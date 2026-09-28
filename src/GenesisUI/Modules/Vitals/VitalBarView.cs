@@ -12,7 +12,7 @@ namespace GenesisUI.Modules.Vitals
     {
         /// <summary>Upward scroll of the bubbles, in tile heights per second.</summary>
         public float Speed;
-        /// <summary>Kept low: the bubbles are a subtle detail (Diego, R-030).</summary>
+        /// <summary>Kept near 15 percent: the bubbles stay translucent (Diego, R-031).</summary>
         public float PatternAlpha;
         /// <summary>A second, slower bubble layer for parallax (eitr); 0 = none.</summary>
         public float CounterSpeed;
@@ -38,13 +38,18 @@ namespace GenesisUI.Modules.Vitals
         private readonly RawImage _flow;
         private readonly RawImage _counterFlow;
         private readonly Image _surface;
+        private readonly Image _glint;
+        private readonly RectTransform _glintRt;
         private readonly TextMeshProUGUI _number;
         private readonly Color _frameColor;
         private readonly Color _dangerColor;
+        private readonly Color _liquidLight;
         private readonly float _areaHeight;
+        private readonly float _glintTravel;
         private readonly float _tileHeightUv;
         private readonly BarMotion _motion;
         private float _shownFast = -1f;
+        private float _activity;
 
         public VitalBarView(RectTransform parent, string name, ThemeRuntime theme, ColorRgba barColor, Vector2 position, Vector2 size, BarMotion motion)
         {
@@ -58,6 +63,7 @@ namespace GenesisUI.Modules.Vitals
 
             var color = ThemeRuntime.ToUnity(barColor);
             var light = Color.Lerp(color, Color.white, 0.55f);
+            _liquidLight = light;
             var area = Ui.Fill(Ui.Child(Root, "FillArea"), InsetSide, InsetBottom, InsetSide, InsetTop);
             _areaHeight = size.y - InsetTop - InsetBottom;
             float areaWidth = size.x - 2f * InsetSide;
@@ -90,14 +96,24 @@ namespace GenesisUI.Modules.Vitals
                     _counterFlow = FlowLayer(_mask, "CounterFlow", flowTex, new Color(light.r, light.g, light.b, motion.PatternAlpha * 0.6f), 0.5f);
             }
 
-            // Bright meniscus at the liquid's surface.
+            // A quiet meniscus and a small travelling reflection make the liquid read as glass.
             var surfaceRt = Ui.Child(_mask, "Surface");
             surfaceRt.anchorMin = new Vector2(0f, 1f);
             surfaceRt.anchorMax = new Vector2(1f, 1f);
             surfaceRt.pivot = new Vector2(0.5f, 1f);
             surfaceRt.anchoredPosition = Vector2.zero;
             surfaceRt.sizeDelta = new Vector2(0f, 2f);
-            _surface = Ui.Image(surfaceRt, null, new Color(light.r, light.g, light.b, 0.85f));
+            _surface = Ui.Image(surfaceRt, null, new Color(light.r, light.g, light.b, 0.35f));
+            var glintSprite = theme.Sprite("bar_glint");
+            if (glintSprite != null)
+            {
+                float glintWidth = areaWidth * 0.55f;
+                _glintTravel = (areaWidth - glintWidth) * 0.5f;
+                _glintRt = Ui.Place(Ui.Child(_mask, "Glint"), new Vector2(0.5f, 1f),
+                    new Vector2(0f, -2.5f), new Vector2(glintWidth, 5f));
+                _glintRt.pivot = new Vector2(0.5f, 0.5f);
+                _glint = Ui.Image(_glintRt, glintSprite, new Color(light.r, light.g, light.b, 0.5f));
+            }
 
             _number = Ui.Fit(Ui.Text(Root, "Value", theme, FontRole.Display, 19f, ThemeRuntime.ToUnity(theme.Tokens.TextTitle),
                                      TextAlignmentOptions.Center, outlined: true), 12f);
@@ -115,19 +131,38 @@ namespace GenesisUI.Modules.Vitals
         {
             if (Mathf.Abs(bar.Fast - _shownFast) > 0.0005f)
             {
+                if (_shownFast >= 0f)
+                    _activity = Mathf.Clamp01(_activity + Mathf.Abs(bar.Fast - _shownFast) * 5f);
                 _shownFast = bar.Fast;
                 _mask.sizeDelta = new Vector2(0f, _areaHeight * bar.Fast);
                 bool any = bar.Fast > 0.001f;
                 if (_surface.enabled != any) _surface.enabled = any;
+                if (_glint != null && _glint.enabled != any) _glint.enabled = any;
             }
             _trail.fillAmount = bar.Slow;
             if (bar.DisplayChanged) _number.SetText("{0}", bar.Display); // SetText with an int does not allocate
             var frame = danger > 0f ? Color.Lerp(_frameColor, _dangerColor, danger * 0.8f) : _frameColor;
             if (_frame.color != frame) _frame.color = frame;
 
+            _activity = Mathf.MoveTowards(_activity, 0f, deltaSeconds * 0.7f);
+            float surfaceAlpha = 0.35f + _activity * 0.28f;
+            if (!Mathf.Approximately(_surface.color.a, surfaceAlpha))
+                _surface.color = new Color(_liquidLight.r, _liquidLight.g, _liquidLight.b, surfaceAlpha);
+            if (_glint != null)
+            {
+                float glintAlpha = 0.5f + _activity * 0.25f;
+                if (!Mathf.Approximately(_glint.color.a, glintAlpha))
+                    _glint.color = new Color(_liquidLight.r, _liquidLight.g, _liquidLight.b, glintAlpha);
+            }
+
             _time += deltaSeconds;
             Scroll(_flow, _motion.Speed, 0f, deltaSeconds);
             Scroll(_counterFlow, _motion.CounterSpeed, 0.5f, deltaSeconds);
+            if (_glintRt != null)
+            {
+                float x = _glintTravel * Mathf.Sin(_time * 0.72f);
+                _glintRt.anchoredPosition = new Vector2(x, -2.5f);
+            }
         }
 
         private float _time;

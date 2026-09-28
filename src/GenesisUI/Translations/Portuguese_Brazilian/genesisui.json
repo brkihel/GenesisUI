@@ -19,5 +19,7 @@
   "genesisui_module_hotbar": "Barra de itens",
   "genesisui_module_status": "Efeitos",
   "genesisui_module_minimap": "Minimapa",
-  "genesisui_day": "Dia"
+  "genesisui_day": "Dia",
+  "genesisui_module_sprint": "Corrida",
+  "genesisui_sprint_label": "VIGOR"
 }

@@ -2,7 +2,7 @@
 
     tools/.venv/bin/python tools/art/patterns.py
 
-bar_bubbles.png (64x128): small rising bubbles, white with alpha, tinted by the bar colour in
+bar_bubbles.png (64x128): translucent rising bubbles, white with alpha, tinted by the bar colour in
 game and scrolled upward (the earlier wisps "flow" pattern was replaced after R-030). Every wave has whole-number frequencies over the
 tile and sparks wrap around its edges, so the texture repeats without a seam in both axes.
 Deterministic: same code, same pixels.
@@ -47,12 +47,12 @@ def flow():
 
 
 def bubbles():
-    """Small rising bubbles (Diego, R-030): a thin bright rim, a clear centre and a tiny
+    """Readable translucent bubbles (Diego, R-031): a soft rim, clear centre and a small
     highlight. Positions wrap around the tile edges, so the texture repeats without a seam."""
     img = Image.new("RGBA", (W, H))
     px = img.load()
     rng = random.Random(11)
-    items = [(rng.uniform(0, W), rng.uniform(0, H), rng.uniform(1.6, 4.2)) for _ in range(14)]
+    items = [(rng.uniform(0, W), rng.uniform(0, H), rng.uniform(4.5, 8.5)) for _ in range(10)]
     for y in range(H):
         for x in range(W):
             a = 0.0
@@ -60,12 +60,12 @@ def bubbles():
                 dx = min(abs(x + 0.5 - bx), W - abs(x + 0.5 - bx))
                 dy = min(abs(y + 0.5 - by), H - abs(y + 0.5 - by))
                 d = math.hypot(dx, dy)
-                rim = max(0.0, 1.0 - abs(d - r) / 0.9)                   # thin ring
-                fill = 0.18 * max(0.0, 1.0 - d / r)                        # faint body
+                rim = max(0.0, 1.0 - abs(d - r) / 1.25)                  # soft ring
+                fill = 0.14 * max(0.0, 1.0 - d / r)                     # nearly clear body
                 hx, hy = bx - r * 0.35, by - r * 0.35                      # highlight up-left
                 hd = math.hypot(min(abs(x + 0.5 - hx), W - abs(x + 0.5 - hx)), min(abs(y + 0.5 - hy), H - abs(y + 0.5 - hy)))
-                spark = max(0.0, 1.0 - hd / max(0.8, r * 0.28))
-                a = max(a, min(1.0, rim * 0.85 + fill + spark))
+                spark = max(0.0, 1.0 - hd / max(0.8, r * 0.22))
+                a = max(a, min(1.0, rim * 0.9 + fill + spark * 0.6))
             px[x, y] = (255, 255, 255, int(a * 255))
     return img
 

@@ -1,7 +1,7 @@
 # GenesisUI — Architecture
 
-Status: design for F0. Sections marked **Spike** are decisions that need a
-prototype on a real client before they are final.
+Status: F3 HUD previews. Sections marked **Spike** still need a prototype on a
+real client before they are final.
 
 ## 1. Repository layout
 
@@ -77,6 +77,10 @@ Game members a module touches are declared with `[GameContract]` on the class in
 of a `Requires` list. Suspend/Resume are not needed yet: the module root lives under the
 vanilla HUD root, which vanilla already moves off-screen when the HUD hides (see
 [regions.md](regions.md)).
+
+An additive module such as `hud.sprint` has an empty region list: it does not veil
+vanilla or claim an existing region. It still gets contract checks, guarding,
+diagnostics and live enable/disable from the host.
 
 **ModuleHost guarantees**, for every module:
 

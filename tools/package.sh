@@ -53,7 +53,20 @@ OUTDIR=$(dirname "$DLL")
 [ -f "$OUTDIR/art/sprites.json" ] || { echo "missing $OUTDIR/art/sprites.json (run tools/art/render.py)" >&2; exit 1; }
 
 cp "$DLL" "$STAGE/plugins/"
-cp -r src/GenesisUI/Translations "$OUTDIR/fonts" "$OUTDIR/art" "$STAGE/plugins/"
+cp -r src/GenesisUI/Translations "$OUTDIR/fonts" "$STAGE/plugins/"
+mkdir -p "$STAGE/plugins/art"
+cp "$OUTDIR/art/sprites.json" "$STAGE/plugins/art/"
+python3 - "$OUTDIR/art" "$STAGE/plugins/art" <<'PY'
+import json, os, shutil, sys
+source, target = sys.argv[1:]
+with open(os.path.join(source, "sprites.json"), encoding="utf-8") as f:
+    manifest = json.load(f)
+for sprite in manifest["sprites"]:
+    name = sprite["file"]
+    if os.path.basename(name) != name:
+        sys.exit("sprite file must be a filename: " + name)
+    shutil.copy2(os.path.join(source, name), os.path.join(target, name))
+PY
 cp icon.png README.md CHANGELOG.md LICENSE "$STAGE/"
 
 # The manifest dependency must name the Jotunn we compiled against (ref/Jotunn.dll).

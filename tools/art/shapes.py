@@ -25,6 +25,23 @@ def bar_frame():
     return svg(48, 160, body, "Vital-bar frame (O6). 9-slice: left 10, right 10, top 32, bottom 22.")
 
 
+def bar_glint():
+    body = ('  <defs><radialGradient id="glint"><stop offset="0" stop-color="#FFFFFF" stop-opacity="0.85"/>'
+            '<stop offset="0.38" stop-color="#FFFFFF" stop-opacity="0.35"/>'
+            '<stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/></radialGradient></defs>\n'
+            '  <ellipse cx="12" cy="4" rx="11" ry="3.5" fill="url(#glint)"/>\n')
+    return svg(24, 8, body, "Soft glint travelling along the vital-bar meniscus.")
+
+
+def sprint_frame():
+    outer = "M13,5 L83,5 Q89,5 89,11 L89,25 Q89,31 83,31 L13,31 Q7,31 7,25 L7,11 Q7,5 13,5 Z"
+    inner = "M15,8.2 L81,8.2 Q85.8,8.2 85.8,12 L85.8,24 Q85.8,27.8 81,27.8 L15,27.8 Q10.2,27.8 10.2,24 L10.2,12 Q10.2,8.2 15,8.2 Z"
+    ends = (volute(7, 18, -1, 0.8) + volute(89, 18, +1, 0.8)
+            + bead(2.8, 18, 1.5) + bead(93.2, 18, 1.5))
+    return svg(96, 36, container(outer, inner) + ends,
+               "Sprint frame (O7). 9-slice keeps the terminal volutes fixed while the track grows.")
+
+
 def plate():
     outer = "M16,6 L80,6 Q86,6 86,12 L86,60 Q86,66 80,66 L16,66 Q10,66 10,60 L10,12 Q10,6 16,6 Z"
     inner = "M17,9.2 L79,9.2 Q82.8,9.2 82.8,13 L82.8,59 Q82.8,62.8 79,62.8 L17,62.8 Q13.2,62.8 13.2,59 L13.2,13 Q13.2,9.2 17,9.2 Z"
@@ -76,6 +93,11 @@ def map_ring():
     return svg(250, 250, body, "Minimap ring (C11). Map window radius 111 of 125.")
 
 
+def map_mask():
+    return svg(64, 64, '  <circle cx="32" cy="32" r="31.5" fill="#FFFFFF"/>\n',
+               "Circular mask for the minimap pins; the terrain itself uses a circular mesh.")
+
+
 def map_crest():
     outer = "M14,46 C38,4 162,4 186,46 C172,50 160,50 148,46 C126,40 74,40 52,46 C40,50 28,50 14,46 Z"
     inner = "M22.5,42.6 C46,10.5 154,10.5 177.5,42.6"
@@ -109,8 +131,10 @@ def badge_cooldown():
 
 
 SHAPES = {
-    "bar_frame": bar_frame, "plate": plate, "slot": slot, "slot_active": slot_active, "tile": tile,
-    "medallion": medallion, "map_ring": map_ring, "map_crest": map_crest, "map_banner": map_banner,
+    "bar_frame": bar_frame, "bar_glint": bar_glint, "sprint_frame": sprint_frame,
+    "plate": plate, "slot": slot, "slot_active": slot_active, "tile": tile,
+    "medallion": medallion, "map_ring": map_ring, "map_mask": map_mask,
+    "map_crest": map_crest, "map_banner": map_banner,
     "wind_disk": wind_disk, "wind_arrow": wind_arrow, "badge_cooldown": badge_cooldown,
 }
 

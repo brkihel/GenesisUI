@@ -145,6 +145,8 @@ partial read is the failure D-013 wanted to avoid. A Core reader is testable, an
 
 ## D-019 — The minimap mirrors vanilla's small map
 
+*The circular rendering mechanism below was superseded by D-021; the mirroring rule remains.*
+
 **Decision (2026-09-28):** the round minimap does not redraw the map. It shows vanilla's
 small-map texture with vanilla's own material (fog of war included) and uvRect inside our
 circular Mask, and mirrors every image under vanilla's small pin root (position, size,
@@ -166,3 +168,14 @@ inner; cells: bronze outer, gold hairline), one fill, three motifs. Hand-drawn S
 longer accepted for UI shapes. **Why:** R-030 — the pieces were each approved but did not read
 as one family; shared constants make cohesion a property of the build instead of a matter of
 care.
+
+## D-021 — Render the map with a circular mesh
+
+**Decision (2026-09-28):** draw the terrain through a circular UI mesh using the
+live vanilla material directly. Keep a standard Unity mask only around the pin and
+player-marker images. Continue mirroring vanilla's UV, material, textures and pins.
+**Why:** R-031 still showed grey terrain after the module followed the live material.
+The previous Unity `Mask` created a stencil copy of that material; its game-managed
+map textures could become stale on the copy. A circular mesh makes that copy
+unnecessary while retaining the same fog-of-war shader. Client confirmation is
+required before treating the grey-terrain bug as resolved.

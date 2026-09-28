@@ -3,7 +3,7 @@
 A modular, themed user interface for Valheim, built for **security and stability
 first**.
 
-> Status: **design (F0)**. No playable build yet. See [docs/ROADMAP.md](docs/ROADMAP.md).
+> Status: **F3 HUD previews**. The current build needs client validation; see [docs/ROADMAP.md](docs/ROADMAP.md).
 
 - **Client-only and visual.** It never moves your items or talks to the server;
   players with and without it can share a world.

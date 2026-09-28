@@ -20,10 +20,9 @@ namespace GenesisUI.Modules.Minimap
     /// and a copy of every image under the vanilla pin root, so pins from other mods appear
     /// too. Vanilla's Minimap.Start REPLACES the small-map material with an instance and only then
     /// sets the map textures on it; our module can be built before that Start, so the material is
-    /// followed every frame (R-030: holding the pre-Start material showed a grey map). The Mask
-    /// renders its own copy of the material; the only runtime property the shader declares,
-    /// _SharedFade, is copied every frame. If the map shader cannot be stencil-masked, the module
-    /// says so in the log and covers the square corners instead.
+    /// followed every frame (R-030: holding the pre-Start material showed a grey map). The map
+    /// itself is a circular mesh, so Unity's stencil Mask cannot make a stale material copy.
+    /// Only the ordinary UI pin images sit under a Mask.
     /// </summary>
     [GameContract("assembly_valheim", "Minimap", "instance")]
     [GameContract("assembly_valheim", "Minimap", "m_smallRoot")]
@@ -44,10 +43,6 @@ namespace GenesisUI.Modules.Minimap
         private const int MaxPins = 256;
 
         private static readonly string[] OwnedRegions = { "hud.minimap" };
-        // Vanilla also sets _zoom, _pixelSize and _mapCenter, but 'Custom/mapshader' does not declare
-        // them (Unity errors on reading them, R-030): only _SharedFade reaches the shader.
-        private static readonly int SharedFadeId = Shader.PropertyToID("_SharedFade");
-
         private readonly ConfigEntry<int> _offsetX;
         private readonly ConfigEntry<int> _offsetY;
         private readonly ConfigEntry<float> _scale;
@@ -55,9 +50,7 @@ namespace GenesisUI.Modules.Minimap
         private ModuleContext _context;
         private RectTransform _group;
         private RectTransform _mapRoot;
-        private Mask _mask;
-        private Image _corners;
-        private RawImage _map;
+        private CircularMapImage _map;
         private RectTransform _pinRoot;
         private readonly List<MirrorImage> _pins = new List<MirrorImage>(64);
         private MirrorImage _marker;
@@ -70,7 +63,6 @@ namespace GenesisUI.Modules.Minimap
         private int _shownMinute = -1;
         private int _shownDay = -1;
         private string _shownBiome;
-        private bool _stencilChecked;
         private Vector2 _appliedOffset = new Vector2(float.NaN, float.NaN);
         private float _appliedScale = float.NaN;
 
@@ -108,26 +100,24 @@ namespace GenesisUI.Modules.Minimap
             _group = Ui.Place(Ui.Child(context.Root, "Minimap"), new Vector2(1f, 1f), Vector2.zero, new Vector2(RingSize, RingSize + 40f));
 
             _mapRoot = Ui.Place(Ui.Child(_group, "MapWindow"), new Vector2(0.5f, 0f), new Vector2(0f, (RingSize - MapSize) / 2f), new Vector2(MapSize, MapSize));
-            var maskImage = Ui.Image(Ui.Fill(Ui.Child(_mapRoot, "Mask")), theme.Sprite("map_mask"), Color.white);
-            _mask = maskImage.gameObject.AddComponent<Mask>();
-            _mask.showMaskGraphic = false;
-            var content = (RectTransform)maskImage.transform;
-
-            var mapRt = Ui.Fill(Ui.Child(content, "Map"));
-            _map = mapRt.gameObject.AddComponent<RawImage>();
+            var mapRt = Ui.Fill(Ui.Child(_mapRoot, "Map"));
+            _map = mapRt.gameObject.AddComponent<CircularMapImage>();
             _map.raycastTarget = false;
             if (mm != null && mm.m_mapImageSmall != null)
             {
-                _map.texture = mm.m_mapImageSmall.texture;
+                _map.texture = MapTexture(mm.m_mapImageSmall);
                 _map.material = mm.m_mapImageSmall.material; // vanilla's instance, fog of war included
             }
+            GenesisLog.Info("Module:hud.minimap", "using a direct circular map mesh; stencil masks only pins (" +
+                MapTextures(_map.material) + ")");
 
+            var maskImage = Ui.Image(Ui.Fill(Ui.Child(_mapRoot, "PinMask")), theme.Sprite("map_mask"), Color.white);
+            var mask = maskImage.gameObject.AddComponent<Mask>();
+            mask.showMaskGraphic = false;
+            var content = (RectTransform)maskImage.transform;
             _pinRoot = Ui.Place(Ui.Child(content, "Pins"), Vector2.zero, Vector2.zero, new Vector2(MapSize, MapSize));
             _shipMarker = NewMirror(content, "ShipMarker");
             _marker = NewMirror(content, "PlayerMarker");
-
-            _corners = Ui.Image(Ui.Fill(Ui.Child(_mapRoot, "Corners")), theme.Sprite("map_corners"), Color.white);
-            _corners.enabled = false;
 
             var ring = theme.Sprite("map_ring");
             if (ring != null)
@@ -158,7 +148,6 @@ namespace GenesisUI.Modules.Minimap
             Ui.Fill((RectTransform)_biome.transform, 18f, 2f, 18f, 2f);
 
             _pins.Clear();
-            _stencilChecked = false;
             _shownMinute = _shownDay = -1;
             _shownBiome = null;
             _appliedOffset = new Vector2(float.NaN, float.NaN);
@@ -183,13 +172,12 @@ namespace GenesisUI.Modules.Minimap
             {
                 // First frames after load, or any later swap: follow vanilla's live instance.
                 _map.material = source.material;
-                _stencilChecked = false;
-                GenesisLog.Info("Module:hud.minimap", "following vanilla's map material '" + (source.material != null ? source.material.name : "null") + "'");
+                GenesisLog.Info("Module:hud.minimap", "following vanilla's map material '" +
+                    (source.material != null ? source.material.name : "null") + "' (" + MapTextures(source.material) + ")");
             }
-            if (_map.texture != source.texture) _map.texture = source.texture;
+            var texture = MapTexture(source);
+            if (_map.texture != texture) _map.texture = texture;
             _map.uvRect = source.uvRect;
-            if (!_stencilChecked) CheckStencil(source.material);
-            SyncMaterial(source.material);
 
             var reference = source.rectTransform;
             MirrorPins(mm.m_pinRootSmall, reference);
@@ -233,28 +221,27 @@ namespace GenesisUI.Modules.Minimap
             _pins.Clear();
         }
 
-        private void CheckStencil(Material vanilla)
+        private static Texture MapTexture(RawImage source)
         {
-            _stencilChecked = true;
-            bool stencil = vanilla != null && vanilla.HasProperty("_Stencil");
-            string shader = vanilla != null && vanilla.shader != null ? vanilla.shader.name : "(none)";
-            if (stencil)
-            {
-                GenesisLog.Info("Module:hud.minimap", "map shader '" + shader + "' supports stencil: round mask");
-                return;
-            }
-            // No stencil: a Mask would silently do nothing. Show the square map with its corners covered.
-            _mask.enabled = false;
-            _corners.enabled = true;
-            GenesisLog.Warn("Module:hud.minimap", "map shader '" + shader + "' has no stencil support: using corner covers instead of a round mask");
+            if (source.texture != null) return source.texture;
+            var material = source.material;
+            return material != null && material.HasProperty("_MainTex") ? material.GetTexture("_MainTex") : null;
         }
 
-        /// <summary>The Mask renders a copy of vanilla's material; keep the runtime properties in step.</summary>
-        private void SyncMaterial(Material vanilla)
+        private static string MapTextures(Material material)
         {
-            var rendered = _map.materialForRendering;
-            if (vanilla == null || rendered == null || rendered == vanilla) return;
-            if (vanilla.HasProperty(SharedFadeId)) rendered.SetFloat(SharedFadeId, vanilla.GetFloat(SharedFadeId));
+            if (material == null) return "no material";
+            return "main=" + TextureName(material, "_MainTex") +
+                   ", mask=" + TextureName(material, "_MaskTex") +
+                   ", height=" + TextureName(material, "_HeightTex") +
+                   ", fog=" + TextureName(material, "_FogTex");
+        }
+
+        private static string TextureName(Material material, string property)
+        {
+            if (!material.HasProperty(property)) return "absent";
+            var texture = material.GetTexture(property);
+            return texture != null ? texture.name : "null";
         }
 
         private void MirrorPins(RectTransform source, RectTransform reference)

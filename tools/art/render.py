@@ -26,6 +26,8 @@ SCALE = 2  # sprites are rendered at 2x and loaded with pixelsPerUnit = 100 * SC
 SPRITES = [
     ("bar_frame", "art/src/bar_frame.svg", 48, 160, (10, 22, 10, 32)),
     ("bar_fill", "art/src/bar_fill.svg", 16, 128, (0, 0, 0, 0)),
+    ("bar_glint", "art/src/bar_glint.svg", 24, 8, (0, 0, 0, 0)),
+    ("sprint_frame", "art/src/sprint_frame.svg", 96, 36, (24, 10, 24, 10)),
     ("medallion", "art/src/medallion.svg", 64, 64, (0, 0, 0, 0)),
     ("slot", "art/src/slot.svg", 56, 56, (12, 12, 12, 12)),
     ("slot_active", "art/src/slot_active.svg", 56, 56, (12, 12, 12, 12)),
@@ -36,7 +38,6 @@ SPRITES = [
     ("map_crest", "art/src/map_crest.svg", 200, 52, (0, 0, 0, 0)),
     ("map_banner", "art/src/map_banner.svg", 180, 32, (0, 0, 0, 0)),
     ("map_mask", "art/src/map_mask.svg", 64, 64, (0, 0, 0, 0)),
-    ("map_corners", "art/src/map_corners.svg", 64, 64, (0, 0, 0, 0)),
     ("wind_arrow", "art/src/wind_arrow.svg", 24, 24, (0, 0, 0, 0)),
     ("wind_disk", "art/src/wind_disk.svg", 26, 26, (0, 0, 0, 0)),
 ]

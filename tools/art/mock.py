@@ -73,8 +73,12 @@ def main(out_path):
         tile = bubbles.resize((aw, aw * 2))
         for yy in range(0, ah, tile.size[1]):
             pattern.paste(tile, (0, yy))
-        liquid.alpha_composite(tint(pattern, tuple(int(c + (255 - c) * 0.55) for c in rgb), 0.2))
+        liquid.alpha_composite(tint(pattern, tuple(int(c + (255 - c) * 0.55) for c in rgb), 0.15))
         put(liquid.crop((0, ah - fh, aw, ah)), x + 9.5, top + 32 + (ah - fh))
+        if fh:
+            glint = tint(sprite("bar_glint").resize((int(aw * 0.55), 5)),
+                         tuple(int(c + (255 - c) * 0.55) for c in rgb), 0.5)
+            put(glint, x + 9.5 + (aw - glint.width) / 2, top + 32 + (ah - fh))
         text(x + w / 2, top + 32 + ah / 2, str(value), font("Cinzel-SemiBold", 19 if len(str(value)) < 3 else 15))
 
     # Vitals [Vitals] OffsetX 36, OffsetY 72
@@ -99,6 +103,13 @@ def main(out_path):
         put(sprite("slot").resize((56, 56)), x, H - (20 + 12 + 56))
         text(x + 8, H - (20 + 12 + 56) + 11, str(i + 1), font("Cinzel-Medium", 13), anchor="lm")
     put(sprite("slot_active").resize((62, 62)), px + 30 + 2 * 64 - 3, H - (20 + 12 + 56) - 3)
+
+    # Sprint [Sprint] OffsetY 120, shown here in its running state.
+    sx, stop = (W - 460) / 2, H - (120 + 36)
+    put(nine(sprite("sprint_frame"), 460, 36, 24, 10, 24, 10), sx, stop)
+    sprint_fill = tint(fill.resize((411, 10)), (0xC0, 0x8A, 0x22))
+    put(sprint_fill.crop((0, 0, int(411 * 0.7), 10)), sx + 24.5, stop + 13)
+    text(W / 2, stop - 8, "VIGOR", font("Cinzel-Medium", 14), fill=(247, 226, 131, 255))
 
     # Minimap [Minimap] OffsetX 24, OffsetY 20, top-right
     gx, ring_top = W - 24 - 250, 20 + 40

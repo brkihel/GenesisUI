@@ -19,5 +19,7 @@
   "genesisui_module_hotbar": "Hotbar",
   "genesisui_module_status": "Status effects",
   "genesisui_module_minimap": "Minimap",
-  "genesisui_day": "Day"
+  "genesisui_day": "Day",
+  "genesisui_module_sprint": "Sprint",
+  "genesisui_sprint_label": "STAMINA"
 }

@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.4.1-preview.2 — R-031 follow-up, F3 sprint
+
+### Changed
+- The minimap terrain now uses a circular UI mesh with the live vanilla map material;
+  only the pin images use a stencil mask. The old stencil material copy could leave
+  the terrain grey even after following `minimap(Clone)`. The client test still needs
+  to confirm this candidate fix. The minimap log now names its map textures.
+- Vital-bar bubbles are larger and more translucent (14–15 % tint alpha). A small
+  reflection moves along the liquid surface and brightens briefly when the value
+  changes.
+
+### Added
+- A temporary horizontal sprint bar above the hotbar, using vanilla running and
+  stamina values. It fades after running stops and has its own module toggle, offset
+  and scale. It has no gameplay action or vanilla region to veil.
+
 ## 0.4.1-preview.1 — R-030 feedback
 
 ### Fixed

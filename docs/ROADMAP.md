@@ -16,6 +16,11 @@ are met.
 | **F7 — Gameplay package (optional)** | Separate package with server authority: extra slots, quick/action slots, crafting from chests… | Own design docs; server validates every action |
 | **F8 — Switch-over** | GenesisUI replaces SeneaL UI on GenesisHeim | Release checklist + rollout in [RELEASE.md](RELEASE.md) |
 
+F3 is in progress: vitals, food, hotbar, status and minimap have client previews;
+the sprint bar is included in 0.4.1-preview.2. Boss/enemy plates, interaction and
+hover cards, notifications and key hints remain. F4 starts after the F3 client
+scripts and modpack performance check pass.
+
 ## Research items (not scheduled)
 
 - 3D character figure in the inventory/character panels (render-texture camera;

@@ -70,7 +70,7 @@ Never hand-edit a generated SVG; change the style or the shape function.
 | Cells (item slots, status tiles, wind disk) | bronze outer line 1.4, gold hairline 0.8 at 20 % inside |
 | Fill | `#0B0D0C` at 90 % everywhere |
 | Motifs | only three: diamond (finials, cardinal points), volute (terminal ends), bead (tips, joints) |
-| Motion inside elements | subtle: bubbles at ~20 % opacity rising slowly, slight sway |
+| Motion inside elements | larger bubbles at 14–15 % opacity rising slowly with slight sway; small travelling glint at the liquid surface |
 
 Delicate, subtle, refined and memorable; never as busy as the concept art (Diego).
 
@@ -88,6 +88,7 @@ atlas. Numbers refer to the concept images.
 | O5 | Knot medallion | triquetra-in-triangle mark; product logo, level badge, bar end caps | 1, 3, 4, 5, 6 |
 | O6 | Bar frame | ornate vertical frame with medallion cap for health/stamina/eitr | 4, 5, 6, 8, 10 |
 | O7 | Plate caps | knot ends on horizontal plates (boss bar, sprint bar, hotbar) | 5, 6 |
+| O7a | Sprint frame | a thin horizontal container above the hotbar, visible while running and briefly after | 5 |
 | O8 | Panel watermark | large knot at low alpha in panel corners | 2, 7, 9 |
 | C1 | Slot | dark square, `line.slot` border; index top-left, quantity bottom-right, 2px durability bar; selected = `accent.gold` border + soft glow | 3–10 |
 | C2 | Key cap | rounded rectangle outline with the key; mouse glyphs for buttons | footers, 2, 8, 10 |
@@ -99,7 +100,7 @@ atlas. Numbers refer to the concept images.
 | C8 | Status tile | dark rounded square with icon, label and timer beneath | 4, 5, 6, 8, 10 |
 | C9 | Hover card | framed card with icon, name, primary action key and a pointer diamond to the target | 8, 10 |
 | C10 | Stat list | label left, value right, thin separators; durability as inline bar | 7, 9, 12 |
-| C11 | Circular minimap | round map with gold ring, biome name plate on top, N marker, side buttons, wind and day/time pills below | 3–6, 8, 10 |
+| C11 | Circular minimap | round map with gold ring, biome name plate, N marker, wind and day/time crest | 3–6, 8, 10 |
 
 Nav and UI icons are line icons in `accent.gold`: we draw them or take them from an
 MIT/ISC set (Lucide or Tabler), recorded in `art/LICENSES.md`. Item icons are always

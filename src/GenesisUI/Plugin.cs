@@ -9,6 +9,7 @@ using GenesisUI.Host;
 using GenesisUI.Modules.Food;
 using GenesisUI.Modules.Hotbar;
 using GenesisUI.Modules.Minimap;
+using GenesisUI.Modules.Sprint;
 using GenesisUI.Modules.Status;
 using GenesisUI.Modules.Vitals;
 using GenesisUI.Theme;
@@ -94,6 +95,8 @@ namespace GenesisUI
                     "Minimapa redondo no canto superior direito, com vento, dia e hora em cima e o bioma embaixo. Desligado, o jogo mostra o minimapa original."));
                 ModuleHost.Register(new StatusModule(Config), Config.Bind("Modules", "Status", true,
                     "Efeitos ativos e o poder do guardião em quadros com nome e tempo. Desligado, o jogo mostra os efeitos originais."));
+                ModuleHost.Register(new SprintModule(Config), Config.Bind("Modules", "Sprint", true,
+                    "Barra temporária de vigor acima dos itens durante a corrida. Desligado, ela desaparece."));
 
                 // Jötunn raises this on every scene: fonts become available on the first one,
                 // and the main scene brings the HUD the modules attach to.
