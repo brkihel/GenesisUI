@@ -5,7 +5,7 @@ decision is marked **Superseded by D-0XX**, never deleted.
 
 ## D-001 — Visual and client-only scope
 
-**Decision:** until F7, GenesisUI changes only what the player sees. No RPC, no synced
+**Decision:** until F8 (renumbered by D-024), GenesisUI changes only what the player sees. No RPC, no synced
 config, no game-state changes. `NetworkCompatibility(NotEnforced)`.
 **Why:** a UI mod that moves items becomes a duplication/loss vector; the SeneaL UI
 study showed chest items taken with forced ZDO ownership at up to 100 m. Keeping the
@@ -206,3 +206,14 @@ and the compact value plate from the R-040 comparison apply to gold.
 **Why:** Diego, after the 0.5.0-preview.2 mock: the carved rendition did not reproduce his
 reference and was unpleasant; focus on gold from now on. A second style doubles every art
 change for no benefit while one direction is being finished.
+
+## D-024 — The whole vanilla UI before mod integration
+
+**Decision (2026-09-28):** phases are reordered. After the HUD (F3): F4 inventory and crafting
+windows (inventory, equipment, containers, crafting and every station, skills, texts, trophies,
+build browser), F5 menus (main menu, pause menu, settings), F6 map, and only then F7 Extension
+API, foreign-element dock and adapters. The optional gameplay package becomes F8, the switch-over
+F9.
+**Why:** Diego: GenesisUI, like SeneaL UI, is a complete rework of the vanilla UI, main and Esc
+menus included; adapting other mods only makes sense once the vanilla screens they plug into
+exist in our form.

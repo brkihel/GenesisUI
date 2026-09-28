@@ -134,12 +134,12 @@ What each concept shows, and what we can build in the visual, client-only scope.
 |---|---|---|---|---|
 | 3, 4, 5, 6, 8, 10 | HUD | vertical health/stamina/eitr bars, hotbar, status tiles with timers, circular minimap frame, biome name, wind, day/time, sprint bar, boss plate with stars, interaction card | player level badge ("NÍVEL 12"): vanilla has no player level | chest card "12/24 espaços usados" before opening: container contents are not reliably on the client until opened; research item |
 | 3 | HUD (horizontal variant) | long health bar with segmented food pips | — | — |
-| 7, 9 | Inventory | grid of any size, equipment panel for vanilla slots (helmet, chest, legs, cape, utility, trinket, weapons, ammo), item details, weight bar, total armor | amulet/ring/gloves/boots slots (Jewelcrafting and similar mods) | 48 slots, "Consumo rápido", "Slots de ação": gameplay (F7). 3D character figure: research (render-texture camera), F5+ |
+| 7, 9 | Inventory | grid of any size, equipment panel for vanilla slots (helmet, chest, legs, cape, utility, trinket, weapons, ammo), item details, weight bar, total armor | amulet/ring/gloves/boots slots (Jewelcrafting and similar mods) | 48 slots, "Consumo rápido", "Slots de ação": gameplay (F8). 3D character figure: research (render-texture camera), F4+ |
 | 1 | Skills ("Habilidades") | vanilla skills (including skills from mods) with level and XP bar, grouped | skill trees, points, attributes (Força, Destreza, Intelecto): no vanilla system | — |
 | 1 | Texts ("Textos") | vanilla texts/lore list with categories | — | — |
 | 2 | Settings | all GenesisUI options; live HUD preview is a later refinement | — | — |
 | 11 | World map | frame, filter pills by pin type, marker palette, legend, zoom and center buttons, "visible to others" toggle (vanilla) | custom pin categories from mods | painterly map texture (see GenesisMapPrinter later), fast travel (gameplay) |
-| 12 | Crafting / Build | recipe list, search, category pills, details, requirements with have/need, craft through vanilla, build piece browser | — | crafting from chests (gameplay, F7) |
+| 12 | Crafting / Build | recipe list, search, category pills, details, requirements with have/need, craft through vanilla, build piece browser | — | crafting from chests (gameplay, F8) |
 | 1, 2 | "Conquistas" tab | tab shell only | achievements from a provider (e.g. an achievements mod) | — |
 
 When a provider is missing, the element is **hidden**, not shown empty (GenesisMods

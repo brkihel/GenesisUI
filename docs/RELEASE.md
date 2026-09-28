@@ -2,7 +2,7 @@
 
 ## Versioning
 
-- Semantic versioning. `0.x` until the F5 windows are stable; the Extension API
+- Semantic versioning. `0.x` until the F4 windows and F5 menus are stable; the Extension API
   follows [EXTENSION-API.md §5](EXTENSION-API.md#5-versioning).
 - The version lives in one place (`PluginInfo.cs`) and is stamped into the assembly,
   the manifest and the diagnostics header.

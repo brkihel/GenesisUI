@@ -32,7 +32,7 @@ in this order:
 - **Not a gameplay mod.** No extra inventory rows, quick slots, action slots,
   crafting from chests, quick stack, area pickup or tombstone logic. Those change
   game state and need server authority; they belong to a separate, later package
-  (roadmap F7) and are never a requirement for the UI.
+  (roadmap F8) and are never a requirement for the UI.
 - **No networking.** The visual scope registers no RPC and syncs no config. The
   plugin declares `NetworkCompatibility(NotEnforced)`: players with or without it
   can share a server.

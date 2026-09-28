@@ -1,6 +1,6 @@
 # GenesisUI — Extension API (draft v1)
 
-Status: design. Ships in F4. Until 1.0 the API may change; every change is listed in
+Status: design. Ships in F7 (D-024: after the whole vanilla UI). Until 1.0 the API may change; every change is listed in
 CHANGELOG.md under "API".
 
 The API is how compatibility becomes a property of the design: a mod describes

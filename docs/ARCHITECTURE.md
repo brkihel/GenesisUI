@@ -140,7 +140,7 @@ Children that other mods add under veiled vanilla roots would disappear with the
 veil. The host watches veiled roots for GameObjects whose components come from a
 non-vanilla assembly, and **re-hosts a visible proxy of their position** in a dock
 the player can place. This is the generic compatibility path for mods that draw
-into the vanilla HUD without knowing GenesisUI. (**Spike** in F4: proxy by
+into the vanilla HUD without knowing GenesisUI. (**Spike** in F7: proxy by
 reparenting vs. by leaving it in place and punching a hole in the veil.)
 
 ## 4. Scheduling and data flow
