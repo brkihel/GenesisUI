@@ -1,0 +1,11 @@
+bin/
+obj/
+*.user
+*.suo
+.vs/
+.idea/
+ref/
+*.zip
+*.nupkg
+packages/
+# concept art and anything extracted from other mods never enter this repository

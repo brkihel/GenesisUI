@@ -1,0 +1,112 @@
+# GenesisUI — Decisions
+
+Short records of decisions and why. New decisions get the next number; a reversed
+decision is marked **Superseded by D-0XX**, never deleted.
+
+## D-001 — Visual and client-only scope
+
+**Decision:** until F7, GenesisUI changes only what the player sees. No RPC, no synced
+config, no game-state changes. `NetworkCompatibility(NotEnforced)`.
+**Why:** a UI mod that moves items becomes a duplication/loss vector; the SeneaL UI
+study showed chest items taken with forced ZDO ownership at up to 100 m. Keeping the
+UI visual makes it safe by construction.
+
+## D-002 — GenesisModLIB is a separate runtime plugin
+
+*Deferred by D-015: still the target format, applied when the LIB is extracted.*
+
+**Decision:** shared infrastructure lives in GenesisModLIB, loaded as its own plugin
+and consumed with a hard `BepInDependency`, strict semver.
+**Why:** fault isolation and diagnostics need one shared registry across all
+GenesisMods mods; a copy merged into each mod with ILRepack cannot share state.
+
+## D-003 — Adapters live in-tree
+
+**Decision:** third-party adapters live inside GenesisUI, isolated per folder. A
+separate adapter package is an exception with its own decision entry.
+**Why:** one package to install and test; the public API covers mods that want to
+integrate themselves.
+
+## D-004 — Two public repositories, Hexium packages
+
+*Partially superseded by D-015: only GenesisUI is published for now.*
+
+**Decision:** `GenesisUI` and `GenesisModLIB` are public repositories; packages follow
+the Hexium format under `GenesisMods`; GUIDs `Genesis.GenesisUI` and
+`Genesis.GenesisModLIB`.
+
+## D-005 — Clean room
+
+**Decision:** no code, art, icon, text or configuration layout copied from SeneaL UI
+or any closed mod; no redistributed game assets; concept art is reference only and
+stays out of the repository.
+**Why:** legal safety for a public project and independence from any author.
+Studying how a mod behaves is fine; its implementation is not ours to reuse.
+
+## D-006 — Postfix-first, per-class patching, never unpatch others
+
+See [PATCH-POLICY.md](PATCH-POLICY.md).
+**Why:** SeneaL UI 1.1.6 applies ~190 patches with one `PatchAll` (one missing
+target breaks all of them), has 50 skipping prefixes, and removes other mods'
+patches. Those are the stability failures GenesisUI exists to avoid.
+
+## D-007 — Hide vanilla, never destroy it
+
+**Decision:** vanilla UI is veiled and restored exactly; never destroyed or
+deactivated. **Why:** other mods locate and extend vanilla objects; the kill switch
+must always work.
+
+## D-008 — The UI acts only through vanilla entry points
+
+**Decision:** clicks call the same vanilla methods as the vanilla UI; the banned-API
+scan enforces it. **Why:** vanilla already handles ownership, container locks and
+networking correctly.
+
+## D-009 — Art as source
+
+**Decision:** ornaments, frames, logo and nav icons are SVG sources in `art/src/`,
+rasterized to an atlas at build time. Fonts are OFL files loaded at runtime. Game
+sprites are read at runtime only. **Why:** we have no artist; vector sources are
+reviewable, re-colorable by theme tokens, resolution-independent and license-clean.
+
+## D-010 — Diagnostics mandatory outside Release
+
+**Decision:** Debug and Preview builds ship the overlay, inspector, fault injection,
+own log file and watermark. **Why:** tests happen on Diego's client; the build must
+explain its own failures. See [DIAGNOSTICS.md](DIAGNOSTICS.md).
+
+## D-011 — Client test scripts in pt-BR, executed by Diego
+
+**Decision:** no server testing at this stage; each preview ships a step-by-step test
+script in Portuguese, following [the template](testing/ROTEIRO-TEMPLATE.md).
+**Why:** Diego runs the tests and must know exactly what is being verified. Scripts
+are the one documentation exception to "English in the repository".
+
+## D-012 — Pure Core
+
+**Decision:** `GenesisUI.Core` targets netstandard2.0 without Unity, Valheim, Harmony
+or BepInEx, with a build guard (GenesisPlayerBots D-001 pattern).
+**Why:** most logic becomes testable with `dotnet test` on a one-person team.
+
+## D-013 — Data files parsed with `JsonUtility`
+
+**Decision:** layout and theme files use Unity `JsonUtility` into typed classes.
+**Why:** no extra dependency, no polymorphic deserialization, nothing in a data file
+can name a type or load code.
+
+## D-014 — Fonts: Cinzel + Cormorant Garamond
+
+**Decision:** Cinzel SemiBold/Medium for display and labels, Cormorant Garamond for
+body, per Diego's font note for the concepts. Numeral legibility at HUD sizes is
+checked in F2 and may add a numbers-only exception.
+
+## D-015 — Infrastructure starts inside GenesisUI
+
+**Decision (2026-09-28):** no GenesisModLIB release for now. Guard, guarded patcher,
+contracts, input leases and diagnostics plumbing are built in GenesisUI's
+`Foundation` layer, which never references UI code (enforced by test). When a second
+GenesisMods mod needs any of it, `Foundation` is extracted into GenesisModLIB as a
+separate plugin (D-002). Only the GenesisUI repository is published until then.
+**Why:** there is no second consumer today (GenesisTooltips was never really started),
+so a separate plugin would only add a dependency to install, version and whitelist.
+Designing Foundation as extraction-ready keeps the door open at no cost.
