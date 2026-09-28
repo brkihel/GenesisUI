@@ -3,7 +3,14 @@
 A modular, themed user interface for Valheim, built for **security and stability
 first**.
 
-> Status: **F3 HUD previews**. The current build needs client validation; see [docs/ROADMAP.md](docs/ROADMAP.md).
+> Status: **F3 (HUD) approved; F4 (inventory and crafting windows) starting.** Latest test
+> package: 0.5.0-preview.4. See [docs/ROADMAP.md](docs/ROADMAP.md).
+
+GenesisUI is a complete rework of the vanilla UI: HUD, inventory and crafting windows,
+menus and map, in one gold ornament language. What exists today (0.5.0) is the whole HUD:
+vital bars with a living liquid, food, hotbar, status effects and guardian power, round
+minimap with wind, day and biome, stamina readout, boss and creature plates, interaction
+card, stacked notifications, and the vanilla key hints lifted above the hotbar.
 
 - **Client-only and visual.** It never moves your items or talks to the server;
   players with and without it can share a world.
@@ -11,8 +18,10 @@ first**.
   piece.
 - **A failure stays local.** If a game update or another mod breaks one module, that
   module steps aside and says why; the rest keeps working.
-- **Compatible by design.** Other mods integrate through a public API; mods that do
-  not know GenesisUI are covered by small, isolated adapters.
+- **Compatible by design.** It mirrors what vanilla decides to show (so other mods'
+  pins, messages and plates still appear) and hides vanilla instead of destroying it.
+  A public API and small, isolated adapters for other mods come after the vanilla UI
+  is complete (roadmap F7).
 
 ## Documentation
 

@@ -39,8 +39,8 @@ leaves the center clear.
 | `bar.eitr` | `#2281AD` → `#1897CC` | vitals |
 | `bar.durability` | `#6DAF50` | 2px bar under slots |
 
-These become the default theme file. Values are starting points; contrast is
-verified in F2 against WCAG AA for body text on `bg.panel`.
+These are the theme tokens (`ThemeTokens.cs`). Contrast of body text on `bg.panel`
+against WCAG AA is still to be checked when the F4 windows put long text on panels.
 
 ## 3. Typography
 
@@ -54,9 +54,8 @@ From Diego's note, confirmed against the concepts:
 
 Both families are SIL OFL 1.1 (Google Fonts); the license files ship with the fonts.
 Cinzel is also the GenesisMods site display face, which keeps the line consistent.
-**To verify in F2:** Cormorant's numeral legibility at HUD sizes (≤ 14 px). If it
-fails, numbers use Cinzel or the vanilla font — decided by screenshot, recorded in
-DECISIONS.md.
+Numbers on the HUD (bar values, timers, slot counts) use Cinzel (the display face), which
+stayed legible at HUD sizes in every client test so far; Cormorant carries labels and body.
 
 ## 4b. Vital-bar effects
 
@@ -90,8 +89,8 @@ Delicate, subtle, refined and memorable; never as busy as the concept art (Diego
 
 ## 4. Ornament and component catalogue
 
-Each item becomes an SVG source in `art/src/` and a sprite (often 9-sliced) in the
-atlas. Numbers refer to the concept images.
+Each item becomes a generated SVG in `art/src/` and a sprite (often 9-sliced) listed in
+`art/out/sprites.json`. Numbers refer to the concept images.
 
 | # | Element | Description | Concepts |
 |---|---|---|---|

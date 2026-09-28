@@ -68,6 +68,10 @@ Results are recorded by the developer in `docs/testing/results/<script-id>.md`
 (date, package, pass/fail per step, notes, follow-ups). A failed step becomes an
 issue before the next preview.
 
+Since F3, Diego asked for fewer foundation scripts: the standing checks below are folded
+into each feature script (fault injection + retry of the new modules and the F8 report at the
+**end** of the run) instead of being run separately.
+
 ### Standing scripts (run on every preview)
 
 - **R-000 Smoke**: game starts, main menu, enter world, overlay opens, no errors in

@@ -40,28 +40,24 @@ The watermark means every screenshot tells us the exact build.
 
 ## 3. The overlay (the "debug bed")
 
-Opened with a configurable hotkey (default `F8`). Panels:
+Opened with a configurable hotkey (default `F8`) in Debug and Preview builds.
 
-| Panel | Shows |
+**What it has today (0.5.0):**
+
+| Part | Shows / does |
 |---|---|
-| Modules | id, state, owned regions, reason for `Blocked`/`Unsupported`/`Faulted`, fault count |
-| Regions | every vanilla region, its owner (GenesisUI module, another mod, or vanilla), veil state |
-| Patches | each patch class: applied / skipped (missing target) / failed |
-| Adapters & API | detected mods, version, adapter state, extensions registered and their fault counts |
-| Perf | ms/frame per module (avg, p95, max), allocations per frame, Scheduler budget use |
-| Input | open input leases and owners, key conflicts |
-| Events | last 50 events of the event trace |
+| Module rows | every module with its name, id and two buttons: **Injetar falha** (throw inside it; its region must return to vanilla) and **Reativar** (retry a faulted module) |
+| Modules | state, average ms per refresh, reason for `Blocked` / `Unsupported` / `Faulted` |
+| Regions | every vanilla region and its owner |
+| Veils | every veiled vanilla object, own or vanilla CanvasGroup, how often vanilla fought it; creature plates summed in one line |
+| Faults | owners that faulted, count, first message |
+| Input | open input leases |
+| Buttons | **show/hide vanilla** under GenesisUI, **Gravar relatório** (§4), close |
 
-Tools:
-
-- **Inspector**: hold `Ctrl+Alt` and hover any GenesisUI element to see its path,
-  its module and its view model.
-- **Veil toggle**: show vanilla under GenesisUI to compare.
-- **Fault injection**: throw inside a chosen module or adapter, or pretend a
-  contract is missing. This is how the test scripts prove that a failure returns
-  the region to vanilla.
-- **Reload** theme and layout files from disk.
-- **Copy report** (below).
+**Planned** (with the windows and the API): patches panel (applied / skipped / failed),
+adapters and extensions, per-frame perf with p95 and allocations, key conflicts, event
+trace, an inspector (hover an element to see its module and view model), reloading theme
+and layout from disk.
 
 ## 4. Diagnostic report
 

@@ -1,7 +1,7 @@
 # GenesisUI — Architecture
 
-Status: F3 HUD previews. Sections marked **Spike** still need a prototype on a
-real client before they are final.
+Status: HUD complete (F3 approved, 0.5.0); F4 windows next. Sections marked **Spike**
+still need a prototype on a real client before they are final.
 
 ## 1. Repository layout
 
@@ -18,16 +18,20 @@ GenesisUI/
       Game/                      readers (game → snapshots) and actions (UI → vanilla entry points)
       Modules/<ModuleName>/      one folder per module
       Widgets/                   reusable UI components (Panel, Slot, Bar, KeyCap, ...)
-      Theme/                     token loading, fonts, ornament atlas
+      Theme/                     tokens, runtime fonts, sprites from art/sprites.json
       Adapters/<ModName>/        one folder per third-party adapter
       Diagnostics/               overlay, inspector, report, fault injection (non-Release)
       Patches/                   Harmony patch classes, one class per target area
       Foundation/                guard, guarded patcher, contracts, input leases, log/report plumbing
                                  (extraction-ready: see §14)
   art/
-    src/                         SVG sources we author (ornaments, frames, logo, nav icons)
+    src/                         generated SVG shapes (tools/art/shapes.py), bar_fill.svg, logo.svg
+    out/                         rendered PNGs + sprites.json (shipped as plugins/art/)
     fonts/                       OFL fonts + their license files
-  tools/                         atlas builder, packaging helpers
+  tools/
+    art/                         style.py, shapes.py, patterns.py, render.py, mock.py, fonts.py
+    inspect/                     lists members of ref/*.dll (before declaring a contract)
+    fill-ref.sh, package.sh      references from the server; Preview/Release packages
   tests/
     GenesisUI.Core.Tests/        L1 — pure logic
     GenesisUI.Contract.Tests/    L2 — game and adapter contracts, banned-API scan
@@ -97,8 +101,9 @@ diagnostics and live enable/disable from the host.
    (rebuild on `GUIManager.OnCustomGUIAvailable`), never by modules on their own.
 5. Toggling a module in settings takes effect live.
 
-States: `Disabled` → `Unsupported` | `Blocked` (region owned by someone else) →
-`Active` ⇄ `Suspended` → `Faulted`.
+States (`Host/IUiModule.cs`): `Disabled` (off in config), `Waiting` (no HUD yet: main
+menu, loading), `Unsupported` (a contract is missing), `Blocked` (region owned by someone
+else), `Active`, `Faulted` (switched off for the session; the diagnostics panel can retry).
 
 ### Region registry
 
@@ -110,16 +115,18 @@ any mod listed in the region's conflict table), the module that wants it becomes
 `Blocked` and says why. This is how GenesisUI and SeneaL UI can coexist during the
 migration: whoever does not own a region leaves it alone.
 
-### VanillaVeil — hide, never destroy (**Spike**)
+### VanillaVeil — hide, never destroy (resolved in F2–F3)
 
 Vanilla objects are hidden, not destroyed or deactivated: other mods find vanilla
 objects by path and attach children to them. The veil records the prior state and
 restores it exactly on teardown.
 
-Preferred mechanism: a `CanvasGroup` (alpha 0, no raycasts, not interactable) on
-the region root. Unity allows one `CanvasGroup` per GameObject, and some vanilla
-roots are faded by vanilla code, so the F2 spike must list, per region, which
-object is veiled and how. The result goes into `docs/regions.md`.
+Mechanism: a `CanvasGroup` (alpha 0, no raycasts, not interactable) on each vanilla object
+of a region, our own when the object has none. `Enforce` re-applies alpha 0 every
+LateUpdate and logs once if vanilla fought it; dead targets are pruned. Per region, which
+objects are veiled and what vanilla does to them is in `docs/regions.md`. When our view
+must live inside a veiled vanilla object (creature plates), it carries its own CanvasGroup
+with `ignoreParentGroups`.
 
 ### VanillaNudge — move, never re-parent
 
@@ -130,9 +137,17 @@ owner is torn down or faults — the same contract as the veil.
 
 ### Dynamic regions
 
-Some regions are created by vanilla on demand (`hud.boss`: one clone per boss). The
-registry resolves them anew and the host veils new objects as they appear; an empty
-dynamic region is normal and not reported as a problem.
+Some regions are created by vanilla on demand (`hud.boss`, `hud.enemy`: one clone per boss
+or creature). The owning module veils new clones as they appear (clones are matched by the
+exact name vanilla gives them, template name + "(Clone)"); an empty dynamic region is normal
+and not reported as a problem.
+
+### Mirroring vanilla
+
+Where vanilla already decides what to show, a module mirrors it instead of re-implementing
+the logic: minimap pins and material (D-019, D-021), hover text, message queue timing,
+creature plates (placement, visibility, marks). This keeps other mods' content visible
+and never reveals more than vanilla would.
 
 ### Foreign-element dock
 
@@ -145,9 +160,11 @@ reparenting vs. by leaving it in place and punching a hole in the veil.)
 
 ## 4. Scheduling and data flow
 
-- No `Update()` per view. A central **Scheduler** ticks modules at the rate each
-  one declares (vitals 20 Hz, compass 30 Hz, status effects 4 Hz, ...), and runs
-  event-driven refreshes when vanilla offers a signal (e.g. `Inventory.m_onChanged`).
+- No `Update()` per view. `ModuleHost.Tick` (from the plugin's `Update`) refreshes each
+  module at the rate it declares: every frame for what follows vanilla positions
+  (minimap, creature plates, notice stack), 30 Hz for bars and plates, 10–20 Hz for food,
+  status, hotbar and hover. The elapsed time handed to a module is capped at 0.25 s.
+  Event-driven refreshes (e.g. `Inventory.m_onChanged`) come with the windows (F4).
 - Views update only when their view model changed (Core diffing).
 - Per-frame budget is enforced by measurement, not by trust (§8).
 

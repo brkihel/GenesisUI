@@ -5,6 +5,24 @@ two priorities are **security** and **stability**. Read this file completely bef
 any change. When a rule here conflicts with your habits, this file wins. When a rule
 is unclear, ask; do not guess.
 
+## 0. Where the project is (keep this section current)
+
+- **Phase:** F3 (HUD) approved by Diego on 2026-09-28. **F4 — inventory and crafting
+  windows** is next, on branch `f4-windows`. Order after that: F5 menus (main and Esc),
+  F6 map, F7 Extension API and adapters, F8 optional gameplay package, F9 switch-over
+  (D-024). Do not start API or adapter work before the vanilla UI is done.
+- **Version:** 0.5.0, last package `0.5.0-preview.4` with script R-041 (R-040 fixes), not
+  yet run by Diego. `main` still holds F0–F1; F2–F3 live on `f2-vitals`, and `f4-windows`
+  branches from it. Fast-forwarding `main` needs Diego: the agent's permissions block merges
+  into `main`, so give him the command.
+- **Art direction:** gold only (D-023). The carved-wood style was tried and rejected; do not
+  propose another style unless Diego asks.
+- **HUD modules (11):** `hud.vitals`, `hud.food`, `hud.hotbar`, `hud.minimap`, `hud.boss`,
+  `hud.enemy`, `hud.hover`, `hud.notice`, `hud.status`, `hud.sprint`, plus the key-hint nudge
+  owned by `hud.hotbar`. Each has a `[Modules]` toggle and its own config section.
+- **Open items from Diego:** boss plate has unused space (refine later); player positioning
+  of HUD pieces (after F3, not scheduled yet); modpack performance check at the first F4 run.
+
 ## 1. Read first, in this order
 
 1. [docs/VISION.md](docs/VISION.md) — what GenesisUI is and is not.
@@ -81,7 +99,21 @@ look): `heimdall-nexus/docs/PADROES-GENESISMODS.md`.
 - **Move vanilla with `VanillaNudge`, never re-parent it**, when it collides with our layout
   (key hints); the original position is restored on teardown or fault.
 - **Mirror vanilla instead of re-implementing its logic** when vanilla already decides what
-  to show (minimap pins, D-019): it stays correct with other mods' content.
+  to show (minimap pins D-019, hover text, message timing, creature plates): it stays correct
+  with other mods' content.
+- **Never trust an elapsed time blindly.** A fresh build asked for a refresh with
+  `float.MaxValue`; the bars' animation clock became NaN and the liquid striped after a fault
+  retry (R-040). The host now caps the delta at 0.25 s; keep animation clocks bounded too.
+- **Match vanilla clones by exact name** (`template.name + "(Clone)"`). A prefix test on
+  `HudBase` would also catch `HudBaseBoss(Clone)`.
+- **To follow a vanilla object exactly, live inside it.** Creature plates are children of the
+  vanilla plate with their own CanvasGroup (`ignoreParentGroups`): vanilla's positioning,
+  show/hide and destruction carry them with no lag and nothing to clean up.
+- **Think about what covers what.** Our HUD root sits under vanilla's HUD root; the
+  interaction card drew over the open large map (R-040). Check new views against vanilla's
+  windows and map.
+- **Do not invent causes.** Prove the cause in code or logs before a fix (a result file names
+  it). If a log is needed, ask Diego to paste it.
 
 ## 3. Language
 
@@ -119,10 +151,12 @@ look): `heimdall-nexus/docs/PADROES-GENESISMODS.md`.
 - **Never test on a server, never touch production.** Game tests happen only on
   Diego's client: you prepare the package **and** its test script; he runs it.
 - One person runs every test: no step may need a second player or client.
-- Diego's personal PC (`ssh win-teste`, over Tailscale) is available for GenesisUI
-  client checks he did not have to run himself, but only with notice: say what you
-  will run and why before running it, never start Valheim there without telling him,
-  and never investigate anything unrelated. When he says stop, stop.
+- Diego tests on **his own PC**, in the Gale mod-manager profile `test` (logs under
+  `...\com.kesomannen.gale\valheim\profiles\test\BepInEx`, our own log in
+  `BepInEx\GenesisUI\logs`). The machine behind `ssh win-teste` is a separate test machine
+  (user `heimdall-teste`) without his client or logs: do not search it for his logs.
+  `win-teste` may be used for GenesisUI client checks only with notice (say what and why
+  first, never start Valheim without telling him, nothing unrelated). When he says stop, stop.
 
 ## 5. How to do common tasks
 
@@ -130,7 +164,8 @@ look): `heimdall-nexus/docs/PADROES-GENESISMODS.md`.
 1. Create `src/GenesisUI/Modules/<Name>/` with a class implementing `Host/IUiModule`
    (`Id`, `NameToken`, `Regions`, `RefreshRate` — 0 = every frame, `Build`, `Refresh`,
    `Teardown`) and its views; reuse `Widgets/` (`Ui`, `SlotView`, `TileView`) before
-   writing new ones.
+   writing new ones. Regions vanilla creates on demand are declared dynamic in
+   `RegionRegistry` and veiled by the module as they appear (see `BossModule`, `EnemyModule`).
 2. Put every game member it touches in `[GameContract(...)]` attributes on the class
    (check names with `tools/inspect`). The contract test finds them automatically.
 3. Add each vanilla region to `Host/RegionRegistry.cs` (resolver + the region list of
@@ -165,7 +200,10 @@ hotbar bottom centre (the player will be able to move them later).
    push the feature branch.
 4. When Diego reports back, record it in `docs/testing/results/R-0NN-<version>.md` (passed,
    bugs with their proven cause, feedback) before changing code. Merge the branch into `main`
-   (fast-forward) only after he approves the phase.
+   (fast-forward) only after he approves the phase; the agent cannot push to `main`, so
+   hand him the command.
+5. Update §0 of this file, the ROADMAP note and the README status line when the state
+   changes (phase, last package, open items).
 
 **Add an adapter** — follow [ADAPTERS.md](docs/ADAPTERS.md): declare GUID, version
 range and contracts; read-only; contract test against the real DLL in

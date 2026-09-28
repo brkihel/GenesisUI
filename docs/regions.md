@@ -42,6 +42,15 @@ GenesisUI's HUD root is a child of `m_rootObject`, so it hides with the vanilla 
 - `m_rootObject` ("hudroot") is canvas-sized: 1920x1080 at GUI scale 1 (R-010, 0.2.0-preview.1).
 - No veil was fought by vanilla in R-010, including the animator-driven stamina bar.
 
+- Vanilla's boss HUD clone is `HudBaseBoss(Clone)`; creature plates are clones of
+  `m_baseHud` matched by exact name, so boss HUDs never get a creature plate (R-040 log).
+- Vanilla keeps its hover text while the large map is open and lets the map cover it; our
+  card hides while `Minimap.IsOpen()` (R-040).
+- The key hints nudge is restored and re-applied cleanly on a hotbar fault and retry (R-040 log).
+
 ## Open questions
 
 - Where exactly `HotkeyBar` hangs under `Hud` (we search the whole `Hud` object).
+- Whether the large map hangs under `hudroot`: the host logs it on entering the world
+  (`HUD root placed below the large map` or `large map is outside the HUD root`), first
+  answer expected from R-041.

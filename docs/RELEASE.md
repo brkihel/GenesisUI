@@ -25,7 +25,7 @@ GenesisMods-GenesisUI-<version>[-preview.N].zip
     GenesisUI.dll        GenesisUI.Core merged in (ILRepack); the package refuses a DLL without it
     Translations/English/genesisui.json
     Translations/Portuguese_Brazilian/genesisui.json
-    fonts/               (F2) Cinzel, Cormorant Garamond + OFL.txt
+    fonts/               Cinzel, Cormorant Garamond + OFL.txt
     art/                 sprites.json + the PNGs it lists
 ```
 
