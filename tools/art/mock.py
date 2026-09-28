@@ -110,12 +110,13 @@ def main(out_path):
         fh, th = int(ah * frac), int(ah * trail)
         light = tuple(int(c + (255 - c) * 0.4) for c in rgb)
         liquid = tint(st.img("bar_fill").resize((aw, ah)), rgb)
-        for name, color, alpha in (("bar_mottle", (0, 0, 0), 0.32), ("bar_veins", light, 0.32), ("bar_bubbles", light, 0.07)):
+        for name, color, alpha in (("bar_mottle", (0, 0, 0), 0.32), ("bar_veins", tuple(int(c * 0.45) for c in rgb), 0.3), ("bar_bubbles", light, 0.07)):
             if st.has(name):
                 liquid.alpha_composite(tint(tiled(st.img(name), aw, ah, aw), color, alpha))
         put(liquid.crop((0, ah - fh, aw, ah)), x + cl, top + ct + ah - fh)
         if th > fh and st.has("bar_burn"):
-            put(tint(st.img("bar_burn").resize((aw, th - fh)), hot, 0.95), x + cl, top + ct + ah - th)
+            bh = min(th - fh, 9)                          # the plugin caps the burn at 9 units
+            put(tint(st.img("bar_burn").resize((aw, bh)), hot, 0.95), x + cl, top + ct + ah - fh - bh)
         put(Image.new("RGBA", (aw, 2), light + (220,)), x + cl, top + ct + ah - fh)
         if st.has("bar_value"):
             pw = int(w * 0.92)

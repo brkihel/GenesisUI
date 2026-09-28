@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.5.0-preview.4 — R-040 fixes; F3 approved
+
+### Added
+- Top-left notices stack up to three, newest on top; each fades while dropping after 4 s,
+  and a repeat of the top one updates it (as vanilla merges pickups).
+
+### Fixed
+- Vital bars striped after a fault injection and retry: the host now caps the elapsed time a
+  module receives at 0.25 s (a fresh build passed `float.MaxValue`, which turned animation
+  clocks into NaN).
+- The interaction card stayed over the open large map (Vegvísir): it hides while the map is
+  open, and the HUD root is kept below the large map.
+- Low health drew a red box around the health bar: the halo is gone; the frame pulses red.
+
+### Changed
+- The burn on a draining bar is a short bright edge instead of a trail that kept growing.
+- Cracks in the liquid are a few small fragments in a darker shade of the liquid.
+
 ## 0.5.0-preview.3 — gold only, creature plates, F3 complete
 
 ### Removed

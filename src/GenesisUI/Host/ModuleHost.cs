@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using BepInEx.Configuration;
 using GenesisUI.Foundation;
+using GenesisUI.Foundation.Contracts;
 using UnityEngine;
 
 namespace GenesisUI.Host
@@ -26,8 +27,13 @@ namespace GenesisUI.Host
     /// tears it down, lifts its veils and releases its regions and input; scene changes
     /// handled here, never by modules.
     /// </summary>
+    [GameContract("assembly_valheim", "Minimap", "instance")]
+    [GameContract("assembly_valheim", "Minimap", "m_largeRoot")]
     internal static class ModuleHost
     {
+        /// <summary>The longest time step a module is ever given (seconds).</summary>
+        private const float MaxRefreshDelta = 0.25f;
+
         private static readonly List<ModuleEntry> Entries = new List<ModuleEntry>();
         private static RectTransform _hudRoot;
         private static Theme.ThemeRuntime _theme;
@@ -66,6 +72,7 @@ namespace GenesisUI.Host
         {
             if (Hud.instance == null || Hud.instance.m_rootObject == null) return; // main menu
             EnsureHudRoot();
+            KeepBelowLargeMap();
             foreach (var e in Entries) Reconcile(e);
         }
 
@@ -81,7 +88,10 @@ namespace GenesisUI.Host
                 float period = e.Module.RefreshRate > 0f ? 1f / e.Module.RefreshRate : 0f;
                 if (e.SinceRefresh < period) continue;
 
-                float elapsed = e.SinceRefresh;
+                // Never hand a module a nonsense delta: a fresh build asks for a refresh with
+                // SinceRefresh = MaxValue, and animation clocks fed that turned NaN (striped
+                // vital bars after a fault + retry, R-040).
+                float elapsed = Mathf.Min(e.SinceRefresh, MaxRefreshDelta);
                 e.SinceRefresh = 0f;
                 long start = System.Diagnostics.Stopwatch.GetTimestamp();
                 Guard.Run(e.Owner, e.RefreshAction, elapsed);
@@ -218,6 +228,30 @@ namespace GenesisUI.Host
             _hudRoot.SetAsLastSibling();
             Stretch(_hudRoot);
             FitToCanvas(parent);
+        }
+
+        /// <summary>
+        /// Our root was the last sibling under the vanilla HUD root, and the interaction card drew
+        /// over the open large map (Vegvísir, R-040). When the large map hangs under the same
+        /// root, put ours just before the map's branch so, like vanilla's HUD, it stays under the
+        /// map. The log line says which case the game is in.
+        /// </summary>
+        private static void KeepBelowLargeMap()
+        {
+            if (_hudRoot == null || Minimap.instance == null || Minimap.instance.m_largeRoot == null) return;
+            var parent = _hudRoot.parent;
+            var branch = Minimap.instance.m_largeRoot.transform;
+            while (branch != null && branch.parent != parent) branch = branch.parent;
+            if (branch == null)
+            {
+                GenesisLog.Info("Host", "large map is outside the HUD root; no reordering needed");
+                return;
+            }
+            int mapIndex = branch.GetSiblingIndex();
+            int ours = _hudRoot.GetSiblingIndex();
+            if (ours < mapIndex) return;
+            _hudRoot.SetSiblingIndex(mapIndex);
+            GenesisLog.Info("Host", "HUD root placed below the large map ('" + branch.name + "')");
         }
 
         /// <summary>

@@ -16,6 +16,8 @@ namespace GenesisUI.Modules.Hover
     /// </summary>
     [GameContract("assembly_valheim", "Hud", "instance")]
     [GameContract("assembly_valheim", "Hud", "m_hoverName")]
+    [GameContract("assembly_valheim", "Minimap", "instance")]
+    [GameContract("assembly_valheim", "Minimap", "IsOpen")]
     internal sealed class HoverModule : IUiModule
     {
         private const float MaxWidth = 340f;
@@ -75,7 +77,10 @@ namespace GenesisUI.Modules.Hover
             if (offset != _appliedOffset) { _card.anchoredPosition = offset; _appliedOffset = offset; }
 
             var source = Hud.instance != null ? Hud.instance.m_hoverName : null;
-            string text = source != null && source.gameObject.activeInHierarchy ? source.text : null;
+            // Vanilla keeps the hover text while the large map is open (a Vegvísir opens it) and
+            // lets the map cover it; the card hides instead (R-040).
+            bool mapOpen = global::Minimap.instance != null && global::Minimap.IsOpen();
+            string text = !mapOpen && source != null && source.gameObject.activeInHierarchy ? source.text : null;
             bool show = !string.IsNullOrEmpty(text);
             if (_card.gameObject.activeSelf != show) _card.gameObject.SetActive(show);
             if (!show) { _shown = null; return; }

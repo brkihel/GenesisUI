@@ -274,16 +274,6 @@
       "borderBottom": 0,
       "borderRight": 0,
       "borderTop": 0
-    },
-    {
-      "name": "glow",
-      "file": "glow.png",
-      "width": 24,
-      "height": 24,
-      "borderLeft": 7,
-      "borderBottom": 7,
-      "borderRight": 7,
-      "borderTop": 7
     }
   ]
 }

@@ -28,18 +28,18 @@ namespace GenesisUI.Modules.Vitals
     /// rises and falls, made of the tinted body, dark clots, bright veins and faint bubbles,
     /// each drifting up at its own pace. Above the liquid, the part just lost burns: a hot band
     /// at the surface breaking into grains, with embers rising. The number sits on the value
-    /// plate when the art has one. Low health adds a pulsing halo and embers along the sides.
+    /// plate when the art has one. Low health pulses the frame red, with embers along the sides.
     /// Only draws what a BarAnimator says; allocation-free per frame.
     /// </summary>
     internal sealed class VitalBarView
     {
         private const int EmberCount = 16;
+        private const float MaxBurnHeight = 9f;         // the burn is a short bright edge, never a long trail (R-040)
         private const float PlateAt = 0.26f;            // plate centre, as a fraction of the liquid's height
         private const float PlateWidth = 0.92f;         // plate width, as a fraction of the bar's width
 
         public readonly RectTransform Root;
         private readonly Image _frame;
-        private readonly Image _glow;
         private readonly RectTransform _mask;
         private readonly RectTransform _burnMask;
         private readonly RawImage _burn;
@@ -90,13 +90,6 @@ namespace GenesisUI.Modules.Vitals
             _random = new System.Random(name.GetHashCode());
             Root = Ui.Place(Ui.Child(parent, name), new Vector2(0f, 0f), position, size);
 
-            var glowSprite = theme.Sprite("glow");
-            if (glowSprite != null)
-            {
-                _glow = Ui.Image(Ui.Fill(Ui.Child(Root, "Glow"), -12f, -12f, -12f, -12f), glowSprite, Color.clear);
-                _glow.enabled = false;
-            }
-
             var frameSprite = theme.Sprite("bar_frame");
             _frameColor = frameSprite != null ? Color.white : ThemeRuntime.ToUnity(theme.Tokens.PanelBackground);
             _dangerColor = ThemeRuntime.ToUnity(theme.Tokens.StateDanger);
@@ -136,9 +129,11 @@ namespace GenesisUI.Modules.Vitals
             Ui.Image(FullHeight(Ui.Child(_mask, "Body")), fillSprite, color);
 
             _tileHeightUv = _areaWidth > 0f ? _areaHeight / (2f * _areaWidth) : 1f;
-            // Calm and rich, not busy (R-040 comparison): large dark clouds, a few faint cracks.
+            // Calm and rich, not busy: large dark clouds and a few small crack fragments in a darker
+            // shade of the liquid, so they sit inside it instead of glowing on top (R-040).
+            var shade = Color.Lerp(color, Color.black, 0.55f);
             _mottle = Layer("Clots", theme.Texture("bar_mottle"), new Color(0f, 0f, 0f, 0.32f), 0f);
-            _veins = Layer("Veins", theme.Texture("bar_veins"), new Color(_light.r, _light.g, _light.b, 0.32f), 0.3f);
+            _veins = Layer("Veins", theme.Texture("bar_veins"), new Color(shade.r, shade.g, shade.b, 0.3f), 0.3f);
             _bubbles = Layer("Bubbles", theme.Texture("bar_bubbles"), new Color(_light.r, _light.g, _light.b, motion.PatternAlpha), 0f);
             if (motion.CounterSpeed != 0f)
                 _counterBubbles = Layer("CounterBubbles", theme.Texture("bar_bubbles"), new Color(_light.r, _light.g, _light.b, motion.PatternAlpha * 0.6f), 0.5f);
@@ -220,10 +215,11 @@ namespace GenesisUI.Modules.Vitals
                 if (_glint != null && _glint.enabled != any) _glint.enabled = any;
             }
 
-            // The burning span: from the liquid's surface up to where the trail still is.
+            // The burning span: just above the liquid's surface, as long as something is still
+            // draining, but only a short edge (a long trail looked bad after sustained use, R-040).
             float burning = Mathf.Max(0f, bar.Slow - bar.Fast);
             _burnMask.anchoredPosition = new Vector2(0f, _areaHeight * bar.Fast);
-            _burnMask.sizeDelta = new Vector2(0f, _areaHeight * burning);
+            _burnMask.sizeDelta = new Vector2(0f, Mathf.Min(_areaHeight * burning, MaxBurnHeight));
             if (_burn != null)
             {
                 var uv = _burn.uvRect;
@@ -232,7 +228,9 @@ namespace GenesisUI.Modules.Vitals
             }
 
             if (bar.DisplayChanged) _number.SetText("{0}", bar.Display); // SetText with an int does not allocate
-            var frame = danger > 0f ? Color.Lerp(_frameColor, _dangerColor, danger * 0.6f) : _frameColor;
+            // Low health: the frame itself pulses red, clearly (R-040: a soft halo was too weak and
+            // drew a red box around the bar).
+            var frame = danger > 0f ? Color.Lerp(_frameColor, _dangerColor, danger) : _frameColor;
             if (_frame.color != frame) _frame.color = frame;
 
             // Any change of value flashes the surface briefly.
@@ -253,13 +251,6 @@ namespace GenesisUI.Modules.Vitals
             Drift(_mottle, _motion.Speed * 0.55f, 0f, 0.008f, deltaSeconds);
             Drift(_bubbles, _motion.Speed * 1.6f, 0f, 0.018f, deltaSeconds);
             Drift(_counterBubbles, _motion.CounterSpeed * 1.6f, 0.5f, 0.018f, deltaSeconds);
-
-            if (_glow != null)
-            {
-                bool glowing = danger > 0f;
-                if (_glow.enabled != glowing) _glow.enabled = glowing;
-                if (glowing) _glow.color = new Color(_dangerColor.r, _dangerColor.g, _dangerColor.b, 0.12f + 0.22f * danger);
-            }
 
             // Embers: from the burning surface while something is being consumed, and along the
             // sides while health is low.

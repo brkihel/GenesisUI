@@ -121,41 +121,26 @@ def _fbm(w, h, base_x, base_y, octaves, seed):
 
 
 def veins(path):
-    """A few long, thin, jagged cracks with small branches, like the reference bars and the
-    hp-bar-internal-blood texture (R-040 comparison: ridged noise read as map contours).
-    Each crack runs the full tile height and wraps, so the texture repeats vertically without
-    a seam; drawn at 4x and reduced for soft, thin lines."""
+    """A few small, broken crack fragments (R-040: long cracks read as one continuous line):
+    short jagged strokes scattered over the tile, wrapped so it repeats without a seam. The
+    plugin tints them a darker shade of the liquid, so they sit inside it."""
     from PIL import ImageDraw, ImageFilter
     w, h, up = 64, 128, 4
     rng = random.Random(8)
     big = Image.new("L", (w * up, h * up), 0)
     d = ImageDraw.Draw(big)
-
-    def line(points, width, value):
-        for dx in (-w * up, 0, w * up):                   # wrap across
-            d.line([(x + dx, y) for x, y in points], fill=value, width=width, joint="curve")
-
-    for i in range(3):
-        x0 = (i + 0.3 + rng.random() * 0.4) * w * up / 3
-        pts, x = [], x0
-        steps = 26
-        for k in range(steps + 1):
-            y = k * h * up / steps
-            x += rng.uniform(-9, 9)
-            if k == steps:
-                x = x0                                    # end where it started: seamless
+    for _ in range(5):
+        x, y = rng.uniform(0, w * up), rng.uniform(0, h * up)
+        pts = [(x, y)]
+        for _ in range(rng.randrange(2, 4)):
+            x += rng.uniform(-10, 10)
+            y += rng.uniform(12, 22)
             pts.append((x, y))
-        line(pts, 6, 235)
-        for _ in range(3):                                # small branches
-            k = rng.randrange(2, steps - 4)
-            bx, by = pts[k]
-            dirx = rng.choice((-1, 1))
-            br = [(bx, by)]
-            for j in range(1, rng.randrange(3, 6)):
-                br.append((bx + dirx * j * rng.uniform(6, 11), by + j * rng.uniform(8, 14)))
-            line(br, 4, 170)
-    small = big.filter(ImageFilter.GaussianBlur(1.6)).resize((w, h), Image.LANCZOS)
-    _save(np.asarray(small, np.float32) / 255 * 1.2, path)
+        for dx in (-w * up, 0, w * up):
+            for dy in (-h * up, 0, h * up):
+                d.line([(px + dx, py + dy) for px, py in pts], fill=220, width=4, joint="curve")
+    small = big.filter(ImageFilter.GaussianBlur(1.4)).resize((w, h), Image.LANCZOS)
+    _save(np.asarray(small, np.float32) / 255, path)
 
 
 def mottle(path):
@@ -188,17 +173,6 @@ def ember(path):
     _save(np.clip(1 - d, 0, 1) ** 1.8, path)
 
 
-def glow(path):
-    """A soft halo for a frame, 9-sliced around it (low health, recent damage)."""
-    y, x = np.mgrid[0:48, 0:48].astype(np.float32)
-    dx = np.maximum(0, np.maximum(16 - x, x - 31))
-    dy = np.maximum(0, np.maximum(16 - y, y - 31))
-    d = np.hypot(dx, dy) / 16
-    # A halo, not a slab: the core stays faint (it sits under the frame anyway).
-    core = np.where(d <= 0, 0.35, 1.0)
-    _save(np.clip(1 - d, 0, 1) ** 2.4 * core, path)
-
-
 # name -> (pixel width, pixel height, wrap, 9-slice border in design units or None, maker)
 PATTERNS = {
     "bar_bubbles": (64, 128, "repeat", None, None),
@@ -206,7 +180,6 @@ PATTERNS = {
     "bar_mottle": (64, 128, "repeat", None, mottle),
     "bar_burn": (64, 64, "repeat", None, burn),   # repeats across; stretched along the consumed part
     "ember": (16, 16, "clamp", None, ember),
-    "glow": (48, 48, "clamp", (7, 7, 7, 7), glow),
 }
 
 

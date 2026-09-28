@@ -90,9 +90,12 @@ diagnostics and live enable/disable from the host.
    to `Faulted`: `Teardown` runs, the veil is lifted from its regions (vanilla is
    back), input leases are released, the fault is logged once with full context.
    No automatic retry in the same session (Debug builds offer a manual retry).
-3. Scene changes, logout, resolution and GUI-scale changes are handled by the host
+3. A module's refresh never receives more than 0.25 s of elapsed time (a fresh build or a
+   long hitch would otherwise feed animation clocks nonsense: R-040 striped bars).
+   The host's HUD root stays below the large map when both hang under the vanilla HUD root.
+4. Scene changes, logout, resolution and GUI-scale changes are handled by the host
    (rebuild on `GUIManager.OnCustomGUIAvailable`), never by modules on their own.
-4. Toggling a module in settings takes effect live.
+5. Toggling a module in settings takes effect live.
 
 States: `Disabled` → `Unsupported` | `Blocked` (region owned by someone else) →
 `Active` ⇄ `Suspended` → `Faulted`.

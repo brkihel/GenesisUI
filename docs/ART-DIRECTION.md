@@ -61,10 +61,12 @@ DECISIONS.md.
 ## 4b. Vital-bar effects
 
 Tinted per bar. The liquid is calm and rich: large soft dark
-clouds (`mottle`) and **a few long, thin cracks** with small branches (`veins`), drifting slowly
-(R-040 comparison: dense veins read as noise); a **burn** band shows the part just lost (dense at
-the surface, dissolving upward, in the bar's hot colour) with **embers** rising from the
-surface; in danger a soft **glow** breathes around the bar and embers leave its sides. A small
+clouds (`mottle`) and **a few small crack fragments** (`veins`) in a darker shade of the liquid at
+30 %, so they sit inside it, never lit on top; everything drifts slowly (R-040: long light cracks
+read as one continuous line). A short **burn** edge (at most 9 units, in the bar's hot colour)
+sits on the surface while the value drains, with **embers** rising; it never grows into a long
+trail. At low health the **frame pulses red** and embers leave the bar's sides (R-040: a halo
+around the bar was too weak and drew a red box). A small
 value plate, barely wider than the bar, carries the number at 26 % of the bar height;
 `[Vitals] ShowValues` hides it.
 Hot colours: health orange `(1, .62, .26)`, stamina pale gold `(1, .93, .62)`, eitr ice

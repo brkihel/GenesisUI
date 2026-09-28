@@ -2,19 +2,21 @@ using System.Collections.Generic;
 using BepInEx.Configuration;
 using GenesisUI.Foundation.Contracts;
 using GenesisUI.Host;
+using GenesisUI.HudModel;
 using GenesisUI.Theme;
 using GenesisUI.Widgets;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace GenesisUI.Modules.Notice
 {
     /// <summary>
-    /// Vanilla's messages in GenesisUI's look: the top-left notice (pickups, "sheltered", skill
-    /// ups) as a card with its icon, and the centre message in the display font. It mirrors
-    /// MessageHud's text, icon and fade (vanilla fades them through the canvas renderer alpha),
-    /// so timing and queueing stay exactly vanilla's.
+    /// Vanilla's messages in GenesisUI's look. The top-left notices (pickups, "sheltered", skill
+    /// ups) become a short stack of cards with their icons (NoticeStack: up to three, newest on
+    /// top, each fading while dropping down after a few seconds), because vanilla replaces its
+    /// single line within a second when several arrive. New messages are detected from vanilla's
+    /// own display (its text changes or its fade restarts), so vanilla still decides what is said
+    /// and in which order. The centre message mirrors vanilla's text and fade in the display font.
     /// </summary>
     [GameContract("assembly_valheim", "MessageHud", "instance")]
     [GameContract("assembly_valheim", "MessageHud", "m_messageText")]
@@ -23,20 +25,23 @@ namespace GenesisUI.Modules.Notice
     internal sealed class NoticeModule : IUiModule
     {
         private const float CardHeight = 46f;
-        private const float IconSize = 30f;
+        private const float Gap = 6f;
+        private const float DropDistance = 22f;
+        private const float SlideSpeed = 14f;   // how fast cards glide to their new slot (1/s)
+        private const int Cards = 6;             // three staying plus the ones still leaving
 
         private static readonly string[] OwnedRegions = { "hud.messages" };
 
         private readonly ConfigEntry<int> _offsetX;
         private readonly ConfigEntry<int> _offsetY;
-        private RectTransform _card;
-        private CanvasGroup _cardOpacity;
-        private Image _icon;
-        private TextMeshProUGUI _text;
+        private readonly NoticeStack _stack = new NoticeStack();
+        private readonly NoticeCard[] _cards = new NoticeCard[Cards];
+        private readonly Dictionary<NoticeStack.Notice, NoticeCard> _bound = new Dictionary<NoticeStack.Notice, NoticeCard>();
+        private RectTransform _column;
         private TextMeshProUGUI _center;
-        private Vector4 _content;
-        private string _shownText;
         private string _shownCenter;
+        private string _lastVanillaText;
+        private float _lastVanillaAlpha;
         private Vector2 _appliedOffset = new Vector2(float.NaN, float.NaN);
 
         public NoticeModule(ConfigFile config)
@@ -50,66 +55,66 @@ namespace GenesisUI.Modules.Notice
         public string Id => "hud.notice";
         public string NameToken => "$genesisui_module_notice";
         public IReadOnlyList<string> Regions => OwnedRegions;
-        public float RefreshRate => 30f;
+        public float RefreshRate => 0f; // the stack glides every frame
 
         public void Build(ModuleContext context)
         {
             var theme = context.Theme;
             var t = theme.Tokens;
-            _card = Ui.Place(Ui.Child(context.Root, "Notice"), new Vector2(0f, 1f), Vector2.zero, new Vector2(240f, CardHeight));
-            _cardOpacity = _card.gameObject.AddComponent<CanvasGroup>();
-            _cardOpacity.blocksRaycasts = false;
-            var sprite = theme.Sprite("card");
-            Ui.Image(Ui.Fill(Ui.Child(_card, "Card")), sprite, sprite != null ? Color.white : ThemeRuntime.ToUnity(t.PanelBackground));
-            _content = theme.Content("card", new Vector4(12f, 12f, 12f, 12f));
-            _content = new Vector4(Mathf.Min(_content.x, 10f), 0f, Mathf.Min(_content.z, 10f), 0f);
-
-            var iconRt = Ui.Place(Ui.Child(_card, "Icon"), new Vector2(0f, 0.5f), new Vector2(_content.x + 6f, 0f), new Vector2(IconSize, IconSize));
-            iconRt.pivot = new Vector2(0f, 0.5f);
-            _icon = Ui.Image(iconRt, null, Color.white);
-            _icon.preserveAspect = true;
-
-            _text = Ui.Text(_card, "Text", theme, FontRole.BodyStrong, 18f, ThemeRuntime.ToUnity(t.TextTitle), TextAlignmentOptions.Left, outlined: true);
+            _column = Ui.Place(Ui.Child(context.Root, "Notices"), new Vector2(0f, 1f), Vector2.zero, new Vector2(560f, 400f));
+            _column.pivot = new Vector2(0f, 1f);
+            for (int i = 0; i < Cards; i++) _cards[i] = new NoticeCard(_column, i, theme, CardHeight);
 
             _center = Ui.Text(context.Root, "CenterMessage", theme, FontRole.Display, 26f, ThemeRuntime.ToUnity(t.TextTitle), TextAlignmentOptions.Center, outlined: true);
             Ui.Place(_center.rectTransform, new Vector2(0.5f, 0.5f), new Vector2(0f, 170f), new Vector2(900f, 80f));
             _center.textWrappingMode = TextWrappingModes.Normal;
 
-            _shownText = _shownCenter = null;
+            _stack.Clear();
+            _bound.Clear();
+            _shownCenter = null;
+            // Whatever vanilla shows at build time is old news: only what changes from now on is new.
+            var hud = MessageHud.instance;
+            _lastVanillaText = hud != null && hud.m_messageText != null ? hud.m_messageText.text : null;
+            _lastVanillaAlpha = hud != null && hud.m_messageText != null ? hud.m_messageText.canvasRenderer.GetAlpha() : 0f;
             _appliedOffset = new Vector2(float.NaN, float.NaN);
-            _card.gameObject.SetActive(false);
             _center.gameObject.SetActive(false);
         }
 
         public void Refresh(float deltaSeconds)
         {
-            if (_card == null) return;
+            if (_column == null) return;
             var offset = new Vector2(_offsetX.Value, -_offsetY.Value);
-            if (offset != _appliedOffset) { _card.anchoredPosition = offset; _appliedOffset = offset; }
+            if (offset != _appliedOffset) { _column.anchoredPosition = offset; _appliedOffset = offset; }
 
             var hud = MessageHud.instance;
             if (hud == null)
             {
-                if (_card.gameObject.activeSelf) _card.gameObject.SetActive(false);
+                _stack.Clear();
+                _bound.Clear();
+                for (int i = 0; i < Cards; i++) _cards[i].Unbind();
                 if (_center.gameObject.activeSelf) _center.gameObject.SetActive(false);
                 return;
             }
 
-            // Top-left notice.
+            // A new top-left message: vanilla changed the text, or restarted its fade for a repeat.
             var src = hud.m_messageText;
-            float alpha = src != null ? src.canvasRenderer.GetAlpha() : 0f;
-            string text = src != null ? src.text : null;
-            bool show = alpha > 0.01f && !string.IsNullOrEmpty(text);
-            if (_card.gameObject.activeSelf != show) _card.gameObject.SetActive(show);
-            if (show)
+            if (src != null)
             {
-                if (!Mathf.Approximately(_cardOpacity.alpha, alpha)) _cardOpacity.alpha = alpha;
-                var iconSrc = hud.m_messageIcon;
-                bool hasIcon = iconSrc != null && iconSrc.sprite != null && iconSrc.canvasRenderer.GetAlpha() > 0.01f;
-                if (_icon.enabled != hasIcon) _icon.enabled = hasIcon;
-                if (hasIcon && _icon.sprite != iconSrc.sprite) _icon.sprite = iconSrc.sprite;
-                if (text != _shownText) Layout(text, hasIcon);
+                string text = src.text;
+                float alpha = src.canvasRenderer.GetAlpha();
+                bool changed = !string.Equals(text, _lastVanillaText) || alpha > _lastVanillaAlpha + 0.2f;
+                if (changed && alpha > 0.5f && !string.IsNullOrEmpty(text))
+                {
+                    var iconSrc = hud.m_messageIcon;
+                    Sprite icon = iconSrc != null && iconSrc.canvasRenderer.GetAlpha() > 0.01f ? iconSrc.sprite : null;
+                    _stack.Push(text, icon);
+                }
+                if (alpha > 0.5f || !string.Equals(text, _lastVanillaText)) _lastVanillaText = text;
+                _lastVanillaAlpha = alpha;
             }
+
+            _stack.Tick(deltaSeconds);
+            LayoutStack(deltaSeconds);
 
             // Centre message.
             var center = hud.m_messageCenterText;
@@ -126,24 +131,53 @@ namespace GenesisUI.Modules.Notice
 
         public void Teardown()
         {
-            if (_card != null) Object.Destroy(_card.gameObject);
+            for (int i = 0; i < Cards; i++) _cards[i] = null;
+            _bound.Clear();
+            if (_column != null) Object.Destroy(_column.gameObject);
             if (_center != null) Object.Destroy(_center.gameObject);
-            _card = null;
+            _column = null;
             _center = null;
+            _stack.Clear();
         }
 
-        private void Layout(string text, bool hasIcon)
+        /// <summary>
+        /// Each notice keeps its card while it lives, so a card glides from its old slot to its new
+        /// one when a newer notice pushes it down; leaving ones drop as they fade.
+        /// </summary>
+        private void LayoutStack(float dt)
         {
-            _shownText = text;
-            _text.text = text;
-            float left = _content.x + 8f + (hasIcon ? IconSize + 8f : 0f);
-            float width = Mathf.Min(520f, _text.GetPreferredValues(text, 480f, 0f).x) + left + _content.z + 12f;
-            _card.sizeDelta = new Vector2(width, CardHeight);
-            var rt = _text.rectTransform;
-            rt.anchorMin = new Vector2(0f, 0f);
-            rt.anchorMax = new Vector2(1f, 1f);
-            rt.offsetMin = new Vector2(left, 0f);
-            rt.offsetMax = new Vector2(-(_content.z + 8f), 0f);
+            for (int c = 0; c < Cards; c++) _cards[c].Used = false;
+            var items = _stack.Items;
+            float y = 0f;
+            float glide = 1f - Mathf.Exp(-SlideSpeed * Mathf.Min(dt, 0.1f));
+            for (int i = 0; i < items.Count; i++)
+            {
+                var n = items[i];
+                float target = -y - n.Drop * DropDistance;
+                y += CardHeight + Gap;
+                if (!_bound.TryGetValue(n, out var card))
+                {
+                    card = FreeCard();
+                    if (card == null) continue;       // more leaving notices than cards: skip the extra
+                    _bound.Add(n, card);
+                    card.Bind(n, target + 12f);      // enters from slightly above its slot
+                }
+                card.Used = true;
+                card.Show(target, glide);
+            }
+            for (int c = 0; c < Cards; c++)
+            {
+                var card = _cards[c];
+                if (card.Used || card.Notice == null) continue;
+                _bound.Remove(card.Notice);
+                card.Unbind();
+            }
+        }
+
+        private NoticeCard FreeCard()
+        {
+            for (int c = 0; c < Cards; c++) if (_cards[c].Notice == null) return _cards[c];
+            return null;
         }
     }
 }
