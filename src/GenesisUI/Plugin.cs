@@ -188,6 +188,7 @@ namespace GenesisUI
             yield return new KeyValuePair<string, IEnumerable<string>>("Regions", RegionRegistry.Snapshot().Select(r => r.Key + " -> " + r.Value));
             yield return new KeyValuePair<string, IEnumerable<string>>("Veils", VanillaVeil.Handles.Select(h =>
                 h.Label + " (" + (h.AddedGroup ? "own" : "vanilla") + " CanvasGroup)" + (h.Fought > 0 ? " fought " + h.Fought + "x" : "")));
+            yield return new KeyValuePair<string, IEnumerable<string>>("Vanilla health panel", HudDump.HealthPanel());
             yield return new KeyValuePair<string, IEnumerable<string>>("Theme", new[]
             {
                 "fonts: " + (_theme?.FontCount ?? 0) + "/5, sprites: " + (_theme?.SpriteCount ?? 0),

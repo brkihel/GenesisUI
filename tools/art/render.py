@@ -14,6 +14,8 @@ import json
 import os
 import sys
 
+sys.path.insert(0, os.path.dirname(__file__))
+
 import cairosvg
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -22,13 +24,20 @@ SCALE = 2  # sprites are rendered at 2x and loaded with pixelsPerUnit = 100 * SC
 
 # name, source, design width, design height, border (left, bottom, right, top) in design px
 SPRITES = [
-    ("bar_frame", "art/src/bar_frame.svg", 48, 160, (10, 14, 10, 26)),
-    ("bar_fill", "art/src/bar_fill.svg", 16, 64, (0, 0, 0, 0)),
+    ("bar_frame", "art/src/bar_frame.svg", 48, 160, (10, 22, 10, 32)),
+    ("bar_fill", "art/src/bar_fill.svg", 16, 128, (0, 0, 0, 0)),
     ("medallion", "art/src/medallion.svg", 64, 64, (0, 0, 0, 0)),
     ("slot", "art/src/slot.svg", 56, 56, (12, 12, 12, 12)),
     ("slot_active", "art/src/slot_active.svg", 56, 56, (12, 12, 12, 12)),
     ("tile", "art/src/tile.svg", 60, 60, (0, 0, 0, 0)),
     ("plate", "art/src/plate.svg", 96, 72, (24, 16, 24, 16)),
+    ("badge_cooldown", "art/src/badge_cooldown.svg", 20, 20, (0, 0, 0, 0)),
+]
+
+# Procedural textures from tools/art/patterns.py: already at final pixel size, drawn at 1x.
+# name, width, height (pixels), wrap
+PATTERNS = [
+    ("bar_flow", 64, 128, "repeat"),
 ]
 
 
@@ -46,6 +55,13 @@ def main() -> int:
                                     "borderLeft": border[0], "borderBottom": border[1],
                                     "borderRight": border[2], "borderTop": border[3]})
         print(f"{src} -> art/out/{name}.png ({w * SCALE}x{h * SCALE})")
+
+    import patterns
+    patterns.main()
+    for name, w, h, wrap in PATTERNS:
+        # Listed at design size = pixels / SCALE so the loader's size check holds.
+        manifest["sprites"].append({"name": name, "file": name + ".png", "width": w // SCALE, "height": h // SCALE,
+                                    "borderLeft": 0, "borderBottom": 0, "borderRight": 0, "borderTop": 0, "wrap": wrap})
 
     with open(os.path.join(OUT, "sprites.json"), "w") as f:
         json.dump(manifest, f, indent=2)

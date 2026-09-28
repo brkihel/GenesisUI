@@ -1,0 +1,57 @@
+"""Procedural, seamlessly tiling textures for animated UI (docs/DECISIONS.md D-009).
+
+    tools/.venv/bin/python tools/art/patterns.py
+
+bar_flow.png (64x128): soft rising wisps plus a few sparks, white with alpha, tinted by the
+bar colour in game and scrolled upward. Every wave has whole-number frequencies over the
+tile and sparks wrap around its edges, so the texture repeats without a seam in both axes.
+Deterministic: same code, same pixels.
+"""
+import math
+import os
+import random
+
+from PIL import Image
+
+ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+W, H = 64, 128
+
+# (frequency across, frequency along, amplitude, phase) - integers keep it seamless
+WAVES = [(1, 2, 1.0, 0.3), (2, 3, 0.7, 1.9), (3, 1, 0.5, 4.1), (1, 5, 0.45, 2.7), (4, 6, 0.25, 0.8)]
+
+
+def smoothstep(a, b, x):
+    t = min(1.0, max(0.0, (x - a) / (b - a)))
+    return t * t * (3 - 2 * t)
+
+
+def flow():
+    img = Image.new("RGBA", (W, H))
+    total = sum(a for _, _, a, _ in WAVES)
+    rng = random.Random(7)
+    sparks = [(rng.uniform(0, W), rng.uniform(0, H), rng.uniform(1.2, 2.4)) for _ in range(9)]
+    px = img.load()
+    for y in range(H):
+        for x in range(W):
+            v = sum(a * math.sin(2 * math.pi * (kx * x / W + ky * y / H) + p) for kx, ky, a, p in WAVES)
+            v = (v / total + 1) / 2                      # 0..1
+            wisp = smoothstep(0.58, 0.92, v) * 0.75
+            spark = 0.0
+            for sx, sy, r in sparks:
+                dx = min(abs(x - sx), W - abs(x - sx))    # wrap-around distance
+                dy = min(abs(y - sy), H - abs(y - sy))
+                spark = max(spark, max(0.0, 1 - math.hypot(dx, dy) / r))
+            a = min(1.0, wisp + spark)
+            px[x, y] = (255, 255, 255, int(a * 255))
+    return img
+
+
+def main():
+    out = os.path.join(ROOT, "art", "out")
+    os.makedirs(out, exist_ok=True)
+    flow().save(os.path.join(out, "bar_flow.png"))
+    print(f"art/out/bar_flow.png ({W}x{H}, tiling)")
+
+
+if __name__ == "__main__":
+    main()

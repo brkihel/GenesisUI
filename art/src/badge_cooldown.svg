@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" width="20" height="20">
+  <!-- Cooldown badge: small dark disc, ember ring, red cross. Original work. -->
+  <circle cx="10" cy="10" r="8.6" fill="#0B0D0C" fill-opacity="0.95" stroke="#E0643C" stroke-width="1.4"/>
+  <path d="M6.6,6.6 L13.4,13.4 M13.4,6.6 L6.6,13.4" stroke="#E23B2E" stroke-width="2" stroke-linecap="round"/>
+</svg>

@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.3.1-preview.1 — R-020 feedback
+
+### Changed
+- **Vital bars v2**: slimmer frame with small volutes on the arch shoulders, gold dots and a
+  banner point with a bead at the bottom; the value is now a living liquid: glass shading,
+  a bright surface line, and a seamless flow pattern rising slowly inside (calm for
+  health, livelier for stamina, a counter-drifting shimmer for eitr). Health stays the
+  widest and tallest bar.
+- **Guardian power is one tile**: steady gold when ready; pulsing gold with the effect's
+  time while active (no second tile); dimmed with a small red cross and the cooldown after.
+
+### Fixed
+- Vanilla leftovers under our bars: the three empty food slot frames, and the remaining
+  decoration of the vanilla health panel (new region `hud.healthDecor`).
+
+### Added
+- Diagnostic report: tree of the vanilla health panel, marking what GenesisUI veils.
+- Sprite manifest `wrap` (`clamp`/`repeat`) for scrolling textures; `tools/art/patterns.py`.
+
+
 ## 0.3.0-preview.1 — F3 part 1: food, hotbar, status effects; art fix
 
 ### Fixed

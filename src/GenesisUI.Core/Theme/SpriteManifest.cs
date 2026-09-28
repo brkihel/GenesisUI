@@ -22,6 +22,9 @@ namespace GenesisUI.Theme
         public int borderBottom;
         public int borderRight;
         public int borderTop;
+
+        /// <summary>"clamp" (default) or "repeat" for textures that scroll or tile (animated patterns).</summary>
+        public string wrap = "clamp";
     }
 
     /// <summary>
@@ -76,6 +79,7 @@ namespace GenesisUI.Theme
                     case "borderBottom": e.borderBottom = Int(kv.Value, where, errors); break;
                     case "borderRight": e.borderRight = Int(kv.Value, where, errors); break;
                     case "borderTop": e.borderTop = Int(kv.Value, where, errors); break;
+                    case "wrap": e.wrap = kv.Value as string; if (e.wrap == null) errors.Add(where + " must be a string"); break;
                     default: errors.Add("unknown property '" + where + "'"); break;
                 }
             }
@@ -112,6 +116,7 @@ namespace GenesisUI.Theme
                 if (s.width < 1 || s.width > MaxDesignSize || s.height < 1 || s.height > MaxDesignSize) errors.Add(id + ": size out of range");
                 if (s.borderLeft < 0 || s.borderRight < 0 || s.borderTop < 0 || s.borderBottom < 0) errors.Add(id + ": negative border");
                 if (s.borderLeft + s.borderRight > s.width || s.borderTop + s.borderBottom > s.height) errors.Add(id + ": borders larger than the sprite");
+                if (s.wrap != "clamp" && s.wrap != "repeat") errors.Add(id + ": wrap must be 'clamp' or 'repeat'");
             }
             return errors;
         }

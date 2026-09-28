@@ -21,6 +21,7 @@ namespace GenesisUI.Widgets
         private readonly Image _icon;
         private readonly TextMeshProUGUI _name;
         private readonly TextMeshProUGUI _time;
+        private readonly Image _badge;
         private readonly Color _frameColor;
         private readonly Color _readyColor;
         private readonly Color _dangerColor;
@@ -44,6 +45,13 @@ namespace GenesisUI.Widgets
 
             _icon = Ui.Image(Ui.Fill(Ui.Child(frameRt, "Icon"), 13f, 10f, 13f, 16f), null, Color.white);
             _icon.preserveAspect = true;
+
+            // Small corner badge (the guardian power's cooldown): top-right of the tile.
+            var badgeSprite = theme.Sprite("badge_cooldown");
+            _badge = Ui.Image(Ui.Place(Ui.Child(frameRt, "Badge"), new Vector2(1f, 1f), new Vector2(4f, -2f), new Vector2(20f, 20f)),
+                              badgeSprite, badgeSprite != null ? Color.white : _dangerColor);
+            _badge.rectTransform.pivot = new Vector2(1f, 1f);
+            _badge.enabled = false;
 
             _name = Ui.Text(Root, "Name", theme, FontRole.BodyStrong, 15f, ThemeRuntime.ToUnity(t.TextTitle), TextAlignmentOptions.Top, outlined: true);
             Ui.Place((RectTransform)_name.transform, new Vector2(0.5f, 1f), new Vector2(0f, -TileSize - 1f), new Vector2(CellWidth + 16f, 20f));
@@ -96,10 +104,16 @@ namespace GenesisUI.Widgets
             else _time.SetText("{0}:{1:00}", clock.Minutes, clock.Seconds);
         }
 
-        /// <param name="flash">0..1 red flash of the icon (vanilla m_flashIcon), 0 for none.</param>
-        public void SetState(bool ready, float flash, bool dimmed)
+        public void SetBadge(bool visible)
         {
-            var frame = ready ? _readyColor : _frameColor;
+            if (_badge.enabled != visible) _badge.enabled = visible;
+        }
+
+        /// <param name="glow">0..1 gold of the frame (1 = ready, pulsing while active, 0 = normal).</param>
+        /// <param name="flash">0..1 red flash of the icon (vanilla m_flashIcon), 0 for none.</param>
+        public void SetState(float glow, float flash, bool dimmed)
+        {
+            var frame = glow > 0f ? Color.Lerp(_frameColor, _readyColor, glow) : _frameColor;
             if (_frame.color != frame) _frame.color = frame;
             var icon = flash > 0f ? Color.Lerp(Color.white, _dangerColor, flash) : Color.white;
             if (dimmed) icon = new Color(icon.r * 0.55f, icon.g * 0.55f, icon.b * 0.55f, 1f);

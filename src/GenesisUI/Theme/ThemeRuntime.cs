@@ -96,6 +96,9 @@ namespace GenesisUI.Theme
         /// <summary>Null when missing: callers fall back to a plain coloured Image.</summary>
         public Sprite Sprite(string name) => _sprites.TryGetValue(name, out var s) ? s : null;
 
+        /// <summary>The texture behind a sprite, for RawImage patterns that scroll. Null when missing.</summary>
+        public Texture2D Texture(string name) => _sprites.TryGetValue(name, out var s) ? s.texture : null;
+
         public int FontCount => _fonts.Count;
         public int SpriteCount => _sprites.Count;
 
@@ -180,7 +183,12 @@ namespace GenesisUI.Theme
                 var info = new FileInfo(path);
                 if (!info.Exists || info.Length > MaxImageBytes) { GenesisLog.Warn("Theme", "sprite file missing or too large: " + entry.file); continue; }
 
-                var tex = new Texture2D(2, 2, TextureFormat.RGBA32, false) { name = "GenesisUI " + entry.name, filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp };
+                var tex = new Texture2D(2, 2, TextureFormat.RGBA32, false)
+                {
+                    name = "GenesisUI " + entry.name,
+                    filterMode = FilterMode.Bilinear,
+                    wrapMode = entry.wrap == "repeat" ? TextureWrapMode.Repeat : TextureWrapMode.Clamp,
+                };
                 // Jötunn's wrapper: Unity 6's ImageConversion needs netstandard 2.1, which net48 cannot reference.
                 if (!Jotunn.Utils.AssetUtils.LoadImage(tex, File.ReadAllBytes(path)))
                 {

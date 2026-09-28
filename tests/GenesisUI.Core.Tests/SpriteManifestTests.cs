@@ -55,6 +55,17 @@ namespace GenesisUI.Core.Tests
         }
 
         [Fact]
+        public void Wrap_is_clamp_or_repeat()
+        {
+            var m = Valid();
+            Assert.Equal("clamp", m.sprites[0].wrap);
+            m.sprites[0].wrap = "repeat";
+            Assert.Empty(SpriteManifestValidator.Validate(m));
+            m.sprites[0].wrap = "mirror";
+            Assert.Contains(SpriteManifestValidator.Validate(m), e => e.Contains("wrap"));
+        }
+
+        [Fact]
         public void Scale_is_bounded()
         {
             var m = Valid();

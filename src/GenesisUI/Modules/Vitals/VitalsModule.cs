@@ -24,7 +24,7 @@ namespace GenesisUI.Modules.Vitals
     {
         private const float LowHealthFraction = 0.25f;
 
-        private static readonly string[] OwnedRegions = { "hud.health", "hud.stamina", "hud.eitr" };
+        private static readonly string[] OwnedRegions = { "hud.health", "hud.stamina", "hud.eitr", "hud.healthDecor" };
 
         private readonly ConfigEntry<int> _offsetX;
         private readonly ConfigEntry<int> _offsetY;
@@ -62,9 +62,13 @@ namespace GenesisUI.Modules.Vitals
             _group = Ui.Place(Ui.Child(context.Root, "Vitals"), Vector2.zero, Vector2.zero, new Vector2(150f, 260f));
 
             // Health is the widest and tallest bar; stamina and eitr sit to its right.
-            _healthView = new VitalBarView(_group, "Health", theme, theme.Tokens.BarHealth, new Vector2(0f, 22f), new Vector2(46f, 226f));
-            _staminaView = new VitalBarView(_group, "Stamina", theme, theme.Tokens.BarStamina, new Vector2(52f, 22f), new Vector2(38f, 196f));
-            _eitrView = new VitalBarView(_group, "Eitr", theme, theme.Tokens.BarEitr, new Vector2(96f, 22f), new Vector2(38f, 196f));
+            // Slow, calm flow for health; livelier for stamina; eitr shimmers with a counter layer.
+            _healthView = new VitalBarView(_group, "Health", theme, theme.Tokens.BarHealth, new Vector2(0f, 22f), new Vector2(46f, 226f),
+                new BarMotion { Speed = 0.05f, PatternAlpha = 0.34f });
+            _staminaView = new VitalBarView(_group, "Stamina", theme, theme.Tokens.BarStamina, new Vector2(52f, 22f), new Vector2(38f, 196f),
+                new BarMotion { Speed = 0.09f, PatternAlpha = 0.3f });
+            _eitrView = new VitalBarView(_group, "Eitr", theme, theme.Tokens.BarEitr, new Vector2(96f, 22f), new Vector2(38f, 196f),
+                new BarMotion { Speed = 0.06f, PatternAlpha = 0.4f, CounterSpeed = -0.035f });
 
             var medallion = theme.Sprite("medallion");
             if (medallion != null)
@@ -94,10 +98,10 @@ namespace GenesisUI.Modules.Vitals
                 ? Pulse.Evaluate(Time.unscaledTimeAsDouble)
                 : 0f;
 
-            _healthView.Apply(_health, danger);
-            _staminaView.Apply(_stamina, 0f);
+            _healthView.Apply(_health, danger, deltaSeconds);
+            _staminaView.Apply(_stamina, 0f, deltaSeconds);
             _eitrView.SetVisible(_eitr.HasCapacity);
-            if (_eitr.HasCapacity) _eitrView.Apply(_eitr, 0f);
+            if (_eitr.HasCapacity) _eitrView.Apply(_eitr, 0f, deltaSeconds);
         }
 
         public void Teardown()

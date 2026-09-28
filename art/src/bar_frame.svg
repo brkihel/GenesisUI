@@ -1,16 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 160" width="48" height="160">
-  <!-- Vertical vital-bar frame (O6). 9-slice: left 10, right 10, top 26, bottom 14.
-       Arched top with a diamond finial, double line in aged gold. Original work. -->
-  <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#F7E283"/>
-      <stop offset="1" stop-color="#B8863E"/>
-    </linearGradient>
-  </defs>
-  <path d="M6,28 Q6,14 24,10 Q42,14 42,28 L42,150 Q42,155 37,155 L11,155 Q6,155 6,150 Z"
-        fill="#0B0D0C" fill-opacity="0.88" stroke="url(#g)" stroke-width="2.2"/>
-  <path d="M9.5,29 Q9.5,17.5 24,14 Q38.5,17.5 38.5,29 L38.5,149 Q38.5,151.5 36,151.5 L12,151.5 Q9.5,151.5 9.5,149 Z"
-        fill="none" stroke="#705B3F" stroke-width="1"/>
-  <path d="M24,0.8 l5.2,5.2 -5.2,5.2 -5.2,-5.2z" fill="url(#g)"/>
-  <path d="M24,3.6 l2.4,2.4 -2.4,2.4 -2.4,-2.4z" fill="#0B0D0C"/>
+  <!-- Vital-bar frame v2 (O6). 9-slice: left 10, right 10, top 32, bottom 22.
+       Slim double gold line, arched top with a diamond finial and two small volutes on the
+       shoulders, a shallow banner point at the bottom with a gold bead. Original work. -->
+  <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F7E283"/><stop offset="1" stop-color="#B8863E"/></linearGradient></defs>
+  <path d="M7,32 Q7,17 24,12.5 Q41,17 41,32 L41,142 L24,152 L7,142 Z"
+        fill="#0B0D0C" fill-opacity="0.9" stroke="url(#g)" stroke-width="1.8" stroke-linejoin="round"/>
+  <path d="M10.2,32.5 Q10.2,20 24,16.2 Q37.8,20 37.8,32.5 L37.8,140.3 L24,148.4 L10.2,140.3 Z"
+        fill="none" stroke="#705B3F" stroke-width="0.9" stroke-linejoin="round"/>
+  <g fill="none" stroke="url(#g)" stroke-width="1.1" stroke-linecap="round">
+    <path d="M7.2,27 C3.8,26.2 2.4,22.6 4.6,20.8 C6.2,19.6 8.2,21 7.4,22.8"/>
+    <path d="M40.8,27 C44.2,26.2 45.6,22.6 43.4,20.8 C41.8,19.6 39.8,21 40.6,22.8"/>
+  </g>
+  <circle cx="7" cy="32" r="1.3" fill="url(#g)"/>
+  <circle cx="41" cy="32" r="1.3" fill="url(#g)"/>
+  <path d="M24,1.2 l4.6,4.6 -4.6,4.6 -4.6,-4.6z" fill="url(#g)"/>
+  <path d="M24,3.9 l1.9,1.9 -1.9,1.9 -1.9,-1.9z" fill="#0B0D0C"/>
+  <circle cx="24" cy="155.2" r="2.6" fill="url(#g)"/>
 </svg>

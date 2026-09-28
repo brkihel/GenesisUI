@@ -10,9 +10,12 @@ using UnityEngine;
 namespace GenesisUI.Modules.Status
 {
     /// <summary>
-    /// Status effects as framed tiles with name and time (concepts 4-6, 8, 10), with the
-    /// guardian power as the first tile and its cooldown as m:ss. Any status effect a mod
-    /// adds shows up here too: we read the same list vanilla reads.
+    /// Status effects as framed tiles with name and time (concepts 4-6, 8, 10). Any status
+    /// effect a mod adds shows up here too: we read the same list vanilla reads.
+    ///
+    /// The guardian power is ONE tile (Diego, R-020): steady gold when ready; pulsing gold
+    /// with the effect's time left while it is active (its effect tile is not repeated);
+    /// dimmed with a small red cross and the cooldown once the effect ended.
     /// </summary>
     [GameContract("assembly_valheim", "Character", "GetSEMan")]
     [GameContract("assembly_valheim", "SEMan", "GetHUDStatusEffects")]
@@ -76,26 +79,50 @@ namespace GenesisUI.Modules.Status
             float flash = Pulse.Evaluate(Time.unscaledTimeAsDouble, 0.4f);
             int used = 0;
 
+            _effects.Clear();
+            player.GetSEMan().GetHUDStatusEffects(_effects);
             player.GetGuardianPowerHUD(out StatusEffect power, out float cooldown);
+
+            // The power's own effect, while it runs, is shown on the power tile instead of its own.
+            StatusEffect activePower = null;
+            if (power != null)
+                foreach (var se in _effects)
+                    if (se != null && se.m_name == power.m_name) { activePower = se; break; }
+
             if (power != null)
             {
                 var tile = Tile(used++);
                 tile.SetIcon(power.m_icon);
                 tile.SetName(power.m_name);
-                tile.SetClock(TimeText.Clock(cooldown));
-                tile.SetState(ready: cooldown <= 0f, flash: 0f, dimmed: cooldown > 0f);
+                if (activePower != null)
+                {
+                    tile.SetTimeText(activePower.GetIconText());
+                    tile.SetBadge(false);
+                    tile.SetState(glow: 0.55f + 0.45f * Pulse.Evaluate(Time.unscaledTimeAsDouble, 1.5f), flash: 0f, dimmed: false);
+                }
+                else if (cooldown > 0f)
+                {
+                    tile.SetClock(TimeText.Clock(cooldown));
+                    tile.SetBadge(true);
+                    tile.SetState(glow: 0f, flash: 0f, dimmed: true);
+                }
+                else
+                {
+                    tile.SetTimeText(null);
+                    tile.SetBadge(false);
+                    tile.SetState(glow: 1f, flash: 0f, dimmed: false);
+                }
             }
 
-            _effects.Clear();
-            player.GetSEMan().GetHUDStatusEffects(_effects);
             foreach (var se in _effects)
             {
-                if (se == null || se.m_hidden || used >= MaxTiles) continue;
+                if (se == null || se.m_hidden || se == activePower || used >= MaxTiles) continue;
                 var tile = Tile(used++);
                 tile.SetIcon(se.m_icon);
                 tile.SetName(se.m_name);
                 tile.SetTimeText(se.GetIconText());
-                tile.SetState(ready: false, flash: se.m_flashIcon ? flash : 0f, dimmed: se.m_cooldownIcon);
+                tile.SetBadge(false);
+                tile.SetState(glow: 0f, flash: se.m_flashIcon ? flash : 0f, dimmed: se.m_cooldownIcon);
             }
 
             for (int i = 0; i < _tiles.Count; i++) _tiles[i].SetVisible(i < used);

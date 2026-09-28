@@ -26,6 +26,7 @@ namespace GenesisUI.Host
     [GameContract("assembly_valheim", "Hud", "m_foodBars")]
     [GameContract("assembly_valheim", "Hud", "m_statusEffectListRoot")]
     [GameContract("assembly_valheim", "Hud", "m_gpRoot")]
+    [GameContract("assembly_valheim", "Hud", "m_healthPanel")]
     internal static class RegionRegistry
     {
         private static readonly Dictionary<string, Func<IEnumerable<GameObject>>> Resolvers = new Dictionary<string, Func<IEnumerable<GameObject>>>(StringComparer.Ordinal)
@@ -34,6 +35,9 @@ namespace GenesisUI.Host
             ["hud.stamina"] = () => FromHud(h => h.m_staminaBar2Root),
             ["hud.eitr"] = () => FromHud(h => h.m_eitrBarRoot),
             ["hud.food"] = Food,
+            // What is left in the vanilla health panel once bars and food have owners: its
+            // decoration (R-020 showed a red emblem and a gold tick still visible).
+            ["hud.healthDecor"] = HealthDecor,
             ["hud.statusEffects"] = () => FromHud(h => h.m_statusEffectListRoot),
             ["hud.guardianPower"] = () => FromHud(h => h.m_gpRoot),
             // HotkeyBar is its own component under the HUD; its Update keeps gamepad
@@ -46,7 +50,7 @@ namespace GenesisUI.Host
         private static readonly Dictionary<string, string[]> ForeignOwners = new Dictionary<string, string[]>(StringComparer.Ordinal)
         {
             // SeneaL UI replaces the whole HUD. While both are installed, it keeps it.
-            ["seneaL.valheim.ui"] = new[] { "hud.health", "hud.stamina", "hud.eitr", "hud.food", "hud.statusEffects", "hud.guardianPower", "hud.hotbar" },
+            ["seneaL.valheim.ui"] = new[] { "hud.health", "hud.stamina", "hud.eitr", "hud.healthDecor", "hud.food", "hud.statusEffects", "hud.guardianPower", "hud.hotbar" },
         };
 
         private static readonly Dictionary<string, string> Owners = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -75,12 +79,47 @@ namespace GenesisUI.Host
             if (hud.m_foodBaseBar != null) yield return hud.m_foodBaseBar.gameObject;
             if (hud.m_foodIcon != null) yield return hud.m_foodIcon.gameObject;
             if (hud.m_foodText != null) yield return hud.m_foodText.gameObject;
-            foreach (var c in (Component[])hud.m_foodIcons ?? Array.Empty<Component>()) if (c != null) yield return c.gameObject;
+            foreach (var c in (Component[])hud.m_foodIcons ?? Array.Empty<Component>())
+            {
+                if (c == null) continue;
+                yield return c.gameObject;
+                // The empty slot frame each icon sits in (R-020: three empty frames showed under our bars).
+                var frame = c.transform.parent;
+                if (frame != null && !IsStructural(hud, frame)) yield return frame.gameObject;
+            }
             foreach (var c in (Component[])hud.m_foodTime ?? Array.Empty<Component>()) if (c != null) yield return c.gameObject;
             foreach (var c in (Component[])hud.m_foodBars ?? Array.Empty<Component>()) if (c != null) yield return c.gameObject;
         }
 
         /// <summary>Claims every region or none.</summary>
+        private static bool IsStructural(Hud hud, Transform t) =>
+            t == hud.transform || t == hud.m_rootObject.transform
+            || (hud.m_healthPanel != null && t == hud.m_healthPanel.transform)
+            || (hud.m_foodBarRoot != null && t == hud.m_foodBarRoot.transform);
+
+        /// <summary>
+        /// Direct children of the vanilla health panel that hold nothing another region owns.
+        /// A child containing a food piece or a bar root is left alone: its owner veils it.
+        /// </summary>
+        private static IEnumerable<GameObject> HealthDecor()
+        {
+            var hud = Hud.instance;
+            if (hud == null || hud.m_healthPanel == null) yield break;
+
+            var owned = new List<Transform>();
+            foreach (var go in Food()) owned.Add(go.transform);
+            foreach (var c in new Component[] { hud.m_healthBarRoot, hud.m_staminaBar2Root, hud.m_eitrBarRoot })
+                if (c != null) owned.Add(c.transform);
+
+            foreach (Transform child in hud.m_healthPanel)
+            {
+                bool holdsOwned = false;
+                foreach (var o in owned)
+                    if (o == child || o.IsChildOf(child)) { holdsOwned = true; break; }
+                if (!holdsOwned) yield return child.gameObject;
+            }
+        }
+
         public static bool TryClaimAll(string owner, IReadOnlyList<string> regions, out string reason)
         {
             foreach (var region in regions)
