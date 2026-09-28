@@ -21,7 +21,7 @@ view-model diffing, module state machine, settings models. Fast, no game.
 `EngineContractTests` (metadata-only load with `MetadataLoadContext`):
 
 - **Game contracts**: every patch target and every member declared in a module's
-  `Requires` exists in `ref/assembly_valheim.dll` with the expected signature. The
+  `[GameContract]` exists in its `ref/*.dll` with the expected signature. The
   verified game build is written in the test file.
 - **Adapter contracts**: every declared foreign member exists in the mod DLL under
   `ref/adapters/`.

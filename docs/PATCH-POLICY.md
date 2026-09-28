@@ -19,9 +19,9 @@ own screen, but what their patches do to everyone else.
    `HarmonyPriority`/`HarmonyAfter`, or by not taking the region.
 5. **One patch class per target area**, applied individually through the
    Foundation guarded patcher. A missing target disables that class and the
-   modules that declared it in `Requires`, nothing else. `PatchAll()` over the whole
+   classes that declared it in `[GameContract]`, nothing else. `PatchAll()` over the whole
    assembly is forbidden.
-6. **Every patch target is a contract.** It appears in the module's `Requires` and in
+6. **Every patch target is a contract.** It appears as a `[GameContract]` on the patch class and in
    `GenesisUI.Contract.Tests`. A patch without a contract test does not merge.
 7. **Patch bodies are thin.** They hand data to the Scheduler or a reader and
    return. No allocation in per-frame patches. Exceptions are caught by the guard;
@@ -34,7 +34,7 @@ own screen, but what their patches do to everyone else.
 ## Review checklist for a patch
 
 - [ ] Postfix or void prefix? If not, where is the decision entry?
-- [ ] Target listed in `Requires` and in contract tests?
+- [ ] Target declared as `[GameContract]` on the patch class (the contract test then covers it)?
 - [ ] What happens to other mods' postfixes on this method? (write it in the PR)
 - [ ] Allocation-free if the method runs every frame?
 - [ ] Behaviour when the module is `Disabled`, `Suspended` or `Faulted`: the patch

@@ -12,8 +12,13 @@ is unclear, ask; do not guess.
    them; propose a new entry if you believe one is wrong.
 3. [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — layers, modules, regions, veil,
    scheduler, input, layout, theme, security model.
-4. [docs/PATCH-POLICY.md](docs/PATCH-POLICY.md) — before touching Harmony.
-5. The document for your task: [ART-DIRECTION](docs/ART-DIRECTION.md),
+4. [docs/regions.md](docs/regions.md) — every vanilla region, its owner module, its veil,
+   and what vanilla does to it (answered by test reports).
+5. [docs/PATCH-POLICY.md](docs/PATCH-POLICY.md) — before touching Harmony.
+6. [CHANGELOG.md](CHANGELOG.md), [docs/ROADMAP.md](docs/ROADMAP.md) and the latest file in
+   [docs/testing/results/](docs/testing/results/) — where the project is right now and what
+   Diego asked for last.
+7. The document for your task: [ART-DIRECTION](docs/ART-DIRECTION.md),
    [EXTENSION-API](docs/EXTENSION-API.md), [ADAPTERS](docs/ADAPTERS.md),
    [DIAGNOSTICS](docs/DIAGNOSTICS.md), [TESTING](docs/TESTING.md),
    [RELEASE](docs/RELEASE.md), [ROADMAP](docs/ROADMAP.md).
@@ -50,6 +55,31 @@ look): `heimdall-nexus/docs/PADROES-GENESISMODS.md`.
 11. **Diagnostics are part of the feature.** Anything new must appear in the
     diagnostics overlay (the host gives modules this for free) and log its failures.
     Debug and Preview builds always ship the full diagnostics layer.
+12. **Art is generated, never hand-drawn** (D-020). Every UI shape comes from
+    `tools/art/shapes.py` using `tools/art/style.py`; animated textures come from
+    `tools/art/patterns.py`. Never edit a generated SVG in `art/src/`. New art is ours
+    (`art/LICENSES.md`); fonts are OFL only.
+
+## 2a. Lessons already paid for (do not relearn them)
+
+- **Never resolve reflection in a static initializer or constructor** of a module. Modules are
+  constructed in `Awake`; a missing member there takes the whole plugin down before the host
+  checks contracts. Resolve `AccessTools` members in `Build` (see `HotbarModule`).
+- **Unity null, not C# null.** Use `if (obj == null)` / helpers like `RegionRegistry.FromHud`;
+  never `?.` or `??` on Unity objects: a destroyed object is not C#-null.
+- **Vanilla may not be ready when you build.** Modules can be built before a vanilla
+  component's `Start` (the minimap was, and vanilla then swapped its material: grey map in
+  R-030). Read live vanilla objects every refresh, never cache what vanilla may replace.
+- **Zero allocation per frame.** No capturing lambdas in per-frame paths (cache delegates,
+  use `Guard.Run(owner, action, arg)`), `TMP.SetText` with numbers instead of string
+  concatenation, update Unity objects only when the value changed.
+- **`Guard.Run` trips an owner on the first exception; `Guard.Try` never trips.** Use `Try`
+  for clean-up paths that must always run (teardown, restore, config toggles).
+- **Do not trust Unity's JsonUtility** with our types (it silently read an empty list, R-010).
+  Data goes through `StrictJson` and a test that reads the shipped file.
+- **Texts shrink to fit** (`Ui.Fit`) inside frames; never let a number cross a border.
+- **Mirror vanilla instead of re-implementing its logic** when vanilla already decides what
+  to show (minimap pins, D-019): it stays correct with other mods' content.
 
 ## 3. Language
 
@@ -72,7 +102,15 @@ look): `heimdall-nexus/docs/PADROES-GENESISMODS.md`.
 - Package: `tools/package.sh [Preview|Release]` runs the tests, checks the merge and the
   icon, and writes `dist/GenesisMods-GenesisUI-<version>[-preview.N].zip`. Commit first:
   the watermark shows the git sha of HEAD.
-- Art: `tools/.venv/bin/python tools/art/render.py` (venv setup in the script header).
+- Art: `tools/.venv/bin/python tools/art/render.py` regenerates shapes, patterns, the icon,
+  the PNGs and `art/out/sprites.json` (venv setup in the script header). Fonts:
+  `tools/art/fonts.py` (downloads the OFL sources with pinned SHA-256; sources gitignored).
+- **Reading the game**: `dotnet run --project tools/inspect -- <assembly> <Type> [filter]` lists
+  members of `ref/*.dll` by metadata; use it before declaring a `[GameContract]`. To read
+  vanilla logic, decompile **one type only**, with a heap cap:
+  `DOTNET_ROLL_FORWARD=Major DOTNET_GCHeapHardLimit=0x30000000 ilspycmd -t <Type> -r <Managed dir> ref/assembly_valheim.dll`
+  into the scratchpad. Never decompile whole assemblies or several at once. Decompiled code
+  is for understanding behaviour only; it is never copied into the repository.
 - The development VPS has little memory: **run one heavy task at a time** (build,
   decompilation, large test runs) and cap heaps (`DOTNET_GCHeapHardLimit`).
   Parallel `ilspycmd` runs have already taken it down.
@@ -87,12 +125,43 @@ look): `heimdall-nexus/docs/PADROES-GENESISMODS.md`.
 ## 5. How to do common tasks
 
 **Add a module**
-1. Create `src/GenesisUI/Modules/<Name>/` with the module class, its views and readers.
-2. Declare `Regions` and `Requires`; add the contracts to `GenesisUI.Contract.Tests`.
-3. Put logic (formatting, diffing, layout) in `GenesisUI.Core` with unit tests.
-4. Add the regions to `docs/regions.md` with the veil strategy.
-5. Add default layout, theme tokens used, config entries (with pt-BR descriptions).
-6. Write the test script (pt-BR) from the template and link it in the PR.
+1. Create `src/GenesisUI/Modules/<Name>/` with a class implementing `Host/IUiModule`
+   (`Id`, `NameToken`, `Regions`, `RefreshRate` — 0 = every frame, `Build`, `Refresh`,
+   `Teardown`) and its views; reuse `Widgets/` (`Ui`, `SlotView`, `TileView`) before
+   writing new ones.
+2. Put every game member it touches in `[GameContract(...)]` attributes on the class
+   (check names with `tools/inspect`). The contract test finds them automatically.
+3. Add each vanilla region to `Host/RegionRegistry.cs` (resolver + the region list of
+   known foreign owners such as SeneaL UI) and to `docs/regions.md` with the veil and what
+   vanilla does to it.
+4. Register it in `Plugin.cs` with a `[Modules] <Name>` config toggle; add its name token to
+   both `Translations/*/genesisui.json`; give it `[<Name>]` offset/scale config with pt-BR
+   descriptions.
+5. Put logic (formatting, diffing, layout) in `GenesisUI.Core` with unit tests.
+6. Add a pt-BR test script and bump the version (below).
+
+**Add art** — add or change a function in `tools/art/shapes.py` using only the style and
+motifs of `tools/art/style.py` (containers vs cells, diamond / volute / bead). Register the
+sprite with its design size and 9-slice border in `tools/art/render.py`, run it, then run
+`tools/art/mock.py` and look at the full-HUD mock before shipping to judge cohesion (add the new
+element to the mock). The only hand-written source is `art/src/bar_fill.svg`, a white
+gradient texture tinted in game, not a shape. Colours in code come
+from theme tokens. Diego's direction: **delicate, subtle, refined and memorable; never as busy
+as the concept art**; the health bar stays the largest; default positions: minimap top-right,
+hotbar bottom centre (the player will be able to move them later).
+
+**Deliver a test build (the loop with Diego)**
+1. Bump `src/GenesisUI/PluginInfo.cs`: `Version` for new features, `PreviewNumber` for another
+   package of the same version.
+2. Write `docs/testing/scripts/R-0NN-<topic>.md` in pt-BR from the template: what is tested,
+   what is not, numbered steps with "Esperado", what to send back. Focus on what shows on
+   screen; foundation behaviour is covered by the automated tests (Diego asked for fewer
+   foundation scripts). Ask for the F8 report at the **end** of the run.
+3. Update CHANGELOG, commit, then `tools/package.sh Preview` (the watermark shows HEAD's sha),
+   push the feature branch.
+4. When Diego reports back, record it in `docs/testing/results/R-0NN-<version>.md` (passed,
+   bugs with their proven cause, feedback) before changing code. Merge the branch into `main`
+   (fast-forward) only after he approves the phase.
 
 **Add an adapter** — follow [ADAPTERS.md](docs/ADAPTERS.md): declare GUID, version
 range and contracts; read-only; contract test against the real DLL in
@@ -104,8 +173,6 @@ under "API" in CHANGELOG.md, keep `[Obsolete]` rules from §5.
 **Add a Harmony patch** — go through the checklist in PATCH-POLICY.md and write, in
 the commit message or PR, what happens to other mods' patches on that method.
 
-**Add art** — SVG source in `art/src/`, colors from theme tokens, license noted in
-`art/LICENSES.md`, rebuild the atlas with `tools/`.
 
 ## 6. Definition of done
 
