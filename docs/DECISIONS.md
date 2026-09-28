@@ -110,3 +110,21 @@ separate plugin (D-002). Only the GenesisUI repository is published until then.
 **Why:** there is no second consumer today (GenesisTooltips was never really started),
 so a separate plugin would only add a dependency to install, version and whitelist.
 Designing Foundation as extraction-ready keeps the door open at no cost.
+
+## D-016 — The patcher may unpatch its own methods, and nothing else
+
+**Decision:** `Foundation.GuardedPatcher` may call `Harmony.Unpatch` to roll back a patch
+class that failed halfway, removing only patch methods declared by that class under our
+own Harmony id. It is the one allow-listed caller in the banned-API test.
+**Why:** without rollback, a class that patched two of three targets before throwing
+would stay half-applied. Filtering by id and declaring type keeps PATCH-POLICY rule 4.
+
+## D-017 — Compile against copies of production, not NuGet
+
+**Decision:** the plugin references `ref/*.dll` copied from the production server by
+`tools/fill-ref.sh`, including its `Jotunn.dll`; no JotunnLib NuGet package, no
+publicized assemblies. Private members are reached through declared contracts and
+`AccessTools`. The package's Jötunn dependency is checked against `ref/Jotunn.dll`.
+**Why:** compiling and running against the same binaries removes a class of load-time
+`MissingMethodException`s, works on Linux without Jötunn's prebuild task, and keeps
+every private access visible as a contract.

@@ -1,0 +1,34 @@
+<Project>
+  <!--
+    Shared by every project. Three channels (docs/ARCHITECTURE.md §9):
+      Debug    unoptimized, full diagnostics         -> local development
+      Preview  optimized, full diagnostics, watermark -> Diego's client tests
+      Release  optimized, errors/warnings + report    -> Hexium
+  -->
+  <PropertyGroup>
+    <LangVersion>10</LangVersion>
+    <Nullable>disable</Nullable>
+    <Deterministic>true</Deterministic>
+    <Configurations>Debug;Preview;Release</Configurations>
+    <RepoRoot>$(MSBuildThisFileDirectory)</RepoRoot>
+    <RefDir>$(RepoRoot)ref</RefDir>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <DefineConstants>$(DefineConstants);DEBUG;TRACE;GENESIS_DIAGNOSTICS;GENESIS_CHANNEL_DEV</DefineConstants>
+    <Optimize>false</Optimize>
+    <DebugType>portable</DebugType>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Preview'">
+    <DefineConstants>$(DefineConstants);TRACE;GENESIS_DIAGNOSTICS;GENESIS_CHANNEL_PREVIEW</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>portable</DebugType>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <DefineConstants>$(DefineConstants);TRACE</DefineConstants>
+    <Optimize>true</Optimize>
+    <DebugType>portable</DebugType>
+  </PropertyGroup>
+</Project>

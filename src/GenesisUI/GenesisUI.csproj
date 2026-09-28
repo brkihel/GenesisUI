@@ -1,0 +1,75 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The BepInEx plugin. Everything that touches Unity, Valheim, Harmony, BepInEx
+    or Jotunn lives here; every decision that can be described as "given these
+    values, expect that result" belongs in GenesisUI.Core.
+
+    References come from ref/ (tools/fill-ref.sh): the exact assemblies of the
+    production server, including the Jotunn.dll that runs there.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <AssemblyName>GenesisUI</AssemblyName>
+    <RootNamespace>GenesisUI</RootNamespace>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+    <AppendTargetFrameworkToOutputPath>true</AppendTargetFrameworkToOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Private=true so the Core DLL lands in the output for ILRepack to merge. -->
+    <ProjectReference Include="../GenesisUI.Core/GenesisUI.Core.csproj">
+      <Private>true</Private>
+    </ProjectReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ILRepack.Lib.MSBuild.Task" Version="2.0.46" />
+    <PackageReference Include="Microsoft.Unity.Analyzers" Version="1.27.0" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="assembly_valheim"><HintPath>$(RefDir)/assembly_valheim.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="assembly_utils"><HintPath>$(RefDir)/assembly_utils.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="assembly_guiutils"><HintPath>$(RefDir)/assembly_guiutils.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine"><HintPath>$(RefDir)/UnityEngine.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.CoreModule"><HintPath>$(RefDir)/UnityEngine.CoreModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.UI"><HintPath>$(RefDir)/UnityEngine.UI.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.UIModule"><HintPath>$(RefDir)/UnityEngine.UIModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.IMGUIModule"><HintPath>$(RefDir)/UnityEngine.IMGUIModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.TextRenderingModule"><HintPath>$(RefDir)/UnityEngine.TextRenderingModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.TextCoreFontEngineModule"><HintPath>$(RefDir)/UnityEngine.TextCoreFontEngineModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Unity.TextMeshPro"><HintPath>$(RefDir)/Unity.TextMeshPro.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="BepInEx"><HintPath>$(RefDir)/BepInEx.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="0Harmony"><HintPath>$(RefDir)/0Harmony.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Jotunn"><HintPath>$(RefDir)/Jotunn.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Translations/**/*.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!--
+    Stamps the git sha into the build so logs, reports and the watermark name
+    the exact commit (docs/DIAGNOSTICS.md §1). Outside a git checkout it says
+    "unknown" instead of failing.
+  -->
+  <Target Name="GenesisBuildStamp" BeforeTargets="CoreCompile">
+    <Exec Command="git rev-parse --short=7 HEAD" ConsoleToMSBuild="true" IgnoreExitCode="true" StandardOutputImportance="low" WorkingDirectory="$(MSBuildProjectDirectory)">
+      <Output TaskParameter="ConsoleOutput" PropertyName="GenesisGitSha" />
+    </Exec>
+    <PropertyGroup>
+      <GenesisGitSha Condition="'$(GenesisGitSha)' == ''">unknown</GenesisGitSha>
+      <GenesisStampFile>$(IntermediateOutputPath)BuildStamp.g.cs</GenesisStampFile>
+    </PropertyGroup>
+    <WriteLinesToFile File="$(GenesisStampFile)" Overwrite="true" WriteOnlyWhenDifferent="true"
+                      Lines="namespace GenesisUI { internal static class BuildStamp { public const string Sha = &quot;$(GenesisGitSha)&quot;%3B } }" />
+    <ItemGroup>
+      <Compile Include="$(GenesisStampFile)" />
+      <FileWrites Include="$(GenesisStampFile)" />
+    </ItemGroup>
+  </Target>
+
+</Project>

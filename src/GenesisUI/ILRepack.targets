@@ -1,0 +1,30 @@
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <!--
+    Merges GenesisUI.Core into GenesisUI.dll.
+
+    Shipped beside the plugin instead, BepInEx never loads the Core and the first
+    call into it throws FileNotFoundException: the mod looks installed and does
+    nothing. That is how GenesisTooltips 0.1.0 went out; tools/package.sh refuses
+    a DLL without the Core types.
+
+    Internalize keeps the merged types private, so they cannot collide with
+    another mod's types.
+  -->
+
+  <Target Name="ILRepacker" AfterTargets="Build">
+    <ItemGroup>
+      <InputAssemblies Include="$(TargetPath)" />
+      <InputAssemblies Include="$(OutputPath)GenesisUI.Core.dll" />
+    </ItemGroup>
+    <ILRepack
+      Parallel="true"
+      DebugInfo="true"
+      Internalize="true"
+      InputAssemblies="@(InputAssemblies)"
+      OutputFile="$(TargetPath)"
+      TargetKind="SameAsPrimaryAssembly"
+      LibraryPath="$(OutputPath);$(RefDir)" />
+  </Target>
+
+</Project>

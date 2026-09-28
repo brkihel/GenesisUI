@@ -32,14 +32,21 @@ view-model diffing, module state machine, settings models. Fast, no game.
   An exception needs a decision entry and an allow-list line naming the calling
   method.
 
-`ref/` is gitignored; `tools/` fills it from `devplugins/referencias` and the
-modpack. Missing refs → tests are skipped with a clear message, not failed.
+`ref/` is gitignored; `tools/fill-ref.sh` fills it from `devplugins/referencias`.
+Missing refs or a missing plugin build → tests are skipped with a clear message
+(`Xunit.SkippableFact`), not failed.
+
+**The guards are tested too.** `Scanner_sees_known_calls` fails if the IL scanner stops
+seeing calls it must see. When a rule is added, prove it catches a violation: add a
+throwaway class that breaks it, run the tests, see the failure, delete the class. F1 did
+this for the three rules (missing contract, banned call, Foundation isolation).
 
 ## L3 — Build checks
 
 - Core purity guard (build error).
-- `TreatWarningsAsErrors` in Core; analyzers (`BepInEx.Analyzers`,
-  `Microsoft.Unity.Analyzers`) in the plugin.
+- `TreatWarningsAsErrors` in Core; `Microsoft.Unity.Analyzers` in the plugin.
+  (`BepInEx.Analyzers` is only published on BepInEx's own feed; we do not add a second
+  package source for it.)
 - Package check: the zip contains exactly the expected files, manifest fields valid
   for Hexium, icon 256×256.
 

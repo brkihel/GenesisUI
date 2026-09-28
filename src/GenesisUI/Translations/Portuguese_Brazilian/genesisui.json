@@ -1,0 +1,4 @@
+{
+  "genesisui_report_saved": "GenesisUI: relatório de diagnóstico salvo; o caminho foi copiado para a área de transferência.",
+  "genesisui_report_failed": "GenesisUI: não foi possível gravar o relatório. Veja BepInEx/LogOutput.log."
+}

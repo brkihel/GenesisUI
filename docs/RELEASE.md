@@ -15,22 +15,25 @@ Author namespace `GenesisMods`, package name `GenesisUI`, BepInEx GUID
 `Genesis.GenesisUI`.
 
 ```
-GenesisMods-GenesisUI-<version>.zip
+GenesisMods-GenesisUI-<version>[-preview.N].zip
   manifest.json          name, version_number, website_url, description (≤ 256 chars), dependencies
   icon.png               exactly 256×256
   README.md
   CHANGELOG.md
   LICENSE
-  GenesisUI.dll
-  fonts/                 Cinzel, Cormorant Garamond + OFL.txt
-  Translations/English/genesisui.json
-  Translations/Portuguese_Brazilian/genesisui.json
-  art/genesisui.atlas.png + genesisui.atlas.json
+  plugins/
+    GenesisUI.dll        GenesisUI.Core merged in (ILRepack); the package refuses a DLL without it
+    Translations/English/genesisui.json
+    Translations/Portuguese_Brazilian/genesisui.json
+    fonts/               (F2) Cinzel, Cormorant Garamond + OFL.txt
+    art/                 (F2) genesisui.atlas.png + genesisui.atlas.json
 ```
 
-Dependency in the manifest: `ValheimModding-Jotunn-<latest>`. BepInExPack is added by Hexium on upload.
-Built with `devplugins/compilar.sh` and packaged with a GenesisUI-aware version of
-`devplugins/empacotar.sh` (it must include the extra folders above).
+Dependency in the manifest: `ValheimModding-Jotunn-<version in ref/>`, checked
+against `ref/Jotunn.dll`. BepInExPack is added by Hexium on upload. Built and packaged
+by `tools/package.sh`, which runs every test first. The manifest `version_number` is
+always `MAJOR.MINOR.PATCH`; the preview number lives in the file name, the watermark
+and the logs.
 
 ## Preview delivery (current stage)
 

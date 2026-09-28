@@ -1,0 +1,4 @@
+{
+  "genesisui_report_saved": "GenesisUI: diagnostic report saved; its path was copied to the clipboard.",
+  "genesisui_report_failed": "GenesisUI: the diagnostic report could not be written. See BepInEx/LogOutput.log."
+}

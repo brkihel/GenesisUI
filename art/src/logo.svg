@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256">
+  <!-- GenesisUI mark: triquetra inside a triangle, on the panel colours of docs/ART-DIRECTION.md.
+       Original work for GenesisUI; see art/LICENSES.md. -->
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F7E283"/>
+      <stop offset="1" stop-color="#D09D4B"/>
+    </linearGradient>
+    <radialGradient id="panel" cx="0.5" cy="0.45" r="0.7">
+      <stop offset="0" stop-color="#1E2220"/>
+      <stop offset="1" stop-color="#0E100F"/>
+    </radialGradient>
+  </defs>
+  <rect x="0" y="0" width="256" height="256" rx="6" fill="url(#panel)"/>
+  <rect x="8" y="8" width="240" height="240" rx="3" fill="none" stroke="#705B3F" stroke-width="2"/>
+  <rect x="13" y="13" width="230" height="230" rx="2" fill="none" stroke="#3A3226" stroke-width="1"/>
+  <g fill="none" stroke="#705B3F" stroke-width="2" stroke-linecap="round">
+    <path d="M18,40 Q18,18 40,18"/><path d="M216,18 Q238,18 238,40"/>
+    <path d="M238,216 Q238,238 216,238"/><path d="M40,238 Q18,238 18,216"/>
+  </g>
+  <g fill="#FACF72">
+    <path d="M128,20 l5,5 -5,5 -5,-5z"/><path d="M128,226 l5,5 -5,5 -5,-5z"/>
+  </g>
+  <path d="M128,52 L224,210 L32,210 Z" fill="none" stroke="url(#gold)" stroke-width="5" stroke-linejoin="round"/>
+  <g fill="none" stroke="url(#gold)" stroke-width="7" stroke-linejoin="round"><path d="M128.0,146.0 A64,64 0 0 1 128.0,82.0 A64,64 0 0 1 128.0,146.0Z"/><path d="M128.0,146.0 A64,64 0 0 1 183.4,178.0 A64,64 0 0 1 128.0,146.0Z"/><path d="M128.0,146.0 A64,64 0 0 1 72.6,178.0 A64,64 0 0 1 128.0,146.0Z"/></g>
+  <circle cx="128" cy="146" r="30" fill="none" stroke="url(#gold)" stroke-width="5"/>
+</svg>

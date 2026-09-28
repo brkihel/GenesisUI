@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The pure half of GenesisUI (docs/DECISIONS.md D-012).
+    It MUST NOT reference Unity, Valheim, Harmony, BepInEx or Jotunn: that is what
+    lets every decision in here be tested with `dotnet test`, without the game.
+    The target below fails the build if someone adds such a reference.
+    It is merged into GenesisUI.dll by ILRepack; it never ships as its own file.
+  -->
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <RootNamespace>GenesisUI</RootNamespace>
+  </PropertyGroup>
+
+  <Target Name="ForbidGameDependency" BeforeTargets="Build">
+    <Error Condition="'%(Reference.Identity)' != '' AND ($([System.String]::Copy('%(Reference.Identity)').StartsWith('UnityEngine')) OR $([System.String]::Copy('%(Reference.Identity)').StartsWith('Unity.')) OR $([System.String]::Copy('%(Reference.Identity)').StartsWith('assembly_')) OR '%(Reference.Identity)' == '0Harmony' OR '%(Reference.Identity)' == 'BepInEx' OR '%(Reference.Identity)' == 'Jotunn')"
+           Text="GenesisUI.Core cannot reference Unity, Valheim, Harmony, BepInEx or Jotunn (docs/DECISIONS.md D-012). Move that code to the plugin." />
+    <Error Condition="'%(ProjectReference.Identity)' != ''"
+           Text="GenesisUI.Core cannot reference other projects: the arrow points from the plugin to the Core." />
+  </Target>
+
+</Project>

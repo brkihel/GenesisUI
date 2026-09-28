@@ -61,18 +61,27 @@ look): `heimdall-nexus/docs/PADROES-GENESISMODS.md`.
 
 ## 4. Environment and constraints
 
-- Build: `mods/devplugins/compilar.sh <csproj> [Release|Debug]` from the genesisheim
-  repository (it sets `VALHEIM_INSTALL`, `BEPINEX_PATH` and publicizes assemblies).
-  Preview is a separate configuration; see RELEASE.md.
-- Tests: `dotnet test` from the repository root. Contract tests need `ref/` (gitignored);
-  if it is missing, they skip with a message.
+- References: `tools/fill-ref.sh` copies the production server's assemblies (game,
+  BepInEx, the exact `Jotunn.dll` that runs there) into `ref/` (gitignored). Refresh the
+  source first with the genesisheim `devplugins` copy after any game/BepInEx/Jötunn
+  update. We do not use the JotunnLib NuGet package or publicized assemblies (D-017).
+- Build: `dotnet build GenesisUI.sln -c Debug|Preview|Release`.
+- Tests: `dotnet test GenesisUI.sln -c <channel>`. Contract tests read `ref/` and the
+  built plugin; if either is missing, they skip with a message.
+- Package: `tools/package.sh [Preview|Release]` runs the tests, checks the merge and the
+  icon, and writes `dist/GenesisMods-GenesisUI-<version>[-preview.N].zip`. Commit first:
+  the watermark shows the git sha of HEAD.
+- Art: `tools/.venv/bin/python tools/art/render.py` (venv setup in the script header).
 - The development VPS has little memory: **run one heavy task at a time** (build,
   decompilation, large test runs) and cap heaps (`DOTNET_GCHeapHardLimit`).
   Parallel `ilspycmd` runs have already taken it down.
 - **Never test on a server, never touch production.** Game tests happen only on
   Diego's client: you prepare the package **and** its test script; he runs it.
 - One person runs every test: no step may need a second player or client.
-- Never run anything on Diego's personal PC unless he asks.
+- Diego's personal PC (`ssh win-teste`, over Tailscale) is available for GenesisUI
+  client checks he did not have to run himself, but only with notice: say what you
+  will run and why before running it, never start Valheim there without telling him,
+  and never investigate anything unrelated. When he says stop, stop.
 
 ## 5. How to do common tasks
 
