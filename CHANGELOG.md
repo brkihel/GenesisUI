@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.4.1-preview.1 — R-030 feedback
+
+### Fixed
+- **Minimap turned grey after a while**: vanilla's `Minimap.Start` replaces the small-map
+  material and only then sets its textures; the module could be built before that and keep
+  the old material. It now follows vanilla's live material every frame. Also stops copying
+  `_zoom`, `_pixelSize`, `_mapCenter`, which the map shader does not declare (Unity errors).
+- **Guardian-power cooldown stayed on a ready tile** after the cooldown was reset: the tile
+  now really clears the clock text.
+- Numbers inside the bars, slot corners and tile names shrink to fit instead of touching the
+  frames.
+
+### Changed
+- **One ornament language** (D-020): every shape is generated from `tools/art/style.py`.
+  Containers share a gold outer and bronze inner line; slots, status tiles and the wind disk
+  share a bronze line with a gold hairline; the hotbar plate ends now use the same volutes
+  and beads as the bars and crest.
+- Bars: the glass is softer (no hard white stripe), and the living detail is now **subtle
+  rising bubbles** with a slight sway (about 20 % opacity).
+- Wind: the arrow sits in its own small disk on the crest, larger and always clearly visible;
+  stronger wind makes it fuller.
+
 ## 0.4.0-preview.1 — Round minimap (includes 0.3.1)
 
 ### Added
