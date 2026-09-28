@@ -11,7 +11,7 @@ is unclear, ask; do not guess.
   windows** is next, on branch `f4-windows`; its plan (approach "dress vanilla", steps
   F4.0–F4.5) is [docs/F4-PLAN.md](docs/F4-PLAN.md): target ConceptArt (9)/(12), rearrange
   and dress vanilla's windows (behaviour stays vanilla), art extracted from the concept;
-  waiting for Diego's OK on the revision and his confirmation of the concept's rights. Order after that: F5 menus (main and Esc),
+  Diego approved the revision and confirmed the concept's rights (D-025/D-026). Order after that: F5 menus (main and Esc),
   F6 map, F7 Extension API and adapters, F8 optional gameplay package, F9 switch-over
   (D-024). Do not start API or adapter work before the vanilla UI is done.
 - **Version:** 0.5.0, last package `0.5.0-preview.4` with script R-041 (R-040 fixes), not
@@ -65,8 +65,9 @@ look): `heimdall-nexus/docs/PADROES-GENESISMODS.md`.
    **Foundation stays self-contained**: code under `Foundation/` never references
    modules, views, theme or API types (it will be extracted into GenesisModLIB).
 8. **Clean room**: never copy code, art, icons, texts or layouts from SeneaL UI or any
-   closed mod; never ship game assets; never commit the concept art. Studying
-   behaviour is allowed; reusing implementation is not.
+   closed mod; never ship game assets; never commit the full concept images. Cleaned UI
+   pieces from Diego's own concepts are allowed by D-026. Studying other mods' behaviour
+   is allowed; reusing their implementation is not.
 9. **No new runtime dependency** without a decision entry. Allowed today: BepInEx,
    Jötunn (latest).
 10. **Data files are data**: JSON via `GenesisUI.Data.StrictJson` (D-018) mapped to typed
@@ -76,9 +77,11 @@ look): `heimdall-nexus/docs/PADROES-GENESISMODS.md`.
 11. **Diagnostics are part of the feature.** Anything new must appear in the
     diagnostics overlay (the host gives modules this for free) and log its failures.
     Debug and Preview builds always ship the full diagnostics layer.
-12. **Art is generated, never hand-drawn** (D-020). Every UI shape comes from
+12. **Art is reproducible** (D-020, amended by D-026). Generated UI shapes come from
     `tools/art/shapes.py` using `tools/art/style.py` (the gold language, the only art
-    direction: D-023); animated textures come from `tools/art/patterns.py`. Never edit a generated SVG in `art/src/`. New art is ours
+    direction: D-023); animated textures come from `tools/art/patterns.py`. Concept cutouts
+    come from `tools/art/extract.py`; refinements for review from `tools/art/refine_concept.py`.
+    Never edit a generated SVG in `art/src/`. New art is ours
     (`art/LICENSES.md`); fonts are OFL only.
 
 ## 2a. Lessons already paid for (do not relearn them)
@@ -192,6 +195,10 @@ from theme tokens. Diego's direction: **delicate, subtle, refined and memorable;
 as the concept art**; the health bar stays the largest; default positions: minimap top-right,
 hotbar bottom centre (the player will be able to move them later).
 
+For D-026 concept cutouts, use `tools/art/extract.py` and review the candidate through
+`tools/art/refine_concept.py` and `docs/F4-ART-REVIEW.md`. Keep the full concepts outside the
+repository and update the extracted sprite's 9-slice borders before integration.
+
 **Deliver a test build (the loop with Diego)**
 1. Bump `src/GenesisUI/PluginInfo.cs`: `Version` for new features, `PreviewNumber` for another
    package of the same version.
@@ -241,5 +248,5 @@ a source you checked, with the source named.
 
 - Small commits, English messages, imperative mood, explaining why.
 - Work on branches; `main` holds reviewed work. Tags `vX.Y.Z` for releases.
-- Never commit `ref/`, build output, packages, concept art, or anything extracted
+- Never commit `ref/`, build output, packages, full concept images, or anything extracted
   from another mod.

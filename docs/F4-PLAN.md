@@ -78,7 +78,7 @@ comes from moving vanilla's panels, not from rewriting them:
   is a research spike in F4.2 (a second camera rendering the local player into a texture);
   if it is not reliable, the panel keeps the slots around an ornament instead.
 
-## 3a. Art taken from the concept (proposed D-026)
+## 3a. Art taken from the concept (D-026)
 
 Diego wants the concept's own ornaments (the chest card of ConceptArt (8), the minimap with
 the biome name above and wind and day/time below, the bars, hotbar, stamina readout, window
@@ -87,7 +87,7 @@ the card's frame was cut out, the gold ornament connected to the border line was
 everything else (icon, texts, arrow) removed, the interior refilled with the panel's own dark
 tone, and the result stretches as a 9-slice at any size without deforming the corners.
 
-- **Pipeline:** `tools/art/extract.py` (to write) takes a crop box and a recipe per piece from
+- **Pipeline:** `tools/art/extract.py` takes a crop box and a recipe per piece from
   a concept image in Diego's local folder, cleans it and writes the sprite into `art/out/`
   with its 9-slice border and content insets, like the generated sprites. The concept images
   themselves never enter the repository; the extracted, cleaned pieces do.
@@ -98,6 +98,9 @@ tone, and the result stretches as a 9-slice at any size without deforming the co
 - **Rights confirmed (D-026):** the images are Diego's own (ChatGPT, edited by him in
   Photoshop). All twelve are upscaled to 3840×2160 first with Real-ESRGAN on the CPU
   (`tools/art/upscale.py`, output outside the repository), so pieces stay sharp at 4K.
+- **Refinement review:** `tools/art/refine_concept.py` builds symmetric, color-normalized
+  candidates and a standalone before/after page in `dist/art-review/`. It leaves shipped
+  sprites intact pending visual review. See `docs/F4-ART-REVIEW.md`.
 - **Vital bars fill their frame's whole opening** (Diego): the liquid is clipped by the shape
   of the frame's inner opening (a mask sprite extracted with the frame) instead of a
   rectangle, so it reaches into the arch and the point and leaves no black corners; burn,
