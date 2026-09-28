@@ -27,6 +27,8 @@ namespace GenesisUI.Host
     [GameContract("assembly_valheim", "Hud", "m_statusEffectListRoot")]
     [GameContract("assembly_valheim", "Hud", "m_gpRoot")]
     [GameContract("assembly_valheim", "Hud", "m_healthPanel")]
+    [GameContract("assembly_valheim", "Minimap", "instance")]
+    [GameContract("assembly_valheim", "Minimap", "m_smallRoot")]
     internal static class RegionRegistry
     {
         private static readonly Dictionary<string, Func<IEnumerable<GameObject>>> Resolvers = new Dictionary<string, Func<IEnumerable<GameObject>>>(StringComparer.Ordinal)
@@ -40,6 +42,8 @@ namespace GenesisUI.Host
             ["hud.healthDecor"] = HealthDecor,
             ["hud.statusEffects"] = () => FromHud(h => h.m_statusEffectListRoot),
             ["hud.guardianPower"] = () => FromHud(h => h.m_gpRoot),
+            ["hud.minimap"] = () => Minimap.instance != null && Minimap.instance.m_smallRoot != null
+                ? new[] { Minimap.instance.m_smallRoot } : Enumerable.Empty<GameObject>(),
             // HotkeyBar is its own component under the HUD; its Update keeps gamepad
             // selection and use working while veiled (see docs/regions.md).
             ["hud.hotbar"] = () => Hud.instance == null ? Enumerable.Empty<GameObject>()
@@ -50,7 +54,7 @@ namespace GenesisUI.Host
         private static readonly Dictionary<string, string[]> ForeignOwners = new Dictionary<string, string[]>(StringComparer.Ordinal)
         {
             // SeneaL UI replaces the whole HUD. While both are installed, it keeps it.
-            ["seneaL.valheim.ui"] = new[] { "hud.health", "hud.stamina", "hud.eitr", "hud.healthDecor", "hud.food", "hud.statusEffects", "hud.guardianPower", "hud.hotbar" },
+            ["seneaL.valheim.ui"] = new[] { "hud.health", "hud.stamina", "hud.eitr", "hud.healthDecor", "hud.food", "hud.statusEffects", "hud.guardianPower", "hud.hotbar", "hud.minimap" },
         };
 
         private static readonly Dictionary<string, string> Owners = new Dictionary<string, string>(StringComparer.Ordinal);

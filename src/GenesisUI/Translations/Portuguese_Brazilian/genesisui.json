@@ -17,5 +17,7 @@
   "genesisui_diag_input": "Bloqueios de entrada abertos:",
   "genesisui_module_food": "Comida",
   "genesisui_module_hotbar": "Barra de itens",
-  "genesisui_module_status": "Efeitos"
+  "genesisui_module_status": "Efeitos",
+  "genesisui_module_minimap": "Minimapa",
+  "genesisui_day": "Dia"
 }

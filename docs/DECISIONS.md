@@ -142,3 +142,18 @@ array empty without any error, so the bars rendered as plain rectangles. The lik
 (types made internal by the ILRepack merge) could not be confirmed offline, and a silent
 partial read is the failure D-013 wanted to avoid. A Core reader is testable, and
 `ShippedArtTests` now runs the real `art/out/sprites.json` through it at build time.
+
+## D-019 — The minimap mirrors vanilla's small map
+
+**Decision (2026-09-28):** the round minimap does not redraw the map. It shows vanilla's
+small-map texture with vanilla's own material (fog of war included) and uvRect inside our
+circular Mask, and mirrors every image under vanilla's small pin root (position, size,
+rotation, sprite, colour, one nested image such as the "checked" cross), plus the player,
+ship and wind markers and the biome text. Vanilla keeps running underneath, veiled.
+**Why:** re-implementing pin placement and visibility would duplicate vanilla logic and
+break with every mod that adds pins; mirroring what vanilla already decided shows exactly
+what vanilla would, mod pins included, and can never reveal unexplored areas. The Mask
+renders a copy of the material, so the four runtime properties vanilla changes
+(`_zoom`, `_pixelSize`, `_mapCenter`, `_SharedFade`, read from the decompiled `Minimap`)
+are copied every frame. If the map shader has no stencil support, the module logs it and
+covers the square corners instead of pretending to be round.

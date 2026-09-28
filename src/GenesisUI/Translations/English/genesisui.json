@@ -17,5 +17,7 @@
   "genesisui_diag_input": "Input leases open:",
   "genesisui_module_food": "Food",
   "genesisui_module_hotbar": "Hotbar",
-  "genesisui_module_status": "Status effects"
+  "genesisui_module_status": "Status effects",
+  "genesisui_module_minimap": "Minimap",
+  "genesisui_day": "Day"
 }

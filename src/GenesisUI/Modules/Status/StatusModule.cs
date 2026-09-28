@@ -46,8 +46,8 @@ namespace GenesisUI.Modules.Status
         {
             _offsetX = config.Bind("Status", "OffsetX", 24,
                 new ConfigDescription("Distância dos efeitos até a borda direita da tela.", new AcceptableValueRange<int>(0, 1800)));
-            _offsetY = config.Bind("Status", "OffsetY", 300,
-                new ConfigDescription("Distância dos efeitos até o topo da tela. O padrão deixa espaço para o minimapa do jogo.", new AcceptableValueRange<int>(0, 1000)));
+            _offsetY = config.Bind("Status", "OffsetY", 340,
+                new ConfigDescription("Distância dos efeitos até o topo da tela. O padrão deixa espaço para o minimapa.", new AcceptableValueRange<int>(0, 1000)));
             _perRow = config.Bind("Status", "PerRow", 6,
                 new ConfigDescription("Quantos efeitos por linha antes de quebrar para a linha de baixo.", new AcceptableValueRange<int>(1, 12)));
         }

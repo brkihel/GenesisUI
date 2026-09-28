@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Fallback: covers the corners of a square map when the map shader cannot be masked. Original work. -->
+  <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F7E283"/><stop offset="1" stop-color="#B8863E"/></linearGradient></defs>
+  <path d="M0,0 H64 V64 H0 Z M32,0.5 A31.5,31.5 0 1 0 32.001,0.5 Z" fill="#0B0D0C" fill-rule="evenodd"/>
+</svg>

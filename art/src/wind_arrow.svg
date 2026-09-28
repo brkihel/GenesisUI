@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <!-- Wind arrow; the plugin rotates it like vanilla's wind marker. Original work. -->
+  <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F7E283"/><stop offset="1" stop-color="#B8863E"/></linearGradient></defs>
+  <path d="M12,2.5 L17.5,15 L12,12.2 L6.5,15 Z" fill="url(#g)"/>
+  <path d="M12,12.2 L12,21.5" stroke="url(#g)" stroke-width="1.6" stroke-linecap="round"/>
+</svg>

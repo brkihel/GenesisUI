@@ -14,7 +14,9 @@ A region is a named piece of the vanilla UI. One owner at a time
 | `hud.food` | `Hud.m_foodBarRoot`, `m_foodBaseBar`, `m_foodIcon`, `m_foodText`, each of `m_foodIcons[]` and its slot frame (parent), `m_foodTime[]`, `m_foodBars[]` | `hud.food` | CanvasGroup alpha 0 on each | vanilla toggles icons/times with SetActive every frame; the CanvasGroup stays on the object | SeneaL UI |
 | `hud.statusEffects` | `Hud.m_statusEffectListRoot` | `hud.status` | CanvasGroup alpha 0 | vanilla clones tiles under it; they inherit the veil | SeneaL UI |
 | `hud.guardianPower` | `Hud.m_gpRoot` | `hud.status` | CanvasGroup alpha 0 | — | SeneaL UI |
-| `hud.hotbar` | every `HotkeyBar` under `Hud` | `hud.hotbar` | CanvasGroup alpha 0 | its `Update` keeps running: gamepad selection and use still work; our hotbar reads `m_selected` | SeneaL UI |
+| `hud.minimap` | `Minimap.m_smallRoot` | `hud.minimap` | CanvasGroup alpha 0 | vanilla deactivates it for the large map and in no-map worlds; our minimap follows `activeInHierarchy`. Mirrored, not replaced (D-019) | SeneaL UI |
+| `hud.hotbar` | every `HotkeyBar` under `Hud` | `hud.minimap` | `Minimap.m_smallRoot` | `hud.minimap` | CanvasGroup alpha 0 | vanilla deactivates it for the large map and in no-map worlds; our minimap follows `activeInHierarchy`. Mirrored, not replaced (D-019) | SeneaL UI |
+| `hud.hotbar` | CanvasGroup alpha 0 | its `Update` keeps running: gamepad selection and use still work; our hotbar reads `m_selected` | SeneaL UI |
 
 ## How the vanilla HUD hides
 

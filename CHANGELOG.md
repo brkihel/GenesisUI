@@ -1,6 +1,16 @@
 # Changelog
 
-## 0.3.1-preview.1 — R-020 feedback
+## 0.4.0-preview.1 — Round minimap (includes 0.3.1)
+
+### Added
+- **Minimap module**: round map at the top-right in a gold ring; a crest on top of the ring
+  holds the wind arrow (vanilla direction, opacity by strength) and "Dia N · HH:MM"; the
+  biome name sits on a banner below. The map mirrors vanilla's small map (same fog of war,
+  zoom, pins — including pins from other mods — player and ship markers; D-019). Hidden
+  with the large map and in no-map worlds, like vanilla.
+- Status effects now start below the minimap (`[Status] OffsetY` 340).
+
+## 0.3.1-preview.1 — R-020 feedback (not delivered separately)
 
 ### Changed
 - **Vital bars v2**: slimmer frame with small volutes on the arch shoulders, gold dots and a

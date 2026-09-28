@@ -32,6 +32,12 @@ SPRITES = [
     ("tile", "art/src/tile.svg", 60, 60, (0, 0, 0, 0)),
     ("plate", "art/src/plate.svg", 96, 72, (24, 16, 24, 16)),
     ("badge_cooldown", "art/src/badge_cooldown.svg", 20, 20, (0, 0, 0, 0)),
+    ("map_ring", "art/src/map_ring.svg", 250, 250, (0, 0, 0, 0)),
+    ("map_crest", "art/src/map_crest.svg", 200, 52, (0, 0, 0, 0)),
+    ("map_banner", "art/src/map_banner.svg", 180, 32, (0, 0, 0, 0)),
+    ("map_mask", "art/src/map_mask.svg", 64, 64, (0, 0, 0, 0)),
+    ("map_corners", "art/src/map_corners.svg", 64, 64, (0, 0, 0, 0)),
+    ("wind_arrow", "art/src/wind_arrow.svg", 24, 24, (0, 0, 0, 0)),
 ]
 
 # Procedural textures from tools/art/patterns.py: already at final pixel size, drawn at 1x.

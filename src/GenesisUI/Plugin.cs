@@ -8,6 +8,7 @@ using GenesisUI.Foundation.Contracts;
 using GenesisUI.Host;
 using GenesisUI.Modules.Food;
 using GenesisUI.Modules.Hotbar;
+using GenesisUI.Modules.Minimap;
 using GenesisUI.Modules.Status;
 using GenesisUI.Modules.Vitals;
 using GenesisUI.Theme;
@@ -89,6 +90,8 @@ namespace GenesisUI
                     "Os três espaços de comida ao lado das barras, com o tempo restante. Desligado, o jogo mostra a comida original."));
                 ModuleHost.Register(new HotbarModule(Config), Config.Bind("Modules", "Hotbar", true,
                     "Barra de itens (1 a 8) emoldurada, no centro de baixo. Desligado, o jogo mostra a barra original."));
+                ModuleHost.Register(new MinimapModule(Config), Config.Bind("Modules", "Minimap", true,
+                    "Minimapa redondo no canto superior direito, com vento, dia e hora em cima e o bioma embaixo. Desligado, o jogo mostra o minimapa original."));
                 ModuleHost.Register(new StatusModule(Config), Config.Bind("Modules", "Status", true,
                     "Efeitos ativos e o poder do guardião em quadros com nome e tempo. Desligado, o jogo mostra os efeitos originais."));
 
