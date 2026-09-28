@@ -28,7 +28,11 @@ namespace GenesisUI.Diagnostics
             var root = GUIManager.CustomGUIFront;
             if (root == null) return;
 
+            // Built inactive: TextMeshPro looks for its default font (LiberationSans, which
+            // Valheim does not ship) in Awake, and warns before we can assign the game font.
+            // Awake only runs on activation, after the font is set.
             var go = new GameObject("GenesisUI_Watermark", typeof(RectTransform));
+            go.SetActive(false);
             go.transform.SetParent(root.transform, false);
 
             var rt = (RectTransform)go.transform;
@@ -44,6 +48,7 @@ namespace GenesisUI.Diagnostics
             label.raycastTarget = false;
             label.textWrappingMode = TextWrappingModes.NoWrap;
             label.text = _text;
+            go.SetActive(true);
 
             GenesisLog.Debug("Diag", "watermark placed");
         }

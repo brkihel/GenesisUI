@@ -15,7 +15,7 @@ namespace GenesisUI.Contract.Tests
     public class GameContractTests
     {
         /// <summary>The game build the contracts were last verified against (ref/SOURCE.txt at that time).</summary>
-        public const string VerifiedAgainst = "Valheim l-1.0.15, release 20260925-b25527701";
+        public const string VerifiedAgainst = "Valheim l-1.0.16, build 25527701";
 
         private const string ContractAttribute = "GenesisUI.Foundation.Contracts.GameContractAttribute";
         private const BindingFlags All = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;

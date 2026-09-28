@@ -52,7 +52,7 @@ namespace GenesisUI
 #endif
             GenesisLog.Init(Logger, PluginInfo.Name, Build.MinimumLogSeverity, file);
 
-            foreach (var line in SessionHeader.Build(PluginInfo.Name, Build.FullVersion, Build.Channel.ToString()))
+            foreach (var line in SessionHeader.Build(PluginInfo.Name, Build.FullVersion, Build.Channel.ToString(), includeDisplay: false))
                 GenesisLog.Info("Host", line);
             GenesisLog.Info("Host", file != null ? "own log file: " + file.FilePath : "own log file: off in this build");
 
@@ -71,6 +71,10 @@ namespace GenesisUI
                     RegisterDiagnosticsKey();
                 }
 
+                // The real resolution only exists once the game has built its GUI; log it
+                // then, and again whenever it changes between scenes.
+                GUIManager.OnCustomGUIAvailable += () => Guard.Run("host:display", LogDisplayIfChanged);
+
                 // No patch class exists in F1. Patches will go through GuardedPatcher.Apply, one class at a time.
                 _harmony = new Harmony(PluginInfo.Guid);
 
@@ -81,6 +85,16 @@ namespace GenesisUI
             });
 
             GenesisLog.Info("Host", _ready ? "ready" : "started with errors; see the lines above");
+        }
+
+        private static string _lastDisplay;
+
+        private static void LogDisplayIfChanged()
+        {
+            string display = SessionHeader.Display();
+            if (display == _lastDisplay) return;
+            _lastDisplay = display;
+            GenesisLog.Info("Host", display);
         }
 
         private void BindConfig()
@@ -120,7 +134,7 @@ namespace GenesisUI
 
         private void WriteReport()
         {
-            var header = SessionHeader.Build(PluginInfo.Name, Build.FullVersion, Build.Channel.ToString());
+            var header = SessionHeader.Build(PluginInfo.Name, Build.FullVersion, Build.Channel.ToString(), includeDisplay: true);
             string path = ReportWriter.Write(PluginInfo.Name, header, Config, RedactReports.Value);
             string token = path != null ? "$genesisui_report_saved" : "$genesisui_report_failed";
             string text = Localization.instance != null ? Localization.instance.Localize(token) : token;

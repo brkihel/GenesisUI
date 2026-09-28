@@ -20,7 +20,12 @@ namespace GenesisUI.Foundation
     [GameContract("assembly_guiutils", "GuiScaler", "m_largeGuiScale")]
     internal static class SessionHeader
     {
-        public static IReadOnlyList<string> Build(string product, string fullVersion, string channel)
+        /// <param name="includeDisplay">
+        /// False at plugin load: BepInEx runs before Valheim applies the player's
+        /// resolution, so the window is still tiny (302x193 was logged on a 1920x1080
+        /// screen). Display facts are logged later by <see cref="Display"/>.
+        /// </param>
+        public static IReadOnlyList<string> Build(string product, string fullVersion, string channel, bool includeDisplay)
         {
             var lines = new List<string>
             {
@@ -30,11 +35,11 @@ namespace GenesisUI.Foundation
                 "BepInEx: " + Read(() => typeof(BaseUnityPlugin).Assembly.GetName().Version.ToString()),
                 "Jotunn: " + Read(() => Jotunn.Main.Version),
                 "OS: " + Read(() => SystemInfo.operatingSystem),
-                "Screen: " + Read(() => Screen.width + "x" + Screen.height + " @" + Screen.currentResolution.refreshRateRatio.value.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) + "Hz, fullscreen=" + Screen.fullScreen),
-                "GUI scale: " + Read(() => Convert.ToString(AccessTools.Field(typeof(GuiScaler), "m_largeGuiScale")?.GetValue(null), System.Globalization.CultureInfo.InvariantCulture)),
                 "Language: " + Read(() => Localization.instance?.GetSelectedLanguage() ?? "(not ready)"),
                 "Plugins (" + Read(() => Chainloader.PluginInfos.Count.ToString()) + "):",
             };
+
+            if (includeDisplay) lines.Insert(6, Display());
 
             try
             {
@@ -49,6 +54,13 @@ namespace GenesisUI.Foundation
 
             return lines;
         }
+
+        /// <summary>Screen and GUI scale as the player sees them right now.</summary>
+        public static string Display() =>
+            "Display: " + Read(() => Screen.width + "x" + Screen.height
+                                     + " @" + Screen.currentResolution.refreshRateRatio.value.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) + "Hz"
+                                     + ", fullscreen=" + Screen.fullScreen)
+            + ", GUI scale " + Read(() => Convert.ToString(AccessTools.Field(typeof(GuiScaler), "m_largeGuiScale")?.GetValue(null), System.Globalization.CultureInfo.InvariantCulture));
 
         private static string Read(Func<string> read)
         {

@@ -2,13 +2,13 @@
 
 | Campo | Valor |
 |---|---|
-| Pacote | `GenesisMods-GenesisUI-0.1.0-preview.1.zip` |
+| Pacote | `GenesisMods-GenesisUI-0.1.0-preview.2.zip` |
 | Tempo estimado | ~15 min |
 | Pré-requisito | nenhum (é o primeiro roteiro) |
 
 ## O que estamos testando
 
-Que a versão de teste 0.1.0-preview.1 **carrega no seu cliente sem erro**, **diz quem
+Que a versão de teste 0.1.0-preview.2 **carrega no seu cliente sem erro**, **diz quem
 é** (marca d'água na tela e cabeçalho no log), **grava um relatório de diagnóstico que
 esconde seus dados pessoais** e **não muda nada no jogo**.
 
@@ -39,8 +39,8 @@ esconde seus dados pessoais** e **não muda nada no jogo**.
 
 | # | Faça | Esperado | Se for diferente, anote |
 |---|---|---|---|
-| 1 | Inicie o jogo pelo perfil `GenesisUI-Teste` e espere o **menu principal**. | No **canto inferior direito**, um texto dourado discreto: `GenesisUI PREVIEW 0.1.0-preview.1+xxxxxxx` (os x são o código da versão). | Print `R-000-01.png` do menu inteiro. |
-| 2 | Sem fechar o jogo, abra `BepInEx/LogOutput.log` e procure por `[GenesisUI:Host]`. | Um bloco de linhas que começa com `GenesisUI 0.1.0-preview.1+… (Preview)` e traz `Game:`, `Unity:`, `BepInEx:`, `Jotunn: 2.30.2`, `Screen:`, `Plugins (N):` com a lista dos plugins, `own log file: …` e, por último, `ready`. **Nenhuma** linha `[Error]` que mencione `GenesisUI`. | Copie as linhas `[GenesisUI:…]` que estranhou. |
+| 1 | Inicie o jogo pelo perfil `GenesisUI-Teste` e espere o **menu principal**. | No **canto inferior direito**, um texto dourado discreto: `GenesisUI PREVIEW 0.1.0-preview.2+xxxxxxx` (os x são o código da versão). | Print `R-000-01.png` do menu inteiro. |
+| 2 | Sem fechar o jogo, abra `BepInEx/LogOutput.log` e procure por `[GenesisUI:Host]`. | Um bloco de linhas que começa com `GenesisUI 0.1.0-preview.2+… (Preview)` e traz `Game: 1.0.16`, `Unity:`, `BepInEx:`, `Jotunn: 2.30.2`, `Language:`, `Plugins (N):` com a lista dos plugins, `own log file: …` e `ready`. Logo depois, já com o menu aberto, uma linha **`[GenesisUI:Host] Display: 1920x1080 @60Hz, fullscreen=True, GUI scale 1`** (com a sua resolução real). **Nenhuma** linha `[Error]` que mencione `GenesisUI`, e **nenhum** aviso `LiberationSans SDF Font Asset was not found … GenesisUI_Watermark`. | Copie as linhas `[GenesisUI:…]` que estranhou. |
 | 3 | Abra a pasta `BepInEx/GenesisUI/logs/`. | Existe um arquivo `genesisui-AAAAMMDD-HHMMSS.log` com as mesmas linhas do passo 2. | Anote se a pasta ou o arquivo não existirem. |
 | 4 | Volte ao jogo, ainda no menu principal, e aperte **F8**. Depois abra `BepInEx/GenesisUI/reports/`. | Um arquivo `report-AAAAMMDD-HHMMSS.txt` novo. Se colar (Ctrl+V) no Explorer ou no Bloco de Notas, aparece o caminho desse arquivo. No menu **não** aparece mensagem na tela; isso é normal, porque o menu não tem HUD. | Anote se o arquivo não foi criado. |
 | 5 | Crie um mundo local novo chamado `GenesisUI-Teste` (ou use um de teste) e entre com um personagem. | A marca d'água continua no canto inferior direito. **Todo o resto da interface está igual ao jogo sem mods**: vida, vigor, barra de itens, minimapa, bússola. | Print `R-000-05.png` com o HUD inteiro. |
