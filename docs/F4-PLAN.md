@@ -1,6 +1,6 @@
 # F4 — Inventory and crafting windows: plan
 
-Status: **proposed, waiting for Diego's approval** (2026-09-28). Branch `f4-windows`.
+Status: **approved in its revised form; F4.0 in progress** (2026-09-28). Branch `f4-windows`.
 
 ## 1. Scope
 
@@ -95,9 +95,13 @@ tone, and the result stretches as a 9-slice at any size without deforming the co
   at 1440p/4K; pieces drawn over the scene (minimap ring over the map, bar frames over grass)
   need their background removed piece by piece; item and game icons in the concept are never
   used (game icons come from the game).
-- **Needs Diego's confirmation:** that he holds the rights to publish pieces of the concept
-  images in a public repository (how they were made), since D-020 (generated art only) and
-  the "concept never in the repository" rule change with this.
+- **Rights confirmed (D-026):** the images are Diego's own (ChatGPT, edited by him in
+  Photoshop). All twelve are upscaled to 3840×2160 first with Real-ESRGAN on the CPU
+  (`tools/art/upscale.py`, output outside the repository), so pieces stay sharp at 4K.
+- **Vital bars fill their frame's whole opening** (Diego): the liquid is clipped by the shape
+  of the frame's inner opening (a mask sprite extracted with the frame) instead of a
+  rectangle, so it reaches into the arch and the point and leaves no black corners; burn,
+  veins and embers live inside the same shape.
 - **HUD first:** the HUD pieces are redone from the concept (chest card, minimap layout,
   bars, hotbar, stamina readout) as step F4.0, then the window frames come from ConceptArt
   (7), (9), (12) and (1).
@@ -130,4 +134,5 @@ tone, and the result stretches as a 9-slice at any size without deforming the co
 2. Tab bar: **all tabs from the start**.
 3. Equipment panel: **clickable already in F4.2**.
 4. Recipe search and filters: **in F4**.
-5. Concept-derived art: wanted; rights confirmation pending (§3a).
+5. Concept-derived art: wanted; images are Diego's own (D-026); upscale to 4K first.
+6. Vital bars: the liquid fills the whole opening of the frame, effects inside it.

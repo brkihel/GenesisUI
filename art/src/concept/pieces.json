@@ -1,0 +1,170 @@
+{
+ "bar_frame": {
+  "border": [
+   13,
+   40,
+   13,
+   38
+  ],
+  "concept": 4,
+  "content": [
+   13,
+   40,
+   13,
+   38
+  ],
+  "from": "bar_frame"
+ },
+ "bar_frame_opening": {
+  "border": [
+   13,
+   40,
+   13,
+   38
+  ],
+  "concept": 4,
+  "from": "bar_frame"
+ },
+ "boss_plate": {
+  "border": [
+   60,
+   21,
+   60,
+   21
+  ],
+  "concept": 6,
+  "content": [
+   51,
+   14,
+   51,
+   14
+  ],
+  "from": "boss_plate"
+ },
+ "card": {
+  "border": [
+   53,
+   53,
+   53,
+   53
+  ],
+  "concept": 8,
+  "content": [
+   18,
+   18,
+   18,
+   18
+  ],
+  "from": "card"
+ },
+ "map_ring": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "concept": 8,
+  "from": "map_ring"
+ },
+ "map_ring_opening": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "concept": 8,
+  "from": "map_ring"
+ },
+ "pill": {
+  "border": [
+   25,
+   25,
+   25,
+   25
+  ],
+  "concept": 8,
+  "content": [
+   16,
+   16,
+   16,
+   16
+  ],
+  "from": "pill"
+ },
+ "plate": {
+  "border": [
+   53,
+   16,
+   53,
+   16
+  ],
+  "concept": 8,
+  "content": [
+   46,
+   14,
+   46,
+   14
+  ],
+  "from": "plate"
+ },
+ "slot": {
+  "border": [
+   16,
+   16,
+   16,
+   16
+  ],
+  "concept": 8,
+  "content": [
+   7,
+   7,
+   7,
+   7
+  ],
+  "from": "slot"
+ },
+ "slot_active": {
+  "border": [
+   18,
+   18,
+   18,
+   18
+  ],
+  "concept": 8,
+  "content": [
+   9,
+   9,
+   9,
+   9
+  ],
+  "from": "slot_active"
+ },
+ "sprint_frame": {
+  "border": [
+   60,
+   15,
+   60,
+   26
+  ],
+  "concept": 5,
+  "content": [
+   60,
+   15,
+   60,
+   26
+  ],
+  "from": "sprint_frame"
+ },
+ "sprint_frame_opening": {
+  "border": [
+   60,
+   15,
+   60,
+   26
+  ],
+  "concept": 5,
+  "from": "sprint_frame"
+ }
+}

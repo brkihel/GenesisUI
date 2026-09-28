@@ -18,6 +18,7 @@ import sys
 sys.path.insert(0, os.path.dirname(__file__))
 
 import cairosvg
+from PIL import Image
 
 import patterns
 import shapes
@@ -54,6 +55,18 @@ def main() -> int:
         cairosvg.svg2png(url=os.path.join(ROOT, "art", "src", name + ".svg"), write_to=os.path.join(out, name + ".png"),
                          output_width=w * SCALE, output_height=h * SCALE)
         manifest["sprites"].append(entry(name, w, h, border, content))
+
+    # Pieces cut from Diego's concept images (D-026) replace the generated sprite of the same name.
+    concept = os.path.join(ROOT, "art", "src", "concept")
+    pieces_path = os.path.join(concept, "pieces.json")
+    if os.path.exists(pieces_path):
+        with open(pieces_path) as f:
+            pieces = json.load(f)
+        manifest["sprites"] = [e for e in manifest["sprites"] if e["name"] not in pieces]
+        for name, meta in sorted(pieces.items()):
+            img = Image.open(os.path.join(concept, name + ".png"))
+            img.save(os.path.join(out, name + ".png"))
+            manifest["sprites"].append(entry(name, img.width // SCALE, img.height // SCALE, meta["border"], meta.get("content")))
 
     patterns.main(out)
     for name, (pw, ph, wrap, border, _) in patterns.PATTERNS.items():

@@ -217,3 +217,24 @@ F9.
 **Why:** Diego: GenesisUI, like SeneaL UI, is a complete rework of the vanilla UI, main and Esc
 menus included; adapting other mods only makes sense once the vanilla screens they plug into
 exist in our form.
+
+## D-025 — Windows: rearrange and dress vanilla, keep its behaviour
+
+**Decision (2026-09-28):** the F4 windows reach the concept layout by moving, resizing and
+restyling vanilla's own panels (`VanillaSkin`, reversible like the veil) plus our own panels
+that call only vanilla's public entry points. Every item operation stays vanilla code.
+**Why:** all item moves, equip swaps, container transfers and crafting live in
+`InventoryGui`'s private handlers, the exact place where item loss and duplication happen,
+and many mods patch them. Diego asked for the concept's layout (ConceptArt 9 and 12); moving
+vanilla's pieces gives that freedom without rewriting the dangerous part. See F4-PLAN.md.
+
+## D-026 — Art cut from Diego's concept images
+
+**Decision (2026-09-28):** UI pieces may be cut from Diego's concept images (the images are his:
+generated with ChatGPT and edited by him in Photoshop), upscaled to 4K with Real-ESRGAN, cleaned
+by `tools/art/extract.py` and committed as sprites with their 9-slice borders and content
+insets. The full concept images and their 4K copies stay outside the repository. Game icons are
+never taken from the concept. This amends D-020 (shapes generated only) for these pieces;
+patterns and anything the concept does not show are still generated.
+**Why:** Diego wants the concept's exact ornaments; a test on the chest card showed they can be
+isolated and stretched cleanly.

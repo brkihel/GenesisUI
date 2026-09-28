@@ -17,3 +17,4 @@ tools/inspect/bin/
 tools/inspect/obj/
 art/fonts/src/
 __pycache__/
+tools/.venv-upscale/
