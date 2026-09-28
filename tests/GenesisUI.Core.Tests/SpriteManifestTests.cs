@@ -87,7 +87,7 @@ namespace GenesisUI.Core.Tests
         {
             var m = Valid();
             m.scale = 9;
-            Assert.Single(SpriteManifestValidator.Validate(m).Where(e => e.Contains("scale")));
+            Assert.Single(SpriteManifestValidator.Validate(m), e => e.Contains("scale"));
         }
     }
 }

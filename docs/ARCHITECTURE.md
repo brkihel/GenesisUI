@@ -182,11 +182,10 @@ reparenting vs. by leaving it in place and punching a hole in the veil.)
   for missing glyphs. If loading fails, the vanilla font is used and the failure is
   reported; the UI never renders without text.
 - **Ornaments and frames**: our own SVG sources, rasterized by `tools/art/render.py`
-  into PNGs plus a per-style `sprites.json` (size, 9-slice border, optional wrap and
+  into PNGs plus `art/out/sprites.json` (size, 9-slice border, optional wrap and
   **content insets** — the rectangle inside a frame where content goes).
-- **Art styles** (D-022): `[Theme] Style` selects `art/<style>/`; `ThemeRuntime.SetStyle`
-  reloads the sprites and the host rebuilds every module. Views ask the theme for sizes
-  (`Border`, `Content`) instead of hard-coding one style's measurements.
+- One art direction, gold (D-023). Views ask the theme where a frame's content goes
+  (`Content`) instead of hard-coding the frame's measurements.
 - **Game sprites** (item icons, some UI sprites) are read at runtime from the game
   (`GUIManager.GetSprite`, `ItemData.GetIcon()`); never redistributed.
 

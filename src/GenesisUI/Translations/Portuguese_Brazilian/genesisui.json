@@ -23,6 +23,7 @@
   "genesisui_module_sprint": "Corrida",
   "genesisui_sprint_label": "VIGOR",
   "genesisui_module_boss": "Placa do chefe",
+  "genesisui_module_enemy": "Placas das criaturas",
   "genesisui_module_hover": "Cartão de interação",
   "genesisui_module_notice": "Notificações"
 }

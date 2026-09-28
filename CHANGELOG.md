@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.5.0-preview.3 — gold only, creature plates, F3 complete
+
+### Removed
+- The `carved` art style, the `[Theme] Style` option and the style selector (D-023). Gold is
+  the only art direction; art ships flat in `plugins/art/`. An old `[Theme] Style` line in
+  the config file is ignored.
+
+### Added
+- **Creature plates** (`hud.enemy`): over regular creatures, a small plate in the boss
+  plate's language with name, 0–2 stars, health with a hot trail (green for tamed/friendly),
+  and vanilla's aware "?" / alerted "!" marks. Each lives inside vanilla's own plate, so it
+  follows vanilla's position and visibility exactly and disappears with it. `[Modules] Enemy`,
+  `[Enemy] OffsetY`.
+
+### Changed
+- Gold vital bars keep the calmer liquid (soft clouds, a few long thin cracks) and the compact
+  value plate from preview.2; bar sizes and the food position are back to the gold layout.
+- The stamina readout scales its whole frame to its small height instead of squashing it.
+- The F8 panel is taller and sums creature-plate veils in one line; restoring a module's
+  veils logs one summary line.
+
 ## 0.5.0-preview.2 — carved bars reworked from the reference comparison
 
 ### Changed

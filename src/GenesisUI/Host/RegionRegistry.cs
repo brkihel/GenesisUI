@@ -37,6 +37,7 @@ namespace GenesisUI.Host
     [GameContract("assembly_valheim", "EnemyHud", "instance")]
     [GameContract("assembly_valheim", "EnemyHud", "m_hudRoot")]
     [GameContract("assembly_valheim", "EnemyHud", "m_baseHudBoss")]
+    [GameContract("assembly_valheim", "EnemyHud", "m_baseHud")]
     internal static class RegionRegistry
     {
         private static readonly Dictionary<string, Func<IEnumerable<GameObject>>> Resolvers = new Dictionary<string, Func<IEnumerable<GameObject>>>(StringComparer.Ordinal)
@@ -55,6 +56,8 @@ namespace GenesisUI.Host
             // Boss HUDs are created and destroyed by vanilla while playing; the boss module veils
             // new ones as they appear (docs/regions.md).
             ["hud.boss"] = BossHuds,
+            // Plates over regular creatures, created and destroyed the same way (hud.enemy).
+            ["hud.enemy"] = EnemyHuds,
             ["hud.minimap"] = () => Minimap.instance != null && Minimap.instance.m_smallRoot != null
                 ? new[] { Minimap.instance.m_smallRoot } : Enumerable.Empty<GameObject>(),
             // HotkeyBar is its own component under the HUD; its Update keeps gamepad
@@ -67,11 +70,11 @@ namespace GenesisUI.Host
         private static readonly Dictionary<string, string[]> ForeignOwners = new Dictionary<string, string[]>(StringComparer.Ordinal)
         {
             // SeneaL UI replaces the whole HUD. While both are installed, it keeps it.
-            ["seneaL.valheim.ui"] = new[] { "hud.health", "hud.stamina", "hud.eitr", "hud.healthDecor", "hud.food", "hud.statusEffects", "hud.guardianPower", "hud.hotbar", "hud.minimap", "hud.hover", "hud.messages", "hud.boss" },
+            ["seneaL.valheim.ui"] = new[] { "hud.health", "hud.stamina", "hud.eitr", "hud.healthDecor", "hud.food", "hud.statusEffects", "hud.guardianPower", "hud.hotbar", "hud.minimap", "hud.hover", "hud.messages", "hud.boss", "hud.enemy" },
         };
 
         /// <summary>Regions whose vanilla objects come and go while playing: empty is normal for them.</summary>
-        private static readonly HashSet<string> Dynamic = new HashSet<string>(StringComparer.Ordinal) { "hud.boss" };
+        private static readonly HashSet<string> Dynamic = new HashSet<string>(StringComparer.Ordinal) { "hud.boss", "hud.enemy" };
 
         public static bool IsDynamic(string region) => Dynamic.Contains(region);
 
@@ -85,16 +88,30 @@ namespace GenesisUI.Host
         }
 
         /// <summary>Live vanilla boss HUDs: clones of m_baseHudBoss under m_hudRoot.</summary>
-        public static IEnumerable<GameObject> BossHuds()
+        public static IEnumerable<GameObject> BossHuds() =>
+            EnemyHud.instance == null ? Enumerable.Empty<GameObject>() : ClonesOf(EnemyHud.instance.m_baseHudBoss);
+
+        /// <summary>Live vanilla plates of regular creatures: clones of m_baseHud under m_hudRoot.</summary>
+        public static IEnumerable<GameObject> EnemyHuds() =>
+            EnemyHud.instance == null ? Enumerable.Empty<GameObject>() : ClonesOf(EnemyHud.instance.m_baseHud);
+
+        /// <summary>
+        /// Name vanilla gives a clone of <paramref name="original"/> (Object.Instantiate appends
+        /// "(Clone)"). Compared exactly: a prefix test would also match a template whose name
+        /// starts with another's.
+        /// </summary>
+        public static string CloneName(GameObject original) => original == null ? null : original.name + "(Clone)";
+
+        private static IEnumerable<GameObject> ClonesOf(GameObject original)
         {
             var e = EnemyHud.instance;
-            if (e == null || e.m_hudRoot == null || e.m_baseHudBoss == null) yield break;
-            string prefix = e.m_baseHudBoss.name;
+            string name = CloneName(original);
+            if (e == null || e.m_hudRoot == null || name == null) yield break;
             var root = e.m_hudRoot.transform;
             for (int i = 0; i < root.childCount; i++)
             {
                 var child = root.GetChild(i);
-                if (child.name.StartsWith(prefix, StringComparison.Ordinal)) yield return child.gameObject;
+                if (string.Equals(child.name, name, StringComparison.Ordinal)) yield return child.gameObject;
             }
         }
 

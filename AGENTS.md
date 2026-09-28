@@ -56,9 +56,8 @@ look): `heimdall-nexus/docs/PADROES-GENESISMODS.md`.
     diagnostics overlay (the host gives modules this for free) and log its failures.
     Debug and Preview builds always ship the full diagnostics layer.
 12. **Art is generated, never hand-drawn** (D-020). Every UI shape comes from
-    `tools/art/shapes.py`, which renders both art styles (D-022): `carved_shapes.py` with
-    `carved_style.py`, `gold_shapes.py` with `gold_style.py`; animated textures come from
-    `tools/art/patterns.py`. Never edit a generated SVG in `art/src/`. New art is ours
+    `tools/art/shapes.py` using `tools/art/style.py` (the gold language, the only art
+    direction: D-023); animated textures come from `tools/art/patterns.py`. Never edit a generated SVG in `art/src/`. New art is ours
     (`art/LICENSES.md`); fonts are OFL only.
 
 ## 2a. Lessons already paid for (do not relearn them)
@@ -106,7 +105,7 @@ look): `heimdall-nexus/docs/PADROES-GENESISMODS.md`.
   icon, and writes `dist/GenesisMods-GenesisUI-<version>[-preview.N].zip`. Commit first:
   the watermark shows the git sha of HEAD.
 - Art: `tools/.venv/bin/python tools/art/render.py` regenerates shapes, patterns, the icon,
-  the PNGs and `art/out/<style>/sprites.json` for every style (venv setup in the script header). Fonts:
+  the PNGs and `art/out/sprites.json` (venv setup in the script header). Fonts:
   `tools/art/fonts.py` (downloads the OFL sources with pinned SHA-256; sources gitignored).
 - **Reading the game**: `dotnet run --project tools/inspect -- <assembly> <Type> [filter]` lists
   members of `ref/*.dll` by metadata; use it before declaring a `[GameContract]`. To read
@@ -143,15 +142,14 @@ look): `heimdall-nexus/docs/PADROES-GENESISMODS.md`.
 5. Put logic (formatting, diffing, layout) in `GenesisUI.Core` with unit tests.
 6. Add a pt-BR test script and bump the version (below).
 
-**Add art** — there are two art styles (D-022, `[Theme] Style`), each a pair of files in
-`tools/art/`: `carved_style.py` + `carved_shapes.py` (wood, iron rivets, V rune) and
-`gold_style.py` + `gold_shapes.py` (gold filigree). Add the piece to **both** under the
-**same sprite name**, using only that style's motifs; its `SPRITES` entry gives design size,
-9-slice border, content insets (where content sits inside a frame) and grain. Views read
-sizes through `ThemeRuntime.Border/Content`, never one style's numbers. Run `render.py`, then
-`tools/art/mock.py <style>` for each style and look at the full-HUD mock before shipping
-(add the new element to the mock). The only hand-written source is
-`art/src/common/bar_fill.svg`, a white gradient texture tinted in game, not a shape. Colours in code come
+**Add art** — add or change a function in `tools/art/shapes.py` using only the style and
+motifs of `tools/art/style.py` (containers vs cells, diamond / volute / bead). There is one art
+direction, gold (D-023); do not start another without Diego asking. Register the sprite in the
+`SPRITES` table with its design size, 9-slice border and, for frames that hold something, its
+content insets (views read them through `ThemeRuntime.Content`). Run `render.py`, then
+`tools/art/mock.py` and look at the full-HUD mock before shipping to judge cohesion (add the new
+element to the mock). The only hand-written source is `art/src/bar_fill.svg`, a white gradient
+texture tinted in game, not a shape. Colours in code come
 from theme tokens. Diego's direction: **delicate, subtle, refined and memorable; never as busy
 as the concept art**; the health bar stays the largest; default positions: minimap top-right,
 hotbar bottom centre (the player will be able to move them later).

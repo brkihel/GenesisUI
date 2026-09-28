@@ -10,6 +10,6 @@ namespace GenesisUI
         public const string Version = "0.5.0";
 
         /// <summary>Bumped for every Preview package handed out for testing.</summary>
-        public const int PreviewNumber = 2;
+        public const int PreviewNumber = 3;
     }
 }

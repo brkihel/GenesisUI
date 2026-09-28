@@ -16,7 +16,7 @@ namespace GenesisUI.Modules.Boss
     /// The boss plate at the top centre (concept 6): name, level stars, health bar with the burn
     /// of what was just lost, and "current / max". Vanilla creates its boss HUD only when a boss
     /// shows up, so the module veils each new one as it appears (region hud.boss is dynamic).
-    /// Regular enemy bars above heads stay vanilla for now.
+    /// Regular creatures get their plates from hud.enemy.
     /// </summary>
     [GameContract("assembly_valheim", "EnemyHud", "instance")]
     [GameContract("assembly_valheim", "EnemyHud", "GetActiveBoss")]

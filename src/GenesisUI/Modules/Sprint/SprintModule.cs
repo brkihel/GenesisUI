@@ -63,13 +63,15 @@ namespace GenesisUI.Modules.Sprint
             _opacity.interactable = false;
             _opacity.blocksRaycasts = false;
 
+            // The frame is drawn 36 high; this readout is smaller, so the whole frame (its
+            // 9-slice ends and its content area) shrinks with it instead of being squashed.
+            float k = Height / 36f;
             var frame = Ui.Fill(Ui.Child(_group, "Frame"));
-            Ui.Image(frame, theme.Sprite("sprint_frame"), Color.white);
+            var frameImage = Ui.Image(frame, theme.Sprite("sprint_frame"), Color.white);
+            frameImage.pixelsPerUnitMultiplier = 1f / k;
 
-            // The track fills the frame's content area, as the loaded style declares it.
-            var c = theme.Content("sprint_frame", new Vector4(24f, 12f, 24f, 12f));
-            float scaleY = Height / 36f;   // the gold frame is drawn 36 high; carved declares its own
-            if (c.y + c.w >= Height) c = new Vector4(c.x, c.y * scaleY, c.z, c.w * scaleY);
+            // The track fills the frame's content area, as art/sprites.json declares it.
+            var c = theme.Content("sprint_frame", new Vector4(24f, 12f, 24f, 12f)) * k;
             var track = Ui.Fill(Ui.Child(frame, "Track"), c.x, c.y, c.z, c.w);
             var fillSprite = theme.Sprite("bar_fill");
             var stamina = ThemeRuntime.ToUnity(theme.Tokens.BarStamina);

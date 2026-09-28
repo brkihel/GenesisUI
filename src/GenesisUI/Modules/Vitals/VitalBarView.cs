@@ -21,14 +21,14 @@ namespace GenesisUI.Modules.Vitals
     }
 
     /// <summary>
-    /// One vertical vital bar, v3 (R-032 references: internal blood texture, burn when consumed,
-    /// carved frame with a value plate).
+    /// One vertical vital bar, v3 (R-032 references: internal blood texture, burn when consumed;
+    /// R-040 comparison: calm liquid, compact value plate).
     ///
-    /// Inside the frame's content area (declared per art style, D-022): a liquid in a mask that
+    /// Inside the frame's content area (declared in art/sprites.json): a liquid in a mask that
     /// rises and falls, made of the tinted body, dark clots, bright veins and faint bubbles,
     /// each drifting up at its own pace. Above the liquid, the part just lost burns: a hot band
-    /// at the surface breaking into grains, with embers rising. The number sits on the style's
-    /// value plate when it has one. Low health adds a pulsing halo and embers along the sides.
+    /// at the surface breaking into grains, with embers rising. The number sits on the value
+    /// plate when the art has one. Low health adds a pulsing halo and embers along the sides.
     /// Only draws what a BarAnimator says; allocation-free per frame.
     /// </summary>
     internal sealed class VitalBarView
@@ -102,15 +102,8 @@ namespace GenesisUI.Modules.Vitals
             _dangerColor = ThemeRuntime.ToUnity(theme.Tokens.StateDanger);
             _frame = Ui.Image(Ui.Fill(Ui.Child(Root, "Frame")), frameSprite, _frameColor);
 
-            // The frame keeps its proportions at any bar width: its 9-slice borders (cap, rails,
-            // pommel) and its content insets scale with the width, only the rails stretch along
-            // the bar (R-040 comparison: a stretched cap looked like a lid on a box).
-            float designWidth = theme.DesignWidth("bar_frame");
-            float k = frameSprite != null && designWidth > 0f ? size.x / designWidth : 1f;
-            _frame.pixelsPerUnitMultiplier = 1f / k;
-
-            // The content area comes from the loaded style; the fallback is the gold frame's.
-            var c = theme.Content("bar_frame", new Vector4(9.5f, 24f, 9.5f, 32f)) * k;
+            // The content area comes from art/sprites.json; the fallback matches the frame drawn today.
+            var c = theme.Content("bar_frame", new Vector4(10f, 24f, 10f, 32f));
             _areaLeft = c.x;
             _areaBottom = c.y;
             _areaWidth = size.x - c.x - c.z;
@@ -178,7 +171,7 @@ namespace GenesisUI.Modules.Vitals
                 _embers[i] = new Ember { Rt = rt, Image = img };
             }
 
-            // The number: on the style's value plate when there is one, else centred on the liquid.
+            // The number: on the value plate when the art has one, else centred on the liquid.
             var plateSprite = theme.Sprite("bar_value");
             if (plateSprite != null)
             {

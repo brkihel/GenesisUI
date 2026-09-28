@@ -21,14 +21,10 @@ namespace GenesisUI.Core.Tests
             return Path.Combine(dir.FullName, "art", "out");
         }
 
-        public static IEnumerable<object[]> Styles() =>
-            new[] { new object[] { "carved" }, new object[] { "gold" } };
-
-        [Theory]
-        [MemberData(nameof(Styles))]
-        public void Shipped_manifest_parses_validates_and_matches_its_pngs(string style)
+        [Fact]
+        public void Shipped_manifest_parses_validates_and_matches_its_pngs()
         {
-            string dir = Path.Combine(ArtOut(), style);
+            string dir = ArtOut();
             var errors = new List<string>();
             var manifest = SpriteManifestValidator.Parse(File.ReadAllText(Path.Combine(dir, "sprites.json")), errors);
             Assert.Empty(errors);

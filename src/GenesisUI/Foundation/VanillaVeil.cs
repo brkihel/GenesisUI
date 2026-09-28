@@ -52,8 +52,9 @@ namespace GenesisUI.Foundation
             return false;
         }
 
+        /// <param name="quiet">Skip the info line: for objects vanilla creates in numbers (creature plates).</param>
         /// <returns>The handle, or null if the target is missing or already veiled by someone else.</returns>
-        public static VeilHandle Apply(string owner, string label, GameObject target)
+        public static VeilHandle Apply(string owner, string label, GameObject target, bool quiet = false)
         {
             if (target == null)
             {
@@ -84,11 +85,16 @@ namespace GenesisUI.Foundation
 
             Active.Add(handle);
             Hide(handle);
-            GenesisLog.Info("Veil", owner + " veiled " + label + (handle.AddedGroup ? " (own CanvasGroup)" : " (vanilla CanvasGroup)"));
+            if (!quiet) GenesisLog.Info("Veil", owner + " veiled " + label + (handle.AddedGroup ? " (own CanvasGroup)" : " (vanilla CanvasGroup)"));
             return handle;
         }
 
         public static void Restore(VeilHandle handle)
+        {
+            Restore(handle, quiet: false);
+        }
+
+        private static void Restore(VeilHandle handle, bool quiet)
         {
             if (handle == null || !Active.Remove(handle)) return;
             if (!handle.Alive) return; // destroyed with its scene: nothing to give back
@@ -103,7 +109,7 @@ namespace GenesisUI.Foundation
                 handle.Group.blocksRaycasts = handle.PreviousBlocksRaycasts;
                 handle.Group.interactable = handle.PreviousInteractable;
             }
-            GenesisLog.Info("Veil", handle.Owner + " restored " + handle.Label);
+            if (!quiet) GenesisLog.Info("Veil", handle.Owner + " restored " + handle.Label);
         }
 
         public static int RestoreAll(string owner)
@@ -112,9 +118,10 @@ namespace GenesisUI.Foundation
             for (int i = Active.Count - 1; i >= 0; i--)
             {
                 if (Active[i].Owner != owner) continue;
-                Restore(Active[i]);
+                Restore(Active[i], quiet: true);
                 n++;
             }
+            if (n > 0) GenesisLog.Info("Veil", owner + " restored " + n + " vanilla object(s)");
             return n;
         }
 

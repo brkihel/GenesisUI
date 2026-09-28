@@ -180,7 +180,7 @@ map textures could become stale on the copy. A circular mesh makes that copy
 unnecessary while retaining the same fog-of-war shader. Client confirmation is
 required before treating the grey-terrain bug as resolved.
 
-## D-022 — Selectable art styles
+## D-022 — Selectable art styles (superseded by D-023)
 
 **Decision (2026-09-28):** GenesisUI ships two complete art styles, `carved` (carved wood
 with iron rivets and a V rune; the default while Diego evaluates) and `gold` (the D-020
@@ -195,3 +195,14 @@ HUD clones, veiled as they appear).
 asked for it as a selectable style rather than a replacement, to decide later which
 direction continues. Shared names and manifest-driven measurements keep modules
 style-agnostic, so a second style costs art, not code.
+
+## D-023 — Gold is the only art direction
+
+**Decision (2026-09-28):** the `carved` style is removed (code, art, config and docs) and the
+style selector with it. GenesisUI has one art direction, the gold language of D-020; art ships
+flat in `plugins/art/` with one `art/out/sprites.json`. What D-022 introduced and stays useful
+is kept: content insets in the manifest, `VanillaNudge`, dynamic regions. The liquid effects
+and the compact value plate from the R-040 comparison apply to gold.
+**Why:** Diego, after the 0.5.0-preview.2 mock: the carved rendition did not reproduce his
+reference and was unpleasant; focus on gold from now on. A second style doubles every art
+change for no benefit while one direction is being finished.

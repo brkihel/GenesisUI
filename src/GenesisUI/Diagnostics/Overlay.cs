@@ -83,7 +83,7 @@ namespace GenesisUI.Diagnostics
             if (root == null || _theme == null) return;
             var t = _theme.Tokens;
 
-            _panel = Ui.Place(Ui.Child(root.transform, "GenesisUI_Diagnostics"), new Vector2(0f, 1f), new Vector2(24f, -24f), new Vector2(560f, 780f));
+            _panel = Ui.Place(Ui.Child(root.transform, "GenesisUI_Diagnostics"), new Vector2(0f, 1f), new Vector2(24f, -24f), new Vector2(560f, 840f));
             var bg = Ui.Image(_panel, null, ThemeRuntime.ToUnity(t.PanelBackground), raycast: true);
             var outline = _panel.gameObject.AddComponent<Outline>();
             outline.effectColor = ThemeRuntime.ToUnity(t.LineFrame);
@@ -119,7 +119,7 @@ namespace GenesisUI.Diagnostics
             y -= 44f;
 
             _body = Ui.Text(_panel, "Body", _theme, FontRole.Body, 16f, ThemeRuntime.ToUnity(t.TextBody), TextAlignmentOptions.TopLeft);
-            Ui.Place((RectTransform)_body.transform, new Vector2(0f, 1f), new Vector2(18f, y), new Vector2(524f, 780f + y - 16f));
+            Ui.Place((RectTransform)_body.transform, new Vector2(0f, 1f), new Vector2(18f, y), new Vector2(524f, 840f + y - 16f));
             _body.textWrappingMode = TextWrappingModes.Normal;
             _body.overflowMode = TextOverflowModes.Truncate;
 
@@ -152,9 +152,15 @@ namespace GenesisUI.Diagnostics
 
             sb.Append("\n<color=#F7E283>").Append(L("$genesisui_diag_veils")).Append("</color>\n");
             if (VanillaVeil.Handles.Count == 0) sb.Append("—\n");
+            int plates = 0;
             foreach (var h in VanillaVeil.Handles)
+            {
+                // Creature plates come and go by the dozen: one summary line instead of a list.
+                if (h.Label.StartsWith("hud.enemy/", StringComparison.Ordinal)) { plates++; continue; }
                 sb.Append("• ").Append(h.Label).Append(h.AddedGroup ? " (own group)" : " (vanilla group)")
                   .Append(h.Fought > 0 ? "  fought " + h.Fought + "x" : "").Append('\n');
+            }
+            if (plates > 0) sb.Append("• hud.enemy: ").Append(plates).Append(" creature plate(s)\n");
 
             var faults = Guard.Faults.Snapshot();
             sb.Append("\n<color=#F7E283>").Append(L("$genesisui_diag_faults")).Append("</color> ").Append(faults.Count).Append('\n');

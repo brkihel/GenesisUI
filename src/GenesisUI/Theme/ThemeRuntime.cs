@@ -44,11 +44,7 @@ namespace GenesisUI.Theme
         private const long MaxImageBytes = 4L * 1024 * 1024;
         private const long MaxManifestBytes = 64L * 1024;
 
-        /// <summary>Art styles shipped under plugins/art/&lt;style&gt;/ (D-022). The first is the default.</summary>
-        public static readonly string[] Styles = { "carved", "gold" };
-
         private readonly string _pluginDir;
-        private string _style = Styles[0];
         private readonly Dictionary<string, SpriteEntry> _entries = new Dictionary<string, SpriteEntry>(StringComparer.Ordinal);
         private readonly Dictionary<FontRole, TMP_FontAsset> _fonts = new Dictionary<FontRole, TMP_FontAsset>();
         private readonly Dictionary<FontRole, Material> _outlined = new Dictionary<FontRole, Material>();
@@ -58,45 +54,19 @@ namespace GenesisUI.Theme
 
         public ThemeTokens Tokens { get; } = ThemeTokens.Default();
 
-        public ThemeRuntime(string pluginDir, string style)
+        public ThemeRuntime(string pluginDir)
         {
             _pluginDir = pluginDir;
-            _style = Array.IndexOf(Styles, style) >= 0 ? style : Styles[0];
-        }
-
-        public string Style => _style;
-
-        /// <summary>
-        /// Switches the art style: drops the loaded sprites and loads the other set. The caller
-        /// rebuilds the modules afterwards (ModuleHost.RebuildAll), so no view keeps an old sprite.
-        /// </summary>
-        public void SetStyle(string style)
-        {
-            if (Array.IndexOf(Styles, style) < 0 || style == _style) return;
-            _style = style;
-            foreach (var s in _sprites.Values)
-            {
-                if (s == null) continue;
-                UnityEngine.Object.Destroy(s.texture);
-                UnityEngine.Object.Destroy(s);
-            }
-            _sprites.Clear();
-            _entries.Clear();
-            if (_vanilla != null) Guard.Try("load sprites", LoadSprites);
-            GenesisLog.Info("Theme", "art style is now '" + _style + "'");
         }
 
         /// <summary>
-        /// Where a frame's contents go, in design units (left, bottom, right, top), as declared by
-        /// the loaded style; <paramref name="fallback"/> when the style does not declare it.
+        /// Where a frame's contents go, in design units (left, bottom, right, top), as declared in
+        /// art/sprites.json; <paramref name="fallback"/> when the sprite does not declare it.
         /// </summary>
         public Vector4 Content(string name, Vector4 fallback) =>
             _entries.TryGetValue(name, out var e) && e.HasContent
                 ? new Vector4(e.contentLeft, e.contentBottom, e.contentRight, e.contentTop)
                 : fallback;
-
-        /// <summary>A sprite's design width in design units as the loaded style declares it; 0 when absent.</summary>
-        public float DesignWidth(string name) => _entries.TryGetValue(name, out var e) ? e.width : 0f;
 
         public static Color ToUnity(ColorRgba c) => new Color(c.R, c.G, c.B, c.A);
 
@@ -199,10 +169,10 @@ namespace GenesisUI.Theme
 
         private void LoadSprites()
         {
-            string dir = Path.GetFullPath(Path.Combine(_pluginDir, "art", _style));
+            string dir = Path.GetFullPath(Path.Combine(_pluginDir, "art"));
             string manifestPath = Path.Combine(dir, "sprites.json");
             var manifestInfo = new FileInfo(manifestPath);
-            if (!manifestInfo.Exists) { GenesisLog.Warn("Theme", "art/" + _style + "/sprites.json missing; plain shapes will be used"); return; }
+            if (!manifestInfo.Exists) { GenesisLog.Warn("Theme", "art/sprites.json missing; plain shapes will be used"); return; }
             if (manifestInfo.Length > MaxManifestBytes) { GenesisLog.Warn("Theme", "art/sprites.json too large; ignored"); return; }
 
             // Our own strict reader (D-018): JsonUtility left the sprite list empty without
@@ -246,7 +216,7 @@ namespace GenesisUI.Theme
                 _sprites[entry.name] = sprite;
                 _entries[entry.name] = entry;
             }
-            GenesisLog.Info("Theme", "style '" + _style + "': sprites loaded " + _sprites.Count + "/" + manifest.sprites.Length);
+            GenesisLog.Info("Theme", "sprites loaded " + _sprites.Count + "/" + manifest.sprites.Length);
         }
     }
 }

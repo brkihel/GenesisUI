@@ -110,17 +110,6 @@ namespace GenesisUI.Host
         }
 #endif
 
-        /// <summary>Rebuilds every active module, e.g. after the art style changed.</summary>
-        public static void RebuildAll()
-        {
-            foreach (var e in Entries)
-            {
-                if (e.State != ModuleState.Active) continue;
-                TearDown(e, ModuleState.Waiting, null);
-                Reconcile(e);
-            }
-        }
-
         /// <summary>Diagnostics "retry": forget the fault and try to build again.</summary>
         public static void Retry(ModuleEntry e)
         {

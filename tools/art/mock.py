@@ -1,9 +1,9 @@
-"""Full-HUD mock at 1920x1080, every element at its default position, in one art style.
+"""Full-HUD mock at 1920x1080, every element at its default position.
 
-    tools/.venv/bin/python tools/art/mock.py [style] [output.png]      (style: carved | gold)
+    tools/.venv/bin/python tools/art/mock.py [output.png]
 
-Composes the rendered sprites of art/out/<style> the way the plugin lays them out, reading
-9-slice borders and content insets from the style's own sprites.json, so cohesion between
+Composes the rendered sprites of art/out the way the plugin lays them out, reading 9-slice
+borders and content insets from art/out/sprites.json, so cohesion between
 pieces can be judged before a build reaches Diego (AGENTS.md "Add art"). Approximate: no
 animation, no exact TMP rendering. The backdrop is a concept image from Diego's local folder
 (its UI-free middle; never committed) when present, else a busy green field. Keep positions in sync with the
@@ -24,8 +24,8 @@ W, H = 1920, 1080
 
 
 class Style:
-    def __init__(self, name):
-        self.dir = os.path.join(ROOT, "art", "out", name)
+    def __init__(self):
+        self.dir = os.path.join(ROOT, "art", "out")
         with open(os.path.join(self.dir, "sprites.json"), encoding="utf-8") as f:
             self.meta = {s["name"]: s for s in json.load(f)["sprites"]}
 
@@ -79,8 +79,8 @@ def font(name, size):
     return ImageFont.truetype(os.path.join(FONTS, name + ".ttf"), size)
 
 
-def main(style_name, out_path):
-    st = Style(style_name)
+def main(out_path):
+    st = Style()
     rng = random.Random(1)
     if os.path.exists(BACKDROP):
         # The concept carries its own HUD; use its UI-free middle so only our pieces show.
@@ -104,10 +104,8 @@ def main(style_name, out_path):
     # Vital bars [Vitals] OffsetX 36, OffsetY 72 (UI y grows upward).
     def bar(x, y, w, h, rgb, frac, trail, value, hot):
         top = H - (y + h)
-        k = w / st.meta["bar_frame"]["width"]
-        put(st.nine("bar_frame", w, h, k), x, top)
-        cl, cb, cr, ct = (v * k for v in st.content("bar_frame", (9.5, 24, 9.5, 32)))
-        cl, cb, cr, ct = int(round(cl)), int(round(cb)), int(round(cr)), int(round(ct))
+        put(st.nine("bar_frame", w, h), x, top)
+        cl, cb, cr, ct = (int(round(v)) for v in st.content("bar_frame", (10, 24, 10, 32)))
         aw, ah = int(w - cl - cr), int(h - cb - ct)
         fh, th = int(ah * frac), int(ah * trail)
         light = tuple(int(c + (255 - c) * 0.4) for c in rgb)
@@ -129,15 +127,15 @@ def main(style_name, out_path):
             text(x + w / 2, top + ct + ah / 2, str(value), font("Cinzel-SemiBold", 17))
 
     vx, vy = 36, 72
-    bar(vx, vy + 22, 40, 226, (0xB8, 0x1E, 0x20), 0.66, 0.78, 148, (255, 158, 66))
-    bar(vx + 46, vy + 22, 34, 196, (0xC8, 0x92, 0x24), 0.8, 0.8, 132, (255, 236, 150))
-    bar(vx + 84, vy + 22, 34, 196, (0x24, 0x8A, 0xB8), 0.5, 0.5, 66, (175, 238, 255))
+    bar(vx, vy + 22, 46, 226, (0xB8, 0x1E, 0x20), 0.66, 0.78, 148, (255, 158, 66))
+    bar(vx + 52, vy + 22, 38, 196, (0xC8, 0x92, 0x24), 0.8, 0.8, 132, (255, 236, 150))
+    bar(vx + 96, vy + 22, 38, 196, (0x24, 0x8A, 0xB8), 0.5, 0.5, 66, (175, 238, 255))
     if st.has("medallion"):
         put(st.img("medallion").resize((58, 58), Image.LANCZOS), vx - 6, H - (vy + 58))
 
-    # Food [Food] OffsetX 176, OffsetY 94.
+    # Food [Food] OffsetX 190, OffsetY 94.
     for i, t in enumerate(("13m", "23m", "28m")):
-        x = 176 + i * 66
+        x = 190 + i * 66
         put(st.img("slot").resize((58, 58), Image.LANCZOS), x, H - (94 + 58))
         text(x + 49, H - 94 - 8, t, font("Cinzel-SemiBold", 14), anchor="rs")
 
@@ -154,10 +152,9 @@ def main(style_name, out_path):
     # Stamina readout [Sprint] OffsetY 120, 220 x 22.
     sw, sh = 220, 22
     sx, stop = W / 2 - sw / 2, H - (120 + sh)
-    put(st.nine("sprint_frame", sw, sh), sx, stop)
-    cl, cb, cr, ct = st.content("sprint_frame", (24, 12, 24, 12))
-    if cb + ct >= sh:
-        cb, ct = cb * sh / 36, ct * sh / 36
+    k = sh / 36
+    put(st.nine("sprint_frame", sw, sh, k), sx, stop)
+    cl, cb, cr, ct = (v * k for v in st.content("sprint_frame", (24, 12, 24, 12)))
     tw, thh = int(sw - cl - cr), int(sh - cb - ct)
     put(tint(st.img("bar_fill").resize((tw, thh)), (0xC8, 0x92, 0x24)).crop((0, 0, int(tw * 0.62), thh)), sx + cl, stop + ct)
 
@@ -202,6 +199,19 @@ def main(style_name, out_path):
         for i in range(2):
             put(st.img("star").resize((13, 13), Image.LANCZOS), W / 2 - 7.5 + (i - 0.5) * 15 - 6, btop - 6)
 
+    # Creature plate [Enemy]: the boss plate drawn at 0.3, inside vanilla's plate over a head.
+    if st.has("boss_plate"):
+        ew, eh, k = 112, 18, 0.3
+        ex, etop = 700, 560
+        put(st.nine("boss_plate", ew, eh, k), ex, etop)
+        cl, cb, cr, ct = (v * k for v in st.content("boss_plate", (22, 12, 22, 12)))
+        bx, by, bw, bh = ex + cl + 1, etop + ct + 1, int(ew - cl - cr - 2), int(eh - cb - ct - 2)
+        put(Image.new("RGBA", (bw, bh), (0, 0, 0, 140)), bx, by)
+        put(tint(st.img("bar_fill").resize((int(bw * 0.8), bh)), (0xA5, 0x1C, 0x1E)), bx, by)
+        put(st.img("star").resize((10, 10), Image.LANCZOS), ex + ew / 2 - 5, etop - 5)
+        text(ex + ew / 2, etop - 14, "Anão Cinzento", font("Cinzel-Medium", 14))
+        text(ex - 8, etop + eh / 2, "!", font("Cinzel-SemiBold", 16), fill=(224, 100, 60, 255))
+
     # Hover card [Hover] OffsetX 60, OffsetY 30 from the centre.
     if st.has("card"):
         cw, chh = 190, 70
@@ -224,5 +234,4 @@ def main(style_name, out_path):
 
 
 if __name__ == "__main__":
-    style = sys.argv[1] if len(sys.argv) > 1 else "carved"
-    main(style, sys.argv[2] if len(sys.argv) > 2 else os.path.join(ROOT, "dist", f"hud-mock-{style}.png"))
+    main(sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "dist", "hud-mock.png"))
