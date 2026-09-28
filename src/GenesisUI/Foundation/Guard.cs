@@ -35,6 +35,43 @@ namespace GenesisUI.Foundation
             }
         }
 
+        /// <summary>
+        /// Allocation-free variant for per-frame calls: pass a cached delegate and its
+        /// argument instead of a capturing lambda.
+        /// </summary>
+        public static bool Run<TArg>(string owner, Action<TArg> action, TArg arg)
+        {
+            if (Faults.IsTripped(owner)) return false;
+            try
+            {
+                action(arg);
+                return true;
+            }
+            catch (Exception e)
+            {
+                Fault(owner, e);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// For clean-up paths that must always be attempted (teardown, restore, config
+        /// toggles): logs a failure but never trips, so the next attempt still runs.
+        /// </summary>
+        public static bool Try(string what, Action action)
+        {
+            try
+            {
+                action();
+                return true;
+            }
+            catch (Exception e)
+            {
+                GenesisLog.Error("Guard", what + " failed: " + e, "try:" + what);
+                return false;
+            }
+        }
+
         public static T Run<T>(string owner, Func<T> func, T fallback)
         {
             if (Faults.IsTripped(owner)) return fallback;

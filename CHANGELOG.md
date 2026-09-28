@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.2.0-preview.1 — F2: first visual module
+
+### Added
+- **Vitals module**: health, stamina and eitr as framed vertical bars at the bottom-left
+  (concepts 4–6). Numbers inside the bars, a trail showing the damage just taken, an
+  ember pulse on the health frame below 25 %, the eitr bar only when the character has
+  eitr. Vanilla bars are veiled, not destroyed. Position and size in `[Vitals]` config.
+- **Module host**: regions with a single owner (blocked while SeneaL UI is installed),
+  guarded build/refresh/teardown, live toggles (`[General] Enabled`, `[Modules] Vitals`),
+  scene changes handled centrally, allocation-free refresh path.
+- **Vanilla veil**: CanvasGroup veil restored exactly; re-applied every LateUpdate when a
+  vanilla animator fights it, logged once.
+- **Theme**: Cinzel and Cormorant Garamond (OFL) loaded at runtime with the game font as
+  fallback; SVG-sourced sprites (bar frame, bar fill, medallion) from a validated manifest.
+- **Diagnostics panel (F8)** in Preview/Debug: modules with state and cost, regions, veils,
+  faults, input leases; buttons to inject a fault, retry a module, show vanilla underneath,
+  write the report.
+- `tools/inspect` (member lister over `ref/`), `tools/art/fonts.py`, `docs/regions.md`.
+- 33 more Core tests (bar animation, colours, pulse, sprite manifest).
+
+
 ## 0.1.0-preview.2 — F1 fixes from R-000
 
 ### Fixed

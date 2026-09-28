@@ -1,4 +1,18 @@
 {
   "genesisui_report_saved": "GenesisUI: diagnostic report saved; its path was copied to the clipboard.",
-  "genesisui_report_failed": "GenesisUI: the diagnostic report could not be written. See BepInEx/LogOutput.log."
+  "genesisui_report_failed": "GenesisUI: the diagnostic report could not be written. See BepInEx/LogOutput.log.",
+  "genesisui_module_vitals": "Vitals",
+  "genesisui_diag_title": "GenesisUI · Diagnostics",
+  "genesisui_diag_inject": "Inject fault",
+  "genesisui_diag_retry": "Retry",
+  "genesisui_diag_show_vanilla": "Show vanilla",
+  "genesisui_diag_hide_vanilla": "Hide vanilla",
+  "genesisui_diag_report": "Write report",
+  "genesisui_diag_report_done": "Report written; its path is on the clipboard.",
+  "genesisui_diag_close": "Close (F8)",
+  "genesisui_diag_modules": "Modules",
+  "genesisui_diag_regions": "Regions",
+  "genesisui_diag_veils": "Veiled vanilla pieces",
+  "genesisui_diag_faults": "Faults:",
+  "genesisui_diag_input": "Input leases open:"
 }

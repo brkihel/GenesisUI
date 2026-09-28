@@ -47,8 +47,13 @@ STAGE="dist/$NAME"
 rm -rf "$STAGE" "dist/$NAME.zip"
 mkdir -p "$STAGE/plugins"
 
+OUTDIR=$(dirname "$DLL")
+# Fonts (OFL, with their licenses) and rendered art ship next to the DLL.
+[ "$(ls "$OUTDIR"/fonts/*.ttf 2>/dev/null | wc -l)" -eq 5 ] || { echo "expected 5 fonts in $OUTDIR/fonts (run tools/art/fonts.py)" >&2; exit 1; }
+[ -f "$OUTDIR/art/sprites.json" ] || { echo "missing $OUTDIR/art/sprites.json (run tools/art/render.py)" >&2; exit 1; }
+
 cp "$DLL" "$STAGE/plugins/"
-cp -r src/GenesisUI/Translations "$STAGE/plugins/"
+cp -r src/GenesisUI/Translations "$OUTDIR/fonts" "$OUTDIR/art" "$STAGE/plugins/"
 cp icon.png README.md CHANGELOG.md LICENSE "$STAGE/"
 
 # The manifest dependency must name the Jotunn we compiled against (ref/Jotunn.dll).

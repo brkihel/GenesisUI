@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 160" width="48" height="160">
+  <!-- Vertical vital-bar frame (O6). 9-slice: left 10, right 10, top 26, bottom 14.
+       Arched top with a diamond finial, double line in aged gold. Original work. -->
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F7E283"/>
+      <stop offset="1" stop-color="#B8863E"/>
+    </linearGradient>
+  </defs>
+  <path d="M6,28 Q6,14 24,10 Q42,14 42,28 L42,150 Q42,155 37,155 L11,155 Q6,155 6,150 Z"
+        fill="#0B0D0C" fill-opacity="0.88" stroke="url(#g)" stroke-width="2.2"/>
+  <path d="M9.5,29 Q9.5,17.5 24,14 Q38.5,17.5 38.5,29 L38.5,149 Q38.5,151.5 36,151.5 L12,151.5 Q9.5,151.5 9.5,149 Z"
+        fill="none" stroke="#705B3F" stroke-width="1"/>
+  <path d="M24,0.8 l5.2,5.2 -5.2,5.2 -5.2,-5.2z" fill="url(#g)"/>
+  <path d="M24,3.6 l2.4,2.4 -2.4,2.4 -2.4,-2.4z" fill="#0B0D0C"/>
+</svg>

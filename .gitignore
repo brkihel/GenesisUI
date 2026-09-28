@@ -11,3 +11,8 @@ packages/
 # concept art and anything extracted from other mods never enter this repository
 tools/.venv/
 dist/
+
+# tools/inspect build output
+tools/inspect/bin/
+tools/inspect/obj/
+art/fonts/src/

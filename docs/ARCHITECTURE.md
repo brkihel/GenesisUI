@@ -61,22 +61,26 @@ it references Unity, Valheim, Harmony or BepInEx, or the plugin project.
 A module owns one or more **regions** of the vanilla UI and draws its replacement.
 
 ```csharp
-public interface IUiModule
+internal interface IUiModule                 // src/GenesisUI/Host/IUiModule.cs
 {
     string Id { get; }                       // "hud.vitals"
+    string NameToken { get; }                // "$genesisui_module_vitals"
     IReadOnlyList<string> Regions { get; }   // ["hud.health", "hud.stamina", "hud.eitr"]
-    IReadOnlyList<GameContract> Requires { get; }
+    float RefreshRate { get; }               // Hz; the scheduler never calls faster
     void Build(ModuleContext ctx);           // create own objects under ctx.Root
-    void Refresh(RefreshReason reason);      // data changed or scheduled tick
-    void Suspend();                          // hidden (e.g. map open), keep objects
-    void Resume();
-    void Teardown();                         // destroy own objects, release leases
+    void Refresh(float deltaSeconds);        // scheduled tick
+    void Teardown();                         // destroy own objects
 }
 ```
 
+Game members a module touches are declared with `[GameContract]` on the class instead
+of a `Requires` list. Suspend/Resume are not needed yet: the module root lives under the
+vanilla HUD root, which vanilla already moves off-screen when the HUD hides (see
+[regions.md](regions.md)).
+
 **ModuleHost guarantees**, for every module:
 
-1. `Requires` is checked once per session before `Build`. A missing member means
+1. The `[GameContract]`s are checked before `Build`. A missing member means
    state `Unsupported` with the exact member named; vanilla keeps the region.
 2. Every call is wrapped by the Foundation guard. An exception moves the module
    to `Faulted`: `Teardown` runs, the veil is lifted from its regions (vanilla is

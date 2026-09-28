@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Knot medallion (O5): ring with triquetra, used under the vital bars. Original work. -->
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#F7E283"/>
+      <stop offset="1" stop-color="#B8863E"/>
+    </linearGradient>
+  </defs>
+  <circle cx="32" cy="32" r="27" fill="#0B0D0C" fill-opacity="0.92" stroke="url(#g)" stroke-width="2.4"/>
+  <circle cx="32" cy="32" r="22.5" fill="none" stroke="#705B3F" stroke-width="1"/>
+  <path d="M32,5 l3,3 -3,3 -3,-3z M32,53 l3,3 -3,3 -3,-3z M5,32 l3,-3 3,3 -3,3z M53,32 l3,-3 3,3 -3,3z" fill="url(#g)"/>
+  <g fill="none" stroke="url(#g)" stroke-width="2.2" stroke-linejoin="round"><path d="M32.00,33.50 A15.0,15.0 0 0 1 32.00,18.50 A15.0,15.0 0 0 1 32.00,33.50Z"/><path d="M32.00,33.50 A15.0,15.0 0 0 1 44.99,41.00 A15.0,15.0 0 0 1 32.00,33.50Z"/><path d="M32.00,33.50 A15.0,15.0 0 0 1 19.01,41.00 A15.0,15.0 0 0 1 32.00,33.50Z"/><circle cx="32.0" cy="33.5" r="7.2"/></g>
+</svg>

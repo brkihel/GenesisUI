@@ -7,9 +7,9 @@ namespace GenesisUI
         public const string Name = "GenesisUI";
 
         /// <summary>MAJOR.MINOR.PATCH; BepInEx parses it as System.Version.</summary>
-        public const string Version = "0.1.0";
+        public const string Version = "0.2.0";
 
         /// <summary>Bumped for every Preview package handed out for testing.</summary>
-        public const int PreviewNumber = 2;
+        public const int PreviewNumber = 1;
     }
 }

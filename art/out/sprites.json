@@ -1,0 +1,35 @@
+{
+  "scale": 2,
+  "sprites": [
+    {
+      "name": "bar_frame",
+      "file": "bar_frame.png",
+      "width": 48,
+      "height": 160,
+      "borderLeft": 10,
+      "borderBottom": 14,
+      "borderRight": 10,
+      "borderTop": 26
+    },
+    {
+      "name": "bar_fill",
+      "file": "bar_fill.png",
+      "width": 16,
+      "height": 64,
+      "borderLeft": 0,
+      "borderBottom": 0,
+      "borderRight": 0,
+      "borderTop": 0
+    },
+    {
+      "name": "medallion",
+      "file": "medallion.png",
+      "width": 64,
+      "height": 64,
+      "borderLeft": 0,
+      "borderBottom": 0,
+      "borderRight": 0,
+      "borderTop": 0
+    }
+  ]
+}

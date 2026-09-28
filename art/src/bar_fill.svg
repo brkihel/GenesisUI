@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 64" width="16" height="64">
+  <!-- Bar fill, white so theme tokens tint it: rounded glass look, brighter core,
+       darker edges, thin highlight line on the left. Original work. -->
+  <defs>
+    <linearGradient id="h" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#8A8A8A"/>
+      <stop offset="0.28" stop-color="#FFFFFF"/>
+      <stop offset="0.55" stop-color="#E6E6E6"/>
+      <stop offset="1" stop-color="#6E6E6E"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="16" height="64" fill="url(#h)"/>
+  <rect x="3" y="0" width="1.2" height="64" fill="#FFFFFF" fill-opacity="0.55"/>
+</svg>

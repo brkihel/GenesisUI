@@ -1,4 +1,18 @@
 {
   "genesisui_report_saved": "GenesisUI: relatório de diagnóstico salvo; o caminho foi copiado para a área de transferência.",
-  "genesisui_report_failed": "GenesisUI: não foi possível gravar o relatório. Veja BepInEx/LogOutput.log."
+  "genesisui_report_failed": "GenesisUI: não foi possível gravar o relatório. Veja BepInEx/LogOutput.log.",
+  "genesisui_module_vitals": "Vitais",
+  "genesisui_diag_title": "GenesisUI · Diagnóstico",
+  "genesisui_diag_inject": "Injetar falha",
+  "genesisui_diag_retry": "Reativar",
+  "genesisui_diag_show_vanilla": "Mostrar vanilla",
+  "genesisui_diag_hide_vanilla": "Esconder vanilla",
+  "genesisui_diag_report": "Gravar relatório",
+  "genesisui_diag_report_done": "Relatório gravado; o caminho está na área de transferência.",
+  "genesisui_diag_close": "Fechar (F8)",
+  "genesisui_diag_modules": "Módulos",
+  "genesisui_diag_regions": "Regiões",
+  "genesisui_diag_veils": "Partes vanilla escondidas",
+  "genesisui_diag_faults": "Falhas:",
+  "genesisui_diag_input": "Bloqueios de entrada abertos:"
 }
