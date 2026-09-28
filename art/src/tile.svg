@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60" width="60" height="60">
+  <!-- Status-effect tile (C8). Fixed size. Original work. -->
+  <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F7E283"/><stop offset="1" stop-color="#B8863E"/></linearGradient></defs>
+  <rect x="2" y="5" width="56" height="53" rx="8" fill="#0B0D0C" fill-opacity="0.88" stroke="#705B3F" stroke-width="1.6"/>
+  <rect x="5" y="8" width="50" height="47" rx="6" fill="none" stroke="#FACF72" stroke-opacity="0.18" stroke-width="1"/>
+  <path d="M30,0.8 l4.2,4.2 -4.2,4.2 -4.2,-4.2z" fill="url(#g)"/>
+</svg>

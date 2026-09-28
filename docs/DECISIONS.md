@@ -90,6 +90,8 @@ or BepInEx, with a build guard (GenesisPlayerBots D-001 pattern).
 
 ## D-013 — Data files parsed with `JsonUtility`
 
+*Superseded by D-018.*
+
 **Decision:** layout and theme files use Unity `JsonUtility` into typed classes.
 **Why:** no extra dependency, no polymorphic deserialization, nothing in a data file
 can name a type or load code.
@@ -128,3 +130,15 @@ publicized assemblies. Private members are reached through declared contracts an
 **Why:** compiling and running against the same binaries removes a class of load-time
 `MissingMethodException`s, works on Linux without Jötunn's prebuild task, and keeps
 every private access visible as a contract.
+
+## D-018 — Our own strict JSON reader for data files
+
+**Decision (2026-09-28):** GenesisUI's data files (sprite manifest now; layout and theme
+later) are read by `GenesisUI.Data.StrictJson` in Core: bounded size and depth, no
+duplicate keys, unknown properties reported as errors, never half-parsed. It returns plain
+dictionaries and lists; typed readers in Core map them and validate.
+**Why:** in 0.2.0-preview.1 (R-010) Unity's `JsonUtility` read `scale` but left the sprite
+array empty without any error, so the bars rendered as plain rectangles. The likely cause
+(types made internal by the ILRepack merge) could not be confirmed offline, and a silent
+partial read is the failure D-013 wanted to avoid. A Core reader is testable, and
+`ShippedArtTests` now runs the real `art/out/sprites.json` through it at build time.

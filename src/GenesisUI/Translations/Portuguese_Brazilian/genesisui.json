@@ -14,5 +14,8 @@
   "genesisui_diag_regions": "Regiões",
   "genesisui_diag_veils": "Partes vanilla escondidas",
   "genesisui_diag_faults": "Falhas:",
-  "genesisui_diag_input": "Bloqueios de entrada abertos:"
+  "genesisui_diag_input": "Bloqueios de entrada abertos:",
+  "genesisui_module_food": "Comida",
+  "genesisui_module_hotbar": "Barra de itens",
+  "genesisui_module_status": "Efeitos"
 }

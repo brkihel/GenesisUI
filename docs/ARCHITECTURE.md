@@ -150,8 +150,8 @@ reparenting vs. by leaving it in place and punching a hole in the veil.)
 - Anchor-based. Reference resolution 1920×1080. Final scale = GenesisUI scale ×
   vanilla GUI scale.
 - A **layout profile** is a JSON data file in the config folder: per widget,
-  anchor, offset, size, visibility. Parsed with Unity `JsonUtility` into typed
-  classes (no polymorphic type names, no code), max 256 KB, schema version checked,
+  anchor, offset, size, visibility. Parsed by Core's `StrictJson` into typed
+  classes (no type names, no code; D-018), max 256 KB, schema version checked,
   every number clamped by Core. A broken file falls back to the default layout and
   is reported, never partially applied.
 - A drag-to-place edit mode comes after F3.

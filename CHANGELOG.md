@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.3.0-preview.1 — F3 part 1: food, hotbar, status effects; art fix
+
+### Fixed
+- **Sprites did not load in 0.2.0-preview.1** (`art/sprites.json rejected: no sprites`):
+  Unity's JsonUtility left the sprite list empty without an error. Data files are now read
+  by our own strict JSON reader in Core (D-018), and a build-time test runs the shipped
+  manifest and PNGs through the same code the game uses.
+
+### Added
+- **Food module**: three framed slots next to the vital bars; food icon, time left written
+  exactly like vanilla ("12m", blinking "45s"), a bar of what is left, the vanilla pulse
+  when the food can be eaten again.
+- **Hotbar module**: eight slots on a framed plate with knot caps at the bottom centre;
+  key index, stack amount, durability bar (blinks red when broken), gold highlight for
+  equipped items and for the gamepad selection. Keys and gamepad keep working through
+  vanilla, which is veiled, not disabled.
+- **Status module**: effect tiles with name and time, top-right below the vanilla
+  minimap; the guardian power first, with its cooldown as m:ss and a gold frame when
+  ready. Effects added by other mods appear too.
+- Regions can hold several vanilla objects (the food strip is many loose pieces).
+- New art: slot, active slot, status tile, hotbar plate (SVG sources).
+- Config: `[Modules] Food/Hotbar/Status`, `[Food]`, `[Hotbar]`, `[Status]` offsets.
+
+
 ## 0.2.0-preview.1 — F2: first visual module
 
 ### Added

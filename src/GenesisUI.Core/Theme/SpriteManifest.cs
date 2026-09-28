@@ -1,21 +1,17 @@
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using GenesisUI.Data;
 
 namespace GenesisUI.Theme
 {
-    /// <summary>
-    /// art/sprites.json as written by tools/art/render.py. Public fields, because the
-    /// plugin parses it with Unity's JsonUtility (docs/DECISIONS.md D-013).
-    /// </summary>
-    [Serializable]
+    /// <summary>art/sprites.json as written by tools/art/render.py.</summary>
     public sealed class SpriteManifest
     {
         public int scale;
         public SpriteEntry[] sprites;
     }
 
-    [Serializable]
     public sealed class SpriteEntry
     {
         public string name;
@@ -35,6 +31,64 @@ namespace GenesisUI.Theme
     /// </summary>
     public static class SpriteManifestValidator
     {
+        /// <summary>
+        /// Reads the manifest with <see cref="StrictJson"/> (D-018). Unknown properties are
+        /// errors, not silently ignored: a typo must not produce a sprite with no border.
+        /// </summary>
+        public static SpriteManifest Parse(string json, List<string> errors)
+        {
+            object root;
+            try { root = StrictJson.Parse(json); }
+            catch (FormatException e) { errors.Add(e.Message); return null; }
+
+            if (!(root is Dictionary<string, object> obj)) { errors.Add("manifest must be a JSON object"); return null; }
+            var m = new SpriteManifest();
+            foreach (var kv in obj)
+            {
+                switch (kv.Key)
+                {
+                    case "scale": m.scale = Int(kv.Value, "scale", errors); break;
+                    case "sprites":
+                        if (!(kv.Value is List<object> list)) { errors.Add("sprites must be an array"); break; }
+                        m.sprites = new SpriteEntry[list.Count];
+                        for (int i = 0; i < list.Count; i++) m.sprites[i] = Entry(list[i], i, errors);
+                        break;
+                    default: errors.Add("unknown property '" + kv.Key + "'"); break;
+                }
+            }
+            return m;
+        }
+
+        private static SpriteEntry Entry(object value, int index, List<string> errors)
+        {
+            if (!(value is Dictionary<string, object> obj)) { errors.Add("sprites[" + index + "] must be an object"); return null; }
+            var e = new SpriteEntry();
+            foreach (var kv in obj)
+            {
+                string where = "sprites[" + index + "]." + kv.Key;
+                switch (kv.Key)
+                {
+                    case "name": e.name = kv.Value as string; if (e.name == null) errors.Add(where + " must be a string"); break;
+                    case "file": e.file = kv.Value as string; if (e.file == null) errors.Add(where + " must be a string"); break;
+                    case "width": e.width = Int(kv.Value, where, errors); break;
+                    case "height": e.height = Int(kv.Value, where, errors); break;
+                    case "borderLeft": e.borderLeft = Int(kv.Value, where, errors); break;
+                    case "borderBottom": e.borderBottom = Int(kv.Value, where, errors); break;
+                    case "borderRight": e.borderRight = Int(kv.Value, where, errors); break;
+                    case "borderTop": e.borderTop = Int(kv.Value, where, errors); break;
+                    default: errors.Add("unknown property '" + where + "'"); break;
+                }
+            }
+            return e;
+        }
+
+        private static int Int(object value, string where, List<string> errors)
+        {
+            if (value is double d && d == Math.Floor(d) && d >= int.MinValue && d <= int.MaxValue) return (int)d;
+            errors.Add(where + " must be an integer");
+            return 0;
+        }
+
         public const int MaxSprites = 256;
         public const int MaxDesignSize = 2048;
         private static readonly Regex Name = new Regex("^[a-z0-9_]{1,48}$", RegexOptions.CultureInvariant);

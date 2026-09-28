@@ -168,8 +168,13 @@ namespace GenesisUI.Host
 
             foreach (var region in e.Module.Regions)
             {
-                var handle = VanillaVeil.Apply(e.Owner, region, RegionRegistry.Resolve(region));
-                if (handle != null) e.Veils.Add(handle);
+                int veiled = 0;
+                foreach (var target in RegionRegistry.Resolve(region))
+                {
+                    var handle = VanillaVeil.Apply(e.Owner, region + "/" + target.name, target);
+                    if (handle != null) { e.Veils.Add(handle); veiled++; }
+                }
+                if (veiled == 0) GenesisLog.Warn("Veil", e.Module.Id + ": no vanilla object found for " + region);
             }
             e.SinceRefresh = float.MaxValue; // refresh on the next tick
             Set(e, ModuleState.Active, null);

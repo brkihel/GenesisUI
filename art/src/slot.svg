@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 56" width="56" height="56">
+  <!-- Inventory/hotbar slot (C1). 9-slice border 12. Original work. -->
+  <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F7E283"/><stop offset="1" stop-color="#B8863E"/></linearGradient></defs>
+  <rect x="1.5" y="1.5" width="53" height="53" rx="4" fill="#0E100F" fill-opacity="0.86" stroke="#474538" stroke-width="1.6"/>
+  <rect x="4" y="4" width="48" height="48" rx="2.5" fill="none" stroke="#FFFFFF" stroke-opacity="0.05" stroke-width="1"/>
+</svg>

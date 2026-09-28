@@ -43,8 +43,9 @@ look): `heimdall-nexus/docs/PADROES-GENESISMODS.md`.
    behaviour is allowed; reusing implementation is not.
 9. **No new runtime dependency** without a decision entry. Allowed today: BepInEx,
    Jötunn (latest).
-10. **Data files are data**: JSON via `JsonUtility` into typed classes, size-bounded,
-    validated and clamped in Core. Nothing in a data file selects a type, a method or
+10. **Data files are data**: JSON via `GenesisUI.Data.StrictJson` (D-018) mapped to typed
+    classes, size-bounded, validated and clamped in Core, with a test that reads the
+    shipped file. Nothing in a data file selects a type, a method or
     a path outside our folders.
 11. **Diagnostics are part of the feature.** Anything new must appear in the
     diagnostics overlay (the host gives modules this for free) and log its failures.

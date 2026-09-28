@@ -1,0 +1,158 @@
+using System.Collections.Generic;
+using BepInEx.Configuration;
+using GenesisUI.Foundation.Contracts;
+using GenesisUI.Host;
+using GenesisUI.Motion;
+using GenesisUI.Theme;
+using GenesisUI.Widgets;
+using HarmonyLib;
+using UnityEngine;
+
+namespace GenesisUI.Modules.Hotbar
+{
+    /// <summary>
+    /// The eight hotbar slots on a framed plate at the bottom centre (concepts 3-6, 8, 10).
+    /// Display only: keys 1-8 and the gamepad keep working through vanilla, because the
+    /// vanilla HotkeyBar is veiled, not disabled, and its Update still runs.
+    /// </summary>
+    [GameContract("assembly_valheim", "Humanoid", "GetInventory")]
+    [GameContract("assembly_valheim", "Inventory", "GetBoundItems")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData", "m_gridPos")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData", "m_stack")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData", "m_equipped")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData", "m_durability")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData", "GetMaxDurability", Parameters = new string[0])]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData", "GetDurabilityPercentage")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData", "GetIcon")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData", "m_shared")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData+SharedData", "m_maxStackSize")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData+SharedData", "m_useDurability")]
+    [GameContract("assembly_valheim", "HotkeyBar", "m_selected")]
+    [GameContract("assembly_valheim", "Character", "IsDead")]
+    [GameContract("assembly_utils", "ZInput", "IsGamepadActive")]
+    internal sealed class HotbarModule : IUiModule
+    {
+        private const int SlotCount = 8;
+        private const float SlotSize = 56f;
+        private const float Gap = 8f;
+        private const float SidePadding = 30f;
+
+        private static readonly string[] OwnedRegions = { "hud.hotbar" };
+
+        private readonly ConfigEntry<int> _offsetY;
+        private readonly ConfigEntry<float> _scale;
+        private readonly List<ItemDrop.ItemData> _bound = new List<ItemDrop.ItemData>(16);
+        private readonly ItemDrop.ItemData[] _bySlot = new ItemDrop.ItemData[SlotCount];
+        private readonly SlotView[] _slots = new SlotView[SlotCount];
+
+        private RectTransform _plate;
+        private HotkeyBar _vanillaBar;
+        // Resolved in Build, after the host checked [GameContract]: a static initializer would
+        // run at construction in Awake and take the whole plugin down if the field vanished.
+        private AccessTools.FieldRef<HotkeyBar, int> _selected;
+        private int _appliedOffset = int.MinValue;
+        private float _appliedScale = float.NaN;
+
+        public HotbarModule(ConfigFile config)
+        {
+            _offsetY = config.Bind("Hotbar", "OffsetY", 20,
+                new ConfigDescription("Distância da barra de itens até a borda de baixo da tela, em pontos de interface.", new AcceptableValueRange<int>(0, 900)));
+            _scale = config.Bind("Hotbar", "Scale", 1f,
+                new ConfigDescription("Tamanho da barra de itens (1 = padrão).", new AcceptableValueRange<float>(0.5f, 2f)));
+        }
+
+        public string Id => "hud.hotbar";
+        public string NameToken => "$genesisui_module_hotbar";
+        public IReadOnlyList<string> Regions => OwnedRegions;
+        public float RefreshRate => 20f;
+
+        public void Build(ModuleContext context)
+        {
+            var theme = context.Theme;
+            float width = SlotCount * SlotSize + (SlotCount - 1) * Gap + 2 * SidePadding;
+            _plate = Ui.Place(Ui.Child(context.Root, "Hotbar"), new Vector2(0.5f, 0f), Vector2.zero, new Vector2(width, SlotSize + 24f));
+            var plateSprite = theme.Sprite("plate");
+            Ui.Image(Ui.Fill(Ui.Child(_plate, "Plate")), plateSprite, plateSprite != null ? Color.white : ThemeRuntime.ToUnity(theme.Tokens.PanelBackground));
+
+            for (int i = 0; i < SlotCount; i++)
+            {
+                var pos = new Vector2(SidePadding + i * (SlotSize + Gap), 12f);
+                _slots[i] = new SlotView(_plate, "Slot" + (i + 1), theme, Vector2.zero, pos, SlotSize, (i + 1).ToString());
+            }
+
+            _selected = AccessTools.FieldRefAccess<HotkeyBar, int>("m_selected");
+            _vanillaBar = Hud.instance != null ? Hud.instance.GetComponentInChildren<HotkeyBar>(true) : null;
+            ApplyLayout();
+        }
+
+        public void Refresh(float deltaSeconds)
+        {
+            if (_plate == null) return;
+            ApplyLayout();
+
+            var player = Player.m_localPlayer;
+            bool show = player != null && !player.IsDead();
+            if (_plate.gameObject.activeSelf != show) _plate.gameObject.SetActive(show);
+            if (!show) return;
+
+            for (int i = 0; i < SlotCount; i++) _bySlot[i] = null;
+            _bound.Clear();
+            player.GetInventory().GetBoundItems(_bound);
+            foreach (var item in _bound)
+            {
+                int x = item.m_gridPos.x;
+                if (x >= 0 && x < SlotCount) _bySlot[x] = item;
+            }
+
+            int gamepadSelected = _vanillaBar != null && ZInput.IsGamepadActive() ? _selected(_vanillaBar) : -1;
+            float blink = Pulse.Evaluate(Time.unscaledTimeAsDouble, 0.5f);
+
+            for (int i = 0; i < SlotCount; i++)
+            {
+                var slot = _slots[i];
+                var item = _bySlot[i];
+                if (item == null)
+                {
+                    slot.SetIcon(null);
+                    slot.SetAmount(0);
+                    slot.SetBar(-1f);
+                    slot.SetActive(i == gamepadSelected);
+                    continue;
+                }
+
+                slot.SetIcon(item.GetIcon());
+                slot.SetAmount(item.m_shared.m_maxStackSize > 1 ? item.m_stack : 0);
+
+                bool worn = item.m_shared.m_useDurability && item.m_durability < item.GetMaxDurability();
+                if (!worn) slot.SetBar(-1f);
+                else if (item.m_durability <= 0f) slot.SetBar(blink > 0.5f ? 1f : -1f, danger: true); // broken: blinks red, like vanilla
+                else slot.SetBar(item.GetDurabilityPercentage());
+
+                slot.SetActive(item.m_equipped || i == gamepadSelected);
+            }
+        }
+
+        public void Teardown()
+        {
+            if (_plate != null) Object.Destroy(_plate.gameObject);
+            _plate = null;
+            _vanillaBar = null;
+            _appliedOffset = int.MinValue;
+            _appliedScale = float.NaN;
+        }
+
+        private void ApplyLayout()
+        {
+            if (_offsetY.Value != _appliedOffset)
+            {
+                _plate.anchoredPosition = new Vector2(0f, _offsetY.Value);
+                _appliedOffset = _offsetY.Value;
+            }
+            if (_scale.Value != _appliedScale)
+            {
+                _plate.localScale = Vector3.one * _scale.Value;
+                _appliedScale = _scale.Value;
+            }
+        }
+    }
+}

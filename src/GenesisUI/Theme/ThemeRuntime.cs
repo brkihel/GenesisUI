@@ -162,8 +162,11 @@ namespace GenesisUI.Theme
             if (!manifestInfo.Exists) { GenesisLog.Warn("Theme", "art/sprites.json missing; plain shapes will be used"); return; }
             if (manifestInfo.Length > MaxManifestBytes) { GenesisLog.Warn("Theme", "art/sprites.json too large; ignored"); return; }
 
-            var manifest = JsonUtility.FromJson<SpriteManifest>(File.ReadAllText(manifestPath));
-            var errors = SpriteManifestValidator.Validate(manifest);
+            // Our own strict reader (D-018): JsonUtility left the sprite list empty without
+            // an error in 0.2.0-preview.1, and a silent half-read is the worst outcome.
+            var errors = new List<string>();
+            var manifest = SpriteManifestValidator.Parse(File.ReadAllText(manifestPath), errors);
+            if (errors.Count == 0) errors.AddRange(SpriteManifestValidator.Validate(manifest));
             if (errors.Count > 0)
             {
                 GenesisLog.Warn("Theme", "art/sprites.json rejected: " + string.Join("; ", errors));

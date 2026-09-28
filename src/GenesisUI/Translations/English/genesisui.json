@@ -14,5 +14,8 @@
   "genesisui_diag_regions": "Regions",
   "genesisui_diag_veils": "Veiled vanilla pieces",
   "genesisui_diag_faults": "Faults:",
-  "genesisui_diag_input": "Input leases open:"
+  "genesisui_diag_input": "Input leases open:",
+  "genesisui_module_food": "Food",
+  "genesisui_module_hotbar": "Hotbar",
+  "genesisui_module_status": "Status effects"
 }

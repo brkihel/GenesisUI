@@ -25,6 +25,10 @@ SPRITES = [
     ("bar_frame", "art/src/bar_frame.svg", 48, 160, (10, 14, 10, 26)),
     ("bar_fill", "art/src/bar_fill.svg", 16, 64, (0, 0, 0, 0)),
     ("medallion", "art/src/medallion.svg", 64, 64, (0, 0, 0, 0)),
+    ("slot", "art/src/slot.svg", 56, 56, (12, 12, 12, 12)),
+    ("slot_active", "art/src/slot_active.svg", 56, 56, (12, 12, 12, 12)),
+    ("tile", "art/src/tile.svg", 60, 60, (0, 0, 0, 0)),
+    ("plate", "art/src/plate.svg", 96, 72, (24, 16, 24, 16)),
 ]
 
 

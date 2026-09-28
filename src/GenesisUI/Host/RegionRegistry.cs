@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using BepInEx.Bootstrap;
 using GenesisUI.Foundation.Contracts;
 using UnityEngine;
@@ -12,30 +13,72 @@ namespace GenesisUI.Host
     /// it: GenesisUI and that mod never fight over the same pixels.
     /// </summary>
     [GameContract("assembly_valheim", "Hud", "instance")]
+    [GameContract("assembly_valheim", "Hud", "m_rootObject")]
     [GameContract("assembly_valheim", "Hud", "m_healthBarRoot")]
     [GameContract("assembly_valheim", "Hud", "m_staminaBar2Root")]
     [GameContract("assembly_valheim", "Hud", "m_eitrBarRoot")]
+    [GameContract("assembly_valheim", "Hud", "m_foodBarRoot")]
+    [GameContract("assembly_valheim", "Hud", "m_foodBaseBar")]
+    [GameContract("assembly_valheim", "Hud", "m_foodIcon")]
+    [GameContract("assembly_valheim", "Hud", "m_foodText")]
+    [GameContract("assembly_valheim", "Hud", "m_foodIcons")]
+    [GameContract("assembly_valheim", "Hud", "m_foodTime")]
+    [GameContract("assembly_valheim", "Hud", "m_foodBars")]
+    [GameContract("assembly_valheim", "Hud", "m_statusEffectListRoot")]
+    [GameContract("assembly_valheim", "Hud", "m_gpRoot")]
     internal static class RegionRegistry
     {
-        private static readonly Dictionary<string, Func<GameObject>> Resolvers = new Dictionary<string, Func<GameObject>>(StringComparer.Ordinal)
+        private static readonly Dictionary<string, Func<IEnumerable<GameObject>>> Resolvers = new Dictionary<string, Func<IEnumerable<GameObject>>>(StringComparer.Ordinal)
         {
-            ["hud.health"] = () => Hud.instance != null && Hud.instance.m_healthBarRoot != null ? Hud.instance.m_healthBarRoot.gameObject : null,
-            ["hud.stamina"] = () => Hud.instance != null && Hud.instance.m_staminaBar2Root != null ? Hud.instance.m_staminaBar2Root.gameObject : null,
-            ["hud.eitr"] = () => Hud.instance != null && Hud.instance.m_eitrBarRoot != null ? Hud.instance.m_eitrBarRoot.gameObject : null,
+            ["hud.health"] = () => FromHud(h => h.m_healthBarRoot),
+            ["hud.stamina"] = () => FromHud(h => h.m_staminaBar2Root),
+            ["hud.eitr"] = () => FromHud(h => h.m_eitrBarRoot),
+            ["hud.food"] = Food,
+            ["hud.statusEffects"] = () => FromHud(h => h.m_statusEffectListRoot),
+            ["hud.guardianPower"] = () => FromHud(h => h.m_gpRoot),
+            // HotkeyBar is its own component under the HUD; its Update keeps gamepad
+            // selection and use working while veiled (see docs/regions.md).
+            ["hud.hotbar"] = () => Hud.instance == null ? Enumerable.Empty<GameObject>()
+                : Hud.instance.GetComponentsInChildren<HotkeyBar>(true).Select(b => b.gameObject),
         };
 
         /// <summary>Mods that redraw vanilla regions: GUID → regions they own while installed.</summary>
         private static readonly Dictionary<string, string[]> ForeignOwners = new Dictionary<string, string[]>(StringComparer.Ordinal)
         {
             // SeneaL UI replaces the whole HUD. While both are installed, it keeps it.
-            ["seneaL.valheim.ui"] = new[] { "hud.health", "hud.stamina", "hud.eitr" },
+            ["seneaL.valheim.ui"] = new[] { "hud.health", "hud.stamina", "hud.eitr", "hud.food", "hud.statusEffects", "hud.guardianPower", "hud.hotbar" },
         };
 
         private static readonly Dictionary<string, string> Owners = new Dictionary<string, string>(StringComparer.Ordinal);
 
         public static bool IsKnown(string region) => Resolvers.ContainsKey(region);
 
-        public static GameObject Resolve(string region) => Resolvers.TryGetValue(region, out var r) ? r() : null;
+        /// <summary>Every live vanilla object of the region (may be empty).</summary>
+        public static IEnumerable<GameObject> Resolve(string region) =>
+            Resolvers.TryGetValue(region, out var r) ? r().Where(go => go != null) : Enumerable.Empty<GameObject>();
+
+        /// <summary>Uses Unity's null check (a destroyed HUD compares equal to null; C#'s ?. would not).</summary>
+        private static IEnumerable<GameObject> FromHud(Func<Hud, Component> pick)
+        {
+            var hud = Hud.instance;
+            if (hud == null) yield break;
+            var c = pick(hud);
+            if (c != null) yield return c.gameObject;
+        }
+
+        /// <summary>The food strip is several loose objects: bars, icons and times per food, plus the hunger icon.</summary>
+        private static IEnumerable<GameObject> Food()
+        {
+            var hud = Hud.instance;
+            if (hud == null) yield break;
+            if (hud.m_foodBarRoot != null) yield return hud.m_foodBarRoot.gameObject;
+            if (hud.m_foodBaseBar != null) yield return hud.m_foodBaseBar.gameObject;
+            if (hud.m_foodIcon != null) yield return hud.m_foodIcon.gameObject;
+            if (hud.m_foodText != null) yield return hud.m_foodText.gameObject;
+            foreach (var c in (Component[])hud.m_foodIcons ?? Array.Empty<Component>()) if (c != null) yield return c.gameObject;
+            foreach (var c in (Component[])hud.m_foodTime ?? Array.Empty<Component>()) if (c != null) yield return c.gameObject;
+            foreach (var c in (Component[])hud.m_foodBars ?? Array.Empty<Component>()) if (c != null) yield return c.gameObject;
+        }
 
         /// <summary>Claims every region or none.</summary>
         public static bool TryClaimAll(string owner, IReadOnlyList<string> regions, out string reason)

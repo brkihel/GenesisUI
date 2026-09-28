@@ -6,6 +6,9 @@ using BepInEx.Configuration;
 using GenesisUI.Foundation;
 using GenesisUI.Foundation.Contracts;
 using GenesisUI.Host;
+using GenesisUI.Modules.Food;
+using GenesisUI.Modules.Hotbar;
+using GenesisUI.Modules.Status;
 using GenesisUI.Modules.Vitals;
 using GenesisUI.Theme;
 using HarmonyLib;
@@ -82,6 +85,12 @@ namespace GenesisUI
 
                 ModuleHost.Register(new VitalsModule(Config), Config.Bind("Modules", "Vitals", true,
                     "Barras verticais de vida, vigor e eitr no canto inferior esquerdo. Desligado, o jogo mostra as barras originais."));
+                ModuleHost.Register(new FoodModule(Config), Config.Bind("Modules", "Food", true,
+                    "Os três espaços de comida ao lado das barras, com o tempo restante. Desligado, o jogo mostra a comida original."));
+                ModuleHost.Register(new HotbarModule(Config), Config.Bind("Modules", "Hotbar", true,
+                    "Barra de itens (1 a 8) emoldurada, no centro de baixo. Desligado, o jogo mostra a barra original."));
+                ModuleHost.Register(new StatusModule(Config), Config.Bind("Modules", "Status", true,
+                    "Efeitos ativos e o poder do guardião em quadros com nome e tempo. Desligado, o jogo mostra os efeitos originais."));
 
                 // Jötunn raises this on every scene: fonts become available on the first one,
                 // and the main scene brings the HUD the modules attach to.
