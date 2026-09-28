@@ -34,8 +34,8 @@ namespace GenesisUI.Modules.Vitals
     internal sealed class VitalBarView
     {
         private const int EmberCount = 16;
-        private const float PlateHeight = 26f;
-        private const float PlateAt = 0.28f;            // plate centre, as a fraction of the liquid's height
+        private const float PlateAt = 0.26f;            // plate centre, as a fraction of the liquid's height
+        private const float PlateWidth = 0.92f;         // plate width, as a fraction of the bar's width
 
         public readonly RectTransform Root;
         private readonly Image _frame;
@@ -51,6 +51,7 @@ namespace GenesisUI.Modules.Vitals
         private readonly Image _glint;
         private readonly RectTransform _glintRt;
         private readonly TextMeshProUGUI _number;
+        private readonly GameObject _valueRoot;
         private readonly Color _frameColor;
         private readonly Color _dangerColor;
         private readonly Color _light;
@@ -101,8 +102,15 @@ namespace GenesisUI.Modules.Vitals
             _dangerColor = ThemeRuntime.ToUnity(theme.Tokens.StateDanger);
             _frame = Ui.Image(Ui.Fill(Ui.Child(Root, "Frame")), frameSprite, _frameColor);
 
+            // The frame keeps its proportions at any bar width: its 9-slice borders (cap, rails,
+            // pommel) and its content insets scale with the width, only the rails stretch along
+            // the bar (R-040 comparison: a stretched cap looked like a lid on a box).
+            float designWidth = theme.DesignWidth("bar_frame");
+            float k = frameSprite != null && designWidth > 0f ? size.x / designWidth : 1f;
+            _frame.pixelsPerUnitMultiplier = 1f / k;
+
             // The content area comes from the loaded style; the fallback is the gold frame's.
-            var c = theme.Content("bar_frame", new Vector4(9.5f, 24f, 9.5f, 32f));
+            var c = theme.Content("bar_frame", new Vector4(9.5f, 24f, 9.5f, 32f)) * k;
             _areaLeft = c.x;
             _areaBottom = c.y;
             _areaWidth = size.x - c.x - c.z;
@@ -110,7 +118,7 @@ namespace GenesisUI.Modules.Vitals
             var area = Ui.Fill(Ui.Child(Root, "FillArea"), c.x, c.y, c.z, c.w);
 
             var color = ThemeRuntime.ToUnity(barColor);
-            _light = Color.Lerp(color, Color.white, 0.55f);
+            _light = Color.Lerp(color, Color.white, 0.4f);
             var fillSprite = theme.Sprite("bar_fill");
 
             // The consumed part, just above the liquid: a burn that the mask keeps to that span.
@@ -135,8 +143,9 @@ namespace GenesisUI.Modules.Vitals
             Ui.Image(FullHeight(Ui.Child(_mask, "Body")), fillSprite, color);
 
             _tileHeightUv = _areaWidth > 0f ? _areaHeight / (2f * _areaWidth) : 1f;
-            _mottle = Layer("Clots", theme.Texture("bar_mottle"), new Color(0f, 0f, 0f, 0.45f), 0f);
-            _veins = Layer("Veins", theme.Texture("bar_veins"), new Color(_light.r, _light.g, _light.b, 0.55f), 0.3f);
+            // Calm and rich, not busy (R-040 comparison): large dark clouds, a few faint cracks.
+            _mottle = Layer("Clots", theme.Texture("bar_mottle"), new Color(0f, 0f, 0f, 0.32f), 0f);
+            _veins = Layer("Veins", theme.Texture("bar_veins"), new Color(_light.r, _light.g, _light.b, 0.32f), 0.3f);
             _bubbles = Layer("Bubbles", theme.Texture("bar_bubbles"), new Color(_light.r, _light.g, _light.b, motion.PatternAlpha), 0f);
             if (motion.CounterSpeed != 0f)
                 _counterBubbles = Layer("CounterBubbles", theme.Texture("bar_bubbles"), new Color(_light.r, _light.g, _light.b, motion.PatternAlpha * 0.6f), 0.5f);
@@ -173,9 +182,12 @@ namespace GenesisUI.Modules.Vitals
             var plateSprite = theme.Sprite("bar_value");
             if (plateSprite != null)
             {
+                float plateWidth = size.x * PlateWidth;
+                float plateHeight = plateWidth * plateSprite.rect.height / Mathf.Max(1f, plateSprite.rect.width);
                 var plateRt = Ui.Place(Ui.Child(Root, "ValuePlate"), new Vector2(0.5f, 0f),
-                    new Vector2(0f, c.y + _areaHeight * PlateAt - PlateHeight / 2f), new Vector2(size.x + 10f, PlateHeight));
+                    new Vector2(0f, c.y + _areaHeight * PlateAt - plateHeight / 2f), new Vector2(plateWidth, plateHeight));
                 Ui.Image(plateRt, plateSprite, Color.white);
+                _valueRoot = plateRt.gameObject;
                 var inner = theme.Content("bar_value", new Vector4(6f, 6f, 6f, 6f));
                 _number = Ui.Fit(Ui.Text(plateRt, "Value", theme, FontRole.Display, 17f, ThemeRuntime.ToUnity(theme.Tokens.TextTitle),
                                          TextAlignmentOptions.Center, outlined: true), 11f);
@@ -186,7 +198,14 @@ namespace GenesisUI.Modules.Vitals
                 _number = Ui.Fit(Ui.Text(Root, "Value", theme, FontRole.Display, 19f, ThemeRuntime.ToUnity(theme.Tokens.TextTitle),
                                          TextAlignmentOptions.Center, outlined: true), 12f);
                 Ui.Fill((RectTransform)_number.transform, c.x - 1f, c.y, c.z - 1f, c.w);
+                _valueRoot = _number.gameObject;
             }
+        }
+
+        /// <summary>Shows or hides the number (and its plate): <c>[Vitals] ShowValues</c>.</summary>
+        public void ShowValue(bool show)
+        {
+            if (_valueRoot.activeSelf != show) _valueRoot.SetActive(show);
         }
 
         public void SetVisible(bool visible)

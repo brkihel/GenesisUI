@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.5.0-preview.2 — carved bars reworked from the reference comparison
+
+### Changed
+- Carved vital bars are one slender piece: pointed rune cap and pommel as wide as the rails,
+  a light V and diamond in recessed panels, a lighter weathered wood with worn edges, chips
+  and a bevelled channel; the empty part is dark brown, not black. The frame now scales its
+  borders with the bar's width (both styles), so the cap never stretches. Bars are slimmer
+  (health 40, stamina and eitr 34 wide); food moves to `OffsetX` 176 by default.
+- Liquid in every bar is calmer: large soft clouds and a few long, thin cracks instead of
+  dense veins; bubbles fainter.
+- The value plate is barely wider than the bar.
+
+### Added
+- `[Vitals] ShowValues`: hide the numbers for clean bars.
+
 ## 0.5.0-preview.1 — F3 complete, carved-wood style
 
 ### Added

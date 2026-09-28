@@ -13,19 +13,22 @@ import math
 import numpy as np
 from PIL import Image
 
-WOOD_TOP = "#43352A"
-WOOD_BOTTOM = "#1F1813"
-EDGE = "#0B0908"
-LIGHT = "#B89A7C"
+# R-040 comparison: the reference reads as worn, dark weathered wood with bright, chipped edges;
+# the first palette was so dark that rails and openings merged into one black mass.
+WOOD_TOP = "#57493D"
+WOOD_BOTTOM = "#2C241E"
+EDGE = "#0A0807"
+LIGHT = "#D4B38D"
+INLAY = "#BC9C77"
 SHADE = "#130E0B"
-OPENING = "#080706"
+OPENING = "#16110E"
 GROOVE = "#110C09"
 IRON_LIGHT = "#CFC3AE"
 IRON_DARK = "#403933"
 
 RIM = 2.2
-BEVEL = 1.1
-OPENING_RIM = 1.3
+BEVEL = 1.5
+OPENING_RIM = 1.7
 
 DEFS = (
     '<defs>'
@@ -46,9 +49,18 @@ def svg(width, height, body, comment):
 
 
 def plank(path):
-    """A carved container body: wood fill, dark rim, bevel lit from the top-left."""
+    """A carved container body: wood fill, dark rim, a worn light edge all round and a stronger
+    bevel lit from the top-left."""
     return (f'  <path d="{path}" fill="url(#wood)" stroke="{EDGE}" stroke-width="{RIM}" stroke-linejoin="round"/>\n'
+            f'  <path d="{path}" fill="none" stroke="{LIGHT}" stroke-opacity="0.45" stroke-width="0.9" stroke-linejoin="round" transform="translate(0.35 0.35)"/>\n'
             f'  <path d="{path}" fill="none" stroke="url(#lit)" stroke-width="{BEVEL}" stroke-linejoin="round" transform="translate(0.5 0.5)" />\n')
+
+
+def inlay(path):
+    """A raised light motif (rune, diamond) set into a sunken panel: light metal-like fill with
+    a dark drop to the lower right, so it reads at HUD size."""
+    return (f'  <path d="{path}" fill="{EDGE}" fill-opacity="0.8" transform="translate(0.7 0.7)"/>\n'
+            f'  <path d="{path}" fill="{INLAY}"/>\n')
 
 
 def opening(path):
@@ -78,8 +90,10 @@ def engrave(path):
             f'  <path d="{path}" fill="{GROOVE}"/>\n')
 
 
-def rune_v(cx, cy, h):
-    """The V of the Valheim logo as an engraved rune: two strokes meeting low, with serifs."""
+def rune_v(cx, cy, h, mark=None):
+    """The V of the Valheim logo as a rune: two strokes meeting low, with serifs. `mark` is
+    engrave (a dark groove) or inlay (a light raised rune, the default for panels)."""
+    mark = mark or engrave
     w = h * 0.78
     t = h * 0.2
     top = cy - h / 2
@@ -88,14 +102,25 @@ def rune_v(cx, cy, h):
             f"L{cx + w / 2},{top} L{cx + t * 0.55},{bottom} L{cx - t * 0.55},{bottom} Z")
     serif = f"M{cx - w / 2 - t * 0.3},{top} L{cx - w / 2 + t * 1.55},{top} L{cx - w / 2 + t * 1.35},{top + t * 0.45} L{cx - w / 2 - t * 0.1},{top + t * 0.45} Z"
     serif2 = f"M{cx + w / 2 + t * 0.3},{top} L{cx + w / 2 - t * 1.55},{top} L{cx + w / 2 - t * 1.35},{top + t * 0.45} L{cx + w / 2 + t * 0.1},{top + t * 0.45} Z"
-    return engrave(path) + engrave(serif) + engrave(serif2)
+    return mark(path) + mark(serif) + mark(serif2)
 
 
-def diamond(cx, cy, r):
-    return engrave(f"M{cx},{cy - r} L{cx + r},{cy} L{cx},{cy + r} L{cx - r},{cy} Z")
+def diamond(cx, cy, r, mark=None):
+    return (mark or engrave)(f"M{cx},{cy - r} L{cx + r},{cy} L{cx},{cy + r} L{cx - r},{cy} Z")
 
 
-def grain(image, vertical, strength=0.26, seed=5):
+def _blotches(h, w, rng):
+    """Soft 0..1 blotches at two scales plus sparse bright chips."""
+    out = np.zeros((h, w), np.float32)
+    for cells, amp in ((6, 0.6), (18, 0.4)):
+        small = rng.random((cells * h // max(h, w) + 2, cells * w // max(h, w) + 2)).astype(np.float32)
+        img = Image.fromarray((small * 255).astype(np.uint8)).resize((w, h), Image.BICUBIC)
+        out += amp * np.asarray(img, np.float32) / 255
+    chips = (rng.random((h, w)) > 0.985).astype(np.float32) * 0.6
+    return np.clip(out + chips, 0, 1.4)
+
+
+def grain(image, vertical, strength=0.34, seed=5):
     """Wood grain: multiplies the lit pixels by long, slightly wavy streaks along the grain."""
     a = np.asarray(image.convert("RGBA")).astype(np.float32)
     h, w = a.shape[:2]
@@ -112,6 +137,10 @@ def grain(image, vertical, strength=0.26, seed=5):
     factor = 1.0 - strength / 2 + strength * streak
     if not vertical:
         factor = factor.T
+    # Wear: blotchy weathering and small chips, so the surface reads as old, handled wood
+    # rather than smooth plastic (R-040 comparison).
+    blot = _blotches(h, w, rng)
+    factor = factor * (0.84 + 0.3 * blot)
     lum = a[..., :3].mean(axis=2, keepdims=True)
     mask = np.clip((lum - 12) / 40, 0, 1)            # leave near-black openings untouched
     a[..., :3] = a[..., :3] * (1 - mask + mask * factor[..., None])

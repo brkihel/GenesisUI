@@ -7,22 +7,26 @@ every other piece. Do not edit the generated SVGs by hand.
 """
 import math
 
-from carved_style import (EDGE, IRON_DARK, IRON_LIGHT, chamfer, diamond, engrave, opening, plank, rivet, rune_v,
-                          sunken, svg)
+from carved_style import (EDGE, IRON_DARK, IRON_LIGHT, chamfer, diamond, engrave, inlay, opening, plank, rivet,
+                          rune_v, sunken, svg)
 
 
 def bar_frame():
-    # Shaft first, then the cap and the pommel over its ends.
-    shaft = plank("M8,30 L40,30 L40,136 L8,136 Z") + opening("M11.5,33.5 L36.5,33.5 L36.5,131.5 L11.5,131.5 Z")
-    cap = plank("M5.5,35 L5.5,15 L24,2 L42.5,15 L42.5,35 L36.5,31 L11.5,31 Z") + rune_v(24, 20, 12)
-    pommel = plank("M5.5,127 L11.5,131 L36.5,131 L42.5,127 L42.5,142 L24,158 L5.5,142 Z") + diamond(24, 143, 4.2)
-    return svg(48, 160, shaft + cap + pommel,
-               "Vital-bar frame: rune cap, shaft, diamond pommel. 9-slice: left 11, right 11, top 35, bottom 30.")
+    # One continuous piece, as slender as the reference (R-040 comparison): the rails run the
+    # full width of the cap and the pommel, which end in points, not in wider blocks. Drawn at
+    # the bar's width ratio; the plugin scales its 9-slice borders with the bar's width, so a
+    # wider bar keeps these proportions instead of stretching the cap.
+    body = plank("M3,12 L18,1 L33,12 L33,147 L18,159 L3,147 Z")
+    channel = opening("M8.5,31 L27.5,31 L27.5,129 L8.5,129 Z")
+    rune_panel = sunken("M18,6.2 L28.2,13.4 L28.2,26.5 L7.8,26.5 L7.8,13.4 Z", 0.62) + rune_v(18, 17.6, 9.5, inlay)
+    foot_panel = sunken("M8,133.5 L28,133.5 L28,145 L18,153.5 L8,145 Z", 0.62) + diamond(18, 142, 4.2, inlay)
+    return svg(36, 160, body + channel + rune_panel + foot_panel,
+               "Vital-bar frame: pointed rune cap, rails, pointed pommel, one piece. 9-slice: left 9, right 9, top 32, bottom 32.")
 
 
 def bar_value():
-    return svg(44, 26, plank(chamfer(1.5, 1.5, 41, 23, 5)) + opening(chamfer(5, 5, 34, 16, 3)) + rivet(4.4, 13, 1.4) + rivet(39.6, 13, 1.4),
-               "Value plate carried by a vital bar (the number sits in the opening).")
+    return svg(40, 30, plank(chamfer(1.5, 1.5, 37, 27, 2.5)) + sunken(chamfer(5, 5, 30, 20, 1.5), 0.55),
+               "Value plate carried by a vital bar, barely wider than the bar (the number sits in the panel).")
 
 
 def bar_glint():
@@ -141,8 +145,8 @@ SHAPES = {
 # name -> (design width, design height, 9-slice border (l, b, r, t), content insets (l, b, r, t) or None, grain)
 # grain: "v" / "h" wood-grain direction, or None for pieces that are not wood.
 SPRITES = {
-    "bar_frame": (48, 160, (11, 30, 11, 35), (12, 29, 12, 35), "v"),
-    "bar_value": (44, 26, (0, 0, 0, 0), (6, 6, 6, 6), "h"),
+    "bar_frame": (36, 160, (9, 32, 9, 32), (9, 31, 9, 31), "v"),
+    "bar_value": (40, 30, (0, 0, 0, 0), (6, 6, 6, 6), "h"),
     "bar_glint": (24, 8, (0, 0, 0, 0), None, None),
     "sprint_frame": (96, 24, (16, 10, 16, 10), (14, 8, 14, 8), "h"),
     "plate": (96, 72, (24, 16, 24, 16), None, "h"),

@@ -45,16 +45,18 @@ class Style:
             return m["contentLeft"], m["contentBottom"], m["contentRight"], m["contentTop"]
         return fallback
 
-    def nine(self, name, w, h):
+    def nine(self, name, w, h, k=1.0):
+        """9-slice at w x h; k scales the borders (the plugin's pixelsPerUnitMultiplier)."""
         im = self.img(name)
-        l, b, r, t = (int(v * S) for v in self.border(name))
+        sl, sb, sr, st_ = (int(v * S) for v in self.border(name))
+        l, b, r, t = (int(round(v * S * k)) for v in self.border(name))
         w, h = int(w), int(h)
         sw, sh = im.size
         out = Image.new("RGBA", (w * S, h * S))
-        for sx0, sx1, dx0, dx1 in ((0, l, 0, l), (l, sw - r, l, w * S - r), (sw - r, sw, w * S - r, w * S)):
-            for sy0, sy1, dy0, dy1 in ((0, t, 0, t), (t, sh - b, t, h * S - b), (sh - b, sh, h * S - b, h * S)):
+        for sx0, sx1, dx0, dx1 in ((0, sl, 0, l), (sl, sw - sr, l, w * S - r), (sw - sr, sw, w * S - r, w * S)):
+            for sy0, sy1, dy0, dy1 in ((0, st_, 0, t), (st_, sh - sb, t, h * S - b), (sh - sb, sh, h * S - b, h * S)):
                 if dx1 > dx0 and dy1 > dy0:
-                    out.paste(im.crop((sx0, sy0, sx1, sy1)).resize((dx1 - dx0, dy1 - dy0)), (dx0, dy0))
+                    out.paste(im.crop((sx0, sy0, sx1, sy1)).resize((dx1 - dx0, dy1 - dy0), Image.LANCZOS), (dx0, dy0))
         return out.resize((w, h), Image.LANCZOS)
 
 
@@ -102,13 +104,15 @@ def main(style_name, out_path):
     # Vital bars [Vitals] OffsetX 36, OffsetY 72 (UI y grows upward).
     def bar(x, y, w, h, rgb, frac, trail, value, hot):
         top = H - (y + h)
-        put(st.nine("bar_frame", w, h), x, top)
-        cl, cb, cr, ct = st.content("bar_frame", (9.5, 24, 9.5, 32))
+        k = w / st.meta["bar_frame"]["width"]
+        put(st.nine("bar_frame", w, h, k), x, top)
+        cl, cb, cr, ct = (v * k for v in st.content("bar_frame", (9.5, 24, 9.5, 32)))
+        cl, cb, cr, ct = int(round(cl)), int(round(cb)), int(round(cr)), int(round(ct))
         aw, ah = int(w - cl - cr), int(h - cb - ct)
         fh, th = int(ah * frac), int(ah * trail)
-        light = tuple(int(c + (255 - c) * 0.55) for c in rgb)
+        light = tuple(int(c + (255 - c) * 0.4) for c in rgb)
         liquid = tint(st.img("bar_fill").resize((aw, ah)), rgb)
-        for name, color, alpha in (("bar_mottle", (0, 0, 0), 0.45), ("bar_veins", light, 0.55), ("bar_bubbles", light, 0.1)):
+        for name, color, alpha in (("bar_mottle", (0, 0, 0), 0.32), ("bar_veins", light, 0.32), ("bar_bubbles", light, 0.07)):
             if st.has(name):
                 liquid.alpha_composite(tint(tiled(st.img(name), aw, ah, aw), color, alpha))
         put(liquid.crop((0, ah - fh, aw, ah)), x + cl, top + ct + ah - fh)
@@ -116,22 +120,24 @@ def main(style_name, out_path):
             put(tint(st.img("bar_burn").resize((aw, th - fh)), hot, 0.95), x + cl, top + ct + ah - th)
         put(Image.new("RGBA", (aw, 2), light + (220,)), x + cl, top + ct + ah - fh)
         if st.has("bar_value"):
-            py = top + ct + ah - int(ah * 0.28) - 13
-            put(st.img("bar_value").resize((w + 10, 26), Image.LANCZOS), x - 5, py)
-            text(x + w / 2, py + 12, str(value), font("Cinzel-SemiBold", 16))
+            pw = int(w * 0.92)
+            ph = int(pw * st.meta["bar_value"]["height"] / st.meta["bar_value"]["width"])
+            py = top + ct + ah - int(ah * 0.26) - ph // 2
+            put(st.img("bar_value").resize((pw, ph), Image.LANCZOS), x + (w - pw) / 2, py)
+            text(x + w / 2, py + ph / 2 - 1, str(value), font("Cinzel-SemiBold", 17 if w > 40 else 15))
         else:
             text(x + w / 2, top + ct + ah / 2, str(value), font("Cinzel-SemiBold", 17))
 
     vx, vy = 36, 72
-    bar(vx, vy + 22, 46, 226, (0xB8, 0x1E, 0x20), 0.66, 0.78, 148, (255, 158, 66))
-    bar(vx + 52, vy + 22, 38, 196, (0xC8, 0x92, 0x24), 0.8, 0.8, 132, (255, 236, 150))
-    bar(vx + 96, vy + 22, 38, 196, (0x24, 0x8A, 0xB8), 0.5, 0.5, 66, (175, 238, 255))
+    bar(vx, vy + 22, 40, 226, (0xB8, 0x1E, 0x20), 0.66, 0.78, 148, (255, 158, 66))
+    bar(vx + 46, vy + 22, 34, 196, (0xC8, 0x92, 0x24), 0.8, 0.8, 132, (255, 236, 150))
+    bar(vx + 84, vy + 22, 34, 196, (0x24, 0x8A, 0xB8), 0.5, 0.5, 66, (175, 238, 255))
     if st.has("medallion"):
         put(st.img("medallion").resize((58, 58), Image.LANCZOS), vx - 6, H - (vy + 58))
 
-    # Food [Food] OffsetX 190, OffsetY 94.
+    # Food [Food] OffsetX 176, OffsetY 94.
     for i, t in enumerate(("13m", "23m", "28m")):
-        x = 190 + i * 66
+        x = 176 + i * 66
         put(st.img("slot").resize((58, 58), Image.LANCZOS), x, H - (94 + 58))
         text(x + 49, H - 94 - 8, t, font("Cinzel-SemiBold", 14), anchor="rs")
 

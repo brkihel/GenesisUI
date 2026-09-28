@@ -29,6 +29,7 @@ namespace GenesisUI.Modules.Vitals
         private readonly ConfigEntry<int> _offsetX;
         private readonly ConfigEntry<int> _offsetY;
         private readonly ConfigEntry<float> _scale;
+        private readonly ConfigEntry<bool> _showValues;
 
         private readonly BarAnimator _health = new BarAnimator();
         private readonly BarAnimator _stamina = new BarAnimator();
@@ -49,6 +50,8 @@ namespace GenesisUI.Modules.Vitals
                 new ConfigDescription("Distância das barras até a borda de baixo da tela, em pontos de interface.", new AcceptableValueRange<int>(0, 900)));
             _scale = config.Bind("Vitals", "Scale", 1f,
                 new ConfigDescription("Tamanho das barras (1 = padrão).", new AcceptableValueRange<float>(0.5f, 2f)));
+            _showValues = config.Bind("Vitals", "ShowValues", true,
+                "Mostra o número de cada barra numa plaquinha. Desligado, as barras ficam limpas, só com o líquido.");
         }
 
         public string Id => "hud.vitals";
@@ -63,12 +66,12 @@ namespace GenesisUI.Modules.Vitals
 
             // Health is the widest and tallest bar; stamina and eitr sit to its right.
             // Larger, translucent bubbles: calm for health, livelier for stamina, parallax for eitr.
-            _healthView = new VitalBarView(_group, "Health", theme, theme.Tokens.BarHealth, new Vector2(0f, 22f), new Vector2(46f, 226f),
-                new BarMotion { Speed = 0.035f, PatternAlpha = 0.1f, Hot = new Color(1f, 0.62f, 0.26f) });
-            _staminaView = new VitalBarView(_group, "Stamina", theme, theme.Tokens.BarStamina, new Vector2(52f, 22f), new Vector2(38f, 196f),
-                new BarMotion { Speed = 0.05f, PatternAlpha = 0.1f, Hot = new Color(1f, 0.93f, 0.62f) });
-            _eitrView = new VitalBarView(_group, "Eitr", theme, theme.Tokens.BarEitr, new Vector2(96f, 22f), new Vector2(38f, 196f),
-                new BarMotion { Speed = 0.04f, PatternAlpha = 0.11f, CounterSpeed = 0.025f, Hot = new Color(0.72f, 0.95f, 1f) });
+            _healthView = new VitalBarView(_group, "Health", theme, theme.Tokens.BarHealth, new Vector2(0f, 22f), new Vector2(40f, 226f),
+                new BarMotion { Speed = 0.035f, PatternAlpha = 0.07f, Hot = new Color(1f, 0.62f, 0.26f) });
+            _staminaView = new VitalBarView(_group, "Stamina", theme, theme.Tokens.BarStamina, new Vector2(46f, 22f), new Vector2(34f, 196f),
+                new BarMotion { Speed = 0.05f, PatternAlpha = 0.07f, Hot = new Color(1f, 0.93f, 0.62f) });
+            _eitrView = new VitalBarView(_group, "Eitr", theme, theme.Tokens.BarEitr, new Vector2(84f, 22f), new Vector2(34f, 196f),
+                new BarMotion { Speed = 0.04f, PatternAlpha = 0.08f, CounterSpeed = 0.025f, Hot = new Color(0.72f, 0.95f, 1f) });
 
             var medallion = theme.Sprite("medallion");
             if (medallion != null)
@@ -98,6 +101,10 @@ namespace GenesisUI.Modules.Vitals
                 ? Pulse.Evaluate(Time.unscaledTimeAsDouble)
                 : 0f;
 
+            bool values = _showValues.Value;
+            _healthView.ShowValue(values);
+            _staminaView.ShowValue(values);
+            _eitrView.ShowValue(values);
             _healthView.Apply(_health, danger, deltaSeconds);
             _staminaView.Apply(_stamina, 0f, deltaSeconds);
             _eitrView.SetVisible(_eitr.HasCapacity);

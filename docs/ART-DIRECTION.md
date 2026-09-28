@@ -73,13 +73,16 @@ new piece: add it to **both** style families, or the module must work without it
 | Material | dark planks (`#43352A` → `#1F1813`), edge `#0B0908`, chamfer light `#B89A7C`, fractal wood grain baked into the PNG |
 | Cells and openings | sunken, darker, with a thin groove; the active slot gets an amber-gold line |
 | Iron | small rivets at joints and ends; nothing else is metal |
-| Signature | a **V rune** (Valheim) engraved in the bar capitals; a diamond pommel at the foot |
+| Signature | a light **V rune** (Valheim) inlaid in a recessed panel of the bar's pointed cap; a light diamond in the pointed pommel |
+| Vital bars | one slender continuous piece, cap and pommel no wider than the rails; the frame scales with the bar's width (never stretched); value plate barely wider than the bar, optional (`[Vitals] ShowValues`) |
+| Surface | weathered: worn light edge all round, top-left bevel, blotches and small chips over the grain; empty openings dark brown, never pure black |
 | Pieces | bar frame (capital + shaft + pommel), value plate, sprint frame, beam plate for the hotbar, slot, status tile, card, boss plate, star, map ring, crest, banner, wind disk; no medallion |
 
 **`gold` — gold filigree.** The earlier language below (§4a), preserved as it was approved.
 
-**Bar effects (both styles, tinted per bar).** The liquid has body, dark clots (`mottle`) and
-bright organic **veins** drifting slowly; a **burn** band shows the part just lost (dense at
+**Bar effects (both styles, tinted per bar).** The liquid is calm and rich: large soft dark
+clouds (`mottle`) and **a few long, thin cracks** with small branches (`veins`), drifting slowly
+(R-040 comparison: dense veins read as noise); a **burn** band shows the part just lost (dense at
 the surface, dissolving upward, in the bar's hot colour) with **embers** rising from the
 surface; in danger a soft **glow** breathes around the bar and embers leave its sides. A small
 value plate carries the number at 28 % of the bar height where the style has one.

@@ -121,24 +121,47 @@ def _fbm(w, h, base_x, base_y, octaves, seed):
 
 
 def veins(path):
-    """Organic, thin, branching veins, like blood moving under glass (hp-bar-internal-blood
-    reference): ridged fractal noise, domain-warped, seamless in both directions."""
-    w, h = 64, 128
-    warp = _fbm(w, h, 2, 4, 3, seed=5)
-    n = _fbm(w, h, 3, 6, 4, seed=21)
-    # Domain warp by resampling with a shifted, wrapped index.
-    y, x = np.mgrid[0:h, 0:w]
-    xs = (x + (warp - 0.5) * 18).astype(int) % w
-    ys = (y + (warp - 0.5) * 30).astype(int) % h
-    n = n[ys, xs]
-    ridge = 1.0 - np.abs(n * 2 - 1)
-    _save(np.clip(np.power(ridge, 9) * 1.3, 0, 1), path)
+    """A few long, thin, jagged cracks with small branches, like the reference bars and the
+    hp-bar-internal-blood texture (R-040 comparison: ridged noise read as map contours).
+    Each crack runs the full tile height and wraps, so the texture repeats vertically without
+    a seam; drawn at 4x and reduced for soft, thin lines."""
+    from PIL import ImageDraw, ImageFilter
+    w, h, up = 64, 128, 4
+    rng = random.Random(8)
+    big = Image.new("L", (w * up, h * up), 0)
+    d = ImageDraw.Draw(big)
+
+    def line(points, width, value):
+        for dx in (-w * up, 0, w * up):                   # wrap across
+            d.line([(x + dx, y) for x, y in points], fill=value, width=width, joint="curve")
+
+    for i in range(3):
+        x0 = (i + 0.3 + rng.random() * 0.4) * w * up / 3
+        pts, x = [], x0
+        steps = 26
+        for k in range(steps + 1):
+            y = k * h * up / steps
+            x += rng.uniform(-9, 9)
+            if k == steps:
+                x = x0                                    # end where it started: seamless
+            pts.append((x, y))
+        line(pts, 6, 235)
+        for _ in range(3):                                # small branches
+            k = rng.randrange(2, steps - 4)
+            bx, by = pts[k]
+            dirx = rng.choice((-1, 1))
+            br = [(bx, by)]
+            for j in range(1, rng.randrange(3, 6)):
+                br.append((bx + dirx * j * rng.uniform(6, 11), by + j * rng.uniform(8, 14)))
+            line(br, 4, 170)
+    small = big.filter(ImageFilter.GaussianBlur(1.6)).resize((w, h), Image.LANCZOS)
+    _save(np.asarray(small, np.float32) / 255 * 1.2, path)
 
 
 def mottle(path):
-    """Soft dark clots inside the liquid (drawn in black)."""
-    n = _fbm(64, 128, 2, 4, 4, seed=33)
-    _save(np.clip((n - 0.42) / 0.35, 0, 1) * 0.85, path, rgb=(0, 0, 0))
+    """Slow, large, soft clouds of darker blood (drawn in black): depth, not texture."""
+    n = _fbm(64, 128, 1, 2, 3, seed=33)
+    _save(np.clip((n - 0.38) / 0.4, 0, 1) * 0.8, path, rgb=(0, 0, 0))
 
 
 def burn(path):

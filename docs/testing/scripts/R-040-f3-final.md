@@ -2,7 +2,7 @@
 
 | Campo | Valor |
 |---|---|
-| Pacote | `GenesisMods-GenesisUI-0.5.0-preview.1.zip` |
+| Pacote | `GenesisMods-GenesisUI-0.5.0-preview.2.zip` |
 | Tempo estimado | ~30 min |
 | Pré-requisito | R-000 no mesmo pacote |
 
@@ -33,6 +33,7 @@ Este é o review final da F3: além de passar/falhar, diga qual direção de art
 |---|---|---|---|
 | 1 | Entre no mundo e olhe o HUD inteiro parado. | Tudo em **madeira escura cravada com rebites de ferro**: barras com capitel com o **V** e pomo em losango, comida, barra de itens numa viga, efeitos de status, minimapa com aro de madeira. Uma família só, nada dourado sobrando. | Print `R-040-01.png`. Diga o que destoa. |
 | 2 | Olhe as barras de perto por uns 20 s. | Dentro do líquido, **veios** claros e manchas escuras se movendo devagar (sangue na vida, na cor de cada barra); bolhas discretas; o número numa plaquinha perto da base, legível. | Print `R-040-02.png`; diga se está forte ou fraco. |
+| 2b | Compare as barras com a sua referência `hp-bars-new`. Depois ponha `[Vitals] ShowValues = false` no F1 e volte para `true`. | Peça única e esguia, ponta em seta em cima e embaixo, V claro num painel rebaixado, madeira gasta com bordas claras, sem faixa preta em volta do líquido; rachaduras poucas e finas. Sem números, as barras ficam limpas; com números, a plaquinha mal passa da largura da barra. | Print `R-040-02b.png` ao lado da referência, como no seu comparativo. |
 | 3 | Leve dano (queda de uma altura, ou `damage 30` se preferir) e gaste vigor com um golpe. | A parte perdida **queima**: faixa na cor quente da barra (laranja na vida, dourado claro no vigor), densa na superfície e se desfazendo para cima, com **brasas** subindo; some em ~1 s. | Print `R-040-03.png` no meio do efeito. |
 | 4 | Deixe a vida abaixo de 25 % (use `damage` até lá). | Um **halo suave pulsa** em volta da barra de vida e brasas saem das laterais; volta ao normal ao curar. | Print `R-040-04.png`. |
 | 5 | Barra de vigor: **1)** corra 2 s e pare; **2)** pule; **3)** dê um golpe; **4)** fique parado até encher. | A barra **pequena** (bem menor que antes) aparece acima dos itens em **qualquer** gasto de vigor, não só correndo, e só some **depois do vigor totalmente cheio**, suavemente. | Print `R-040-05.png` e anote algum caso em que não apareceu. |

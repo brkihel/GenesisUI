@@ -95,6 +95,9 @@ namespace GenesisUI.Theme
                 ? new Vector4(e.contentLeft, e.contentBottom, e.contentRight, e.contentTop)
                 : fallback;
 
+        /// <summary>A sprite's design width in design units as the loaded style declares it; 0 when absent.</summary>
+        public float DesignWidth(string name) => _entries.TryGetValue(name, out var e) ? e.width : 0f;
+
         public static Color ToUnity(ColorRgba c) => new Color(c.R, c.G, c.B, c.A);
 
         public void EnsureLoaded()

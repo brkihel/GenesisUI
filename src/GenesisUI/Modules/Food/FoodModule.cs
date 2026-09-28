@@ -38,7 +38,7 @@ namespace GenesisUI.Modules.Food
 
         public FoodModule(ConfigFile config)
         {
-            _offsetX = config.Bind("Food", "OffsetX", 190,
+            _offsetX = config.Bind("Food", "OffsetX", 176,
                 new ConfigDescription("Distância dos espaços de comida até a borda esquerda da tela.", new AcceptableValueRange<int>(0, 1800)));
             _offsetY = config.Bind("Food", "OffsetY", 94,
                 new ConfigDescription("Distância dos espaços de comida até a borda de baixo da tela.", new AcceptableValueRange<int>(0, 1000)));
