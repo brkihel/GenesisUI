@@ -8,7 +8,8 @@ is unclear, ask; do not guess.
 ## 0. Where the project is (keep this section current)
 
 - **Phase:** F3 (HUD) approved by Diego on 2026-09-28. **F4 — inventory and crafting
-  windows** is next, on branch `f4-windows`. Order after that: F5 menus (main and Esc),
+  windows** is next, on branch `f4-windows`; its plan (approach "dress vanilla", steps
+  F4.1–F4.5) is [docs/F4-PLAN.md](docs/F4-PLAN.md), waiting for Diego's approval. Order after that: F5 menus (main and Esc),
   F6 map, F7 Extension API and adapters, F8 optional gameplay package, F9 switch-over
   (D-024). Do not start API or adapter work before the vanilla UI is done.
 - **Version:** 0.5.0, last package `0.5.0-preview.4` with script R-041 (R-040 fixes), not
