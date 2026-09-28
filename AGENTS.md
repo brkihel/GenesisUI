@@ -12,8 +12,8 @@ is unclear, ask; do not guess.
   F6 map, F7 Extension API and adapters, F8 optional gameplay package, F9 switch-over
   (D-024). Do not start API or adapter work before the vanilla UI is done.
 - **Version:** 0.5.0, last package `0.5.0-preview.4` with script R-041 (R-040 fixes), not
-  yet run by Diego. `main` still holds F0–F1; F2–F3 live on `f2-vitals`, and `f4-windows`
-  branches from it. Fast-forwarding `main` needs Diego: the agent's permissions block merges
+  yet run by Diego. `main` holds F0–F3 (fast-forwarded by Diego to `479a11e`);
+  `f4-windows` branches from it. Fast-forwarding `main` needs Diego: the agent's permissions block merges
   into `main`, so give him the command.
 - **Art direction:** gold only (D-023). The carved-wood style was tried and rejected; do not
   propose another style unless Diego asks.
