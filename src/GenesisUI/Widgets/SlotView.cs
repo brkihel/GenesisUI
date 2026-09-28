@@ -65,8 +65,8 @@ namespace GenesisUI.Widgets
                 _index.text = indexLabel;
             }
 
-            _corner = Ui.Text(Root, "Corner", theme, FontRole.Display, size * 0.26f, ThemeRuntime.ToUnity(t.TextTitle), TextAlignmentOptions.BottomRight, outlined: true);
-            Ui.Fill((RectTransform)_corner.transform, 0f, size * 0.1f, size * 0.1f, 0f);
+            _corner = Ui.Fit(Ui.Text(Root, "Corner", theme, FontRole.Display, size * 0.26f, ThemeRuntime.ToUnity(t.TextTitle), TextAlignmentOptions.BottomRight, outlined: true), 10f);
+            Ui.Fill((RectTransform)_corner.transform, size * 0.12f, size * 0.1f, size * 0.1f, size * 0.55f);
             _corner.text = "";
         }
 

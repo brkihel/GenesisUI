@@ -38,16 +38,19 @@ SPRITES = [
     ("map_mask", "art/src/map_mask.svg", 64, 64, (0, 0, 0, 0)),
     ("map_corners", "art/src/map_corners.svg", 64, 64, (0, 0, 0, 0)),
     ("wind_arrow", "art/src/wind_arrow.svg", 24, 24, (0, 0, 0, 0)),
+    ("wind_disk", "art/src/wind_disk.svg", 26, 26, (0, 0, 0, 0)),
 ]
 
 # Procedural textures from tools/art/patterns.py: already at final pixel size, drawn at 1x.
 # name, width, height (pixels), wrap
 PATTERNS = [
-    ("bar_flow", 64, 128, "repeat"),
+    ("bar_bubbles", 64, 128, "repeat"),
 ]
 
 
 def main() -> int:
+    import shapes
+    shapes.main()  # every shape SVG comes from the shared style first
     cairosvg.svg2png(url=os.path.join(ROOT, "art/src/logo.svg"), write_to=os.path.join(ROOT, "icon.png"),
                      output_width=256, output_height=256)
     print("art/src/logo.svg -> icon.png (256x256)")

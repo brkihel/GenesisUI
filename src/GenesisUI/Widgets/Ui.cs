@@ -77,5 +77,18 @@ namespace GenesisUI.Widgets
             go.SetActive(true);
             return text;
         }
+
+        /// <summary>
+        /// Shrinks the text to fit its box instead of spilling over a frame (R-030: numbers such as
+        /// "148" overlapped the narrow bar frames). Never grows above the given size.
+        /// </summary>
+        public static TextMeshProUGUI Fit(TextMeshProUGUI text, float minSize)
+        {
+            text.enableAutoSizing = true;
+            text.fontSizeMax = text.fontSize;
+            text.fontSizeMin = Mathf.Min(minSize, text.fontSize);
+            text.overflowMode = TextOverflowModes.Overflow;
+            return text;
+        }
     }
 }

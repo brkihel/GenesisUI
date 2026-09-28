@@ -142,8 +142,18 @@
       "borderTop": 0
     },
     {
-      "name": "bar_flow",
-      "file": "bar_flow.png",
+      "name": "wind_disk",
+      "file": "wind_disk.png",
+      "width": 26,
+      "height": 26,
+      "borderLeft": 0,
+      "borderBottom": 0,
+      "borderRight": 0,
+      "borderTop": 0
+    },
+    {
+      "name": "bar_bubbles",
+      "file": "bar_bubbles.png",
       "width": 32,
       "height": 64,
       "borderLeft": 0,

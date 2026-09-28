@@ -53,8 +53,8 @@ namespace GenesisUI.Widgets
             _badge.rectTransform.pivot = new Vector2(1f, 1f);
             _badge.enabled = false;
 
-            _name = Ui.Text(Root, "Name", theme, FontRole.BodyStrong, 15f, ThemeRuntime.ToUnity(t.TextTitle), TextAlignmentOptions.Top, outlined: true);
-            Ui.Place((RectTransform)_name.transform, new Vector2(0.5f, 1f), new Vector2(0f, -TileSize - 1f), new Vector2(CellWidth + 16f, 20f));
+            _name = Ui.Fit(Ui.Text(Root, "Name", theme, FontRole.BodyStrong, 15f, ThemeRuntime.ToUnity(t.TextTitle), TextAlignmentOptions.Top, outlined: true), 11f);
+            Ui.Place((RectTransform)_name.transform, new Vector2(0.5f, 1f), new Vector2(0f, -TileSize - 1f), new Vector2(CellWidth - 2f, 20f));
 
             _time = Ui.Text(Root, "Time", theme, FontRole.Label, 13f, ThemeRuntime.ToUnity(t.TextBody), TextAlignmentOptions.Top, outlined: true);
             Ui.Place((RectTransform)_time.transform, new Vector2(0.5f, 1f), new Vector2(0f, -TileSize - 20f), new Vector2(CellWidth, 18f));
@@ -95,9 +95,13 @@ namespace GenesisUI.Widgets
             _time.text = text ?? "";
         }
 
+        // Marks "the text shows a clock", so a later SetTimeText(null) really clears it (R-030:
+        // resetting the power's cooldown left the last m:ss frozen on a ready tile).
+        private const string ClockShown = "\u0001clock";
+
         public void SetClock(TimeText clock)
         {
-            _shownTime = null;
+            _shownTime = ClockShown;
             if (clock.Value == _shownClock) return;
             _shownClock = clock.Value;
             if (clock.Value <= 0) _time.text = "";

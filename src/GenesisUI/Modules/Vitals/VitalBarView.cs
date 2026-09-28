@@ -10,10 +10,11 @@ namespace GenesisUI.Modules.Vitals
     /// <summary>How a bar's "living" liquid moves (docs/ART-DIRECTION.md §5: quiet motion).</summary>
     internal struct BarMotion
     {
-        /// <summary>Upward scroll of the flow pattern, in tile heights per second.</summary>
+        /// <summary>Upward scroll of the bubbles, in tile heights per second.</summary>
         public float Speed;
+        /// <summary>Kept low: the bubbles are a subtle detail (Diego, R-030).</summary>
         public float PatternAlpha;
-        /// <summary>A second layer drifting the other way (eitr's shimmer); 0 = none.</summary>
+        /// <summary>A second, slower bubble layer for parallax (eitr); 0 = none.</summary>
         public float CounterSpeed;
     }
 
@@ -81,12 +82,12 @@ namespace GenesisUI.Modules.Vitals
 
             // The flow tile is 1:2; one tile is as wide as the bar, so uv height = area / (2 * width).
             _tileHeightUv = areaWidth > 0f ? _areaHeight / (2f * areaWidth) : 1f;
-            var flowTex = theme.Texture("bar_flow");
+            var flowTex = theme.Texture("bar_bubbles");
             if (flowTex != null)
             {
                 _flow = FlowLayer(_mask, "Flow", flowTex, new Color(light.r, light.g, light.b, motion.PatternAlpha), 0f);
                 if (motion.CounterSpeed != 0f)
-                    _counterFlow = FlowLayer(_mask, "CounterFlow", flowTex, new Color(light.r, light.g, light.b, motion.PatternAlpha * 0.7f), 0.5f);
+                    _counterFlow = FlowLayer(_mask, "CounterFlow", flowTex, new Color(light.r, light.g, light.b, motion.PatternAlpha * 0.6f), 0.5f);
             }
 
             // Bright meniscus at the liquid's surface.
@@ -98,9 +99,10 @@ namespace GenesisUI.Modules.Vitals
             surfaceRt.sizeDelta = new Vector2(0f, 2f);
             _surface = Ui.Image(surfaceRt, null, new Color(light.r, light.g, light.b, 0.85f));
 
-            _number = Ui.Text(Root, "Value", theme, FontRole.Display, 19f, ThemeRuntime.ToUnity(theme.Tokens.TextTitle),
-                              TextAlignmentOptions.Center, outlined: true);
-            Ui.Fill((RectTransform)_number.transform, 0f, InsetBottom, 0f, InsetTop);
+            _number = Ui.Fit(Ui.Text(Root, "Value", theme, FontRole.Display, 19f, ThemeRuntime.ToUnity(theme.Tokens.TextTitle),
+                                     TextAlignmentOptions.Center, outlined: true), 12f);
+            // The number lives inside the liquid's width, so it can never cross the frame.
+            Ui.Fill((RectTransform)_number.transform, InsetSide - 1f, InsetBottom, InsetSide - 1f, InsetTop);
         }
 
         public void SetVisible(bool visible)
@@ -123,15 +125,20 @@ namespace GenesisUI.Modules.Vitals
             var frame = danger > 0f ? Color.Lerp(_frameColor, _dangerColor, danger * 0.8f) : _frameColor;
             if (_frame.color != frame) _frame.color = frame;
 
-            Scroll(_flow, _motion.Speed, deltaSeconds);
-            Scroll(_counterFlow, _motion.CounterSpeed, deltaSeconds);
+            _time += deltaSeconds;
+            Scroll(_flow, _motion.Speed, 0f, deltaSeconds);
+            Scroll(_counterFlow, _motion.CounterSpeed, 0.5f, deltaSeconds);
         }
 
-        private void Scroll(RawImage layer, float speed, float dt)
+        private float _time;
+
+        private void Scroll(RawImage layer, float speed, float baseX, float dt)
         {
             if (layer == null || speed == 0f) return;
             var uv = layer.uvRect;
             uv.y = Mathf.Repeat(uv.y - speed * dt, 1f); // lower v = the texture moves up
+            // A slight side-to-side sway, as bubbles do while rising.
+            uv.x = baseX + 0.018f * Mathf.Sin(_time * 1.3f + baseX * 6f);
             layer.uvRect = uv;
         }
 

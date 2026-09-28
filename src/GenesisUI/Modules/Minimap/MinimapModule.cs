@@ -18,8 +18,11 @@ namespace GenesisUI.Modules.Minimap
     /// It MIRRORS the vanilla small map instead of redrawing it: same texture and the same
     /// material (fog of war included, so nothing unexplored is ever revealed), the same uvRect,
     /// and a copy of every image under the vanilla pin root, so pins from other mods appear
-    /// too. The Mask makes its own copy of the material, so the four properties vanilla changes
-    /// at runtime are copied every frame. If the map shader cannot be stencil-masked, the module
+    /// too. Vanilla's Minimap.Start REPLACES the small-map material with an instance and only then
+    /// sets the map textures on it; our module can be built before that Start, so the material is
+    /// followed every frame (R-030: holding the pre-Start material showed a grey map). The Mask
+    /// renders its own copy of the material; the only runtime property the shader declares,
+    /// _SharedFade, is copied every frame. If the map shader cannot be stencil-masked, the module
     /// says so in the log and covers the square corners instead.
     /// </summary>
     [GameContract("assembly_valheim", "Minimap", "instance")]
@@ -41,10 +44,8 @@ namespace GenesisUI.Modules.Minimap
         private const int MaxPins = 256;
 
         private static readonly string[] OwnedRegions = { "hud.minimap" };
-        // The material properties vanilla Minimap changes at runtime (read from its decompiled code).
-        private static readonly int ZoomId = Shader.PropertyToID("_zoom");
-        private static readonly int PixelSizeId = Shader.PropertyToID("_pixelSize");
-        private static readonly int MapCenterId = Shader.PropertyToID("_mapCenter");
+        // Vanilla also sets _zoom, _pixelSize and _mapCenter, but 'Custom/mapshader' does not declare
+        // them (Unity errors on reading them, R-030): only _SharedFade reaches the shader.
         private static readonly int SharedFadeId = Shader.PropertyToID("_SharedFade");
 
         private readonly ConfigEntry<int> _offsetX;
@@ -139,7 +140,11 @@ namespace GenesisUI.Modules.Minimap
             // Crest: wind arrow + "Dia 4 · 07:26", resting on the ring's top.
             var crestRt = Ui.Place(Ui.Child(_group, "Crest"), new Vector2(0.5f, 0f), new Vector2(0f, RingSize - 18f), new Vector2(200f, 52f));
             Ui.Image(crestRt, theme.Sprite("map_crest"), theme.Sprite("map_crest") != null ? Color.white : ThemeRuntime.ToUnity(t.PanelBackground));
-            _wind = Ui.Place(Ui.Child(crestRt, "Wind"), new Vector2(0.5f, 0f), new Vector2(-62f, 12f), new Vector2(18f, 18f));
+            // The wind sits in its own small cell on the crest, so the arrow reads at a glance (R-030).
+            var disk = Ui.Place(Ui.Child(crestRt, "WindDisk"), new Vector2(0.5f, 0f), new Vector2(-64f, 8f), new Vector2(30f, 30f));
+            disk.pivot = new Vector2(0.5f, 0f);
+            Ui.Image(disk, theme.Sprite("wind_disk"), Color.white);
+            _wind = Ui.Place(Ui.Child(disk, "Wind"), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(24f, 24f));
             _wind.pivot = new Vector2(0.5f, 0.5f);
             _windImage = Ui.Image(_wind, theme.Sprite("wind_arrow"), Color.white);
             _time = Ui.Text(crestRt, "DayTime", theme, FontRole.Display, 14f, ThemeRuntime.ToUnity(t.TextTitle), TextAlignmentOptions.Center, outlined: true);
@@ -174,6 +179,13 @@ namespace GenesisUI.Modules.Minimap
             if (!show) return;
 
             var source = mm.m_mapImageSmall;
+            if (_map.material != source.material)
+            {
+                // First frames after load, or any later swap: follow vanilla's live instance.
+                _map.material = source.material;
+                _stencilChecked = false;
+                GenesisLog.Info("Module:hud.minimap", "following vanilla's map material '" + (source.material != null ? source.material.name : "null") + "'");
+            }
             if (_map.texture != source.texture) _map.texture = source.texture;
             _map.uvRect = source.uvRect;
             if (!_stencilChecked) CheckStencil(source.material);
@@ -189,8 +201,12 @@ namespace GenesisUI.Modules.Minimap
             var env = EnvMan.instance;
             if (env != null)
             {
-                float a = 0.45f + 0.55f * Mathf.Clamp01(env.GetWindIntensity());
+                // Stronger wind = a fuller, larger arrow; it never fades out of sight.
+                float intensity = Mathf.Clamp01(env.GetWindIntensity());
+                float a = 0.75f + 0.25f * intensity;
                 if (!Mathf.Approximately(_windImage.color.a, a)) _windImage.color = new Color(1f, 1f, 1f, a);
+                float s = 0.85f + 0.2f * intensity;
+                if (!Mathf.Approximately(_wind.localScale.x, s)) _wind.localScale = new Vector3(s, s, 1f);
 
                 int day = env.GetDay();
                 int minute = Mathf.Clamp((int)(env.GetDayFraction() * 1440f), 0, 1439);
@@ -238,9 +254,6 @@ namespace GenesisUI.Modules.Minimap
         {
             var rendered = _map.materialForRendering;
             if (vanilla == null || rendered == null || rendered == vanilla) return;
-            rendered.SetFloat(ZoomId, vanilla.GetFloat(ZoomId));
-            rendered.SetFloat(PixelSizeId, vanilla.GetFloat(PixelSizeId));
-            rendered.SetVector(MapCenterId, vanilla.GetVector(MapCenterId));
             if (vanilla.HasProperty(SharedFadeId)) rendered.SetFloat(SharedFadeId, vanilla.GetFloat(SharedFadeId));
         }
 
