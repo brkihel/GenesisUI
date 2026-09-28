@@ -43,6 +43,15 @@ namespace GenesisUI.Foundation
 
         public static IReadOnlyList<VeilHandle> Handles => Active;
 
+        /// <summary>True if <paramref name="target"/> is already veiled (by anyone).</summary>
+        public static bool IsVeiled(GameObject target)
+        {
+            if (target == null) return false;
+            for (int i = 0; i < Active.Count; i++)
+                if (Active[i].Target == target) return true;
+            return false;
+        }
+
         /// <returns>The handle, or null if the target is missing or already veiled by someone else.</returns>
         public static VeilHandle Apply(string owner, string label, GameObject target)
         {

@@ -16,9 +16,18 @@ A region is a named piece of the vanilla UI. One owner at a time
 | `hud.guardianPower` | `Hud.m_gpRoot` | `hud.status` | CanvasGroup alpha 0 | — | SeneaL UI |
 | `hud.minimap` | `Minimap.m_smallRoot` | `hud.minimap` | CanvasGroup alpha 0 | vanilla deactivates it for the large map and in no-map worlds; our minimap follows `activeInHierarchy`. Terrain uses a circular mesh with the live material; pins stay masked (D-019, D-021) | SeneaL UI |
 | `hud.hotbar` | every `HotkeyBar` under `Hud` | `hud.hotbar` | CanvasGroup alpha 0 | its `Update` keeps running: gamepad selection and use still work; our hotbar reads `m_selected` | SeneaL UI |
+| `hud.hover` | `Hud.m_hoverName` | `hud.hover` | CanvasGroup alpha 0 | vanilla writes the text and fades it through the CanvasRenderer alpha every frame; the card mirrors both | SeneaL UI |
+| `hud.messages` | `MessageHud.m_messageText`, `m_messageIcon`, `m_messageCenterText` | `hud.notice` | CanvasGroup alpha 0 on each | vanilla queues, times and fades the messages; the cards mirror text, icon and alpha | SeneaL UI |
+| `hud.boss` | children of `EnemyHud.m_hudRoot` cloned from `m_baseHudBoss` | `hud.boss` | CanvasGroup alpha 0 on each clone | **dynamic**: vanilla creates one clone per boss in range and destroys it later; the host re-applies the veil to new clones every 0.5 s and does not warn when there is none | SeneaL UI |
 
-The sprint bar is additive and has no vanilla region or veil. It appears only during
-running and briefly after, above the hotbar.
+The sprint bar is additive and has no vanilla region or veil. It appears when stamina
+drops below its maximum (any action that spends it) and fades only after it is full.
+
+**Nudge, not veil — `hud.keyHints`.** Vanilla's `KeyHints` (the button hints bottom
+centre) sits where our hotbar plate is. `hud.hotbar` moves it up by `[Hotbar] KeyHintsLift`
+through `VanillaNudge`: the original `anchoredPosition` is recorded, re-applied if vanilla
+moves it, and restored exactly when the hotbar module is torn down or faults. Jötunn's
+custom key hints live under the same object and move with it.
 
 ## How the vanilla HUD hides
 

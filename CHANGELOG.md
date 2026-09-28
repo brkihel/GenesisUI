@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.5.0-preview.1 — F3 complete, carved-wood style
+
+### Added
+- **Selectable art styles** (D-022): `[Theme] Style` = `carved` (carved wood with iron
+  rivets and a V rune, the new default) or `gold` (the filigree style), switched live.
+  Both ship; sprite sizes, 9-slice borders and content insets come from each style's
+  `sprites.json`.
+- **Boss plate** top centre: name, stars, health with a hot trail; replaces vanilla's boss
+  bar (`hud.boss`, a dynamic region veiled as vanilla creates it).
+- **Interaction card** beside the crosshair, mirroring vanilla's hover text and fade.
+- **Notifications**: top-left card with icon and the large centre message, mirroring
+  vanilla's queue, timing and fade.
+- **Key hints** lifted above the hotbar (`[Hotbar] KeyHintsLift`) through `VanillaNudge`,
+  restored exactly when the hotbar module stops or faults.
+- Vital-bar effects in every bar's own colour: drifting veins and clots inside the liquid,
+  a burn band with rising embers over the part just lost, a soft danger glow with embers
+  at low health, and a value plate for the number.
+
+### Changed
+- The stamina bar above the hotbar is much smaller (220 x 22), appears whenever stamina is
+  spent (not only running) and fades only after stamina is full.
+- Package layout: `plugins/art/<style>/` per style.
+
 ## 0.4.1-preview.2 — R-031 follow-up, F3 sprint
 
 ### Changed

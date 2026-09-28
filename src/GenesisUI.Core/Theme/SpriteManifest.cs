@@ -25,6 +25,18 @@ namespace GenesisUI.Theme
 
         /// <summary>"clamp" (default) or "repeat" for textures that scroll or tile (animated patterns).</summary>
         public string wrap = "clamp";
+
+        /// <summary>
+        /// Content insets in design units: where a frame's contents go (a bar's liquid, a
+        /// plate's track). -1 = not declared; code then uses its own default. Each art style
+        /// declares its own, so layout never hard-codes one style's measurements.
+        /// </summary>
+        public int contentLeft = -1;
+        public int contentBottom = -1;
+        public int contentRight = -1;
+        public int contentTop = -1;
+
+        public bool HasContent => contentLeft >= 0 && contentBottom >= 0 && contentRight >= 0 && contentTop >= 0;
     }
 
     /// <summary>
@@ -80,6 +92,10 @@ namespace GenesisUI.Theme
                     case "borderRight": e.borderRight = Int(kv.Value, where, errors); break;
                     case "borderTop": e.borderTop = Int(kv.Value, where, errors); break;
                     case "wrap": e.wrap = kv.Value as string; if (e.wrap == null) errors.Add(where + " must be a string"); break;
+                    case "contentLeft": e.contentLeft = Int(kv.Value, where, errors); break;
+                    case "contentBottom": e.contentBottom = Int(kv.Value, where, errors); break;
+                    case "contentRight": e.contentRight = Int(kv.Value, where, errors); break;
+                    case "contentTop": e.contentTop = Int(kv.Value, where, errors); break;
                     default: errors.Add("unknown property '" + where + "'"); break;
                 }
             }
@@ -117,6 +133,10 @@ namespace GenesisUI.Theme
                 if (s.borderLeft < 0 || s.borderRight < 0 || s.borderTop < 0 || s.borderBottom < 0) errors.Add(id + ": negative border");
                 if (s.borderLeft + s.borderRight > s.width || s.borderTop + s.borderBottom > s.height) errors.Add(id + ": borders larger than the sprite");
                 if (s.wrap != "clamp" && s.wrap != "repeat") errors.Add(id + ": wrap must be 'clamp' or 'repeat'");
+                bool anyContent = s.contentLeft >= 0 || s.contentBottom >= 0 || s.contentRight >= 0 || s.contentTop >= 0;
+                if (anyContent && !s.HasContent) errors.Add(id + ": content insets must be given all four or none");
+                if (s.HasContent && (s.contentLeft + s.contentRight >= s.width || s.contentTop + s.contentBottom >= s.height))
+                    errors.Add(id + ": content insets leave no room");
             }
             return errors;
         }

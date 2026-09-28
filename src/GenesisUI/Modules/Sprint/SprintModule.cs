@@ -11,15 +11,20 @@ using UnityEngine.UI;
 
 namespace GenesisUI.Modules.Sprint
 {
-    /// <summary>A temporary stamina readout above the hotbar while the player runs.</summary>
+    /// <summary>
+    /// A small stamina readout above the hotbar. It appears whenever stamina is below full,
+    /// whatever spent it (running, attacking, jumping, dodging, blocking, swimming), and only
+    /// fades once stamina is completely back (Diego, R-032).
+    /// </summary>
     [GameContract("assembly_valheim", "Player", "m_localPlayer")]
-    [GameContract("assembly_valheim", "Character", "IsRunning", Parameters = new string[0])]
     [GameContract("assembly_valheim", "Player", "GetStamina", Parameters = new string[0])]
     [GameContract("assembly_valheim", "Player", "GetMaxStamina", Parameters = new string[0])]
     internal sealed class SprintModule : IUiModule
     {
-        private const float Width = 460f;
-        private const float LingerSeconds = 1.5f;
+        private const float Width = 220f;
+        private const float Height = 22f;
+        private const float FullHoldSeconds = 0.8f;   // stays a moment after stamina is full...
+        private const float FadeSeconds = 0.4f;       // ...then fades
         private static readonly string[] NoVanillaRegions = new string[0];
 
         private readonly ConfigEntry<int> _offsetY;
@@ -52,18 +57,20 @@ namespace GenesisUI.Modules.Sprint
         {
             var theme = context.Theme;
             _group = Ui.Place(Ui.Child(context.Root, "Sprint"), new Vector2(0.5f, 0f),
-                Vector2.zero, new Vector2(Width, 58f));
+                Vector2.zero, new Vector2(Width, Height));
             _opacity = _group.gameObject.AddComponent<CanvasGroup>();
             _opacity.alpha = 0f;
             _opacity.interactable = false;
             _opacity.blocksRaycasts = false;
 
-            var frame = Ui.Place(Ui.Child(_group, "Frame"), new Vector2(0.5f, 0f),
-                Vector2.zero, new Vector2(Width, 36f));
+            var frame = Ui.Fill(Ui.Child(_group, "Frame"));
             Ui.Image(frame, theme.Sprite("sprint_frame"), Color.white);
 
-            var track = Ui.Place(Ui.Child(frame, "Track"), new Vector2(0.5f, 0.5f),
-                new Vector2(0f, 0f), new Vector2(Width - 49f, 10f));
+            // The track fills the frame's content area, as the loaded style declares it.
+            var c = theme.Content("sprint_frame", new Vector4(24f, 12f, 24f, 12f));
+            float scaleY = Height / 36f;   // the gold frame is drawn 36 high; carved declares its own
+            if (c.y + c.w >= Height) c = new Vector4(c.x, c.y * scaleY, c.z, c.w * scaleY);
+            var track = Ui.Fill(Ui.Child(frame, "Track"), c.x, c.y, c.z, c.w);
             var fillSprite = theme.Sprite("bar_fill");
             var stamina = ThemeRuntime.ToUnity(theme.Tokens.BarStamina);
             _trail = Ui.Image(Ui.Fill(Ui.Child(track, "Trail")), fillSprite,
@@ -75,13 +82,6 @@ namespace GenesisUI.Modules.Sprint
             _fill.type = Image.Type.Filled;
             _fill.fillMethod = Image.FillMethod.Horizontal;
             _fill.fillAmount = 0f;
-
-            var label = Ui.Text(_group, "Label", theme, FontRole.Label, 14f,
-                ThemeRuntime.ToUnity(theme.Tokens.AccentGoldBright), TextAlignmentOptions.Center, outlined: true);
-            Ui.Place((RectTransform)label.transform, new Vector2(0.5f, 0f),
-                new Vector2(0f, 35f), new Vector2(150f, 21f));
-            label.text = Localization.instance != null
-                ? Localization.instance.Localize("$genesisui_sprint_label") : "STAMINA";
 
             _bar = new BarAnimator();
             _linger = 0f;
@@ -107,16 +107,19 @@ namespace GenesisUI.Modules.Sprint
             }
 
             var player = Player.m_localPlayer;
-            bool running = player != null && player.IsRunning();
-            if (running) _linger = LingerSeconds;
+            float stamina = player != null ? player.GetStamina() : 0f;
+            float max = player != null ? player.GetMaxStamina() : 0f;
+            // Anything that spends stamina shows the bar; it goes only once stamina is full again.
+            bool spent = player != null && max > 0f && stamina < max - 0.5f;
+            if (spent) _linger = FullHoldSeconds + FadeSeconds;
             else _linger = Mathf.Max(0f, _linger - deltaSeconds);
             bool visible = player != null && _linger > 0f;
             if (_group.gameObject.activeSelf != visible) _group.gameObject.SetActive(visible);
             if (!visible) return;
 
-            float alpha = Mathf.Clamp01(_linger / 0.45f);
+            float alpha = Mathf.Clamp01(_linger / FadeSeconds);
             if (!Mathf.Approximately(_opacity.alpha, alpha)) _opacity.alpha = alpha;
-            _bar.Update(player.GetStamina(), player.GetMaxStamina(), deltaSeconds);
+            _bar.Update(stamina, max, deltaSeconds);
             if (!Mathf.Approximately(_fill.fillAmount, _bar.Fast)) _fill.fillAmount = _bar.Fast;
             if (!Mathf.Approximately(_trail.fillAmount, _bar.Slow)) _trail.fillAmount = _bar.Slow;
         }

@@ -179,3 +179,19 @@ The previous Unity `Mask` created a stencil copy of that material; its game-mana
 map textures could become stale on the copy. A circular mesh makes that copy
 unnecessary while retaining the same fog-of-war shader. Client confirmation is
 required before treating the grey-terrain bug as resolved.
+
+## D-022 — Selectable art styles
+
+**Decision (2026-09-28):** GenesisUI ships two complete art styles, `carved` (carved wood
+with iron rivets and a V rune; the default while Diego evaluates) and `gold` (the D-020
+filigree), selected by `[Theme] Style` and switched live. Both draw the same sprite names;
+each has its own `art/out/<style>/sprites.json` with sizes, 9-slice borders and content
+insets, read by views through `ThemeRuntime.Border/Content`. D-020 now applies per style:
+one generated ornament language inside each style. Two supporting mechanisms come with it:
+`VanillaNudge` (a reversible offset for vanilla elements that collide with our layout, used
+for the key hints) and dynamic regions (vanilla objects created on demand, such as boss
+HUD clones, veiled as they appear).
+**Why:** Diego (after R-032) designed a carved-wood bar that reads more like Valheim and
+asked for it as a selectable style rather than a replacement, to decide later which
+direction continues. Shared names and manifest-driven measurements keep modules
+style-agnostic, so a second style costs art, not code.

@@ -30,6 +30,7 @@ namespace GenesisUI.Modules.Hotbar
     [GameContract("assembly_valheim", "HotkeyBar", "m_selected")]
     [GameContract("assembly_valheim", "Character", "IsDead")]
     [GameContract("assembly_utils", "ZInput", "IsGamepadActive")]
+    [GameContract("assembly_valheim", "KeyHints", "instance")]
     internal sealed class HotbarModule : IUiModule
     {
         private const int SlotCount = 8;
@@ -41,6 +42,7 @@ namespace GenesisUI.Modules.Hotbar
 
         private readonly ConfigEntry<int> _offsetY;
         private readonly ConfigEntry<float> _scale;
+        private readonly ConfigEntry<int> _keyHintsLift;
         private readonly List<ItemDrop.ItemData> _bound = new List<ItemDrop.ItemData>(16);
         private readonly ItemDrop.ItemData[] _bySlot = new ItemDrop.ItemData[SlotCount];
         private readonly SlotView[] _slots = new SlotView[SlotCount];
@@ -59,6 +61,9 @@ namespace GenesisUI.Modules.Hotbar
                 new ConfigDescription("Distância da barra de itens até a borda de baixo da tela, em pontos de interface.", new AcceptableValueRange<int>(0, 900)));
             _scale = config.Bind("Hotbar", "Scale", 1f,
                 new ConfigDescription("Tamanho da barra de itens (1 = padrão).", new AcceptableValueRange<float>(0.5f, 2f)));
+            _keyHintsLift = config.Bind("Hotbar", "KeyHintsLift", 72,
+                new ConfigDescription("Quanto as dicas de atalho do jogo sobem para não ficar atrás da barra de itens (0 = não mexer).",
+                    new AcceptableValueRange<int>(0, 600)));
         }
 
         public string Id => "hud.hotbar";
@@ -81,6 +86,12 @@ namespace GenesisUI.Modules.Hotbar
             }
 
             _selected = AccessTools.FieldRefAccess<HotkeyBar, int>("m_selected");
+
+            // Vanilla's key hints sit along the bottom right, behind our wider hotbar (R-020). They
+            // stay vanilla; they are only lifted, reversibly, above the plate.
+            if (_keyHintsLift.Value > 0 && KeyHints.instance != null)
+                Foundation.VanillaNudge.Apply("module:" + Id, "hud.keyHints", KeyHints.instance.transform as RectTransform,
+                    new Vector2(0f, _keyHintsLift.Value));
             _vanillaBar = Hud.instance != null ? Hud.instance.GetComponentInChildren<HotkeyBar>(true) : null;
             ApplyLayout();
         }

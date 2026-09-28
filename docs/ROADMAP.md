@@ -16,10 +16,11 @@ are met.
 | **F7 — Gameplay package (optional)** | Separate package with server authority: extra slots, quick/action slots, crafting from chests… | Own design docs; server validates every action |
 | **F8 — Switch-over** | GenesisUI replaces SeneaL UI on GenesisHeim | Release checklist + rollout in [RELEASE.md](RELEASE.md) |
 
-F3 is in progress: vitals, food, hotbar, status and minimap have client previews;
-the sprint bar is included in 0.4.1-preview.2. Boss/enemy plates, interaction and
-hover cards, notifications and key hints remain. F4 starts after the F3 client
-scripts and modpack performance check pass.
+F3 is feature-complete in 0.5.0-preview.1: vitals, food, hotbar, status, minimap,
+stamina bar, boss plate, interaction card, notifications and key hints (lifted above
+the hotbar), in two selectable art styles (`carved`, `gold`; D-022). It closes with
+Diego's final review of R-040 and the modpack performance check; F4 starts after that.
+Enemy (non-boss) plates stay vanilla until Diego asks for them.
 
 ## Research items (not scheduled)
 

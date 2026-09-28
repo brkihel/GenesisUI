@@ -6,7 +6,10 @@ using BepInEx.Configuration;
 using GenesisUI.Foundation;
 using GenesisUI.Foundation.Contracts;
 using GenesisUI.Host;
+using GenesisUI.Modules.Boss;
 using GenesisUI.Modules.Food;
+using GenesisUI.Modules.Hover;
+using GenesisUI.Modules.Notice;
 using GenesisUI.Modules.Hotbar;
 using GenesisUI.Modules.Minimap;
 using GenesisUI.Modules.Sprint;
@@ -41,6 +44,7 @@ namespace GenesisUI
 
         internal static ConfigEntry<bool> Enabled;
         internal static ConfigEntry<bool> RedactReports;
+        internal static ConfigEntry<string> ArtStyle;
         internal static ConfigEntry<KeyboardShortcut> DiagnosticsKey;
 
         private ButtonConfig _diagnosticsButton;
@@ -81,7 +85,12 @@ namespace GenesisUI
                 }
                 RegisterDiagnosticsKey();
 
-                _theme = new ThemeRuntime(Path.GetDirectoryName(Info.Location));
+                _theme = new ThemeRuntime(Path.GetDirectoryName(Info.Location), ArtStyle.Value);
+                ArtStyle.SettingChanged += (_, __) => Guard.Try("art style", () =>
+                {
+                    _theme.SetStyle(ArtStyle.Value);
+                    ModuleHost.RebuildAll();
+                });
                 ModuleHost.Init(_theme, Enabled.Value);
                 Enabled.SettingChanged += (_, __) => Guard.Try("master toggle", () => ModuleHost.SetMasterEnabled(Enabled.Value));
 
@@ -93,10 +102,16 @@ namespace GenesisUI
                     "Barra de itens (1 a 8) emoldurada, no centro de baixo. Desligado, o jogo mostra a barra original."));
                 ModuleHost.Register(new MinimapModule(Config), Config.Bind("Modules", "Minimap", true,
                     "Minimapa redondo no canto superior direito, com vento, dia e hora em cima e o bioma embaixo. Desligado, o jogo mostra o minimapa original."));
+                ModuleHost.Register(new BossModule(Config), Config.Bind("Modules", "Boss", true,
+                    "Placa do chefe no topo, com nome, estrelas e vida. Desligado, o jogo mostra a barra de chefe original."));
+                ModuleHost.Register(new HoverModule(Config), Config.Bind("Modules", "Hover", true,
+                    "Cartão de interação ao lado da mira (nome do objeto e ações). Desligado, o jogo mostra o texto original."));
+                ModuleHost.Register(new NoticeModule(Config), Config.Bind("Modules", "Notice", true,
+                    "Notificações do canto superior esquerdo e mensagens do centro no visual do GenesisUI. Desligado, o jogo mostra as originais."));
                 ModuleHost.Register(new StatusModule(Config), Config.Bind("Modules", "Status", true,
                     "Efeitos ativos e o poder do guardião em quadros com nome e tempo. Desligado, o jogo mostra os efeitos originais."));
                 ModuleHost.Register(new SprintModule(Config), Config.Bind("Modules", "Sprint", true,
-                    "Barra temporária de vigor acima dos itens durante a corrida. Desligado, ela desaparece."));
+                    "Barra pequena de vigor acima dos itens: surge quando o vigor é gasto e some só depois de cheio. Desligado, ela não aparece."));
 
                 // Jötunn raises this on every scene: fonts become available on the first one,
                 // and the main scene brings the HUD the modules attach to.
@@ -137,6 +152,10 @@ namespace GenesisUI
         {
             Enabled = Config.Bind("General", "Enabled", true,
                 "Liga a interface GenesisUI. Desligado, todas as partes voltam para a interface original do jogo, na hora.");
+
+            ArtStyle = Config.Bind("Theme", "Style", ThemeRuntime.Styles[0],
+                new ConfigDescription("Estilo da arte: 'carved' (madeira entalhada com ferro) ou 'gold' (filigrana dourada). Troca na hora.",
+                    new AcceptableValueList<string>(ThemeRuntime.Styles)));
 
             DiagnosticsKey = Config.Bind("Diagnostics", "DiagnosticsKey", new KeyboardShortcut(KeyCode.F8),
                 "Tecla de diagnóstico. Nas versões de teste abre o painel de diagnóstico; " +
@@ -197,7 +216,7 @@ namespace GenesisUI
             yield return new KeyValuePair<string, IEnumerable<string>>("Vanilla health panel", HudDump.HealthPanel());
             yield return new KeyValuePair<string, IEnumerable<string>>("Theme", new[]
             {
-                "fonts: " + (_theme?.FontCount ?? 0) + "/5, sprites: " + (_theme?.SpriteCount ?? 0),
+                "style: " + (_theme?.Style ?? "?") + ", fonts: " + (_theme?.FontCount ?? 0) + "/5, sprites: " + (_theme?.SpriteCount ?? 0),
             });
         }
 

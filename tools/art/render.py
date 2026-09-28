@@ -1,14 +1,15 @@
-"""Rasterizes art/src/*.svg (our own vector sources, docs/DECISIONS.md D-009).
+"""Builds every art style: shapes (SVG) and patterns into PNGs and one manifest per style.
 
     tools/.venv/bin/python tools/art/render.py
 
 Outputs:
-  icon.png                     package icon, exactly 256x256 (Hexium rule)
-  art/out/<name>.png           UI sprites at 2x their design size
-  art/out/sprites.json         name, file, design size and 9-slice border per sprite,
-                               read by the plugin with JsonUtility (D-013)
+  icon.png                         package icon, exactly 256x256 (Hexium rule)
+  art/out/<style>/<name>.png       sprites at 2x design size (patterns at their pixel size)
+  art/out/<style>/sprites.json     name, file, size, 9-slice border, content insets, wrap;
+                                   read by the plugin through StrictJson (D-018)
 
-Setup once:  python3 -m venv tools/.venv && tools/.venv/bin/pip install -r tools/art/requirements.txt
+Styles share sprite names (D-022). Setup once:
+  python3 -m venv tools/.venv && tools/.venv/bin/pip install -r tools/art/requirements.txt
 """
 import json
 import os
@@ -17,64 +18,62 @@ import sys
 sys.path.insert(0, os.path.dirname(__file__))
 
 import cairosvg
+from PIL import Image
+
+import carved_style
+import patterns
+import shapes
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-OUT = os.path.join(ROOT, "art", "out")
 SCALE = 2  # sprites are rendered at 2x and loaded with pixelsPerUnit = 100 * SCALE
+COMMON = {"bar_fill": ("art/src/common/bar_fill.svg", 16, 128)}  # hand-written textures shared by all styles
 
-# name, source, design width, design height, border (left, bottom, right, top) in design px
-SPRITES = [
-    ("bar_frame", "art/src/bar_frame.svg", 48, 160, (10, 22, 10, 32)),
-    ("bar_fill", "art/src/bar_fill.svg", 16, 128, (0, 0, 0, 0)),
-    ("bar_glint", "art/src/bar_glint.svg", 24, 8, (0, 0, 0, 0)),
-    ("sprint_frame", "art/src/sprint_frame.svg", 96, 36, (24, 10, 24, 10)),
-    ("medallion", "art/src/medallion.svg", 64, 64, (0, 0, 0, 0)),
-    ("slot", "art/src/slot.svg", 56, 56, (12, 12, 12, 12)),
-    ("slot_active", "art/src/slot_active.svg", 56, 56, (12, 12, 12, 12)),
-    ("tile", "art/src/tile.svg", 60, 60, (0, 0, 0, 0)),
-    ("plate", "art/src/plate.svg", 96, 72, (24, 16, 24, 16)),
-    ("badge_cooldown", "art/src/badge_cooldown.svg", 20, 20, (0, 0, 0, 0)),
-    ("map_ring", "art/src/map_ring.svg", 250, 250, (0, 0, 0, 0)),
-    ("map_crest", "art/src/map_crest.svg", 200, 52, (0, 0, 0, 0)),
-    ("map_banner", "art/src/map_banner.svg", 180, 32, (0, 0, 0, 0)),
-    ("map_mask", "art/src/map_mask.svg", 64, 64, (0, 0, 0, 0)),
-    ("wind_arrow", "art/src/wind_arrow.svg", 24, 24, (0, 0, 0, 0)),
-    ("wind_disk", "art/src/wind_disk.svg", 26, 26, (0, 0, 0, 0)),
-]
 
-# Procedural textures from tools/art/patterns.py: already at final pixel size, drawn at 1x.
-# name, width, height (pixels), wrap
-PATTERNS = [
-    ("bar_bubbles", 64, 128, "repeat"),
-]
+def entry(name, w, h, border, content=None, wrap="clamp"):
+    e = {"name": name, "file": name + ".png", "width": w, "height": h,
+         "borderLeft": border[0], "borderBottom": border[1], "borderRight": border[2], "borderTop": border[3]}
+    if wrap != "clamp":
+        e["wrap"] = wrap
+    if content is not None:
+        e.update({"contentLeft": content[0], "contentBottom": content[1], "contentRight": content[2], "contentTop": content[3]})
+    return e
+
+
+def build_style(style, module):
+    out = os.path.join(ROOT, "art", "out", style)
+    os.makedirs(out, exist_ok=True)
+    for f in os.listdir(out):
+        os.remove(os.path.join(out, f))  # a style folder only ever holds what this build wrote
+    manifest = {"scale": SCALE, "sprites": []}
+
+    for name, (w, h, border, content, grain) in module.SPRITES.items():
+        png = os.path.join(out, name + ".png")
+        cairosvg.svg2png(url=os.path.join(ROOT, "art", "src", style, name + ".svg"), write_to=png,
+                         output_width=w * SCALE, output_height=h * SCALE)
+        if grain:
+            carved_style.grain(Image.open(png), vertical=(grain == "v")).save(png)
+        manifest["sprites"].append(entry(name, w, h, border, content))
+
+    for name, (src, w, h) in COMMON.items():
+        cairosvg.svg2png(url=os.path.join(ROOT, src), write_to=os.path.join(out, name + ".png"),
+                         output_width=w * SCALE, output_height=h * SCALE)
+        manifest["sprites"].append(entry(name, w, h, (0, 0, 0, 0)))
+
+    patterns.main(out)
+    for name, (pw, ph, wrap, border, _) in patterns.PATTERNS.items():
+        manifest["sprites"].append(entry(name, pw // SCALE, ph // SCALE, border or (0, 0, 0, 0), wrap=wrap))
+
+    with open(os.path.join(out, "sprites.json"), "w") as f:
+        json.dump(manifest, f, indent=2)
+    print(f"{style}: {len(manifest['sprites'])} sprites -> art/out/{style}")
 
 
 def main() -> int:
-    import shapes
-    shapes.main()  # every shape SVG comes from the shared style first
+    shapes.main()
     cairosvg.svg2png(url=os.path.join(ROOT, "art/src/logo.svg"), write_to=os.path.join(ROOT, "icon.png"),
                      output_width=256, output_height=256)
-    print("art/src/logo.svg -> icon.png (256x256)")
-
-    os.makedirs(OUT, exist_ok=True)
-    manifest = {"scale": SCALE, "sprites": []}
-    for name, src, w, h, border in SPRITES:
-        out = os.path.join(OUT, name + ".png")
-        cairosvg.svg2png(url=os.path.join(ROOT, src), write_to=out, output_width=w * SCALE, output_height=h * SCALE)
-        manifest["sprites"].append({"name": name, "file": name + ".png", "width": w, "height": h,
-                                    "borderLeft": border[0], "borderBottom": border[1],
-                                    "borderRight": border[2], "borderTop": border[3]})
-        print(f"{src} -> art/out/{name}.png ({w * SCALE}x{h * SCALE})")
-
-    import patterns
-    patterns.main()
-    for name, w, h, wrap in PATTERNS:
-        # Listed at design size = pixels / SCALE so the loader's size check holds.
-        manifest["sprites"].append({"name": name, "file": name + ".png", "width": w // SCALE, "height": h // SCALE,
-                                    "borderLeft": 0, "borderBottom": 0, "borderRight": 0, "borderTop": 0, "wrap": wrap})
-
-    with open(os.path.join(OUT, "sprites.json"), "w") as f:
-        json.dump(manifest, f, indent=2)
+    for style, module in shapes.STYLES.items():
+        build_style(style, module)
     return 0
 
 

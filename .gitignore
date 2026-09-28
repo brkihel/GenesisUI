@@ -16,3 +16,4 @@ dist/
 tools/inspect/bin/
 tools/inspect/obj/
 art/fonts/src/
+__pycache__/

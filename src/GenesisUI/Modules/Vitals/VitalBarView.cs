@@ -7,118 +7,186 @@ using UnityEngine.UI;
 
 namespace GenesisUI.Modules.Vitals
 {
-    /// <summary>How a bar's "living" liquid moves (docs/ART-DIRECTION.md §5: quiet motion).</summary>
+    /// <summary>How a bar's living liquid moves and burns (docs/ART-DIRECTION.md §5: quiet motion).</summary>
     internal struct BarMotion
     {
-        /// <summary>Upward scroll of the bubbles, in tile heights per second.</summary>
+        /// <summary>Upward drift of the veins, in tile heights per second (clots and bubbles derive from it).</summary>
         public float Speed;
-        /// <summary>Kept near 15 percent: the bubbles stay translucent (Diego, R-031).</summary>
+        /// <summary>Opacity of the bubbles: a subtle detail (Diego, R-030).</summary>
         public float PatternAlpha;
         /// <summary>A second, slower bubble layer for parallax (eitr); 0 = none.</summary>
         public float CounterSpeed;
+        /// <summary>Colour of the burn and its embers where the bar is consumed.</summary>
+        public Color Hot;
     }
 
     /// <summary>
-    /// One framed vertical bar, v2: slim ornate frame, the trail of the last loss, and a
-    /// liquid that rises and falls inside a mask. The flow texture scrolls up through the
-    /// liquid and is never squashed, because the liquid keeps the full bar height and only
-    /// the mask moves. Only draws what a BarAnimator says.
+    /// One vertical vital bar, v3 (R-032 references: internal blood texture, burn when consumed,
+    /// carved frame with a value plate).
+    ///
+    /// Inside the frame's content area (declared per art style, D-022): a liquid in a mask that
+    /// rises and falls, made of the tinted body, dark clots, bright veins and faint bubbles,
+    /// each drifting up at its own pace. Above the liquid, the part just lost burns: a hot band
+    /// at the surface breaking into grains, with embers rising. The number sits on the style's
+    /// value plate when it has one. Low health adds a pulsing halo and embers along the sides.
+    /// Only draws what a BarAnimator says; allocation-free per frame.
     /// </summary>
     internal sealed class VitalBarView
     {
-        // Fill area inside bar_frame v2, in design units (see art/src/bar_frame.svg).
-        private const float InsetSide = 9.5f;
-        private const float InsetBottom = 24f;
-        private const float InsetTop = 32f;
+        private const int EmberCount = 16;
+        private const float PlateHeight = 26f;
+        private const float PlateAt = 0.28f;            // plate centre, as a fraction of the liquid's height
 
         public readonly RectTransform Root;
         private readonly Image _frame;
-        private readonly Image _trail;
+        private readonly Image _glow;
         private readonly RectTransform _mask;
-        private readonly RawImage _flow;
-        private readonly RawImage _counterFlow;
+        private readonly RectTransform _burnMask;
+        private readonly RawImage _burn;
+        private readonly RawImage _mottle;
+        private readonly RawImage _veins;
+        private readonly RawImage _bubbles;
+        private readonly RawImage _counterBubbles;
         private readonly Image _surface;
         private readonly Image _glint;
         private readonly RectTransform _glintRt;
         private readonly TextMeshProUGUI _number;
         private readonly Color _frameColor;
         private readonly Color _dangerColor;
-        private readonly Color _liquidLight;
+        private readonly Color _light;
+        private readonly Vector2 _size;
         private readonly float _areaHeight;
-        private readonly float _glintTravel;
+        private readonly float _areaWidth;
+        private readonly float _areaBottom;
+        private readonly float _areaLeft;
         private readonly float _tileHeightUv;
+        private readonly float _glintTravel;
         private readonly BarMotion _motion;
+
+        private readonly Ember[] _embers = new Ember[EmberCount];
+        private readonly System.Random _random;
+        private float _emitBurn;
+        private float _emitSides;
         private float _shownFast = -1f;
+        private float _lastFast = -1f;
         private float _activity;
+        private float _time;
+
+        private struct Ember
+        {
+            public RectTransform Rt;
+            public Image Image;
+            public Vector2 Position;
+            public Vector2 Velocity;
+            public float Life;
+            public float MaxLife;
+        }
 
         public VitalBarView(RectTransform parent, string name, ThemeRuntime theme, ColorRgba barColor, Vector2 position, Vector2 size, BarMotion motion)
         {
             _motion = motion;
+            _size = size;
+            _random = new System.Random(name.GetHashCode());
             Root = Ui.Place(Ui.Child(parent, name), new Vector2(0f, 0f), position, size);
+
+            var glowSprite = theme.Sprite("glow");
+            if (glowSprite != null)
+            {
+                _glow = Ui.Image(Ui.Fill(Ui.Child(Root, "Glow"), -12f, -12f, -12f, -12f), glowSprite, Color.clear);
+                _glow.enabled = false;
+            }
 
             var frameSprite = theme.Sprite("bar_frame");
             _frameColor = frameSprite != null ? Color.white : ThemeRuntime.ToUnity(theme.Tokens.PanelBackground);
             _dangerColor = ThemeRuntime.ToUnity(theme.Tokens.StateDanger);
             _frame = Ui.Image(Ui.Fill(Ui.Child(Root, "Frame")), frameSprite, _frameColor);
 
+            // The content area comes from the loaded style; the fallback is the gold frame's.
+            var c = theme.Content("bar_frame", new Vector4(9.5f, 24f, 9.5f, 32f));
+            _areaLeft = c.x;
+            _areaBottom = c.y;
+            _areaWidth = size.x - c.x - c.z;
+            _areaHeight = size.y - c.y - c.w;
+            var area = Ui.Fill(Ui.Child(Root, "FillArea"), c.x, c.y, c.z, c.w);
+
             var color = ThemeRuntime.ToUnity(barColor);
-            var light = Color.Lerp(color, Color.white, 0.55f);
-            _liquidLight = light;
-            var area = Ui.Fill(Ui.Child(Root, "FillArea"), InsetSide, InsetBottom, InsetSide, InsetTop);
-            _areaHeight = size.y - InsetTop - InsetBottom;
-            float areaWidth = size.x - 2f * InsetSide;
+            _light = Color.Lerp(color, Color.white, 0.55f);
             var fillSprite = theme.Sprite("bar_fill");
 
-            _trail = Ui.Image(Ui.Fill(Ui.Child(area, "Trail")), fillSprite, new Color(color.r, color.g, color.b, theme.Tokens.BarTrailAlpha));
-            _trail.type = Image.Type.Filled;
-            _trail.fillMethod = Image.FillMethod.Vertical;
-            _trail.fillOrigin = (int)Image.OriginVertical.Bottom;
-            _trail.fillAmount = 0f;
-
-            // The mask grows from the bottom; its children keep the full area height.
-            _mask = Ui.Child(area, "Liquid");
-            _mask.anchorMin = new Vector2(0f, 0f);
-            _mask.anchorMax = new Vector2(1f, 0f);
-            _mask.pivot = new Vector2(0.5f, 0f);
-            _mask.anchoredPosition = Vector2.zero;
-            _mask.sizeDelta = new Vector2(0f, 0f);
-            _mask.gameObject.AddComponent<RectMask2D>();
-
-            Ui.Image(FullHeight(Ui.Child(_mask, "Body")), fillSprite, color);
-
-            // The flow tile is 1:2; one tile is as wide as the bar, so uv height = area / (2 * width).
-            _tileHeightUv = areaWidth > 0f ? _areaHeight / (2f * areaWidth) : 1f;
-            var flowTex = theme.Texture("bar_bubbles");
-            if (flowTex != null)
+            // The consumed part, just above the liquid: a burn that the mask keeps to that span.
+            _burnMask = Ui.Child(area, "Burn");
+            Bottom(_burnMask, 0f, 0f);
+            _burnMask.gameObject.AddComponent<RectMask2D>();
+            var burnTex = theme.Texture("bar_burn");
+            if (burnTex != null)
             {
-                _flow = FlowLayer(_mask, "Flow", flowTex, new Color(light.r, light.g, light.b, motion.PatternAlpha), 0f);
-                if (motion.CounterSpeed != 0f)
-                    _counterFlow = FlowLayer(_mask, "CounterFlow", flowTex, new Color(light.r, light.g, light.b, motion.PatternAlpha * 0.6f), 0.5f);
+                var brt = Ui.Fill(Ui.Child(_burnMask, "Grains"));
+                _burn = brt.gameObject.AddComponent<RawImage>();
+                _burn.texture = burnTex;
+                _burn.color = motion.Hot;
+                _burn.raycastTarget = false;
+                _burn.uvRect = new Rect(0f, 0f, 2f, 1f);
             }
 
-            // A quiet meniscus and a small travelling reflection make the liquid read as glass.
+            // The liquid: its layers keep the full height; only the mask moves.
+            _mask = Ui.Child(area, "Liquid");
+            Bottom(_mask, 0f, 0f);
+            _mask.gameObject.AddComponent<RectMask2D>();
+            Ui.Image(FullHeight(Ui.Child(_mask, "Body")), fillSprite, color);
+
+            _tileHeightUv = _areaWidth > 0f ? _areaHeight / (2f * _areaWidth) : 1f;
+            _mottle = Layer("Clots", theme.Texture("bar_mottle"), new Color(0f, 0f, 0f, 0.45f), 0f);
+            _veins = Layer("Veins", theme.Texture("bar_veins"), new Color(_light.r, _light.g, _light.b, 0.55f), 0.3f);
+            _bubbles = Layer("Bubbles", theme.Texture("bar_bubbles"), new Color(_light.r, _light.g, _light.b, motion.PatternAlpha), 0f);
+            if (motion.CounterSpeed != 0f)
+                _counterBubbles = Layer("CounterBubbles", theme.Texture("bar_bubbles"), new Color(_light.r, _light.g, _light.b, motion.PatternAlpha * 0.6f), 0.5f);
+
             var surfaceRt = Ui.Child(_mask, "Surface");
             surfaceRt.anchorMin = new Vector2(0f, 1f);
             surfaceRt.anchorMax = new Vector2(1f, 1f);
             surfaceRt.pivot = new Vector2(0.5f, 1f);
-            surfaceRt.anchoredPosition = Vector2.zero;
             surfaceRt.sizeDelta = new Vector2(0f, 2f);
-            _surface = Ui.Image(surfaceRt, null, new Color(light.r, light.g, light.b, 0.35f));
+            _surface = Ui.Image(surfaceRt, null, new Color(_light.r, _light.g, _light.b, 0.4f));
+
             var glintSprite = theme.Sprite("bar_glint");
             if (glintSprite != null)
             {
-                float glintWidth = areaWidth * 0.55f;
-                _glintTravel = (areaWidth - glintWidth) * 0.5f;
-                _glintRt = Ui.Place(Ui.Child(_mask, "Glint"), new Vector2(0.5f, 1f),
-                    new Vector2(0f, -2.5f), new Vector2(glintWidth, 5f));
+                float glintWidth = _areaWidth * 0.55f;
+                _glintTravel = (_areaWidth - glintWidth) * 0.5f;
+                _glintRt = Ui.Place(Ui.Child(_mask, "Glint"), new Vector2(0.5f, 1f), new Vector2(0f, -2.5f), new Vector2(glintWidth, 5f));
                 _glintRt.pivot = new Vector2(0.5f, 0.5f);
-                _glint = Ui.Image(_glintRt, glintSprite, new Color(light.r, light.g, light.b, 0.5f));
+                _glint = Ui.Image(_glintRt, glintSprite, new Color(_light.r, _light.g, _light.b, 0.5f));
             }
 
-            _number = Ui.Fit(Ui.Text(Root, "Value", theme, FontRole.Display, 19f, ThemeRuntime.ToUnity(theme.Tokens.TextTitle),
-                                     TextAlignmentOptions.Center, outlined: true), 12f);
-            // The number lives inside the liquid's width, so it can never cross the frame.
-            Ui.Fill((RectTransform)_number.transform, InsetSide - 1f, InsetBottom, InsetSide - 1f, InsetTop);
+            // Embers live on the bar's root so they can drift past the frame.
+            var emberSprite = theme.Sprite("ember");
+            for (int i = 0; i < EmberCount; i++)
+            {
+                var rt = Ui.Place(Ui.Child(Root, "Ember" + i), Vector2.zero, Vector2.zero, new Vector2(5f, 5f));
+                rt.pivot = new Vector2(0.5f, 0.5f);
+                var img = Ui.Image(rt, emberSprite, motion.Hot);
+                img.enabled = false;
+                _embers[i] = new Ember { Rt = rt, Image = img };
+            }
+
+            // The number: on the style's value plate when there is one, else centred on the liquid.
+            var plateSprite = theme.Sprite("bar_value");
+            if (plateSprite != null)
+            {
+                var plateRt = Ui.Place(Ui.Child(Root, "ValuePlate"), new Vector2(0.5f, 0f),
+                    new Vector2(0f, c.y + _areaHeight * PlateAt - PlateHeight / 2f), new Vector2(size.x + 10f, PlateHeight));
+                Ui.Image(plateRt, plateSprite, Color.white);
+                var inner = theme.Content("bar_value", new Vector4(6f, 6f, 6f, 6f));
+                _number = Ui.Fit(Ui.Text(plateRt, "Value", theme, FontRole.Display, 17f, ThemeRuntime.ToUnity(theme.Tokens.TextTitle),
+                                         TextAlignmentOptions.Center, outlined: true), 11f);
+                Ui.Fill((RectTransform)_number.transform, inner.x, inner.y - 2f, inner.z, inner.w - 2f);
+            }
+            else
+            {
+                _number = Ui.Fit(Ui.Text(Root, "Value", theme, FontRole.Display, 19f, ThemeRuntime.ToUnity(theme.Tokens.TextTitle),
+                                         TextAlignmentOptions.Center, outlined: true), 12f);
+                Ui.Fill((RectTransform)_number.transform, c.x - 1f, c.y, c.z - 1f, c.w);
+            }
         }
 
         public void SetVisible(bool visible)
@@ -129,57 +197,129 @@ namespace GenesisUI.Modules.Vitals
         /// <param name="danger">0..1 pulse strength of the low-value alert (0 = none).</param>
         public void Apply(BarAnimator bar, float danger, float deltaSeconds)
         {
+            _time += deltaSeconds;
+
             if (Mathf.Abs(bar.Fast - _shownFast) > 0.0005f)
             {
-                if (_shownFast >= 0f)
-                    _activity = Mathf.Clamp01(_activity + Mathf.Abs(bar.Fast - _shownFast) * 5f);
                 _shownFast = bar.Fast;
                 _mask.sizeDelta = new Vector2(0f, _areaHeight * bar.Fast);
                 bool any = bar.Fast > 0.001f;
                 if (_surface.enabled != any) _surface.enabled = any;
                 if (_glint != null && _glint.enabled != any) _glint.enabled = any;
             }
-            _trail.fillAmount = bar.Slow;
-            if (bar.DisplayChanged) _number.SetText("{0}", bar.Display); // SetText with an int does not allocate
-            var frame = danger > 0f ? Color.Lerp(_frameColor, _dangerColor, danger * 0.8f) : _frameColor;
-            if (_frame.color != frame) _frame.color = frame;
 
-            _activity = Mathf.MoveTowards(_activity, 0f, deltaSeconds * 0.7f);
-            float surfaceAlpha = 0.35f + _activity * 0.28f;
-            if (!Mathf.Approximately(_surface.color.a, surfaceAlpha))
-                _surface.color = new Color(_liquidLight.r, _liquidLight.g, _liquidLight.b, surfaceAlpha);
-            if (_glint != null)
+            // The burning span: from the liquid's surface up to where the trail still is.
+            float burning = Mathf.Max(0f, bar.Slow - bar.Fast);
+            _burnMask.anchoredPosition = new Vector2(0f, _areaHeight * bar.Fast);
+            _burnMask.sizeDelta = new Vector2(0f, _areaHeight * burning);
+            if (_burn != null)
             {
-                float glintAlpha = 0.5f + _activity * 0.25f;
-                if (!Mathf.Approximately(_glint.color.a, glintAlpha))
-                    _glint.color = new Color(_liquidLight.r, _liquidLight.g, _liquidLight.b, glintAlpha);
+                var uv = _burn.uvRect;
+                uv.x = Mathf.Repeat(uv.x + deltaSeconds * 0.35f, 1f);   // the grains shimmer sideways
+                _burn.uvRect = uv;
             }
 
-            _time += deltaSeconds;
-            Scroll(_flow, _motion.Speed, 0f, deltaSeconds);
-            Scroll(_counterFlow, _motion.CounterSpeed, 0.5f, deltaSeconds);
-            if (_glintRt != null)
+            if (bar.DisplayChanged) _number.SetText("{0}", bar.Display); // SetText with an int does not allocate
+            var frame = danger > 0f ? Color.Lerp(_frameColor, _dangerColor, danger * 0.6f) : _frameColor;
+            if (_frame.color != frame) _frame.color = frame;
+
+            // Any change of value flashes the surface briefly.
+            if (_lastFast >= 0f && Mathf.Abs(bar.Fast - _lastFast) > 0.0005f) _activity = 1f;
+            _lastFast = bar.Fast;
+            _activity = Mathf.Max(0f, _activity - deltaSeconds * 1.8f);
+            float surfaceAlpha = 0.4f + _activity * 0.45f;
+            if (!Mathf.Approximately(_surface.color.a, surfaceAlpha))
+                _surface.color = new Color(_light.r, _light.g, _light.b, surfaceAlpha);
+            if (_glint != null)
             {
-                float x = _glintTravel * Mathf.Sin(_time * 0.72f);
-                _glintRt.anchoredPosition = new Vector2(x, -2.5f);
+                float glintAlpha = 0.45f + _activity * 0.3f;
+                if (!Mathf.Approximately(_glint.color.a, glintAlpha)) _glint.color = new Color(_light.r, _light.g, _light.b, glintAlpha);
+                _glintRt.anchoredPosition = new Vector2(_glintTravel * Mathf.Sin(_time * 0.72f), -2.5f);
+            }
+
+            Drift(_veins, _motion.Speed, 0.3f, 0.012f, deltaSeconds);
+            Drift(_mottle, _motion.Speed * 0.55f, 0f, 0.008f, deltaSeconds);
+            Drift(_bubbles, _motion.Speed * 1.6f, 0f, 0.018f, deltaSeconds);
+            Drift(_counterBubbles, _motion.CounterSpeed * 1.6f, 0.5f, 0.018f, deltaSeconds);
+
+            if (_glow != null)
+            {
+                bool glowing = danger > 0f;
+                if (_glow.enabled != glowing) _glow.enabled = glowing;
+                if (glowing) _glow.color = new Color(_dangerColor.r, _dangerColor.g, _dangerColor.b, 0.12f + 0.22f * danger);
+            }
+
+            // Embers: from the burning surface while something is being consumed, and along the
+            // sides while health is low.
+            _emitBurn += deltaSeconds * Mathf.Clamp01(burning * 6f) * 22f;
+            _emitSides += deltaSeconds * (danger > 0f ? 5f : 0f);
+            while (_emitBurn >= 1f) { _emitBurn -= 1f; Emit(fromSides: false, bar.Fast); }
+            while (_emitSides >= 1f) { _emitSides -= 1f; Emit(fromSides: true, bar.Fast); }
+            UpdateEmbers(deltaSeconds);
+        }
+
+        private void Emit(bool fromSides, float fast)
+        {
+            for (int i = 0; i < EmberCount; i++)
+            {
+                if (_embers[i].Life > 0f) continue;
+                var e = _embers[i];
+                float r = (float)_random.NextDouble();
+                if (fromSides)
+                {
+                    float side = _random.Next(2) == 0 ? -2f : _size.x + 2f;
+                    e.Position = new Vector2(side, _areaBottom + r * _areaHeight);
+                    e.Velocity = new Vector2((side < 0f ? -1f : 1f) * (3f + 6f * r), 14f + 12f * r);
+                }
+                else
+                {
+                    e.Position = new Vector2(_areaLeft + r * _areaWidth, _areaBottom + _areaHeight * fast);
+                    e.Velocity = new Vector2(((float)_random.NextDouble() - 0.5f) * 10f, 18f + 22f * r);
+                }
+                e.MaxLife = e.Life = 0.7f + 0.7f * (float)_random.NextDouble();
+                e.Image.enabled = true;
+                _embers[i] = e;
+                return;
             }
         }
 
-        private float _time;
+        private void UpdateEmbers(float dt)
+        {
+            for (int i = 0; i < EmberCount; i++)
+            {
+                var e = _embers[i];
+                if (e.Life <= 0f) continue;
+                e.Life -= dt;
+                if (e.Life <= 0f)
+                {
+                    e.Image.enabled = false;
+                    _embers[i] = e;
+                    continue;
+                }
+                e.Velocity.y += 6f * dt;
+                e.Position += e.Velocity * dt;
+                e.Rt.anchoredPosition = e.Position;
+                float t = e.Life / e.MaxLife;
+                e.Image.color = new Color(_motion.Hot.r, _motion.Hot.g, _motion.Hot.b, t * 0.95f);
+                float size = 2.5f + 3.5f * t;
+                e.Rt.sizeDelta = new Vector2(size, size);
+                _embers[i] = e;
+            }
+        }
 
-        private void Scroll(RawImage layer, float speed, float baseX, float dt)
+        private void Drift(RawImage layer, float speed, float baseX, float sway, float dt)
         {
             if (layer == null || speed == 0f) return;
             var uv = layer.uvRect;
             uv.y = Mathf.Repeat(uv.y - speed * dt, 1f); // lower v = the texture moves up
-            // A slight side-to-side sway, as bubbles do while rising.
-            uv.x = baseX + 0.018f * Mathf.Sin(_time * 1.3f + baseX * 6f);
+            uv.x = baseX + sway * Mathf.Sin(_time * 1.3f + baseX * 6f);
             layer.uvRect = uv;
         }
 
-        private RawImage FlowLayer(RectTransform parent, string name, Texture texture, Color color, float xOffset)
+        private RawImage Layer(string name, Texture texture, Color color, float xOffset)
         {
-            var rt = FullHeight(Ui.Child(parent, name));
+            if (texture == null) return null;
+            var rt = FullHeight(Ui.Child(_mask, name));
             var raw = rt.gameObject.AddComponent<RawImage>();
             raw.texture = texture;
             raw.color = color;
@@ -190,12 +330,17 @@ namespace GenesisUI.Modules.Vitals
 
         private RectTransform FullHeight(RectTransform rt)
         {
+            Bottom(rt, 0f, _areaHeight);
+            return rt;
+        }
+
+        private static void Bottom(RectTransform rt, float y, float height)
+        {
             rt.anchorMin = new Vector2(0f, 0f);
             rt.anchorMax = new Vector2(1f, 0f);
             rt.pivot = new Vector2(0.5f, 0f);
-            rt.anchoredPosition = Vector2.zero;
-            rt.sizeDelta = new Vector2(0f, _areaHeight);
-            return rt;
+            rt.anchoredPosition = new Vector2(0f, y);
+            rt.sizeDelta = new Vector2(0f, height);
         }
     }
 }

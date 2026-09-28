@@ -50,22 +50,29 @@ mkdir -p "$STAGE/plugins"
 OUTDIR=$(dirname "$DLL")
 # Fonts (OFL, with their licenses) and rendered art ship next to the DLL.
 [ "$(ls "$OUTDIR"/fonts/*.ttf 2>/dev/null | wc -l)" -eq 5 ] || { echo "expected 5 fonts in $OUTDIR/fonts (run tools/art/fonts.py)" >&2; exit 1; }
-[ -f "$OUTDIR/art/sprites.json" ] || { echo "missing $OUTDIR/art/sprites.json (run tools/art/render.py)" >&2; exit 1; }
+[ -f "$OUTDIR/art/carved/sprites.json" ] && [ -f "$OUTDIR/art/gold/sprites.json" ] || { echo "missing art styles in $OUTDIR/art (run tools/art/render.py)" >&2; exit 1; }
 
 cp "$DLL" "$STAGE/plugins/"
 cp -r src/GenesisUI/Translations "$OUTDIR/fonts" "$STAGE/plugins/"
-mkdir -p "$STAGE/plugins/art"
-cp "$OUTDIR/art/sprites.json" "$STAGE/plugins/art/"
+# Every art style ships in its own folder (D-022); only files named in its manifest are copied.
 python3 - "$OUTDIR/art" "$STAGE/plugins/art" <<'PY'
 import json, os, shutil, sys
 source, target = sys.argv[1:]
-with open(os.path.join(source, "sprites.json"), encoding="utf-8") as f:
-    manifest = json.load(f)
-for sprite in manifest["sprites"]:
-    name = sprite["file"]
-    if os.path.basename(name) != name:
-        sys.exit("sprite file must be a filename: " + name)
-    shutil.copy2(os.path.join(source, name), os.path.join(target, name))
+styles = sorted(d for d in os.listdir(source) if os.path.isdir(os.path.join(source, d)))
+if not styles:
+    sys.exit("no art styles under " + source)
+for style in styles:
+    src, dst = os.path.join(source, style), os.path.join(target, style)
+    os.makedirs(dst, exist_ok=True)
+    with open(os.path.join(src, "sprites.json"), encoding="utf-8") as f:
+        manifest = json.load(f)
+    shutil.copy2(os.path.join(src, "sprites.json"), dst)
+    for sprite in manifest["sprites"]:
+        name = sprite["file"]
+        if os.path.basename(name) != name:
+            sys.exit("sprite file must be a filename: " + name)
+        shutil.copy2(os.path.join(src, name), os.path.join(dst, name))
+    print(f"   art style {style}: {len(manifest['sprites'])} sprites")
 PY
 cp icon.png README.md CHANGELOG.md LICENSE "$STAGE/"
 

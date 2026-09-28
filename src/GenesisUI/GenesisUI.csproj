@@ -51,7 +51,7 @@
     <None Include="Translations/**/*.json" CopyToOutputDirectory="PreserveNewest" />
     <!-- Fonts and rendered art ship next to the DLL (tools/art/*.py produce them). -->
     <None Include="$(RepoRoot)art/fonts/*.ttf;$(RepoRoot)art/fonts/*-OFL.txt" Link="fonts/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="$(RepoRoot)art/out/*.png;$(RepoRoot)art/out/sprites.json" Link="art/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="$(RepoRoot)art/out/**/*.png;$(RepoRoot)art/out/**/sprites.json" Link="art/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <!--

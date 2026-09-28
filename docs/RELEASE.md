@@ -26,7 +26,8 @@ GenesisMods-GenesisUI-<version>[-preview.N].zip
     Translations/English/genesisui.json
     Translations/Portuguese_Brazilian/genesisui.json
     fonts/               (F2) Cinzel, Cormorant Garamond + OFL.txt
-    art/                 (F2) genesisui.atlas.png + genesisui.atlas.json
+    art/carved/          sprites.json + the PNGs it lists (one folder per art style)
+    art/gold/            same sprite names, other style
 ```
 
 Dependency in the manifest: `ValheimModding-Jotunn-<version in ref/>`, checked

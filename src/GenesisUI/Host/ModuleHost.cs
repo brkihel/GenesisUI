@@ -91,7 +91,11 @@ namespace GenesisUI.Host
         }
 
         /// <summary>Plugin.LateUpdate.</summary>
-        public static void LateTick() => VanillaVeil.Enforce();
+        public static void LateTick()
+        {
+            VanillaVeil.Enforce();
+            VanillaNudge.Enforce();
+        }
 
 #if GENESIS_DIAGNOSTICS
         private static readonly System.Action<string> ThrowInjected = id =>
@@ -105,6 +109,17 @@ namespace GenesisUI.Host
             Guard.Run(e.Owner, ThrowInjected, e.Module.Id);
         }
 #endif
+
+        /// <summary>Rebuilds every active module, e.g. after the art style changed.</summary>
+        public static void RebuildAll()
+        {
+            foreach (var e in Entries)
+            {
+                if (e.State != ModuleState.Active) continue;
+                TearDown(e, ModuleState.Waiting, null);
+                Reconcile(e);
+            }
+        }
 
         /// <summary>Diagnostics "retry": forget the fault and try to build again.</summary>
         public static void Retry(ModuleEntry e)
@@ -174,7 +189,8 @@ namespace GenesisUI.Host
                     var handle = VanillaVeil.Apply(e.Owner, region + "/" + target.name, target);
                     if (handle != null) { e.Veils.Add(handle); veiled++; }
                 }
-                if (veiled == 0) GenesisLog.Warn("Veil", e.Module.Id + ": no vanilla object found for " + region);
+                if (veiled == 0 && !RegionRegistry.IsDynamic(region))
+                    GenesisLog.Warn("Veil", e.Module.Id + ": no vanilla object found for " + region);
             }
             e.SinceRefresh = float.MaxValue; // refresh on the next tick
             Set(e, ModuleState.Active, null);
@@ -184,6 +200,7 @@ namespace GenesisUI.Host
         {
             Guard.Try("teardown " + e.Module.Id, e.Module.Teardown);
             VanillaVeil.RestoreAll(e.Owner);
+            VanillaNudge.RestoreAll(e.Owner);
             e.Veils.Clear();
             InputLeases.ReleaseAll(e.Owner);
             RegionRegistry.ReleaseAll(e.Owner);

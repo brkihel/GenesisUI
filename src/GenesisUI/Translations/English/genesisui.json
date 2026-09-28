@@ -21,5 +21,8 @@
   "genesisui_module_minimap": "Minimap",
   "genesisui_day": "Day",
   "genesisui_module_sprint": "Sprint",
-  "genesisui_sprint_label": "STAMINA"
+  "genesisui_sprint_label": "STAMINA",
+  "genesisui_module_boss": "Boss plate",
+  "genesisui_module_hover": "Interaction card",
+  "genesisui_module_notice": "Notices"
 }

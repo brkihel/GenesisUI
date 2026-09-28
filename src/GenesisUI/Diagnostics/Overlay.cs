@@ -83,7 +83,7 @@ namespace GenesisUI.Diagnostics
             if (root == null || _theme == null) return;
             var t = _theme.Tokens;
 
-            _panel = Ui.Place(Ui.Child(root.transform, "GenesisUI_Diagnostics"), new Vector2(0f, 1f), new Vector2(24f, -24f), new Vector2(560f, 620f));
+            _panel = Ui.Place(Ui.Child(root.transform, "GenesisUI_Diagnostics"), new Vector2(0f, 1f), new Vector2(24f, -24f), new Vector2(560f, 780f));
             var bg = Ui.Image(_panel, null, ThemeRuntime.ToUnity(t.PanelBackground), raycast: true);
             var outline = _panel.gameObject.AddComponent<Outline>();
             outline.effectColor = ThemeRuntime.ToUnity(t.LineFrame);
@@ -119,7 +119,7 @@ namespace GenesisUI.Diagnostics
             y -= 44f;
 
             _body = Ui.Text(_panel, "Body", _theme, FontRole.Body, 16f, ThemeRuntime.ToUnity(t.TextBody), TextAlignmentOptions.TopLeft);
-            Ui.Place((RectTransform)_body.transform, new Vector2(0f, 1f), new Vector2(18f, y), new Vector2(524f, 620f + y - 16f));
+            Ui.Place((RectTransform)_body.transform, new Vector2(0f, 1f), new Vector2(18f, y), new Vector2(524f, 780f + y - 16f));
             _body.textWrappingMode = TextWrappingModes.Normal;
             _body.overflowMode = TextOverflowModes.Truncate;
 

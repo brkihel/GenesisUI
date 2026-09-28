@@ -64,11 +64,11 @@ namespace GenesisUI.Modules.Vitals
             // Health is the widest and tallest bar; stamina and eitr sit to its right.
             // Larger, translucent bubbles: calm for health, livelier for stamina, parallax for eitr.
             _healthView = new VitalBarView(_group, "Health", theme, theme.Tokens.BarHealth, new Vector2(0f, 22f), new Vector2(46f, 226f),
-                new BarMotion { Speed = 0.07f, PatternAlpha = 0.15f });
+                new BarMotion { Speed = 0.035f, PatternAlpha = 0.1f, Hot = new Color(1f, 0.62f, 0.26f) });
             _staminaView = new VitalBarView(_group, "Stamina", theme, theme.Tokens.BarStamina, new Vector2(52f, 22f), new Vector2(38f, 196f),
-                new BarMotion { Speed = 0.11f, PatternAlpha = 0.14f });
+                new BarMotion { Speed = 0.05f, PatternAlpha = 0.1f, Hot = new Color(1f, 0.93f, 0.62f) });
             _eitrView = new VitalBarView(_group, "Eitr", theme, theme.Tokens.BarEitr, new Vector2(96f, 22f), new Vector2(38f, 196f),
-                new BarMotion { Speed = 0.08f, PatternAlpha = 0.15f, CounterSpeed = 0.045f });
+                new BarMotion { Speed = 0.04f, PatternAlpha = 0.11f, CounterSpeed = 0.025f, Hot = new Color(0.72f, 0.95f, 1f) });
 
             var medallion = theme.Sprite("medallion");
             if (medallion != null)

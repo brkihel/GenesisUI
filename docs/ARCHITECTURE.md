@@ -118,6 +118,19 @@ the region root. Unity allows one `CanvasGroup` per GameObject, and some vanilla
 roots are faded by vanilla code, so the F2 spike must list, per region, which
 object is veiled and how. The result goes into `docs/regions.md`.
 
+### VanillaNudge — move, never re-parent
+
+When a vanilla element is not replaced but collides with our layout (the key hints under
+the hotbar plate), `Foundation/VanillaNudge` offsets its `anchoredPosition`, records the
+original, re-applies the offset if vanilla resets it, and restores it exactly when the
+owner is torn down or faults — the same contract as the veil.
+
+### Dynamic regions
+
+Some regions are created by vanilla on demand (`hud.boss`: one clone per boss). The
+registry resolves them anew and the host veils new objects as they appear; an empty
+dynamic region is normal and not reported as a problem.
+
 ### Foreign-element dock
 
 Children that other mods add under veiled vanilla roots would disappear with the
@@ -168,8 +181,12 @@ reparenting vs. by leaving it in place and punching a hole in the veil.)
   `TMP_FontAsset.CreateFontAsset(path, ...)`, with the vanilla TMP font as fallback
   for missing glyphs. If loading fails, the vanilla font is used and the failure is
   reported; the UI never renders without text.
-- **Ornaments and frames**: our own SVG sources, rasterized by `tools/` into an atlas
-  plus 9-slice metadata at build time.
+- **Ornaments and frames**: our own SVG sources, rasterized by `tools/art/render.py`
+  into PNGs plus a per-style `sprites.json` (size, 9-slice border, optional wrap and
+  **content insets** — the rectangle inside a frame where content goes).
+- **Art styles** (D-022): `[Theme] Style` selects `art/<style>/`; `ThemeRuntime.SetStyle`
+  reloads the sprites and the host rebuilds every module. Views ask the theme for sizes
+  (`Border`, `Content`) instead of hard-coding one style's measurements.
 - **Game sprites** (item icons, some UI sprites) are read at runtime from the game
   (`GUIManager.GetSprite`, `ItemData.GetIcon()`); never redistributed.
 

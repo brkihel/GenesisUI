@@ -11,6 +11,8 @@ import math
 import os
 import random
 
+import numpy as np
+
 from PIL import Image
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -70,11 +72,129 @@ def bubbles():
     return img
 
 
-def main():
-    out = os.path.join(ROOT, "art", "out")
+def _tile_noise(w, h, waves, seed):
+    """Seamless noise: sum of sines with whole-number frequencies over the tile, domain-warped."""
+    import numpy as np
+    rng = np.random.default_rng(seed)
+    y, x = np.mgrid[0:h, 0:w].astype(np.float32)
+    u, v = x / w, y / h
+    warp = 0.08 * np.sin(2 * math.pi * (2 * u + 1 * v) + rng.random() * 6.28)
+    out = np.zeros((h, w), np.float32)
+    for kx, ky, amp in waves:
+        out += amp * np.sin(2 * math.pi * (kx * (u + warp) + ky * (v + warp)) + rng.random() * 6.28)
+    return (out - out.min()) / max(1e-6, out.max() - out.min())
+
+
+def _save(arr_alpha, path, rgb=(255, 255, 255)):
+    import numpy as np
+    a = np.clip(arr_alpha, 0, 1)
+    img = np.zeros(a.shape + (4,), np.uint8)
+    img[..., 0], img[..., 1], img[..., 2] = rgb
+    img[..., 3] = (a * 255).astype(np.uint8)
+    Image.fromarray(img, "RGBA").save(path)
+
+
+def _value_noise(w, h, cells_x, cells_y, rng):
+    """Seamless value noise: random lattice that wraps, smooth (cubic) interpolation."""
+    lattice = rng.random((cells_y, cells_x)).astype(np.float32)
+    y, x = np.mgrid[0:h, 0:w].astype(np.float32)
+    gx, gy = x / w * cells_x, y / h * cells_y
+    x0, y0 = np.floor(gx).astype(int), np.floor(gy).astype(int)
+    fx, fy = gx - x0, gy - y0
+    sx, sy = fx * fx * (3 - 2 * fx), fy * fy * (3 - 2 * fy)
+    x1, y1 = (x0 + 1) % cells_x, (y0 + 1) % cells_y
+    x0, y0 = x0 % cells_x, y0 % cells_y
+    top = lattice[y0, x0] * (1 - sx) + lattice[y0, x1] * sx
+    bottom = lattice[y1, x0] * (1 - sx) + lattice[y1, x1] * sx
+    return top * (1 - sy) + bottom * sy
+
+
+def _fbm(w, h, base_x, base_y, octaves, seed):
+    rng = np.random.default_rng(seed)
+    out = np.zeros((h, w), np.float32)
+    amp, total = 1.0, 0.0
+    for o in range(octaves):
+        out += amp * _value_noise(w, h, base_x * 2 ** o, base_y * 2 ** o, rng)
+        total += amp
+        amp *= 0.5
+    return out / total
+
+
+def veins(path):
+    """Organic, thin, branching veins, like blood moving under glass (hp-bar-internal-blood
+    reference): ridged fractal noise, domain-warped, seamless in both directions."""
+    w, h = 64, 128
+    warp = _fbm(w, h, 2, 4, 3, seed=5)
+    n = _fbm(w, h, 3, 6, 4, seed=21)
+    # Domain warp by resampling with a shifted, wrapped index.
+    y, x = np.mgrid[0:h, 0:w]
+    xs = (x + (warp - 0.5) * 18).astype(int) % w
+    ys = (y + (warp - 0.5) * 30).astype(int) % h
+    n = n[ys, xs]
+    ridge = 1.0 - np.abs(n * 2 - 1)
+    _save(np.clip(np.power(ridge, 9) * 1.3, 0, 1), path)
+
+
+def mottle(path):
+    """Soft dark clots inside the liquid (drawn in black)."""
+    n = _fbm(64, 128, 2, 4, 4, seed=33)
+    _save(np.clip((n - 0.42) / 0.35, 0, 1) * 0.85, path, rgb=(0, 0, 0))
+
+
+def burn(path):
+    """The part being consumed: a hot band at the bottom (the surface that just moved) that
+    breaks into grains and dissolves upward (bar-being-consumed reference). Repeats across,
+    stretched along the consumed height."""
+    w, h = 64, 64
+    rng = np.random.default_rng(44)
+    n = _fbm(w, h, 4, 4, 4, seed=45)
+    grain = rng.random((h, w)).astype(np.float32)
+    # Image row 0 is the top. The dense, hot rows are at the BOTTOM of the image: in game that
+    # edge touches the liquid's surface, and the grains thin out upward into the emptied part.
+    t = np.mgrid[0:h, 0:w][0].astype(np.float32) / (h - 1)
+    density = np.power(t, 1.4)
+    keep = (grain * 0.7 + n * 0.6) < density * 1.15                    # grains thin out upward
+    alpha = np.where(keep, 0.55 + 0.45 * density, 0.0) + 0.35 * np.power(t, 6)
+    _save(np.clip(alpha, 0, 1), path)
+
+
+def ember(path):
+    """A soft glowing dot for sparks and embers."""
+    y, x = np.mgrid[0:16, 0:16].astype(np.float32)
+    d = np.hypot(x - 7.5, y - 7.5) / 7.5
+    _save(np.clip(1 - d, 0, 1) ** 1.8, path)
+
+
+def glow(path):
+    """A soft halo for a frame, 9-sliced around it (low health, recent damage)."""
+    y, x = np.mgrid[0:48, 0:48].astype(np.float32)
+    dx = np.maximum(0, np.maximum(16 - x, x - 31))
+    dy = np.maximum(0, np.maximum(16 - y, y - 31))
+    d = np.hypot(dx, dy) / 16
+    # A halo, not a slab: the core stays faint (it sits under the frame anyway).
+    core = np.where(d <= 0, 0.35, 1.0)
+    _save(np.clip(1 - d, 0, 1) ** 2.4 * core, path)
+
+
+# name -> (pixel width, pixel height, wrap, 9-slice border in design units or None, maker)
+PATTERNS = {
+    "bar_bubbles": (64, 128, "repeat", None, None),
+    "bar_veins": (64, 128, "repeat", None, veins),
+    "bar_mottle": (64, 128, "repeat", None, mottle),
+    "bar_burn": (64, 64, "repeat", None, burn),   # repeats across; stretched along the consumed part
+    "ember": (16, 16, "clamp", None, ember),
+    "glow": (48, 48, "clamp", (7, 7, 7, 7), glow),
+}
+
+
+def main(out_dir=None):
+    out = out_dir or os.path.join(ROOT, "art", "out")
     os.makedirs(out, exist_ok=True)
     bubbles().save(os.path.join(out, "bar_bubbles.png"))
-    print(f"art/out/bar_bubbles.png ({W}x{H}, tiling)")
+    for name, (_, _, _, _, maker) in PATTERNS.items():
+        if maker is not None:
+            maker(os.path.join(out, name + ".png"))
+    print(f"{len(PATTERNS)} patterns written to {os.path.relpath(out, ROOT)}")
 
 
 if __name__ == "__main__":

@@ -66,6 +66,23 @@ namespace GenesisUI.Core.Tests
         }
 
         [Fact]
+        public void Content_insets_are_all_or_nothing_and_leave_room()
+        {
+            var m = Valid();
+            Assert.False(m.sprites[0].HasContent);
+
+            m.sprites[0].contentLeft = 9; m.sprites[0].contentRight = 9; m.sprites[0].contentBottom = 24; m.sprites[0].contentTop = 32;
+            Assert.True(m.sprites[0].HasContent);
+            Assert.Empty(SpriteManifestValidator.Validate(m));
+
+            m.sprites[0].contentTop = -1;
+            Assert.Contains(SpriteManifestValidator.Validate(m), e => e.Contains("all four"));
+
+            m.sprites[0].contentTop = 140;
+            Assert.Contains(SpriteManifestValidator.Validate(m), e => e.Contains("no room"));
+        }
+
+        [Fact]
         public void Scale_is_bounded()
         {
             var m = Valid();
