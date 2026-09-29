@@ -20,6 +20,12 @@ is unclear, ask; do not guess.
   into `main`, so give him the command.
 - **Art direction:** gold only (D-023). The carved-wood style was tried and rejected; do not
   propose another style unless Diego asks.
+- **Current F4.0 art source:** Diego supplied isolated UI sheets and separate background,
+  health, stamina and eitr textures at
+  `/home/diego/GenesisUI-Concept/GenesisUI-textures/`. Use these as the source for new
+  integration work (§2b). The earlier concept crops/review candidates are superseded for
+  pieces Diego rejected; only the reviewed vertical-bar shapes were approved visually.
+  None of these new sheets is integrated or tested in game yet.
 - **HUD modules (11):** `hud.vitals`, `hud.food`, `hud.hotbar`, `hud.minimap`, `hud.boss`,
   `hud.enemy`, `hud.hover`, `hud.notice`, `hud.status`, `hud.sprint`, plus the key-hint nudge
   owned by `hud.hotbar`. Each has a `[Modules]` toggle and its own config section.
@@ -81,7 +87,9 @@ look): `heimdall-nexus/docs/PADROES-GENESISMODS.md`.
     `tools/art/shapes.py` using `tools/art/style.py` (the gold language, the only art
     direction: D-023); animated textures come from `tools/art/patterns.py`. Concept cutouts
     come from `tools/art/extract.py`; refinements for review from `tools/art/refine_concept.py`.
-    Never edit a generated SVG in `art/src/`. New art is ours
+    The newly isolated source sheets in §2b take priority over rejected crops; update the
+    pipeline to produce reproducible individual sprites from them. Never edit a generated SVG
+    in `art/src/`. New art is ours
     (`art/LICENSES.md`); fonts are OFL only.
 
 ## 2a. Lessons already paid for (do not relearn them)
@@ -120,6 +128,65 @@ look): `heimdall-nexus/docs/PADROES-GENESISMODS.md`.
   windows and map.
 - **Do not invent causes.** Prove the cause in code or logs before a fix (a result file names
   it). If a log is needed, ask Diego to paste it.
+
+## 2b. Texture integration contract (F4.0, 2026-09-28)
+
+- **Source inventory:** `UI_elements1-upscaled.png` through `UI_elements5-upscaled.png`
+  contain isolated gold UI elements; `background_texture.png` is the common dark panel
+  material; `texture_example-upscaled.png` illustrates the intended assembled look;
+  `hp_texture.png`, `stamina_texture.png` and `eitr_texture.png` are the three coloured
+  liquid materials. All are in `/home/diego/GenesisUI-Concept/GenesisUI-textures/`, outside
+  this repository. The five element sheets have alpha; the background and three liquid
+  images are RGB without alpha. Cut and name **individual UI sprites** before integration.
+  Keep full source sheets outside the repository; commit only reviewed, cleaned pieces and
+  the recipe/metadata needed to reproduce them (D-026).
+- **Visual fidelity:** preserve the source metal's thickness, highlights and ornaments.
+  Previous attempts that redrew long rails as thin, flat strokes or changed the central
+  stamina bar were rejected. Treat the earlier `dist/art-review/` page and
+  `art/src/concept/` crops as historical drafts, not approved replacements. Diego approved
+  the **vertical vital-bar shapes** in that review; preserve their distinct sizes and
+  proportions. The new sheets and their use in the game still need visual review.
+- **No texture deformation:** isolate fixed corners, knots, caps and other ornaments.
+  Render fixed-size pieces at their intended proportions, allowing only a uniform scale of
+  the whole UI group. For a variable-length straight section, repeat a clean, seamless
+  strip or use separate fixed caps and a centre; a Unity 9-slice preserves corners but
+  stretches its edge and centre pixels. Do not stretch decorated rails, change a vertical
+  bar's width independently of its height, or scale an eight-slot hotbar non-uniformly.
+  The eight-slot sheet may be rendered at a fixed aspect ratio with vanilla item icons,
+  labels, durability and selection as aligned independent children; use separately cut
+  slot/rail pieces if the layout must become variable later.
+- **Independent background opacity:** `background_texture.png` belongs behind panel
+  frames, not baked into them. Clip/crop it to each panel's inner silhouette so transparent
+  corners stay transparent. Give the background graphic its **own** alpha/config value per
+  panel (or a shared default with per-panel override); do not put an opacity `CanvasGroup`
+  on a parent of the gold frame, text, icons or item controls, because that would fade them
+  too. A separate parent fade for the entire UI element remains valid for show/hide.
+  The background is not edge-seamless; do not repeat the original PNG unmodified. Crop a
+  fixed-area sample without stretching, or prepare a seamless derivative before tiling.
+- **Valheim content:** layer the game's own icons, texts, values, maps and interactions
+  above the background and within the frame's declared content insets. HUD modules may
+  continue reading or mirroring vanilla state while veiling the original drawing. For F4
+  windows, move and skin vanilla `InventoryGui`/`InventoryGrid` controls reversibly so
+  their item handlers, drag/drop, keyboard/gamepad navigation and other mods' hooks remain
+  intact (D-025). Patch only a proven blocking behaviour under `docs/PATCH-POLICY.md`;
+  never substitute new item-transfer logic. Precise alignment and input behavior require
+  a client test at the target GUI scales, including fault/teardown restoration.
+- **Animated liquid:** keep the metallic bar frame stationary. Put the appropriate HP,
+  stamina or eitr texture in a separate layer behind it, clipped first to the bar's shaped
+  opening and then to the current value (including the existing loss trail/surface where
+  applicable). Animate texture UVs or a supported UI material, not the frame or the bar's
+  geometry; the fill level and texture motion are independent. The three supplied liquids
+  are static images, **not animation frames or seamless loops**. Prepare/test a looping
+  version (or another seam-free motion) before continuous UV scrolling; keep motion subtle
+  and allocation-free per frame. Apply the same principle to the horizontal stamina bar,
+  whose earlier review candidate Diego rejected. Do not claim a finished liquid effect
+  until it is checked in the running game.
+- **Asset quality gate:** inspect each cutout against dark and light backdrops at its
+  intended on-screen size for fringe colours, alpha halos, seams, stretched highlights,
+  corner leaks and legibility. The isolated sheets still show some coloured edge halos.
+  Record the sprite's borders/content insets in `art/out/sprites.json`; verify the package
+  with the shipped-art test and Diego's client script. Do not mistake a 4K upscale for
+  restored detail or a successful build for visual approval.
 
 ## 3. Language
 
@@ -183,21 +250,23 @@ look): `heimdall-nexus/docs/PADROES-GENESISMODS.md`.
 5. Put logic (formatting, diffing, layout) in `GenesisUI.Core` with unit tests.
 6. Add a pt-BR test script and bump the version (below).
 
-**Add art** — add or change a function in `tools/art/shapes.py` using only the style and
-motifs of `tools/art/style.py` (containers vs cells, diamond / volute / bead). There is one art
-direction, gold (D-023); do not start another without Diego asking. Register the sprite in the
-`SPRITES` table with its design size, 9-slice border and, for frames that hold something, its
-content insets (views read them through `ThemeRuntime.Content`). Run `render.py`, then
-`tools/art/mock.py` and look at the full-HUD mock before shipping to judge cohesion (add the new
-element to the mock). The only hand-written source is `art/src/bar_fill.svg`, a white gradient
-texture tinted in game, not a shape. Colours in code come
-from theme tokens. Diego's direction: **delicate, subtle, refined and memorable; never as busy
-as the concept art**; the health bar stays the largest; default positions: minimap top-right,
-hotbar bottom centre (the player will be able to move them later).
+**Add art** — for a piece present in Diego's isolated sheets, follow §2b and preserve that
+source's metallic detail; do not redraw it as a flatter generated approximation. For a piece
+absent from the sheets, add or change a function in `tools/art/shapes.py` using the gold
+style/motifs in `tools/art/style.py` (D-023). Register each shipped sprite with its design
+size, borders and, for frames that hold content, its content insets (views read them through
+`ThemeRuntime.Content`). Run `render.py`, then `tools/art/mock.py` and inspect the full HUD
+before shipping; add the new element to the mock. Generated SVGs are not hand-edited.
+Colours used by generated graphics come from theme tokens. The health bar stays the largest;
+default positions are minimap top-right and hotbar bottom centre until player positioning
+is implemented.
 
-For D-026 concept cutouts, use `tools/art/extract.py` and review the candidate through
-`tools/art/refine_concept.py` and `docs/F4-ART-REVIEW.md`. Keep the full concepts outside the
-repository and update the extracted sprite's 9-slice borders before integration.
+For D-026 art, start with the isolated sheets in §2b and build reproducible per-element
+cutouts. The existing `tools/art/extract.py`, `tools/art/refine_concept.py` and
+`docs/F4-ART-REVIEW.md` describe the older concept-crop experiments; reuse their code only
+where it preserves the new source art and revise their documentation before integration.
+Keep full source sheets outside the repository and record each sprite's borders, content
+insets and background mask before shipping.
 
 **Deliver a test build (the loop with Diego)**
 1. Bump `src/GenesisUI/PluginInfo.cs`: `Version` for new features, `PreviewNumber` for another
