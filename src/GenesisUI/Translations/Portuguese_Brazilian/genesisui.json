@@ -275,5 +275,12 @@
   "genesisui_store_buy": "Comprar",
   "genesisui_store_sell_next": "Vender {0} por {1} moedas",
   "genesisui_store_nothing_to_sell": "Nada de valor para vender.",
-  "genesisui_cfg_Modules_StoreWindow": "Janela da loja"
+  "genesisui_cfg_Modules_StoreWindow": "Janela da loja",
+  "genesisui_module_dialogs": "Diálogos",
+  "genesisui_split_title": "Dividir pilha",
+  "genesisui_style_title": "Escolha o estilo",
+  "genesisui_cancel": "Cancelar",
+  "genesisui_ok": "Confirmar",
+  "genesisui_reader_close": "[E] ou Esc para fechar",
+  "genesisui_cfg_Modules_Dialogs": "Diálogos"
 }

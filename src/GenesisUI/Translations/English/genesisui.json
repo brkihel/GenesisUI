@@ -191,5 +191,11 @@
   "genesisui_store_sell": "Sell",
   "genesisui_store_buy": "Buy",
   "genesisui_store_sell_next": "Sell {0} for {1} coins",
-  "genesisui_store_nothing_to_sell": "Nothing of value to sell."
+  "genesisui_store_nothing_to_sell": "Nothing of value to sell.",
+  "genesisui_module_dialogs": "Dialogs",
+  "genesisui_split_title": "Split stack",
+  "genesisui_style_title": "Choose the style",
+  "genesisui_cancel": "Cancel",
+  "genesisui_ok": "Confirm",
+  "genesisui_reader_close": "[E] or Esc to close"
 }

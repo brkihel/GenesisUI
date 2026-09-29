@@ -131,6 +131,8 @@ namespace GenesisUI
                     "Menu de construção do martelo, enxada e cultivador no estilo do GenesisUI, com materiais e dicas. Desligado, o menu original do jogo aparece."));
                 ModuleHost.Register(new Modules.Windows.StoreWindowModule(), Config.Bind("Modules", "StoreWindow", true,
                     "Loja dos comerciantes (Haldor, Hildir, Bruxa do Pântano) no estilo do GenesisUI. Desligado, a loja original do jogo aparece."));
+                ModuleHost.Register(new Modules.Windows.DialogsModule(), Config.Bind("Modules", "Dialogs", true,
+                    "Diálogos no estilo do GenesisUI: dividir pilha, estilo do item, pedras rúnicas e corvos, nomear placas e portais."));
                 ModuleHost.Register(new SprintModule(Config), Config.Bind("Modules", "Sprint", true,
                     "Barra pequena de vigor acima dos itens: surge quando o vigor é gasto e some só depois de cheio. Desligado, ela não aparece."));
 
