@@ -49,6 +49,15 @@ namespace GenesisUI.Gameplay
                 new AcceptableValueRange<int>(0, SlotLayout.MaxUtility))));
         }
 
+        /// <summary>
+        /// True when these values come from a server that locks them and this player is not its admin:
+        /// the settings window shows them read-only.
+        /// </summary>
+        internal static bool LockedHere => _sync != null && _sync.IsLocked && !_sync.IsSourceOfTruth && !_sync.IsAdmin;
+
+        /// <summary>Whether an entry is one of the server-synced inventory settings.</summary>
+        internal static bool IsSynced(ConfigEntryBase entry) => entry == Rows || entry == QuickSlots || entry == UtilitySlots;
+
         /// <summary>The layout the admin's settings describe right now.</summary>
         internal static SlotLayout Layout() =>
             new SlotLayout(Rows.Value, QuickSlots.Value, UtilitySlots.Value, EquipmentSlots());
