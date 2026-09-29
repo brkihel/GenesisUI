@@ -91,16 +91,16 @@ Shader "GenesisUI/Burn"
                 float c = p.y;
                 float edge = _Edge * _Size.x;
                 float trail = max(_Trail, _Edge) * _Size.x;
-                float half = _Size.y * 0.5;
+                float halfThick = _Size.y * 0.5;
                 float t = _Time.y;
 
                 float flicker = 0.85 + 0.15 * sin(t * 23.0 + Hash(floor(t * 12.0)) * 6.28);
                 float d = a - edge;
-                float inside = step(abs(c), half + 0.5);
+                float inside = step(abs(c), halfThick + 0.5);
                 float core = exp(-d * d / (2.0 * _CoreWidth * _CoreWidth)) * inside;
                 float halo = exp(-d * d / (2.0 * _HaloWidth * _HaloWidth) - c * c / (2.0 * pow(_Size.y * 0.9, 2)));
                 float span = max(1.0, trail - edge);
-                float tail = (d >= 0.0 && a <= trail) ? exp(-d / (span * 0.35 + 1.0)) * exp(-c * c / (2.0 * pow(half * 0.7, 2))) : 0.0;
+                float tail = (d >= 0.0 && a <= trail) ? exp(-d / (span * 0.35 + 1.0)) * exp(-c * c / (2.0 * pow(halfThick * 0.7, 2))) : 0.0;
 
                 float3 light = _Core.rgb * core * 1.1 + _Halo.rgb * halo * 0.85 * flicker + _Tail.rgb * tail * 0.35;
 
@@ -111,7 +111,7 @@ Shader "GenesisUI/Burn"
                     float seed = i * 7.31;
                     float life = frac(t * (0.55 + Hash(seed) * 0.5) + Hash(seed + 1.0));
                     float2 e = float2(edge + (Hash(seed + 2.0) - 0.3) * 14.0 + sin(t * 3.0 + seed) * 2.0,
-                                      life * (half + _Pad) * 1.6 * (Hash(seed + 3.0) > 0.5 ? 1.0 : -0.6));
+                                      life * (halfThick + _Pad) * 1.6 * (Hash(seed + 3.0) > 0.5 ? 1.0 : -0.6));
                     float r = 0.6 + Hash(seed + 4.0) * 0.8;
                     float2 q = float2(a, c) - e;
                     embers += exp(-dot(q, q) / (2.0 * r * r)) * (1.0 - life);

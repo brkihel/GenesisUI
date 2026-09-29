@@ -15,8 +15,11 @@ is unclear, ask; do not guess.
   callbacks. D-025 ("move and dress vanilla's slots") is replaced; Diego wants fidelity to the
   concept's assembly, not new designs. Order after F4: F5 menus, F6 map, F7 API and adapters,
   F8 gameplay package, F9 switch-over (D-024).
-- **Version:** 0.7.0, last package `0.7.0-preview.9` (own inventory window, D-032) with script
-  R-053; requires Diego's in-game check. The minimal hotbar from preview.4 is preserved at git
+- **Version:** 0.7.0, last package `0.7.0-preview.10` (thin-line metal frames, burn as light,
+  darker theme, D-033) with script R-054; preview.9 (own inventory window, D-032, R-053) was
+  not reported on separately. Shaders: source in `unity/`, built on `win-teste` (Unity
+  6000.0.75f1 in `C:\Unity`, Personal licence activated in the `heimdall-teste` Windows user) by
+  `tools/shaders/build.sh` into `art/shaders/genesisui.shaders`. The minimal hotbar from preview.4 is preserved at git
   tag `hotbar-minimal-v1`. Inventory requirements in `docs/GAMEPLAY.md` §1.
   Next: HUD row for quick/action slots above the hotbar + Alt hotkeys, ring/amulet swap,
   3D character in the equipment panel, gamepad on our cells, F4.2d modded slots, F4.3 crafting

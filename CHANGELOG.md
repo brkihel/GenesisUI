@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.7.0-preview.10 — Thin-line metal, burn as light, darker theme (D-033)
+
+### Changed
+- Window panels and bars, cards, item slots and their selected/equipped states, key caps and
+  rules are thin lines with small ornaments (`tools/art/metal.py`), lit as polished metal by
+  the new `GenesisUI/Metal` shader: bronze-to-gold ramp, light from the top left, specular, and
+  a slow glint that sweeps the screen every few seconds.
+- The resource bars' loss is light (`GenesisUI/Burn`): a white-hot core at the level, a halo
+  past the frame, a cooling tail and a few embers, replacing the bright band and rising grains.
+- Darker theme: stone at 55 % brightness, older gold, softer text; the world dims behind the
+  inventory window.
+- The heavy sheet hotbar is retired: the hotbar is the minimal slot row again, in the new
+  thin slots.
+
+### Added
+- `art/genesisui.shaders` (our shaders, built with Unity 6000.0.75f1, Valheim's version, by
+  `tools/shaders/build.sh`). Without it, on an unsupported GPU, or with
+  `[Theme] MetalShader = false`, frames use their pre-lit sprites and the bars their previous
+  burn.
+
+### Verification
+- Core (141) and contract tests pass; both shaders compile without errors for Direct3D 11,
+  Direct3D 12 and Vulkan. The look in game needs Diego's client test (R-054).
+
 ## 0.7.0-preview.9 — Own inventory window on the concept's layout (D-032)
 
 ### Changed
