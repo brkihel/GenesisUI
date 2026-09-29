@@ -14,7 +14,7 @@ are met.
 | **F5 — Menus** | Main menu (title, character and world selection, join/host), pause (Esc) menu, vanilla settings window, GenesisUI settings | Menu scripts pass; nothing of the vanilla flow (saves, joining, settings) behaves differently |
 | **F6 — Map** | Map frame, pin filters, marker palette, legend, zoom/center, visibility toggle | Map script passes |
 | **F7 — Extension API v1 and adapters** | Public API, foreign-element dock (spike resolved), first adapters (Backpacks, Jewelcrafting, StarLevelSystem) | Adapter scripts pass with the modpack's versions; contract tests against their DLLs |
-| **F8 — Gameplay package (optional)** | Separate package with server authority: extra slots, quick/action slots, crafting from chests… | Own design docs; server validates every action |
+| **F8 — Gameplay package (optional)** | Separate package with server authority. **Inventory part moved into F4 (D-028)**: admin slot count, quick/utility slots, equipment slots, sort. Left for F8: crafting from chests… | Own design docs; server validates every action |
 | **F9 — Switch-over** | GenesisUI replaces SeneaL UI on GenesisHeim | Release checklist + rollout in [RELEASE.md](RELEASE.md) |
 
 F3 was approved by Diego on 2026-09-28 (R-040 on 0.5.0-preview.3; fixes in preview.4). F4.0 (textures from Diego's sheets on the whole HUD, D-027) is in 0.6.0-preview.1, script R-042.

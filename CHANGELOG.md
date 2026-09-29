@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.0-preview.4 — one darker gold
+
+### Changed
+- Every piece cut from Diego's sheets is recoloured to one darker, discreet gold taken from his
+  colour reference (D-029); shapes, alpha and highlights are unchanged. The green equipped cell
+  keeps its colour.
+
 ## 0.6.0-preview.3 — creature plate restored
 
 ### Fixed

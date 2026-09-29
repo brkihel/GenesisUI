@@ -14,10 +14,10 @@ is unclear, ask; do not guess.
   Diego approved the revision and confirmed the concept's rights (D-025/D-026). Order after that: F5 menus (main and Esc),
   F6 map, F7 Extension API and adapters, F8 optional gameplay package, F9 switch-over
   (D-024). Do not start API or adapter work before the vanilla UI is done.
-- **Version:** 0.6.0. R-042 (0.6.0-preview.1) **approved F4.0** with five adjustments, done in
-  `0.6.0-preview.3` (script R-043, not yet run; preview.3 also restores the F3 creature plate,
-  which must not use sheet art). Diego is retouching colours (too strong) in
-  `~/GenesisUI-Concept/GenesisUI-cuts/edited/` and will send textures for the windows.
+- **Version:** 0.6.0, last package `0.6.0-preview.4` (one gold, D-029) with scripts R-043 +
+  R-044, not yet run. F4.0 approved (R-042). **F4-PLAN §7 (revision 3) waits for Diego's OK**:
+  window sheets in `~/GenesisUI-Concept/windows-textures-genesisui/`, gameplay package
+  `GenesisUI.Gameplay` inside F4 (D-028), filter dims, grid from single slots.
 - **Art direction:** gold only (D-023). The carved-wood style was tried and rejected; do not
   propose another style unless Diego asks.
 - **Current F4.0 art source:** Diego supplied isolated UI sheets and separate background,

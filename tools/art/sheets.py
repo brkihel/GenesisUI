@@ -113,6 +113,33 @@ def defringe(a):
     return out
 
 
+# One gold for every piece (D-029): a ramp taken from Diego's colour reference. Each piece's own
+# light and shade (its luminance) is kept, re-ranked onto the reference's luminance and coloured
+# by the ramp, so sheets drawn in different tones come out as one darker, discreet gold. Shape,
+# alpha, symmetry and highlights are untouched: only the colour of each pixel changes.
+GOLD = json.load(open(os.path.join(os.path.dirname(__file__), "gold_ramp.json")))
+TONE_DARKEN = 0.8           # the reference's luminance, pulled down: darker and more discreet
+TONE_SATURATION = 1.25      # the ramp's warmth, a little stronger so the darker gold stays gold
+
+
+def tone(a):
+    ramp = np.asarray(GOLD["ramp"], np.float32)
+    lum = ramp.mean(1, keepdims=True)
+    ramp = np.clip(lum + (ramp - lum) * TONE_SATURATION, 0, 255)
+    target = np.asarray(GOLD["quantiles"], np.float32) * TONE_DARKEN
+    rgb = a[..., :3].astype(np.float32)
+    l = 0.299 * rgb[..., 0] + 0.587 * rgb[..., 1] + 0.114 * rgb[..., 2]
+    metal = a[..., 3] > 200
+    if metal.sum() < 50:
+        return a
+    source = np.percentile(l[metal], np.linspace(0, 100, 101))
+    source = np.maximum.accumulate(source + np.arange(101) * 1e-4)    # strictly increasing for interp
+    mapped = np.interp(l, source, target)
+    out = a.copy()
+    out[..., :3] = ramp[np.clip(mapped, 0, 255).astype(int)].astype(np.uint8)
+    return out
+
+
 def resize(img, size):
     """Premultiplied resampling: transparent pixels do not darken or tint the metal's edge."""
     return img.convert("RGBa").resize(size, Image.LANCZOS).convert("RGBA")
@@ -131,7 +158,9 @@ def frame(p):
     trimmed = trim_box(a[..., 3])
     a = a[trimmed[1]:trimmed[3], trimmed[0]:trimmed[2]].copy()
     ox, oy = p["box"][0] + trimmed[0], p["box"][1] + trimmed[1]
-    a = retouched(p.get("cut", p["name"]), a)
+    a, edited = retouched(p.get("cut", p["name"]), a)
+    if not edited and p.get("tone", True):
+        a = tone(a)
     original = a.copy()
 
     ornaments = {}
@@ -227,17 +256,17 @@ def frame(p):
 
 
 def retouched(name, a):
-    """Exports the element as cut; returns Diego's edited version instead when there is one."""
+    """Exports the element as cut; returns (pixels, edited): Diego's version instead when there is one."""
     os.makedirs(os.path.join(CUTS, "original"), exist_ok=True)
     Image.fromarray(a, "RGBA").save(os.path.join(CUTS, "original", name + ".png"))
     edited = os.path.join(CUTS, "edited", name + ".png")
     if not os.path.exists(edited):
-        return a
+        return a, False
     e = np.asarray(Image.open(edited).convert("RGBA")).copy()
     if e.shape != a.shape:
         sys.exit(f"{edited} is {e.shape[1]}x{e.shape[0]}, the cut is {a.shape[1]}x{a.shape[0]}: keep the size")
-    print(f"  {name}: using Diego's edited cut")
-    return e
+    print(f"  {name}: using Diego's edited cut (kept as he coloured it)")
+    return e, True
 
 
 def holes(alpha, count, min_area=400):
@@ -261,7 +290,8 @@ def ring(p):
     """A round frame at any diameter from a small one: every pixel samples the source ring at
     the same angle and the same distance from the rail (so the rail keeps its thickness, bevel
     and light direction); the four cardinal diamonds are cut whole and put back at scale."""
-    src = Image.fromarray(retouched(p["name"], np.asarray(sheet(p["sheet"]).crop(p["box"])).copy()), "RGBA")
+    cut, edited = retouched(p["name"], np.asarray(sheet(p["sheet"]).crop(p["box"])).copy())
+    src = Image.fromarray(cut if edited else tone(cut), "RGBA")
     a = np.asarray(src).astype(np.float32)
     cx, cy, r0 = p["centre"][0] - p["box"][0], p["centre"][1] - p["box"][1], p["radius"]
     s = p.get("scale", K) * SCALE                  # output px per sheet px (rail thickness)
@@ -408,7 +438,7 @@ PIECES = [
     {"name": "slot_selected", "kind": "frame", "sheet": 4, "box": (404, 320, 720, 620), "scale": 0.4,
      "opening": (562, 470), "opening_grow": 0, "glow": True},
     {"name": "slot_equipped", "kind": "frame", "sheet": 4, "box": (748, 320, 1068, 620), "scale": 0.4,
-     "opening": (908, 470), "opening_grow": 0, "glow": True},
+     "opening": (908, 470), "opening_grow": 0, "glow": True, "tone": False},
     # Food slot (sheet 2) and status tile (sheet 5): square frames with four diamonds.
     {"name": "slot", "kind": "frame", "sheet": 2, "box": (256, 600, 480, 820), "scale": 0.29,
      "border": (46, 46, 46, 46), "content": (26, 26, 26, 26)},

@@ -265,3 +265,25 @@ original/`, and a same-size retouched copy in `edited/` replaces the cut: Diego 
 there without anything being cut again. The creature plate is **not** from the sheets: it keeps
 the generated boss plate drawn small, as approved in F3 (Diego, after R-042).
 
+## D-028 — The gameplay package is built inside F4
+
+**Decision (2026-09-28):** the inventory gameplay Diego wants (admin-set slot count up to 48,
+4 quick-use and 4 utility slots, an equipment panel holding every equipped item, sort) is
+built in F4 instead of F8, as the separate optional package **`GenesisUI.Gameplay`** (own
+plugin, server config through ServerSync, AzuAntiCheat whitelist). The UI plugin stays visual,
+networkless and `NotEnforced`; without the package it runs on vanilla's 32 slots. A research
+spike and `docs/GAMEPLAY.md` (F4-PLAN §7.2) come before any code that moves items.
+**Why:** Diego wants the inventory whole in this phase. The *when* changes; the separation
+that keeps the UI safe (VISION: "never a requirement for the UI") does not.
+
+## D-029 — One gold for every piece of art
+
+**Decision (2026-09-28):** `tools/art/sheets.py` recolours every piece cut from Diego's sheets
+through one ramp taken from his colour reference (`tools/art/gold_ramp.json`, from
+`elements-color.jpg`): each pixel keeps its luminance rank and alpha and takes the ramp's colour
+at the reference's (darkened) luminance. Pieces with their own colour (green equipped, grey
+disabled, red) are exempt; a cut Diego retouches by hand (`GenesisUI-cuts/edited/`) is kept as
+he coloured it.
+**Why:** the sheets were drawn in different tones and too bright (R-042); Diego asked for one
+darker, discreet gold without the art being redrawn, deformed or de-symmetrised.
+

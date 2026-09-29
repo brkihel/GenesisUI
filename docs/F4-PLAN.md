@@ -1,6 +1,7 @@
 # F4 — Inventory and crafting windows: plan
 
-Status: **approved in its revised form; F4.0 in progress** (2026-09-28). Branch `f4-windows`.
+Status: **F4.0 done and approved (R-042). Revision 3 (§7) proposed, waiting for Diego's OK**
+(2026-09-28). Branch `f4-windows`. §7 supersedes §3–§5 where they differ.
 
 ## 1. Scope
 
@@ -142,3 +143,74 @@ tone, and the result stretches as a 9-slice at any size without deforming the co
 4. Recipe search and filters: **in F4**.
 5. Concept-derived art: wanted; images are Diego's own (D-026); upscale to 4K first.
 6. Vital bars: the liquid fills the whole opening of the frame, effects inside it.
+
+## 7. Revision 3 — window sheets, gameplay inside F4 (2026-09-28, after F4.0)
+
+Diego supplied 13 window sheets (`~/GenesisUI-Concept/windows-textures-genesisui/`) drawn for
+ConceptArt (9) inventory and (12) crafting, all without background (the shared stone material
+goes behind, with its own opacity), and answered three questions.
+
+### 7.1 What changed
+
+- **Gameplay moves into F4** (D-028). Diego wants the inventory complete in this phase: a slot
+  count set by the server admin up to **48** (the 8 hotbar slots included), **4 quick-use**
+  slots (food, a potion), **4 utility** slots (anything that is not equipment), an
+  **equipment panel where every equipped item lives** (weapons and tools stay on the hotbar)
+  and **sort**. These change the inventory, so they are built as the separate, optional
+  package the roadmap called F8, **`GenesisUI.Gameplay`**, only earlier. The UI plugin stays
+  visual, networkless and `NotEnforced`; it shows the extra areas only when the package is
+  present and otherwise works with vanilla's 32 slots.
+- **Filter = dim** (Diego): items outside the chosen category are dimmed in place; nothing
+  moves, drag and drop stays exact. Visual, UI plugin.
+- **One gold for all art** (D-029): every sheet piece is recoloured by `tools/art/sheets.py`
+  from a ramp taken from Diego's reference (`elements-color.jpg`): darker, discreet, one tone
+  for HUD and windows; shape, alpha, symmetry and highlights untouched. Pieces with a colour of
+  their own (green equipped, grey disabled, red) are exempt. Diego's hand retouching is no
+  longer needed; he approves the tone. Applied to the HUD in 0.6.0-preview.4.
+- **No ready-made grids** (Diego): the inventory grid is built from single slot sprites, sized
+  from the configured count, with a scroll bar on the inventory slots only. Prefer the finest,
+  least busy pieces of the sheets when composing.
+- **Configurações** is GenesisUI's own settings page (our config, in pt-BR, live), not
+  vanilla's settings; vanilla settings stay on the Esc menu until F5.
+- **Item details window** replaces the tooltip: the selected (or hovered) item's details in
+  their own panel, as in ConceptArt (9).
+
+### 7.2 Gameplay package: how it stays safe
+
+Research first (step F4.G0), clean room: study how existing extra-slot mods behave (by use and
+public docs, never their code) and vanilla's `Inventory`, `Player`, `Humanoid` save/load.
+Open questions the spike must answer before any item code:
+
+1. **Where extra slots live.** Proposal: extra rows of the player's own inventory (vanilla
+   saves every item's grid position in the character file), so nothing new is saved and the
+   server needs no storage. Equipment, quick and utility slots are reserved positions in rows
+   the vanilla grid never shows.
+2. **Removing the mod or joining a server with a smaller limit must never lose items.** What
+   vanilla's `Inventory.Load` does with a position outside its grid is the first thing to
+   prove; the package must repack overflow into free slots or drop nothing silently.
+3. **Admin authority.** The slot count comes from the server (ServerSync, as in the house
+   standard; Jötunn does not ship it). Clients cannot raise it. AzuAntiCheat whitelist entry.
+4. **Moves go through vanilla** (`Inventory.MoveItemToThis`, `Humanoid.EquipItem`,
+   `UnequipItem`) wherever vanilla has an entry point; the package's own writes are few,
+   named and covered by the item-safety matrix.
+5. **Compatibility**: detect other extra-slot mods (and SeneaL UI) and refuse to start the
+   package when one is present, with a clear log line, instead of fighting over rows.
+
+### 7.3 Steps (each: one preview, one pt-BR script)
+
+| Step | Delivers |
+|---|---|
+| F4.1 | Window art cut from the 13 sheets (toned, `_shape`, ornaments, states); `VanillaSkin`; the window shell: top bar with the six tabs (Q/E), bottom key-hint bar, frame, open/close by every key, fault → vanilla window intact |
+| F4.2 | Inventory in the ConceptArt (9) layout with **vanilla's 32 slots**: grid from single slots, filter (dim), weight bar, item details panel, containers; equipment panel (click to unequip, drop to equip through vanilla) |
+| F4.G0 | Gameplay research spike (§7.2) → `docs/GAMEPLAY.md` for Diego's approval; no item code before it |
+| F4.G1 | `GenesisUI.Gameplay`: admin slot count up to 48 with scroll, equipment slots, 4 quick-use, 4 utility, sort; item-safety matrix incl. uninstall and smaller-limit servers |
+| F4.3 | Crafting in the ConceptArt (12) layout at every station, search and category filters, upgrade, repair |
+| F4.4 | Skills, texts, trophies, achievements; **Configurações** (our settings page) |
+| F4.5 | Build piece browser (hammer, hoe, cultivator) |
+
+### 7.4 Decided (2026-09-28)
+
+1. Gameplay: **with F4** (Diego) → separate package inside this phase (D-028).
+2. Filter: **dim in place**.
+3. Colour: **automatic normalisation of every piece** (D-029).
+
