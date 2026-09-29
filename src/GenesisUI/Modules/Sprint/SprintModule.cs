@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using BepInEx.Configuration;
+using GenesisUI.Foundation;
 using GenesisUI.Foundation.Contracts;
 using GenesisUI.Host;
 using GenesisUI.Theme;
@@ -36,6 +37,12 @@ namespace GenesisUI.Modules.Sprint
         private RectTransform _liquidMask;
         private RectTransform _burnRt;
         private RawImage _burn;
+        private RectTransform _glowRt;
+        private Image _glow;
+        private readonly RectTransform[] _sparkRt = new RectTransform[5];
+        private readonly Image[] _spark = new Image[5];
+        private Material _additive;
+        private float _burnClock;
         private LiquidLayer _liquid;
         private BarAnimator _bar;
         private float _linger;
@@ -117,12 +124,37 @@ namespace GenesisUI.Modules.Sprint
                 _burn.color = Color.white;
                 _burn.raycastTarget = false;
                 _burn.uvRect = new Rect(0f, 0f, 1f, 1f);
+
+                // The core always uses UI's ordinary shader (reliable through the frame mask).
+                // If the game's additive particle shader is available, the halo and pooled
+                // embers add light to the liquid. Alpha-blended copies remain the fallback.
+                var shader = Shader.Find("Legacy Shaders/Particles/Additive") ?? Shader.Find("Particles/Additive");
+                if (shader != null && shader.isSupported)
+                {
+                    _additive = new Material(shader) { name = "GenesisUI stamina burn glow", hideFlags = HideFlags.DontSave };
+                    GenesisLog.Info("Module:hud.sprint", "additive burn glow shader available");
+                }
+                else GenesisLog.Warn("Module:hud.sprint", "additive shader unavailable; using alpha glow");
+
+                var ember = theme.Sprite("ember");
+                _glowRt = Ui.Place(Ui.Child(track, "BurnGlow"), new Vector2(0f, 0.5f), Vector2.zero, new Vector2(26f, 20f));
+                _glowRt.pivot = new Vector2(0.5f, 0.5f);
+                _glow = Ui.Image(_glowRt, ember, new Color(1f, 0.49f, 0.09f, 0f));
+                if (_additive != null) _glow.material = _additive;
+                for (int i = 0; i < _spark.Length; i++)
+                {
+                    _sparkRt[i] = Ui.Place(Ui.Child(track, "Spark" + i), new Vector2(0f, 0.5f), Vector2.zero, new Vector2(3f, 3f));
+                    _sparkRt[i].pivot = new Vector2(0.5f, 0.5f);
+                    _spark[i] = Ui.Image(_sparkRt[i], ember, Color.clear);
+                    if (_additive != null) _spark[i].material = _additive;
+                }
             }
 
             _bar = new BarAnimator();
             _linger = 0f;
             _initialized = false;
             _burnTime = 0f;
+            _burnClock = 0f;
             _appliedY = int.MinValue;
             _appliedScale = float.NaN;
             _group.gameObject.SetActive(false);
@@ -190,15 +222,35 @@ namespace GenesisUI.Modules.Sprint
                 float to = Mathf.Min(1f, _displayed + 0.04f);
                 bool burning = _burnTime > 0f && to > _displayed + 0.002f;
                 if (_burn.enabled != burning) _burn.enabled = burning;
+                if (_glow.enabled != burning) _glow.enabled = burning;
                 if (burning)
                 {
+                    _burnClock += deltaSeconds;
                     _burnRt.anchorMin = new Vector2(_displayed, 0f);
                     _burnRt.anchorMax = new Vector2(to, 1f);
-                    _burn.color = new Color(1f, 1f, 1f, Mathf.Clamp01(_burnTime / 0.25f));
+                    float heat = Mathf.Clamp01(_burnTime / 0.25f);
+                    float pulse = 0.8f + 0.2f * Mathf.Sin(_burnClock * 38f);
+                    _burn.color = new Color(1f, 0.79f, 0.37f, heat * pulse);
                     var uv = _burn.uvRect;
                     uv.y = Mathf.Repeat(uv.y + deltaSeconds * 0.7f, 1f);
                     _burn.uvRect = uv;
+
+                    _glowRt.anchorMin = _glowRt.anchorMax = new Vector2(_displayed, 0.5f);
+                    _glow.color = new Color(1f, 0.42f, 0.06f, heat * (0.52f + 0.2f * pulse));
+                    for (int i = 0; i < _spark.Length; i++)
+                    {
+                        float phase = Mathf.Repeat(_burnClock * (2.9f + i * 0.13f) + i * 0.21f, 1f);
+                        float size = 1.8f + (1f - phase) * (i % 2 == 0 ? 2.6f : 1.4f);
+                        _sparkRt[i].anchorMin = _sparkRt[i].anchorMax = new Vector2(_displayed, 0.5f);
+                        _sparkRt[i].anchoredPosition = new Vector2(2f + phase * 19f,
+                            Mathf.Sin(i * 2.4f + phase * 5f) * (2f + phase * 5f));
+                        _sparkRt[i].sizeDelta = new Vector2(size, size);
+                        _spark[i].color = new Color(1f, 0.68f + (1f - phase) * 0.3f, 0.18f,
+                            heat * (1f - phase) * (i % 2 == 0 ? 0.95f : 0.7f));
+                    }
                 }
+                for (int i = 0; i < _spark.Length; i++)
+                    if (_spark[i] != null && _spark[i].enabled != burning) _spark[i].enabled = burning;
             }
         }
 
@@ -237,6 +289,7 @@ namespace GenesisUI.Modules.Sprint
         public void Teardown()
         {
             if (_group != null) Object.Destroy(_group.gameObject);
+            if (_additive != null) Object.Destroy(_additive);
             _group = null;
             _opacity = null;
             _trail = _fill = null;
@@ -244,6 +297,10 @@ namespace GenesisUI.Modules.Sprint
             _liquidMask = null;
             _burn = null;
             _burnRt = null;
+            _glowRt = null;
+            _glow = null;
+            _additive = null;
+            for (int i = 0; i < _spark.Length; i++) { _spark[i] = null; _sparkRt[i] = null; }
             _bar = null;
         }
     }

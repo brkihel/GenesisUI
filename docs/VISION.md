@@ -13,7 +13,7 @@ in this order:
 
 ## What GenesisUI is
 
-- A **client-side, visual** replacement for the vanilla HUD and windows: vitals,
+- A **client-side** replacement for the vanilla HUD and windows: vitals,
   hotbar, status effects, minimap frame, compass, hover/interaction cards, boss and
   enemy bars, notifications, key hints, and later the inventory, crafting, texts,
   settings and map windows.
@@ -35,9 +35,9 @@ in this order:
   (roadmap F8) and are never a requirement for the UI. **Exception (D-028):** the inventory
   gameplay (admin slot count, quick/utility/equipment slots, sort) is built during F4 as an
   isolated module of this plugin, with its own toggle and server-synced settings.
-- **No networking.** The visual scope registers no RPC and syncs no config. The
-  plugin declares `NetworkCompatibility(NotEnforced)`: players with or without it
-  can share a server.
+- **Visual modules register no RPC.** The optional inventory module uses ServerSync
+  for admin settings (D-031). The plugin declares `NetworkCompatibility(NotEnforced)`:
+  players with or without it can share a server.
 - **Not a copy of anything.** No code, art, icon or text from SeneaL UI or any other
   closed mod. No redistributed game assets. See [DECISIONS.md](DECISIONS.md) D-005.
 
@@ -46,8 +46,8 @@ in this order:
 - Entering, leaving and re-entering a world never duplicates or loses HUD elements.
 - Every module can be switched back to vanilla, individually, in-session.
 - Nothing is lost or duplicated when moving items between inventory, container,
-  backpack and tombstone with the real modpack (the UI only calls vanilla entry
-  points, so this is a property we keep, not one we must build).
+  backpack and tombstone with the real modpack. The inventory module changes slot
+  positions under D-030; its full item-safety matrix must pass on the client.
 - A game update breaks at most the modules whose contracts changed; the contract
   tests name them before a player does.
 - The diagnostic report of any failure names the module, the region, the game

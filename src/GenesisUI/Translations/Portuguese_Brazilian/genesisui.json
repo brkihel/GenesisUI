@@ -55,5 +55,11 @@
   "genesisui_filter_consumables": "Consumíveis",
   "genesisui_filter_materials": "Materiais",
   "genesisui_filter_ammo": "Munição",
-  "genesisui_filter_misc": "Diversos"
+  "genesisui_filter_misc": "Diversos",
+  "genesisui_slot_head": "Cabeça",
+  "genesisui_slot_chest": "Peito",
+  "genesisui_slot_legs": "Pernas",
+  "genesisui_slot_cape": "Capa",
+  "genesisui_slot_belt": "Cinto",
+  "genesisui_slot_trinket": "Trinket"
 }

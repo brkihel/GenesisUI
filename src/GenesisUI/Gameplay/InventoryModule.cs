@@ -11,8 +11,8 @@ namespace GenesisUI.Gameplay
     /// <summary>
     /// GenesisUI's inventory slots (docs/GAMEPLAY.md, step F4.2a): keeps the player's inventory in
     /// the layout the admin set — ordinary rows, then quick-use/utility, then equipment — moving
-    /// items when that layout changes, and keeps the special rows out of vanilla's grid until their
-    /// own panels arrive (F4.2b/c). The placement patches read <see cref="Current"/>; while this
+    /// items when that layout changes, and keeps quick/utility rows out of the custom window until
+    /// their panels arrive (F4.2c). Equipment cells appear in F4.2b. The placement patches read <see cref="Current"/>; while this
     /// module is not active it is null and they do nothing.
     /// </summary>
     [GameContract("assembly_valheim", "Player", "m_localPlayer")]
@@ -39,7 +39,10 @@ namespace GenesisUI.Gameplay
         private bool _dirty = true;
         private string _lastRefusal;
         private readonly List<ItemAt> _items = new List<ItemAt>(64);
-        private readonly List<GameObject> _hidden = new List<GameObject>(32);
+        private readonly VanillaSkin _specialSkin = new VanillaSkin("module:inv.slots");
+        private InventoryElement _firstSpecialElement;
+        private static InventoryModule _active;
+        private static bool _equipmentPanelVisible;
         private AccessTools.FieldRef<InventoryGrid, List<InventoryElement>> _elements;
 
         public string Id => "inv.slots";
@@ -54,6 +57,8 @@ namespace GenesisUI.Gameplay
             InventorySettings.Changed += OnSettingsChanged;
             _appliedTo = null;
             _dirty = true;
+            _active = this;
+            _equipmentPanelVisible = false;
         }
 
         public void Refresh(float deltaSeconds)
@@ -74,7 +79,10 @@ namespace GenesisUI.Gameplay
             InventorySettings.Changed -= OnSettingsChanged;
             Current = null;
             _appliedTo = null;
-            ShowHiddenRows();
+            _equipmentPanelVisible = false;
+            _active = null;
+            _specialSkin.Restore();
+            _firstSpecialElement = null;
         }
 
         private void OnSettingsChanged() => _dirty = true;
@@ -130,12 +138,23 @@ namespace GenesisUI.Gameplay
             // vanilla stores that height in the character and never drops a special item.
             player.SetInventorySize(layout.Rows);
             SavedLayout.Write(player, layout);
-            ShowHiddenRows();
+            EquipmentRules.ReconcileExisting(player);
+            _specialSkin.Restore();
+            _firstSpecialElement = null;
+        }
+
+        /// <summary>The custom equipment panel shows the real special-row cells. If it is not
+        /// available, vanilla shows every row so no stored item becomes inaccessible.</summary>
+        internal static void SetEquipmentPanelVisible(bool visible)
+        {
+            if (_equipmentPanelVisible == visible) return;
+            _equipmentPanelVisible = visible;
+            if (_active != null && Current != null) _active.HideSpecialRows();
         }
 
         /// <summary>
-        /// The special rows are GenesisUI's; until their panels exist (F4.2b/c) vanilla's grid must not
-        /// show or accept them. Hidden, never deactivated: vanilla keeps updating its elements.
+        /// The custom window shows equipment cells and hides quick/utility cells until F4.2c.
+        /// When the custom window is off or faulted, show the whole vanilla grid as a safe fallback.
         /// </summary>
         private void HideSpecialRows()
         {
@@ -143,32 +162,23 @@ namespace GenesisUI.Gameplay
             if (gui == null || !InventoryGui.IsVisible() || gui.m_playerGrid == null) return;
             var elements = _elements(gui.m_playerGrid);
             if (elements == null) return;
+            var first = elements.Count > 0 ? elements[0] : null;
+            if (first != _firstSpecialElement)
+            {
+                _specialSkin.Restore();
+                _firstSpecialElement = first;
+            }
             for (int i = 0; i < elements.Count; i++)
             {
                 var element = elements[i];
                 if (element == null || element.Position.y < Current.Rows) continue;
-                var go = element.gameObject;
-                var group = go.GetComponent<CanvasGroup>();
-                if (group == null)
-                {
-                    group = go.AddComponent<CanvasGroup>();
-                    _hidden.Add(go);
-                }
-                if (group.alpha != 0f) group.alpha = 0f;
-                if (group.blocksRaycasts) group.blocksRaycasts = false;
-                if (group.interactable) group.interactable = false;
+                var pos = element.Position;
+                bool show = !_equipmentPanelVisible || Current.EquipmentAt(pos.x, pos.y).HasValue;
+                var group = _specialSkin.Group(element.gameObject);
+                if (group.alpha != (show ? 1f : 0f)) group.alpha = show ? 1f : 0f;
+                if (group.blocksRaycasts != show) group.blocksRaycasts = show;
+                if (group.interactable != show) group.interactable = show;
             }
-        }
-
-        private void ShowHiddenRows()
-        {
-            foreach (var go in _hidden)
-            {
-                if (go == null) continue;
-                var group = go.GetComponent<CanvasGroup>();
-                if (group != null) Object.Destroy(group);
-            }
-            _hidden.Clear();
         }
 
         private static string Describe(SlotLayout l) => l.Rows + " rows, " + l.Quick + " quick, " + l.Utility + " utility, " + l.Equipment.Count + " worn";

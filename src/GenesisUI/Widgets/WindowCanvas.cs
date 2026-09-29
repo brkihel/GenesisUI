@@ -45,6 +45,16 @@ namespace GenesisUI.Widgets
             var rt = Ui.Fill(Ui.Child(root, name));
             int index = ancestor.parent == root ? ancestor.GetSiblingIndex() : root.childCount - 1;
             rt.SetSiblingIndex(behind ? index : index + 1);
+            if (behind)
+            {
+                // InventoryGrid has its own nested canvas in the game. Sibling order alone
+                // cannot put our translucent panel below it: give the panel an explicit lower
+                // sorting order so item icons, hit targets and hover highlights stay on top.
+                var layer = rt.gameObject.AddComponent<Canvas>();
+                layer.overrideSorting = true;
+                layer.sortingLayerID = canvas.rootCanvas.sortingLayerID;
+                layer.sortingOrder = Mathf.Max(short.MinValue, canvas.rootCanvas.sortingOrder - 1);
+            }
             GenesisLog.Info("Windows", name + " on canvas '" + canvas.rootCanvas.name + "' (reference pixels per unit " +
                 Frame.CanvasReference(rt).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture) + ", 9-slice scale " +
                 Frame.CanvasScale(rt).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture) + "), " + (behind ? "behind" : "in front of") +

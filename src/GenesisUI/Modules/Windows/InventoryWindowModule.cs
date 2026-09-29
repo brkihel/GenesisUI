@@ -190,6 +190,7 @@ namespace GenesisUI.Modules.Windows
             Hide(gui.m_info.gameObject);
             _dressedRows = -1;
             _reportedDrift = false;
+            InventoryModule.SetEquipmentPanelVisible(true);
         }
 
         private void Hide(GameObject go)
@@ -203,6 +204,7 @@ namespace GenesisUI.Modules.Windows
         private void Unapply()
         {
             _applied = false;
+            InventoryModule.SetEquipmentPanelVisible(false);
             // A moved button may never receive the pointer-exit event that clears Unity's hover
             // transition. Clear its state before restoring its original sprite and colours.
             var gui = InventoryGui.instance;
@@ -243,16 +245,18 @@ namespace GenesisUI.Modules.Windows
             _dressedRows = rows;
             var slot = _theme.Sprite("hotslot");
             var equipped = _theme.Sprite("hotslot_equipped");
+            var layout = InventoryModule.Current;
 
             for (int i = 0; i < elements.Count; i++)
             {
                 var element = elements[i];
                 if (element == null) continue;
                 var pos = element.Position;
-                if (pos.y >= rows) continue;
+                var equipment = layout != null ? layout.EquipmentAt(pos.x, pos.y) : null;
+                if (pos.y >= rows && !equipment.HasValue) continue;
 
                 var rt = _skin.Rect((RectTransform)element.transform);
-                var target = CellWorld(pos.x, pos.y);
+                var target = equipment.HasValue ? EquipmentCellWorld(equipment.Value) : CellWorld(pos.x, pos.y);
                 float scale = rt.parent != null ? Mathf.Max(0.0001f, rt.parent.lossyScale.x) : 1f;
                 rt.pivot = new Vector2(0.5f, 0.5f);
                 rt.sizeDelta = new Vector2(target.width, target.height) / scale;
@@ -329,6 +333,35 @@ namespace GenesisUI.Modules.Windows
             return new Rect(cx - size / 2f, cy - size / 2f, size, size);
         }
 
+        private Rect EquipmentCellWorld(EquipSlot slot)
+        {
+            _equipmentPanel.GetWorldCorners(_corners);
+            int index = EquipmentIndex(slot);
+            int column = index % 2;
+            int row = index / 2;
+            float width = _corners[2].x - _corners[1].x;
+            float height = _corners[1].y - _corners[0].y;
+            float x = _corners[1].x + width * (column == 0 ? 0.23f : 0.77f);
+            float y = _corners[1].y - height * (0.20f + row * 0.22f);
+            float unit = width / Mathf.Max(1f, _equipmentPanel.rect.width);
+            float size = _cell * unit;
+            return new Rect(x - size / 2f, y - size / 2f, size, size);
+        }
+
+        private static int EquipmentIndex(EquipSlot slot)
+        {
+            switch (slot)
+            {
+                case EquipSlot.Head: return 0;
+                case EquipSlot.Trinket: return 1;
+                case EquipSlot.Chest: return 2;
+                case EquipSlot.Belt: return 3;
+                case EquipSlot.Cape: return 4;
+                case EquipSlot.Legs: return 5;
+                default: return 0;
+            }
+        }
+
         private void OnWillRenderCanvases()
         {
             if (!_applied) return;
@@ -345,15 +378,17 @@ namespace GenesisUI.Modules.Windows
             var elements = _elements(gui.m_playerGrid);
             if (elements == null || elements.Count != _elementCount ||
                 (elements.Count > 0 && elements[0] != _firstElement)) return;
-            int rows = InventoryModule.Current != null ? InventoryModule.Current.Rows : SlotLayout.MinRows;
+            var layout = InventoryModule.Current;
+            int rows = layout != null ? layout.Rows : SlotLayout.MinRows;
             for (int i = 0; i < elements.Count; i++)
             {
                 var element = elements[i];
                 if (element == null) continue;
                 var pos = element.Position;
-                if (pos.y >= rows) continue;
+                var equipment = layout != null ? layout.EquipmentAt(pos.x, pos.y) : null;
+                if (pos.y >= rows && !equipment.HasValue) continue;
                 var rt = (RectTransform)element.transform;
-                var target = CellWorld(pos.x, pos.y);
+                var target = equipment.HasValue ? EquipmentCellWorld(equipment.Value) : CellWorld(pos.x, pos.y);
                 var world = target.center;
                 if (((Vector2)rt.position - world).sqrMagnitude < 0.0625f) continue;
                 if (!_reportedDrift && ((Vector2)rt.position - world).sqrMagnitude > 25f)
@@ -544,7 +579,32 @@ namespace GenesisUI.Modules.Windows
             _weightFill.fillMethod = Image.FillMethod.Horizontal;
             _weightText = Label(weight, "Value", FontRole.Label, 14f, t.TextTitle, Vector2.zero, new Vector2(100f, 24f), TextAlignmentOptions.Right, anchor: new Vector2(1f, 0.5f));
 
-            // Equipment: total protection (the slots arrive in F4.2b).
+            // Equipment: real cells and the total protection readout.
+            // Six real vanilla cells, placed around the centre of the panel. Their item
+            // icons, durability, drag handlers and click handlers remain the game's own.
+            var equipmentOrder = new[]
+            {
+                EquipSlot.Head, EquipSlot.Trinket, EquipSlot.Chest,
+                EquipSlot.Belt, EquipSlot.Cape, EquipSlot.Legs,
+            };
+            var equipmentNames = new[]
+            {
+                "$genesisui_slot_head", "$genesisui_slot_trinket", "$genesisui_slot_chest",
+                "$genesisui_slot_belt", "$genesisui_slot_cape", "$genesisui_slot_legs",
+            };
+            for (int i = 0; i < equipmentOrder.Length; i++)
+            {
+                int column = i % 2;
+                int row = i / 2;
+                var anchor = new Vector2(column == 0 ? 0.23f : 0.77f, 1f);
+                float fromTop = (_area.rect.height - BarsTop - BarsBottom) * (0.20f + row * 0.22f) + _cell * 0.5f + 4f;
+                var label = Ui.Fit(Ui.Text(_equipmentPanel, "Equipment " + equipmentOrder[i], _theme,
+                    FontRole.Label, 13f, ThemeRuntime.ToUnity(t.TextTitle), TextAlignmentOptions.Center), 11f);
+                var labelRt = Ui.Place((RectTransform)label.transform, anchor,
+                    new Vector2(0f, -fromTop), new Vector2(112f, 19f));
+                labelRt.pivot = new Vector2(0.5f, 1f);
+                label.text = Localize(equipmentNames[i]);
+            }
             Label(_equipmentPanel, "ArmorLabel", FontRole.Label, 12f, t.TextFlavor, new Vector2(0f, 70f), new Vector2(240f, 18f), TextAlignmentOptions.Center, anchor: new Vector2(0.5f, 0f)).text =
                 Localize("$genesisui_armor_total").ToUpperInvariant();
             _armorText = Label(_equipmentPanel, "Armor", FontRole.Display, 26f, t.TextTitle, new Vector2(0f, 34f), new Vector2(160f, 34f), TextAlignmentOptions.Center, anchor: new Vector2(0.5f, 0f));

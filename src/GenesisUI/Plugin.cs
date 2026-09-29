@@ -129,6 +129,7 @@ namespace GenesisUI
                 GuardedPatcher.Apply(_harmony, typeof(Patches.InventoryTabKeyPatch));
                 GuardedPatcher.Apply(_harmony, typeof(Patches.InventorySizePatch));
                 GuardedPatcher.Apply(_harmony, typeof(Patches.InventoryPlacementPatches));
+                GuardedPatcher.Apply(_harmony, typeof(Patches.EquipmentPatches));
 
 #if GENESIS_DIAGNOSTICS
                 Diagnostics.Watermark.Install(Build.Channel, Build.FullVersion);

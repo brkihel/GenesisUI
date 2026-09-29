@@ -22,9 +22,10 @@ The whole vanilla UI comes before any mod integration (D-024): F4 windows, F5 me
 then the Extension API and adapters in F7. The modpack performance check from the F3 exit
 criteria moves to the first F4 test run. The F4 plan is in [F4-PLAN.md](F4-PLAN.md).
 
-F4.2a is still in client testing: R-049 found slot drift and hover faults in preview.5.
-Preview.6 addresses them and the requested HUD details; R-050 must pass before moving to
-equipment slots in F4.2b.
+Diego advanced F4.2b before completing R-050. Preview.7 combines F4.2b's six vanilla
+equipment cells with fixes for the two remaining preview.6 findings: inventory slot draw
+order and the horizontal stamina burn. R-051 tests those fixes and item safety on the client;
+F4.2b remains unapproved until that run passes.
 
 ## Research items (not scheduled)
 

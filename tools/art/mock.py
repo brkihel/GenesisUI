@@ -380,6 +380,15 @@ def window_mock(out_path):
     ImageDraw.Draw(bg).rectangle((side_ + 94, wy - 2, side_ + 94 + (widths[0] - 198) * 0.7, wy + 2), fill=(190, 140, 60, 255))
     text(side_ + widths[0] - 30, wy, "151 / 300", font("Cinzel-Medium", 14), anchor="rm")
     ex = side_ + widths[0] + gap_
+    equipment = ["CABEÇA", "TRINKET", "PEITO", "CINTO", "CAPA", "PERNAS"]
+    for i, label in enumerate(equipment):
+        column, row = i % 2, i // 2
+        cx = ex + widths[1] * (0.23 if column == 0 else 0.77)
+        cy = top_ + ph * (0.20 + row * 0.22)
+        bg.alpha_composite(dressed("hotslot", cell, cell, fit=cell),
+                           (int(cx - cell / 2), int(cy - cell / 2)))
+        text(cx, cy + cell / 2 + 13, label, font("Cinzel-Medium", 11),
+             fill=(186, 153, 92, 255))
     text(ex + widths[1] / 2, top_ + ph - 70, "PROTEÇÃO TOTAL", font("Cinzel-Medium", 12), fill=(186, 153, 92, 255))
     text(ex + widths[1] / 2, top_ + ph - 42, "24", font("Cinzel-SemiBold", 26))
 

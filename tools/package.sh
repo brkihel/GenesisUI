@@ -86,7 +86,7 @@ cat > "$STAGE/manifest.json" <<JSON
   "name": "GenesisUI",
   "version_number": "$VERSION",
   "website_url": "https://github.com/brkihel/GenesisUI",
-  "description": "Modular, themed Valheim UI built for security and stability first. Client-only and visual: it never moves your items or talks to the server.",
+  "description": "Modular Valheim UI with themed HUD, windows, and configurable inventory and equipment slots.",
   "dependencies": ["ValheimModding-Jotunn-$JOTUNN_VERSION"]
 }
 JSON

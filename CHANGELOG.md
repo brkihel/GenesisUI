@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.7.0-preview.7 — F4.2b equipment panel
+
+### Added
+- Six real Valheim inventory cells in the equipment panel: head, chest, legs, cape, belt
+  and trinket. Vanilla still owns the items and their clicks. Equipping moves a worn item
+  into its cell; replacing it swaps the old item into the source cell. Unequipping uses a
+  free ordinary cell. Invalid drops into equipment cells are refused before vanilla acts.
+- Already worn items move into the panel when an existing character loads. When the
+  inventory window is closed, disabled or faulted, the extra rows stay accessible in the
+  vanilla inventory for recovery.
+
+### Fixed
+- The inventory panel art now has an explicit lower canvas sorting order than the
+  game's inventory grid, so its translucent textures cannot cover item slots.
+- Horizontal stamina burn now pulses with a bright core, halo and moving sparks. An
+  additive particle shader is used when Unity provides one, with an alpha glow fallback.
+
+### Verification
+- Core and contract tests pass. Slot draw order, the shader and all equipment actions
+  need Diego's client test (R-051); no in-game pass is claimed.
+
 ## 0.7.0-preview.6 — R-049 inventory and HUD corrections
 
 ### Fixed
