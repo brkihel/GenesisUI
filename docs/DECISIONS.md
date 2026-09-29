@@ -265,16 +265,19 @@ original/`, and a same-size retouched copy in `edited/` replaces the cut: Diego 
 there without anything being cut again. The creature plate is **not** from the sheets: it keeps
 the generated boss plate drawn small, as approved in F3 (Diego, after R-042).
 
-## D-028 — The gameplay package is built inside F4
+## D-028 — Inventory gameplay is built inside F4, in the same plugin
 
-**Decision (2026-09-28):** the inventory gameplay Diego wants (admin-set slot count up to 48,
-4 quick-use and 4 utility slots, an equipment panel holding every equipped item, sort) is
-built in F4 instead of F8, as the separate optional package **`GenesisUI.Gameplay`** (own
-plugin, server config through ServerSync, AzuAntiCheat whitelist). The UI plugin stays visual,
-networkless and `NotEnforced`; without the package it runs on vanilla's 32 slots. A research
-spike and `docs/GAMEPLAY.md` (F4-PLAN §7.2) come before any code that moves items.
-**Why:** Diego wants the inventory whole in this phase. The *when* changes; the separation
-that keeps the UI safe (VISION: "never a requirement for the UI") does not.
+**Decision (2026-09-29, amending the proposal of 2026-09-28):** the inventory gameplay Diego
+wants (admin-set slot count up to 48 including the hotbar, 4 quick-use and 4 utility slots, an
+equipment panel holding every equipped item, sort) is built in F4, **inside the GenesisUI
+plugin** — no separate package (Diego: non-negotiable). It is an isolated module
+(`Gameplay/`) with its own `[Modules]` toggle, guard and diagnostics; the admin's settings come
+from the server through ServerSync; the plugin's network compatibility and the AzuAntiCheat
+whitelist are reviewed when it lands. A deep study of current (post-1.0) inventory mods on the
+Hexium store and of vanilla's inventory save/load comes first (`docs/GAMEPLAY.md`), before any
+code that moves items. This supersedes VISION's "not a gameplay mod" for the inventory.
+**Why:** Diego wants the inventory whole in this phase and one plugin to install. Safety comes
+from isolation inside the plugin and from the study, not from a second DLL.
 
 ## D-029 — One gold for every piece of art
 

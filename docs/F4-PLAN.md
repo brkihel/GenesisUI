@@ -1,6 +1,6 @@
 # F4 — Inventory and crafting windows: plan
 
-Status: **F4.0 done and approved (R-042). Revision 3 (§7) proposed, waiting for Diego's OK**
+Status: **F4.0 done and approved (R-042). Revision 3 (§7) approved 2026-09-29 (one plugin)**
 (2026-09-28). Branch `f4-windows`. §7 supersedes §3–§5 where they differ.
 
 ## 1. Scope
@@ -156,10 +156,9 @@ goes behind, with its own opacity), and answered three questions.
   count set by the server admin up to **48** (the 8 hotbar slots included), **4 quick-use**
   slots (food, a potion), **4 utility** slots (anything that is not equipment), an
   **equipment panel where every equipped item lives** (weapons and tools stay on the hotbar)
-  and **sort**. These change the inventory, so they are built as the separate, optional
-  package the roadmap called F8, **`GenesisUI.Gameplay`**, only earlier. The UI plugin stays
-  visual, networkless and `NotEnforced`; it shows the extra areas only when the package is
-  present and otherwise works with vanilla's 32 slots.
+  and **sort**. They are built **inside the GenesisUI plugin** as an isolated `Gameplay/`
+  module with its own toggle (Diego, 2026-09-29: one plugin, non-negotiable). Switched off,
+  the UI works with vanilla's 32 slots.
 - **Filter = dim** (Diego): items outside the chosen category are dimmed in place; nothing
   moves, drag and drop stays exact. Visual, UI plugin.
 - **One gold for all art** (D-029): every sheet piece is recoloured by `tools/art/sheets.py`
@@ -175,10 +174,11 @@ goes behind, with its own opacity), and answered three questions.
 - **Item details window** replaces the tooltip: the selected (or hovered) item's details in
   their own panel, as in ConceptArt (9).
 
-### 7.2 Gameplay package: how it stays safe
+### 7.2 Gameplay module: how it stays safe
 
-Research first (step F4.G0), clean room: study how existing extra-slot mods behave (by use and
-public docs, never their code) and vanilla's `Inventory`, `Player`, `Humanoid` save/load.
+Research first (step F4.G0), clean room, deep (Diego): study current post-1.0 extra-slot mods
+from the Hexium store (behaviour, docs, changelogs: what broke and how they fixed it; never their
+code) and vanilla's `Inventory`, `Player`, `Humanoid` save/load.
 Open questions the spike must answer before any item code:
 
 1. **Where extra slots live.** Proposal: extra rows of the player's own inventory (vanilla
@@ -193,8 +193,8 @@ Open questions the spike must answer before any item code:
 4. **Moves go through vanilla** (`Inventory.MoveItemToThis`, `Humanoid.EquipItem`,
    `UnequipItem`) wherever vanilla has an entry point; the package's own writes are few,
    named and covered by the item-safety matrix.
-5. **Compatibility**: detect other extra-slot mods (and SeneaL UI) and refuse to start the
-   package when one is present, with a clear log line, instead of fighting over rows.
+5. **Compatibility**: detect other extra-slot mods (and SeneaL UI) and keep the gameplay
+   module off when one is present, with a clear log line, instead of fighting over rows.
 
 ### 7.3 Steps (each: one preview, one pt-BR script)
 
@@ -203,14 +203,14 @@ Open questions the spike must answer before any item code:
 | F4.1 | Window art cut from the 13 sheets (toned, `_shape`, ornaments, states); `VanillaSkin`; the window shell: top bar with the six tabs (Q/E), bottom key-hint bar, frame, open/close by every key, fault → vanilla window intact |
 | F4.2 | Inventory in the ConceptArt (9) layout with **vanilla's 32 slots**: grid from single slots, filter (dim), weight bar, item details panel, containers; equipment panel (click to unequip, drop to equip through vanilla) |
 | F4.G0 | Gameplay research spike (§7.2) → `docs/GAMEPLAY.md` for Diego's approval; no item code before it |
-| F4.G1 | `GenesisUI.Gameplay`: admin slot count up to 48 with scroll, equipment slots, 4 quick-use, 4 utility, sort; item-safety matrix incl. uninstall and smaller-limit servers |
+| F4.G1 | Gameplay module (same plugin): admin slot count up to 48 with scroll, equipment slots, 4 quick-use, 4 utility, sort; item-safety matrix incl. uninstall and smaller-limit servers |
 | F4.3 | Crafting in the ConceptArt (12) layout at every station, search and category filters, upgrade, repair |
 | F4.4 | Skills, texts, trophies, achievements; **Configurações** (our settings page) |
 | F4.5 | Build piece browser (hammer, hoe, cultivator) |
 
 ### 7.4 Decided (2026-09-28)
 
-1. Gameplay: **with F4** (Diego) → separate package inside this phase (D-028).
+1. Gameplay: **with F4, in the same plugin** (Diego, non-negotiable, D-028).
 2. Filter: **dim in place**.
 3. Colour: **automatic normalisation of every piece** (D-029).
 

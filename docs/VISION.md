@@ -32,7 +32,9 @@ in this order:
 - **Not a gameplay mod.** No extra inventory rows, quick slots, action slots,
   crafting from chests, quick stack, area pickup or tombstone logic. Those change
   game state and need server authority; they belong to a separate, later package
-  (`GenesisUI.Gameplay`, built during F4 by D-028) and are never a requirement for the UI.
+  (roadmap F8) and are never a requirement for the UI. **Exception (D-028):** the inventory
+  gameplay (admin slot count, quick/utility/equipment slots, sort) is built during F4 as an
+  isolated module of this plugin, with its own toggle and server-synced settings.
 - **No networking.** The visual scope registers no RPC and syncs no config. The
   plugin declares `NetworkCompatibility(NotEnforced)`: players with or without it
   can share a server.
