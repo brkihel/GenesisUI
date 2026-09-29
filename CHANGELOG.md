@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.7.0-preview.15 — Stations open the Crafting tab
+
+### Changed
+- Using a workbench, forge or any crafting station opens the windows on Criação instead of
+  Inventário. The game keeps the station only while the window it opened is open, so Tab near a
+  station and chests still open on Inventário (R-057 feedback: everything else worked).
+
 ## 0.7.0-preview.14 — Crafting tab in Diego's layout: details left, Criar | Aprimorar
 
 ### Changed

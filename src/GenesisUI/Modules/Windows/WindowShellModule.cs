@@ -34,6 +34,7 @@ namespace GenesisUI.Modules.Windows
     [GameContract("assembly_valheim", "Minimap", "IsOpen")]
     [GameContract("assembly_valheim", "InventoryGui", "Show")]
     [GameContract("assembly_valheim", "KeyHints", "instance")]
+    [GameContract("assembly_valheim", "Player", "GetCurrentCraftingStation")]
     internal sealed class WindowShellModule : IUiModule
     {
         // ConceptArt (9) in design-board units (WindowCanvas.Design): tab bar 90, hint bar 62.
@@ -159,7 +160,11 @@ namespace GenesisUI.Modules.Windows
             _hudAlpha = Mathf.MoveTowards(_hudAlpha, visible ? 0f : 1f, deltaSeconds * FadeSpeed);
             ModuleHost.SetHudAlpha(_hudAlpha);
             KeyHintsAlpha(_hudAlpha);
-            if (visible && !_wasVisible) Select(Tab.Inventory, callVanilla: false);
+            // Opened at a workbench, forge or any crafting station: straight to Criação (R-057). The game
+            // keeps the station only while the window it opened is open, so Tab near one still opens
+            // the inventory, and a chest opens with the inventory as before.
+            if (visible && !_wasVisible)
+                Select(Player.m_localPlayer.GetCurrentCraftingStation() != null ? Tab.Crafting : Tab.Inventory, callVanilla: false);
             _wasVisible = visible;
             ActiveNextKey = visible ? _nextKey.Value.MainKey : KeyCode.None;
             Showing = visible;
