@@ -1,5 +1,33 @@
 # Changelog
 
+## 0.8.0-preview.1 — Every in-game window in GenesisUI (D-032)
+
+All with the same rule: vanilla stays the engine (invisible, still deciding and acting), GenesisUI
+draws the window and hands every press to vanilla's own buttons and methods.
+
+### Added
+- **Habilidades** (ConceptArt 1, real data): character (name, day, total skill ring, guardian
+  power, attributes, vanilla's PvP switch), skills by group with gear bonus and progress, active
+  effects, and the texts vanilla keeps (compendium, log, effects, stats).
+- **Conquistas**: achievements in vanilla's order with the count, earned trophies, details.
+- **Configurações** (ConceptArt 2): GenesisUI's options by category — switches, sliders, key
+  capture — with an explanation, default and restore per option; server-locked inventory options
+  are read-only.
+- **Construção** (hammer, hoe, cultivator): vanilla's 1.0 build menu mirrored — lists, tags,
+  favourites, recent, search, other mods' pieces — with piece details (materials, station) and a
+  "Posicionar" card while placing.
+- **Loja** of the traders: goods, details, coins, buy and sell (vanilla's own sell choice shown).
+- **Diálogos**: split stack, style, rune stones and ravens, naming signs and portals.
+- **Mapa** (ConceptArt 11): vanilla's map framed with title and day, biome under the cursor, pin
+  filters, marker palette, visible-to-others, zoom and back-to-player; the window bars show over
+  the map and lead to the other tabs.
+- **Menu Esc**: vanilla's entries and confirmations in a GenesisUI card.
+- `WindowModuleBase`, `ScrollArea`, the ring pieces: shared by the new windows.
+
+### Not yet
+- The main menu (character and world selection) and the game's own settings screen keep
+  vanilla's look; they are the next step, studied separately.
+
 ## 0.7.0-preview.15 — Stations open the Crafting tab
 
 ### Changed

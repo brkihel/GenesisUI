@@ -15,16 +15,13 @@ is unclear, ask; do not guess.
   callbacks. D-025 ("move and dress vanilla's slots") is replaced; Diego wants fidelity to the
   concept's assembly, not new designs. Order after F4: F5 menus, F6 map, F7 API and adapters,
   F8 gameplay package, F9 switch-over (D-024).
-- **Version:** 0.7.0, last package `0.7.0-preview.14` (Crafting tab in Diego's layout, script R-057; preview.13 fixed R-056); preview.12 first Crafting tab (R-056); before it `0.7.0-preview.11` (R-054 fixes; art of preview.10 approved:
-  "melhorou 250%") with script R-055. preview.10: thin-line metal frames, burn as light,
-  darker theme, D-033, R-054; preview.9 (own inventory window, D-032, R-053) was
-  not reported on separately. Shaders: source in `unity/`, built on `win-teste` (Unity
-  6000.0.75f1 in `C:\Unity`, Personal licence activated in the `heimdall-teste` Windows user) by
-  `tools/shaders/build.sh` into `art/shaders/genesisui.shaders`. The minimal hotbar from preview.4 is preserved at git
-  tag `hotbar-minimal-v1`. Inventory requirements in `docs/GAMEPLAY.md` §1.
-  Next: HUD row for quick/action slots above the hotbar + Alt hotkeys, ring/amulet swap,
-  3D character in the equipment panel, gamepad on our cells, F4.2d modded slots, F4.3 crafting
-  (same approach: own window, vanilla as engine).
+- **Version:** 0.8.0, last package `0.8.0-preview.1` (every in-game window: Skills, Achievements,
+  Settings, build menu + placement card, trader store, small dialogs, framed map, Esc menu) with
+  script R-058. Crafting (preview.14/15) and the inventory are approved by Diego. Shaders:
+  source in `unity/`, built on `win-teste` (Unity 6000.0.75f1 in `C:\Unity`, Personal licence in
+  the `heimdall-teste` Windows user) by `tools/shaders/build.sh` into `art/shaders/genesisui.shaders`.
+  Next: main menu (FejdStartup) and the game's settings screen, then the HUD row for quick/action
+  slots, the 3D character, modded slots.
 - **Art direction:** gold only (D-023). The carved-wood style was tried and rejected; do not
   propose another style unless Diego asks.
 - **Current F4.0 art source:** Diego supplied isolated UI sheets and separate background,
