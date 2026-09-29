@@ -25,7 +25,9 @@ criteria moves to the first F4 test run. The F4 plan is in [F4-PLAN.md](F4-PLAN.
 Diego advanced F4.2b before completing R-050. Preview.7 combines F4.2b's six vanilla
 equipment cells with fixes for the two remaining preview.6 findings: inventory slot draw
 order and the horizontal stamina burn. R-051 tests those fixes and item safety on the client;
-F4.2b remains unapproved until that run passes.
+Diego reports that the equipment flow works, with two window lifecycle defects: hints pile
+up on the first opening and vanilla inventory flashes on close. Preview.8 targets those
+defects. R-052 is the client gate before F4.2b is marked approved.
 
 ## Research items (not scheduled)
 

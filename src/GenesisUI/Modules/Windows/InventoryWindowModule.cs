@@ -53,6 +53,7 @@ namespace GenesisUI.Modules.Windows
         private const float BarsTop = 72f, BarsBottom = 54f, Gap = 8f;
         private const float InventoryShare = 0.47f, EquipmentShare = 0.25f;
         private const float CellGap = 6f, HeaderRule = 40f;
+        private const float CloseHoldSeconds = 0.6f;
 
         internal enum Filter { All, Weapons, Armor, Tools, Consumables, Materials, Ammo, Misc }
 
@@ -66,8 +67,10 @@ namespace GenesisUI.Modules.Windows
         private readonly Vector3[] _corners = new Vector3[4];
         private ThemeRuntime _theme;
         private RectTransform _root;
+        private CanvasGroup _panelFade;
         private RectTransform _area;
         private RectTransform _controlsRoot;
+        private CanvasGroup _controlsFade;
         private RectTransform _controlsArea;
         private RectTransform _inventoryPanel;
         private RectTransform _equipmentPanel;
@@ -85,6 +88,7 @@ namespace GenesisUI.Modules.Windows
         private TextMeshProUGUI _detailBody;
         private Filter _filter = Filter.All;
         private bool _applied;
+        private float _closedFor;
         private bool _containerShown;
         private InventoryElement _firstElement;
         private int _elementCount;
@@ -120,11 +124,27 @@ namespace GenesisUI.Modules.Windows
             bool on = gui != null && player != null && WindowShellModule.Showing && WindowShellModule.ActiveTab == WindowShellModule.Tab.Inventory;
             if (!on)
             {
-                if (_applied) Unapply();
+                if (_applied)
+                {
+                    // IsVisible becomes false after two hidden frames, while vanilla's close
+                    // animation is still drawing. Keep the vanilla graphics veiled until the
+                    // themed panel has faded away and the closing animation has settled.
+                    if (gui == null || player == null || InventoryGui.IsVisible() || WindowShellModule.Showing)
+                        Unapply(); // another tab, disabled shell or scene loss
+                    else
+                    {
+                        _closedFor += deltaSeconds;
+                        SetFade(WindowShellModule.Opacity, false);
+                        if (_closedFor >= CloseHoldSeconds && WindowShellModule.Opacity <= 0.001f)
+                            Unapply();
+                    }
+                }
                 return;
             }
+            _closedFor = 0f;
             if (!EnsureBuilt(gui)) return;
             if (!_applied) Apply(gui);
+            SetFade(WindowShellModule.Opacity, true);
 
             var grid = gui.m_playerGrid;
             var elements = _elements(grid);
@@ -153,6 +173,8 @@ namespace GenesisUI.Modules.Windows
             if (_root != null) return true;
             _root = WindowCanvas.CreateRoot(gui, "GenesisUI.InventoryWindow", behind: true);
             if (_root == null) return false;
+            _panelFade = _root.gameObject.AddComponent<CanvasGroup>();
+            _panelFade.alpha = 0f;
             _area = WindowCanvas.Area(_root, "Area");
             // Only interactive controls are drawn in front of InventoryGui. The panel art remains
             // behind vanilla's item cells, while the filter can receive pointer events reliably.
@@ -163,6 +185,8 @@ namespace GenesisUI.Modules.Windows
                 _root = null;
                 return false;
             }
+            _controlsFade = _controlsRoot.gameObject.AddComponent<CanvasGroup>();
+            _controlsFade.alpha = 0f;
             _controlsArea = WindowCanvas.Area(_controlsRoot, "Area");
             BuildPanels();
             _root.gameObject.SetActive(false);
@@ -193,6 +217,17 @@ namespace GenesisUI.Modules.Windows
             InventoryModule.SetEquipmentPanelVisible(true);
         }
 
+        private void SetFade(float alpha, bool interactive)
+        {
+            if (_panelFade != null && !Mathf.Approximately(_panelFade.alpha, alpha)) _panelFade.alpha = alpha;
+            if (_controlsFade != null)
+            {
+                if (!Mathf.Approximately(_controlsFade.alpha, alpha)) _controlsFade.alpha = alpha;
+                _controlsFade.blocksRaycasts = interactive;
+                _controlsFade.interactable = interactive;
+            }
+        }
+
         private void Hide(GameObject go)
         {
             var g = _skin.Group(go);
@@ -204,6 +239,7 @@ namespace GenesisUI.Modules.Windows
         private void Unapply()
         {
             _applied = false;
+            _closedFor = 0f;
             InventoryModule.SetEquipmentPanelVisible(false);
             // A moved button may never receive the pointer-exit event that clears Unity's hover
             // transition. Clear its state before restoring its original sprite and colours.
@@ -364,7 +400,7 @@ namespace GenesisUI.Modules.Windows
 
         private void OnWillRenderCanvases()
         {
-            if (!_applied) return;
+            if (!_applied || !WindowShellModule.Showing) return;
             if (!Guard.Run(Owner, AlignForRender, this) && Guard.IsTripped(Owner)) Unapply();
         }
 

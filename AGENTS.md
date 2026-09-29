@@ -14,9 +14,10 @@ is unclear, ask; do not guess.
   Diego approved the revision and confirmed the concept's rights (D-025/D-026). Order after that: F5 menus (main and Esc),
   F6 map, F7 Extension API and adapters, F8 optional gameplay package, F9 switch-over
   (D-024). Do not start API or adapter work before the vanilla UI is done.
-- **Version:** 0.7.0, last package `0.7.0-preview.7` (F4.2b equipment panel and
-  follow-up on R-050) with script R-051; requires Diego's in-game check. Diego explicitly
-  asked to advance to F4.2b before finishing R-050. The minimal hotbar from preview.4 is
+- **Version:** 0.7.0, last package `0.7.0-preview.8` (R-051 window lifecycle fixes)
+  with script R-052; requires Diego's in-game check. Diego reports that preview.7 equipment
+  functionality works but found the first-open hint pileup and a vanilla inventory flash on close.
+  The minimal hotbar from preview.4 is
   preserved at git tag `hotbar-minimal-v1`. Inventory requirements in `docs/GAMEPLAY.md` §1.
   Next: F4.2c quick/utility + HUD row + sort, containers dressed, F4.2d modded slots,
   F4.3 crafting.

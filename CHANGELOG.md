@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.7.0-preview.8 — R-051 window lifecycle fixes
+
+### Fixed
+- The first inventory opening places each footer hint in a fixed cell. The hint row no
+  longer depends on nested size fitters resolving their widths during Unity's first
+  canvas layout pass.
+- The inventory art and its controls follow the shell fade on close. Vanilla panel
+  graphics remain hidden through the closing animation and are restored after the
+  fade and a short settle period, avoiding the visible vanilla flash. A quick reopen
+  reuses the dressed window.
+
+### Verification
+- Core and contract tests pass; first open, rapid reopen and close still need Diego's
+  client check (R-052).
+
 ## 0.7.0-preview.7 — F4.2b equipment panel
 
 ### Added

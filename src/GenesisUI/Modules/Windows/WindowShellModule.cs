@@ -93,6 +93,8 @@ namespace GenesisUI.Modules.Windows
         /// <summary>Whether the shell is showing a window, and which tab: read by the window modules.</summary>
         internal static bool Showing { get; private set; }
         internal static Tab ActiveTab { get; private set; } = Tab.Inventory;
+        /// <summary>The shared window fade, also used by the inventory panel during close.</summary>
+        internal static float Opacity { get; private set; }
 
         /// <summary>The next-tab key, while the shell is showing; read by the Use guard patch.</summary>
         internal static KeyCode ActiveNextKey { get; private set; } = KeyCode.None;
@@ -117,6 +119,7 @@ namespace GenesisUI.Modules.Windows
             if (_root == null) return false;
             _fade = _root.gameObject.AddComponent<CanvasGroup>();
             _fade.alpha = 0f;
+            Opacity = 0f;
             _area = WindowCanvas.Area(_root, "Area");
             BuildTopBar();
             BuildHintBar();
@@ -162,6 +165,7 @@ namespace GenesisUI.Modules.Windows
             float target = visible ? 1f : 0f;
             float alpha = Mathf.MoveTowards(_fade.alpha, target, deltaSeconds * FadeSpeed);
             if (!Mathf.Approximately(_fade.alpha, alpha)) _fade.alpha = alpha;
+            Opacity = alpha;
             bool show = alpha > 0f;
             if (_root.gameObject.activeSelf != show) _root.gameObject.SetActive(show);
             _fade.blocksRaycasts = visible;
@@ -176,6 +180,7 @@ namespace GenesisUI.Modules.Windows
         {
             ActiveNextKey = KeyCode.None;
             Showing = false;
+            Opacity = 0f;
             ModuleHost.SetHudAlpha(1f);
             _hudAlpha = 1f;
             if (_keyHints != null)
@@ -386,32 +391,27 @@ namespace GenesisUI.Modules.Windows
             row.anchorMax = Vector2.one;
             row.offsetMin = new Vector2(c.x + 10f, c.y);
             row.offsetMax = new Vector2(-c.z - 10f, -c.w);
-            var layout = row.gameObject.AddComponent<HorizontalLayoutGroup>();
-            layout.spacing = 26f;
+            // Fixed cells avoid a first-frame size cycle between nested HorizontalLayoutGroups
+            // and ContentSizeFitters. Each hint has a stable sixth of the bar from the start.
+            Hint(row, 0, "Esc", null, "$genesisui_hint_close");
+            Hint(row, 1, null, "icon_mouse_left", "$genesisui_hint_move");
+            Hint(row, 2, null, "icon_mouse_right", "$genesisui_hint_use");
+            Hint(row, 3, "Shift", "icon_mouse_left", "$genesisui_hint_split");
+            Hint(row, 4, "Ctrl", "icon_mouse_left", "$genesisui_hint_transfer");
+            Hint(row, 5, KeyName(_previousKey.Value.MainKey) + "/" + KeyName(_nextKey.Value.MainKey), null, "$genesisui_hint_tabs");
+        }
+
+        private void Hint(RectTransform row, int index, string key, string mouse, string token)
+        {
+            var group = Ui.Child(row, "Hint " + token);
+            group.anchorMin = new Vector2(index / 6f, 0f);
+            group.anchorMax = new Vector2((index + 1f) / 6f, 1f);
+            group.offsetMin = group.offsetMax = Vector2.zero;
+            var layout = group.gameObject.AddComponent<HorizontalLayoutGroup>();
+            layout.spacing = 4f;
             layout.childAlignment = TextAnchor.MiddleCenter;
             layout.childControlWidth = layout.childControlHeight = false;
             layout.childForceExpandWidth = layout.childForceExpandHeight = false;
-
-            // What vanilla's inventory does with each input; texts in pt-BR through the translations.
-            Hint(row, "Esc", null, "$genesisui_hint_close");
-            Hint(row, null, "icon_mouse_left", "$genesisui_hint_move");
-            Hint(row, null, "icon_mouse_right", "$genesisui_hint_use");
-            Hint(row, "Shift", "icon_mouse_left", "$genesisui_hint_split");
-            Hint(row, "Ctrl", "icon_mouse_left", "$genesisui_hint_transfer");
-            Hint(row, KeyName(_previousKey.Value.MainKey) + "/" + KeyName(_nextKey.Value.MainKey), null, "$genesisui_hint_tabs");
-        }
-
-        private void Hint(RectTransform row, string key, string mouse, string token)
-        {
-            var group = Ui.Child(row, "Hint " + token);
-            var layout = group.gameObject.AddComponent<HorizontalLayoutGroup>();
-            layout.spacing = 6f;
-            layout.childAlignment = TextAnchor.MiddleLeft;
-            layout.childControlWidth = layout.childControlHeight = false;
-            layout.childForceExpandWidth = layout.childForceExpandHeight = false;
-            var fitter = group.gameObject.AddComponent<ContentSizeFitter>();
-            fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
-            group.sizeDelta = new Vector2(0f, 30f);
 
             if (key != null) KeyCap(group, new Vector2(0f, 0.5f), Vector2.zero, key);
             if (key != null && mouse != null)
