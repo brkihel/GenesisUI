@@ -55,7 +55,8 @@ namespace GenesisUI.Modules.Food
                               new Vector2(SlotCount * SlotSize + (SlotCount - 1) * Gap, SlotSize));
             for (int i = 0; i < SlotCount; i++)
                 _slots[i] = new SlotView(_group, "Food" + (i + 1), context.Theme, Vector2.zero, new Vector2(i * (SlotSize + Gap), 0f),
-                                         new Vector2(SlotSize, SlotSize), null, "slot", "Food");
+                                         new Vector2(SlotSize, SlotSize), null,
+                                         context.Theme.Sprite("hotslot") != null ? "hotslot" : "slot", "Food");
             _appliedOffset = new Vector2(float.NaN, float.NaN);
         }
 

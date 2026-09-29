@@ -175,7 +175,7 @@ namespace GenesisUI
         /// </summary>
         private void BindBackgrounds(ThemeRuntime theme)
         {
-            var shared = Config.Bind("Backgrounds", "Default", 0.85f,
+            var shared = Config.Bind("Backgrounds", "Default", 0.6f,
                 new ConfigDescription("Opacidade do fundo de pedra escura dentro das molduras (0 = sem fundo, 1 = opaco). " +
                     "Só o fundo fica transparente; moldura, textos e ícones não.", new AcceptableValueRange<float>(0f, 1f)));
             var panels = new Dictionary<string, ConfigEntry<float>>();

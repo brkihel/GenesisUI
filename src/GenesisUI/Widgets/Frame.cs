@@ -25,9 +25,9 @@ namespace GenesisUI.Widgets
         public static Image Dress(RectTransform rt, ThemeRuntime theme, string sprite, string panel, float fitHeight = 0f)
         {
             var frameSprite = theme.Sprite(sprite);
-            float multiplier = 1f;
+            float multiplier = CanvasScale(rt);
             if (fitHeight > 0f && frameSprite != null)
-                multiplier = theme.Size(sprite).y / fitHeight;
+                multiplier *= theme.Size(sprite).y / fitHeight;
 
             Background(rt, theme, sprite, panel, multiplier);
             var frame = Ui.Image(Ui.Fill(Ui.Child(rt, "Frame")), frameSprite,
@@ -36,9 +36,32 @@ namespace GenesisUI.Widgets
             return frame;
         }
 
-        /// <summary>The panel material clipped to the frame's silhouette; null when the art has none.</summary>
-        public static Image Background(RectTransform rt, ThemeRuntime theme, string sprite, string panel, float multiplier = 1f)
+        /// <summary>
+        /// Sliced and tiled sprites are sized by the canvas's reference pixels per unit. The art is laid
+        /// out on the HUD's canvas; Jötunn's GUI canvases use 50 (GUIManager.CreateCustomGUI), which drew
+        /// every 9-slice border of the window bars at another size (R-046: they looked stretched). This
+        /// returns the factor that keeps borders as they are on the HUD's canvas, whatever canvas holds them.
+        /// </summary>
+        public static float CanvasScale(Transform t)
         {
+            var canvas = t.GetComponentInParent<Canvas>();
+            if (canvas == null) return 1f;
+            float reference = canvas.rootCanvas.referencePixelsPerUnit;
+            float hud = HudReference();
+            return reference > 0f && hud > 0f ? reference / hud : 1f;
+        }
+
+        private static float HudReference()
+        {
+            var hud = Hud.instance != null ? Hud.instance.m_rootObject : null;
+            var canvas = hud != null ? hud.GetComponentInParent<Canvas>() : null;
+            return canvas != null ? canvas.rootCanvas.referencePixelsPerUnit : 100f;
+        }
+
+        /// <summary>The panel material clipped to the frame's silhouette; null when the art has none.</summary>
+        public static Image Background(RectTransform rt, ThemeRuntime theme, string sprite, string panel, float multiplier = -1f)
+        {
+            if (multiplier <= 0f) multiplier = CanvasScale(rt);
             var shape = theme.Sprite(sprite + "_shape");
             var material = theme.Sprite("panel_bg");
             if (shape == null || material == null) return null;
@@ -50,6 +73,7 @@ namespace GenesisUI.Widgets
 
             var tiled = Ui.Image(Ui.Fill(Ui.Child(back, "Material")), material, Color.white);
             tiled.type = Image.Type.Tiled;
+            tiled.pixelsPerUnitMultiplier = CanvasScale(rt);
             theme.RegisterBackground(tiled, panel);
             return tiled;
         }

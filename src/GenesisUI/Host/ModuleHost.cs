@@ -112,6 +112,24 @@ namespace GenesisUI.Host
             throw new System.InvalidOperationException("Fault injected from the diagnostics panel into " + id);
 
         /// <summary>Diagnostics: make the module fail through the same guard a real bug would.</summary>
+        /// <summary>
+        /// Opacity of every HUD module at once (0-1), without touching the modules: the window shell
+        /// fades the HUD out while a window is open (Diego, R-046) and back in when it closes.
+        /// </summary>
+        public static void SetHudAlpha(float alpha)
+        {
+            if (_hudRoot == null) return;
+            var group = _hudRoot.GetComponent<CanvasGroup>();
+            if (group == null)
+            {
+                if (alpha >= 1f) return;
+                group = _hudRoot.gameObject.AddComponent<CanvasGroup>();
+                group.interactable = false;
+                group.blocksRaycasts = false;
+            }
+            if (!Mathf.Approximately(group.alpha, alpha)) group.alpha = alpha;
+        }
+
         public static void InjectFault(ModuleEntry e)
         {
             if (e.State != ModuleState.Active) return;

@@ -32,6 +32,8 @@ namespace GenesisUI.Modules.Windows
     [GameContract("assembly_valheim", "SkillsDialog", "OnClose")]
     [GameContract("assembly_valheim", "Minimap", "SetMapMode")]
     [GameContract("assembly_valheim", "Minimap", "IsOpen")]
+    [GameContract("assembly_valheim", "InventoryGui", "Show")]
+    [GameContract("assembly_valheim", "KeyHints", "instance")]
     internal sealed class WindowShellModule : IUiModule
     {
         private const float Margin = 36f;
@@ -39,7 +41,6 @@ namespace GenesisUI.Modules.Windows
         private const float BottomY = 14f;
         private const float BarHeight = 72f;
         private const float HintHeight = 52f;
-        private const float TitleWidth = 330f;
         private const float FadeSpeed = 8f;
 
         private static readonly string[] NoRegions = new string[0];
@@ -66,6 +67,10 @@ namespace GenesisUI.Modules.Windows
         private RectTransform _settingsPage;
         private Tab _active = Tab.Inventory;
         private bool _wasVisible;
+        private bool _mapFromTab;
+        private float _hudAlpha = 1f;
+        private CanvasGroup _keyHints;
+        private bool _keyHintsOwn;
 
         private sealed class TabView
         {
@@ -101,6 +106,8 @@ namespace GenesisUI.Modules.Windows
             _root = Ui.Fill(Ui.Child(front.transform, "GenesisUI.WindowShell"));
             _fade = _root.gameObject.AddComponent<CanvasGroup>();
             _fade.alpha = 0f;
+            GenesisLog.Info("Module:win.shell", "window canvas scale " + Frame.CanvasScale(_root).ToString("0.###",
+                System.Globalization.CultureInfo.InvariantCulture) + " (reference pixels per unit relative to the HUD's)");
             BuildTopBar();
             BuildHintBar();
             BuildSettingsPage();
@@ -112,7 +119,31 @@ namespace GenesisUI.Modules.Windows
         {
             if (_root == null) return;
             var gui = InventoryGui.instance;
-            bool visible = gui != null && InventoryGui.IsVisible() && Player.m_localPlayer != null && !global::Minimap.IsOpen();
+            bool mapOpen = global::Minimap.IsOpen();
+            bool visible = gui != null && InventoryGui.IsVisible() && Player.m_localPlayer != null && !mapOpen;
+
+            // The map opened from the Mapa tab is part of the windows: Q/E lead back to the tabs.
+            if (_mapFromTab && !mapOpen) _mapFromTab = false;
+            if (_mapFromTab && gui != null)
+            {
+                int step = _previousKey.Value.IsDown() ? -1 : _nextKey.Value.IsDown() ? 1 : 0;
+                if (step != 0)
+                {
+                    _mapFromTab = false;
+                    global::Minimap.instance.SetMapMode(global::Minimap.MapMode.Small);
+                    gui.Show(null);
+                    _active = Tab.Map;
+                    Select(Step(step), callVanilla: true);
+                    _wasVisible = true;
+                    return;
+                }
+            }
+
+            // While a window is open the HUD (bars, hotbar, vanilla's key hints) fades out, and back in
+            // when it closes (Diego, R-046): nothing draws over the windows.
+            _hudAlpha = Mathf.MoveTowards(_hudAlpha, visible ? 0f : 1f, deltaSeconds * FadeSpeed);
+            ModuleHost.SetHudAlpha(_hudAlpha);
+            KeyHintsAlpha(_hudAlpha);
             if (visible && !_wasVisible) Select(Tab.Inventory, callVanilla: false);
             _wasVisible = visible;
             ActiveNextKey = visible ? _nextKey.Value.MainKey : KeyCode.None;
@@ -133,9 +164,32 @@ namespace GenesisUI.Modules.Windows
         public void Teardown()
         {
             ActiveNextKey = KeyCode.None;
+            ModuleHost.SetHudAlpha(1f);
+            _hudAlpha = 1f;
+            if (_keyHints != null)
+            {
+                if (_keyHintsOwn) Object.Destroy(_keyHints);
+                else _keyHints.alpha = 1f;
+            }
+            _keyHints = null;
+            _mapFromTab = false;
             if (_root != null) Object.Destroy(_root.gameObject);
             _root = null;
             _settingsPage = null;
+        }
+
+        /// <summary>Vanilla's key hints fade with the HUD; our own group on them, removed on teardown.</summary>
+        private void KeyHintsAlpha(float alpha)
+        {
+            if (_keyHints == null)
+            {
+                if (alpha >= 1f || KeyHints.instance == null) return;
+                // Add a group only if vanilla has none, and remember whether it is ours to remove.
+                _keyHints = KeyHints.instance.gameObject.GetComponent<CanvasGroup>();
+                _keyHintsOwn = _keyHints == null;
+                if (_keyHintsOwn) _keyHints = KeyHints.instance.gameObject.AddComponent<CanvasGroup>();
+            }
+            if (!Mathf.Approximately(_keyHints.alpha, alpha)) _keyHints.alpha = alpha;
         }
 
         // ------------------------------------------------------------------ tabs
@@ -166,7 +220,11 @@ namespace GenesisUI.Modules.Windows
                     case Tab.Map:
                         // The map is its own screen: leave the inventory and open vanilla's large map.
                         gui.Hide();
-                        if (global::Minimap.instance != null) global::Minimap.instance.SetMapMode(global::Minimap.MapMode.Large);
+                        if (global::Minimap.instance != null)
+                        {
+                            global::Minimap.instance.SetMapMode(global::Minimap.MapMode.Large);
+                            _mapFromTab = true;
+                        }
                         tab = Tab.Inventory;
                         break;
                 }
@@ -216,19 +274,14 @@ namespace GenesisUI.Modules.Windows
             float k = drawn.y > 0f ? BarHeight / drawn.y : 1f;
             var c = _theme.Content("window_topbar", new Vector4(150f, 12f, 150f, 12f)) * k;
 
-            // Title: GENESISUI and the previous-tab key. (The bar's end caps carry the emblem.)
-            var title = Ui.Text(bar, "Title", _theme, FontRole.Display, 30f, ThemeRuntime.ToUnity(t.AccentGoldBright), TextAlignmentOptions.MidlineLeft, outlined: true);
-            title.characterSpacing = 18f;
-            var titleRt = Ui.Place((RectTransform)title.transform, new Vector2(0f, 0.5f), new Vector2(c.x - 6f, 0f), new Vector2(TitleWidth - 60f, 40f));
-            titleRt.pivot = new Vector2(0f, 0.5f);
-            title.text = "GENESISUI";
-            KeyCap(bar, new Vector2(0f, 0.5f), new Vector2(c.x + TitleWidth - 58f, 0f), KeyName(_previousKey.Value.MainKey));
+            // No title or logo in the bar (Diego, R-046): the previous-tab key, then the tabs.
+            KeyCap(bar, new Vector2(0f, 0.5f), new Vector2(c.x + 4f, 0f), KeyName(_previousKey.Value.MainKey));
 
             // Tabs share the space between the title and the next-tab key, divided by the sheet's dividers.
             var strip = Ui.Child(bar, "Tabs");
             strip.anchorMin = new Vector2(0f, 0f);
             strip.anchorMax = new Vector2(1f, 1f);
-            strip.offsetMin = new Vector2(c.x + TitleWidth, c.y);
+            strip.offsetMin = new Vector2(c.x + 44f, c.y);
             strip.offsetMax = new Vector2(-c.z - 44f, -c.w);
             KeyCap(bar, new Vector2(1f, 0.5f), new Vector2(-c.z + 4f, 0f), KeyName(_nextKey.Value.MainKey));
 
@@ -293,7 +346,7 @@ namespace GenesisUI.Modules.Windows
                 mrt.anchoredPosition = new Vector2(0f, 2f);
                 mrt.sizeDelta = new Vector2(0f, 10f);
                 view.Marker = Ui.Image(mrt, marker, Color.white);
-                view.Marker.pixelsPerUnitMultiplier = _theme.Size("tab_marker").y / 10f;
+                view.Marker.pixelsPerUnitMultiplier = _theme.Size("tab_marker").y / 10f * Frame.CanvasScale(mrt);
                 view.Marker.enabled = false;
             }
             return view;

@@ -133,8 +133,8 @@ def defringe(a):
 # by the ramp, so sheets drawn in different tones come out as one darker, discreet gold. Shape,
 # alpha, symmetry and highlights are untouched: only the colour of each pixel changes.
 GOLD = json.load(open(os.path.join(os.path.dirname(__file__), "gold_ramp.json")))
-TONE_DARKEN = 0.8           # the reference's luminance, pulled down: darker and more discreet
-TONE_SATURATION = 1.25      # the ramp's warmth, a little stronger so the darker gold stays gold
+TONE_DARKEN = 0.62          # the reference's luminance, pulled well down: dark, discreet gold (Diego, R-046)
+TONE_SATURATION = 1.0       # the ramp's own warmth: no extra colour, quieter (Diego, R-046)
 
 
 def tone(a):
@@ -207,6 +207,12 @@ def frame(p):
         a[:, bl:bl + span] = np.tile(strip, (1, -(-span // n), 1))[:, :span]
     if p.get("mirror"):
         a = a[:, ::-1].copy()
+    if "recolor" in p:
+        # A state of another colour (equipped = green) drawn from the same toned piece: each pixel's
+        # luminance carried by the new colour, so shape and light stay the gold piece's own.
+        rgb = a[..., :3].astype(np.float32)
+        lum = (0.299 * rgb[..., 0] + 0.587 * rgb[..., 1] + 0.114 * rgb[..., 2])[..., None] / 255.0
+        a[..., :3] = np.clip(lum * np.asarray(p["recolor"], np.float32) * 1.6, 0, 255).astype(np.uint8)
 
     # Re-trim after erasing (a top ornament may have been the highest pixel).
     t2 = trim_box(a[..., 3])
@@ -506,6 +512,14 @@ PIECES = [
      "border": (14, 14, 14, 14), "content": (10, 10, 10, 10), "tone": False},
     {"name": "keycap_wide", "kind": "frame", "win": 2, "box": (412, 678, 556, 750),
      "border": (22, 14, 22, 14), "content": (14, 10, 14, 10), "tone": False},
+    # The hotbar and food slots (window sheet 3): single thin slots instead of the heavy 8-cell plate
+    # (Diego, R-046: "grosseira"). Selected = the lit thin slot; equipped = the same, in green.
+    {"name": "hotslot", "kind": "frame", "win": 3, "box": (28, 28, 196, 198), "scale": 0.35,
+     "border": (30, 30, 30, 30), "content": (14, 14, 14, 14)},
+    {"name": "hotslot_selected", "kind": "frame", "win": 3, "box": (206, 24, 386, 200), "scale": 0.35,
+     "opening": (296, 112), "opening_grow": 0, "glow": True},
+    {"name": "hotslot_equipped", "kind": "frame", "win": 3, "box": (206, 24, 386, 200), "scale": 0.35,
+     "opening": (296, 112), "opening_grow": 0, "glow": True, "recolor": (90, 200, 70), "cut": "hotslot_selected"},
     # Tab icons and mouse hints (sheet 7).
     {"name": "icon_logo", "kind": "frame", "win": 7, "box": (28, 8, 194, 160), "scale": 0.3},
     {"name": "icon_inventory", "kind": "frame", "win": 7, "box": (236, 26, 336, 140), "scale": 0.3},

@@ -73,7 +73,8 @@ namespace GenesisUI.Widgets
 
             // States drawn by Diego (R-042): the lit gold cell when selected, the green one when
             // equipped, laid over the cell with their window on the cell's. Else a soft inner glow.
-            _active = State(theme, "slot_selected", cell);
+            _active = State(theme, "hotslot_selected", cell);
+            if (_active == null) _active = State(theme, "slot_selected", cell);
             if (_active == null)
             {
                 var glow = theme.Sprite("cell_glow");
@@ -82,7 +83,8 @@ namespace GenesisUI.Widgets
                                    glow != null ? Color.white : ThemeRuntime.ToUnity(t.AccentGold).WithA(0.35f));
                 _active.type = Image.Type.Simple;
             }
-            _equipped = State(theme, "slot_equipped", cell);
+            _equipped = State(theme, "hotslot_equipped", cell);
+            if (_equipped == null) _equipped = State(theme, "slot_equipped", cell);
             if (_equipped == null) _equipped = _active;
             _active.enabled = false;
 

@@ -267,6 +267,98 @@
       "borderTop": 0
     },
     {
+      "name": "hotslot",
+      "file": "hotslot.png",
+      "width": 57,
+      "height": 58,
+      "borderLeft": 10,
+      "borderBottom": 11,
+      "borderRight": 10,
+      "borderTop": 11,
+      "contentLeft": 5,
+      "contentBottom": 5,
+      "contentRight": 5,
+      "contentTop": 5
+    },
+    {
+      "name": "hotslot_equipped",
+      "file": "hotslot_equipped.png",
+      "width": 63,
+      "height": 62,
+      "borderLeft": 0,
+      "borderBottom": 0,
+      "borderRight": 0,
+      "borderTop": 0,
+      "contentLeft": 8,
+      "contentBottom": 8,
+      "contentRight": 8,
+      "contentTop": 8
+    },
+    {
+      "name": "hotslot_equipped_opening",
+      "file": "hotslot_equipped_opening.png",
+      "width": 63,
+      "height": 62,
+      "borderLeft": 0,
+      "borderBottom": 0,
+      "borderRight": 0,
+      "borderTop": 0
+    },
+    {
+      "name": "hotslot_equipped_shape",
+      "file": "hotslot_equipped_shape.png",
+      "width": 63,
+      "height": 62,
+      "borderLeft": 0,
+      "borderBottom": 0,
+      "borderRight": 0,
+      "borderTop": 0
+    },
+    {
+      "name": "hotslot_selected",
+      "file": "hotslot_selected.png",
+      "width": 63,
+      "height": 62,
+      "borderLeft": 0,
+      "borderBottom": 0,
+      "borderRight": 0,
+      "borderTop": 0,
+      "contentLeft": 8,
+      "contentBottom": 8,
+      "contentRight": 8,
+      "contentTop": 8
+    },
+    {
+      "name": "hotslot_selected_opening",
+      "file": "hotslot_selected_opening.png",
+      "width": 63,
+      "height": 62,
+      "borderLeft": 0,
+      "borderBottom": 0,
+      "borderRight": 0,
+      "borderTop": 0
+    },
+    {
+      "name": "hotslot_selected_shape",
+      "file": "hotslot_selected_shape.png",
+      "width": 63,
+      "height": 62,
+      "borderLeft": 0,
+      "borderBottom": 0,
+      "borderRight": 0,
+      "borderTop": 0
+    },
+    {
+      "name": "hotslot_shape",
+      "file": "hotslot_shape.png",
+      "width": 57,
+      "height": 58,
+      "borderLeft": 10,
+      "borderBottom": 11,
+      "borderRight": 10,
+      "borderTop": 11
+    },
+    {
       "name": "icon_achievements",
       "file": "icon_achievements.png",
       "width": 32,

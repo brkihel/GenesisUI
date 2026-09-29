@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.7.0-preview.3 — R-046 fixes
+
+### Fixed
+- Window bars drew their 9-slice ends at the wrong size on Jötunn's GUI canvas (reference pixels
+  per unit 50): frames now compensate for the canvas they are on.
+- With a window open, the HUD (bars, hotbar, food, minimap, vanilla's key hints) fades out, and
+  back in when it closes.
+- From the large map opened by the Mapa tab, Q/E go back to the tabs.
+
+### Changed
+- No "GENESISUI" title in the tab bar.
+- Hotbar: eight single thin slots, no plate; selected and equipped are the thin slot lit in gold
+  and in green. Food slots use the same slot.
+- Minimap: the day/time plate is the same plate as the biome's, over the ring's top edge.
+- Status tiles closer together.
+- One darker, quieter gold for all sheet art.
+- Defaults: `[Backgrounds] Default` 0.6, `[Minimap] OffsetY` 1, `[Status] OffsetY` 315.
+
 ## 0.7.0-preview.2 — F4.2a (part 1): the admin's inventory size
 
 ### Added

@@ -14,12 +14,11 @@ is unclear, ask; do not guess.
   Diego approved the revision and confirmed the concept's rights (D-025/D-026). Order after that: F5 menus (main and Esc),
   F6 map, F7 Extension API and adapters, F8 optional gameplay package, F9 switch-over
   (D-024). Do not start API or adapter work before the vanilla UI is done.
-- **Version:** 0.7.0, last package `0.7.0-preview.2` (F4.2a part 1: admin inventory size,
-  placement patches, ServerSync) with script R-046; R-043/044/045 not yet run either. Diego
-  approved the inventory requirements in `docs/GAMEPLAY.md` §1 (his rejection of the
-  uninstall-safe design is recorded there; losing items on uninstall is accepted). Next:
-  F4.2a part 2 (concept layout of the inventory: scroll grid, weight, filter, item details),
-  then F4.2b equipment panel, F4.2c quick/utility + HUD row + sort, F4.2d modded slots.
+- **Version:** 0.7.0, last package `0.7.0-preview.3` (R-046 fixes: canvas scale, HUD fade with
+  windows, thin hotbar, darker gold, minimap plates, tighter status) with script R-047.
+  R-046's inventory-size steps still to run. Inventory requirements in `docs/GAMEPLAY.md` §1.
+  Next: F4.2a part 2 — the inventory window in the concept layout (the windows are still
+  vanilla, Diego's main complaint), then F4.2b/c/d.
 - **Art direction:** gold only (D-023). The carved-wood style was tried and rejected; do not
   propose another style unless Diego asks.
 - **Current F4.0 art source:** Diego supplied isolated UI sheets and separate background,

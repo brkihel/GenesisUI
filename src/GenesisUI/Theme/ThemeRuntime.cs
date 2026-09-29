@@ -88,7 +88,7 @@ namespace GenesisUI.Theme
         private readonly List<KeyValuePair<Image, string>> _backgrounds = new List<KeyValuePair<Image, string>>();
 
         /// <summary>Opacity of a panel's background, by panel key; set by the plugin from [Backgrounds].</summary>
-        public Func<string, float> BackgroundOpacity = _ => 0.85f;
+        public Func<string, float> BackgroundOpacity = _ => 0.6f;
 
         public int BackgroundCount => _backgrounds.Count;
 

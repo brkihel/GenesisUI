@@ -179,25 +179,23 @@ def main(out_path):
     # Food [Food] OffsetX 172, OffsetY 90.
     for i, t in enumerate(("13m", "23m", "28m")):
         x = 172 + i * 66
-        put(dressed("slot", 58, 58, fit=58), x, H - (90 + 58))
+        put(dressed("hotslot", 58, 58, fit=58), x, H - (90 + 58))
         text(x + 49, H - 90 - 8, t, font("Cinzel-SemiBold", 14), anchor="rs")
 
-    # Hotbar [Hotbar] OffsetY 20, bottom centre: Diego's eight-cell piece at its own size.
-    pw, ph = size("hotbar_frame")
-    px, ptop = W / 2 - pw / 2, H - (20 + ph)
-    put(dressed("hotbar_frame", pw, ph), px, ptop)
-    cl, cb, cr, ct = st.content("hotbar_frame", (32, 12, 32, 12))
-    gap = st.meta["hotbar_frame"].get("gap", 4)
-    cw, chh = (pw - cl - cr - 7 * gap) / 8, ph - cb - ct
-    for i in range(8):
-        x = px + cl + i * (cw + gap)
-        text(x + cw * 0.12, ptop + ct + chh * 0.18, str(i + 1), font("Cinzel-Medium", 13), anchor="lm")
-        state = {0: "slot_equipped", 2: "slot_selected"}.get(i)
+    # Hotbar [Hotbar] OffsetY 20, bottom centre: eight single thin slots, no plate (R-046).
+    n, cs, gap = 8, 56, 6
+    pw = n * cs + (n - 1) * gap
+    px, ptop = W / 2 - pw / 2, H - (20 + cs)
+    for i in range(n):
+        x = px + i * (cs + gap)
+        put(dressed("hotslot", cs, cs, fit=cs), x, ptop)
+        text(x + 9, ptop + 10, str(i + 1), font("Cinzel-Medium", 13), anchor="lm")
+        state = {0: "hotslot_equipped", 2: "hotslot_selected"}.get(i)
         if state:
             sw_, sh_ = size(state)
             scl, sbt, scr, sct = st.content(state, (0, 0, 0, 0))
-            kk = cw / (sw_ - scl - scr)
-            put(st.img(state).resize((int(sw_ * kk), int(sh_ * kk)), Image.LANCZOS), x - scl * kk, ptop + ct - sct * kk)
+            kk = cs / (sw_ - scl - scr)
+            put(st.img(state).resize((int(sw_ * kk), int(sh_ * kk)), Image.LANCZOS), x - scl * kk, ptop - sct * kk)
 
     # Stamina readout [Sprint] OffsetY 142: Diego's frame, 220 wide at its own proportions.
     fw, fh = size("sprint_frame")
@@ -215,7 +213,7 @@ def main(out_path):
     put(frame_img, sx, stop)
 
     # Minimap [Minimap] OffsetX 24, OffsetY 20, top-right.
-    gx, ring_top = W - 24 - 250, 20 + 40
+    gx, ring_top = W - 24 - 250, 1 + 40
     cl, cb, cr, ct = st.content("map_ring", (14, 14, 14, 14))
     ms = int(250 - cl - cr)
     world = Image.new("RGBA", (ms, ms), (90, 120, 70, 255))
@@ -225,24 +223,22 @@ def main(out_path):
         wd.ellipse((x, y, x + 24, y + 24), fill=(70 + rng.randrange(40), 110 + rng.randrange(30), 60, 255))
     bg.paste(world, (int(gx + cl), int(ring_top + ct)), st.img("map_mask").split()[3].resize((ms, ms)))
     put(st.img("map_ring").resize((250, 250), Image.LANCZOS), gx, ring_top)
-    crest_h = 44
-    crest_top = ring_top + 18 - crest_h                                 # its bottom sits 18 into the ring
-    put(dressed("map_crest", 200, crest_h, fit=crest_h), gx + 25, crest_top)
-    ornament(gx + 25, crest_top, 200, crest_h, "map_crest_knot", "top", crest_h / size("map_crest")[1])
-    put(st.img("wind_disk").resize((30, 30), Image.LANCZOS), gx + 125 - 64 - 15, crest_top + crest_h - 8 - 30)
-    put(st.img("wind_arrow").resize((24, 24), Image.LANCZOS).rotate(-40, resample=Image.BICUBIC), gx + 125 - 64 - 12, crest_top + crest_h - 8 - 27)
-    text(gx + 137, crest_top + crest_h - 22, "Dia 4 · 07:26", font("Cinzel-SemiBold", 14))
+    ctop = ring_top - 32 + 18                                          # same plate as the biome's, over the ring's top
+    put(dressed("map_banner", 180, 32, fit=32), gx + 35, ctop)
+    put(st.img("wind_disk").resize((22, 22), Image.LANCZOS), gx + 35 + 24, ctop + 5)
+    put(st.img("wind_arrow").resize((18, 18), Image.LANCZOS).rotate(-40, resample=Image.BICUBIC), gx + 35 + 26, ctop + 7)
+    text(gx + 35 + 50 + (180 - 72) / 2, ctop + 16, "Dia 4 · 07:26", font("Cinzel-Medium", 14))
     put(dressed("map_banner", 180, 32, fit=32), gx + 35, ring_top + 250 - 18)
     text(gx + 125, ring_top + 250 - 2, "PRADO", font("Cinzel-Medium", 14), fill=(247, 226, 131, 255))
     text(gx + 125, ring_top + 22, "N", font("Cinzel-SemiBold", 13), fill=(247, 226, 131, 255))
 
     # Status [Status] OffsetX 24, OffsetY 340, right to left.
     for i, (name, t) in enumerate((("Eikthyr", "19:54"), ("Molhado(a)", "1:50"), ("Frio", ""))):
-        x = W - 24 - 84 - i * 84
-        put(dressed("tile", 60, 60, fit=60), x + 12, 340)
-        text(x + 42, 340 + 71, name, font("CormorantGaramond-SemiBold", 15))
-        text(x + 42, 340 + 89, t, font("Cinzel-Medium", 13))
-    put(st.img("badge_cooldown").resize((20, 20), Image.LANCZOS), W - 24 - 84 + 12 + 44, 338)
+        x = W - 24 - 70 - i * 70
+        put(dressed("tile", 60, 60, fit=60), x + 5, 315)
+        text(x + 35, 315 + 71, name, font("CormorantGaramond-SemiBold", 14))
+        text(x + 35, 315 + 89, t, font("Cinzel-Medium", 13))
+    put(st.img("badge_cooldown").resize((20, 20), Image.LANCZOS), W - 24 - 70 + 5 + 44, 313)
 
     # Boss plate [Boss] OffsetY 18, top centre, 520 x 74, Diego's plate.
     bw, bh = 520, 74
@@ -330,9 +326,8 @@ def window_mock(out_path):
     bg.alpha_composite(dressed("window_topbar", bw, bar_h, fit=bar_h), (margin, top))
     k = bar_h / size("window_topbar")[1]
     cl, cb, cr, ct = (v * k for v in st.content("window_topbar", (150, 12, 150, 12)))
-    text(margin + cl - 6, top + bar_h / 2, "G E N E S I S U I", font("Cinzel-SemiBold", 30), fill=(247, 226, 131, 255), anchor="lm")
-    key(margin + cl + 330 - 58, top + bar_h / 2, "Q")
-    x0, x1 = margin + cl + 330, margin + bw - cr - 44
+    key(margin + cl + 4, top + bar_h / 2, "Q")
+    x0, x1 = margin + cl + 44, margin + bw - cr - 44
     key(margin + bw - cr + 4 - 26, top + bar_h / 2, "E")
     tabs = [("icon_inventory", "INVENTÁRIO"), ("icon_skills", "HABILIDADES"), ("icon_map", "MAPA"), ("icon_crafting", "CRIAÇÃO"),
             ("icon_achievements", "CONQUISTAS"), ("icon_settings", "CONFIGURAÇÕES")]

@@ -110,6 +110,104 @@
   "from": "hotbar_frame",
   "sheet": 4
  },
+ "hotslot": {
+  "border": [
+   10,
+   11,
+   10,
+   11
+  ],
+  "content": [
+   5,
+   5,
+   5,
+   5
+  ],
+  "from": "hotslot",
+  "sheet": 103
+ },
+ "hotslot_equipped": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "content": [
+   8,
+   8,
+   8,
+   8
+  ],
+  "from": "hotslot_equipped",
+  "sheet": 103
+ },
+ "hotslot_equipped_opening": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "hotslot_equipped",
+  "sheet": 103
+ },
+ "hotslot_equipped_shape": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "hotslot_equipped",
+  "sheet": 103
+ },
+ "hotslot_selected": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "content": [
+   8,
+   8,
+   8,
+   8
+  ],
+  "from": "hotslot_selected",
+  "sheet": 103
+ },
+ "hotslot_selected_opening": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "hotslot_selected",
+  "sheet": 103
+ },
+ "hotslot_selected_shape": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "hotslot_selected",
+  "sheet": 103
+ },
+ "hotslot_shape": {
+  "border": [
+   10,
+   11,
+   10,
+   11
+  ],
+  "from": "hotslot",
+  "sheet": 103
+ },
  "icon_achievements": {
   "border": [
    0,

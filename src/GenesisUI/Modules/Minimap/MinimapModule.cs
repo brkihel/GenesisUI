@@ -79,7 +79,7 @@ namespace GenesisUI.Modules.Minimap
         {
             _offsetX = config.Bind("Minimap", "OffsetX", 24,
                 new ConfigDescription("Distância do minimapa até a borda direita da tela.", new AcceptableValueRange<int>(0, 1800)));
-            _offsetY = config.Bind("Minimap", "OffsetY", 20,
+            _offsetY = config.Bind("Minimap", "OffsetY", 1,
                 new ConfigDescription("Distância do minimapa até o topo da tela.", new AcceptableValueRange<int>(0, 1000)));
             _scale = config.Bind("Minimap", "Scale", 1f,
                 new ConfigDescription("Tamanho do minimapa (1 = padrão).", new AcceptableValueRange<float>(0.5f, 2f)));
@@ -132,29 +132,18 @@ namespace GenesisUI.Modules.Minimap
             Ui.Place((RectTransform)north.transform, new Vector2(0.5f, 0f), new Vector2(0f, RingSize - 40f), new Vector2(30f, 18f));
             north.text = "N";
 
-            // Crest: wind arrow + "Dia 4 · 07:26", resting on the ring's top.
-            var crestRt = Ui.Place(Ui.Child(_group, "Crest"), new Vector2(0.5f, 0f), new Vector2(0f, RingSize - 18f), new Vector2(200f, 52f));
-            if (theme.Sprite("map_crest_knot") != null)
-            {
-                // Diego's plate (D-027) at a fixed height; its top diamond is a separate piece, so it
-                // stays whole at any width.
-                const float crestHeight = 44f;
-                crestRt.sizeDelta = new Vector2(200f, crestHeight);
-                Frame.Dress(crestRt, theme, "map_crest", "Minimap", crestHeight);
-                var drawn = theme.Size("map_crest");
-                Frame.Ornament(crestRt, theme, "map_crest_knot", Edge.Top, drawn.y > 0f ? crestHeight / drawn.y : 1f);
-            }
-            else
-                Ui.Image(crestRt, theme.Sprite("map_crest"), theme.Sprite("map_crest") != null ? Color.white : ThemeRuntime.ToUnity(t.PanelBackground));
-            // The wind sits in its own small cell on the crest, so the arrow reads at a glance (R-030).
-            var disk = Ui.Place(Ui.Child(crestRt, "WindDisk"), new Vector2(0.5f, 0f), new Vector2(-64f, 8f), new Vector2(30f, 30f));
-            disk.pivot = new Vector2(0.5f, 0f);
+            // Top plate: wind and "Dia 4 · 07:26". The same plate as the biome's below (Diego, R-046),
+            // over the ring's top edge as the biome's is over its bottom, drawn after the ring.
+            var crestRt = Ui.Place(Ui.Child(_group, "Crest"), new Vector2(0.5f, 0f), new Vector2(0f, RingSize - 18f), new Vector2(180f, 32f));
+            Frame.Dress(crestRt, theme, "map_banner", "Minimap", 32f);
+            var disk = Ui.Place(Ui.Child(crestRt, "WindDisk"), new Vector2(0f, 0.5f), new Vector2(24f, 0f), new Vector2(22f, 22f));
+            disk.pivot = new Vector2(0f, 0.5f);
             Ui.Image(disk, theme.Sprite("wind_disk"), Color.white);
-            _wind = Ui.Place(Ui.Child(disk, "Wind"), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(24f, 24f));
+            _wind = Ui.Place(Ui.Child(disk, "Wind"), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(18f, 18f));
             _wind.pivot = new Vector2(0.5f, 0.5f);
             _windImage = Ui.Image(_wind, theme.Sprite("wind_arrow"), Color.white);
-            _time = Ui.Text(crestRt, "DayTime", theme, FontRole.Display, 14f, ThemeRuntime.ToUnity(t.TextTitle), TextAlignmentOptions.Center, outlined: true);
-            Ui.Place((RectTransform)_time.transform, new Vector2(0.5f, 0f), new Vector2(10f, 11f), new Vector2(130f, 22f));
+            _time = Ui.Fit(Ui.Text(crestRt, "DayTime", theme, FontRole.Label, 14f, ThemeRuntime.ToUnity(t.TextTitle), TextAlignmentOptions.Center, outlined: true), 10f);
+            Ui.Fill((RectTransform)_time.transform, 50f, 2f, 22f, 2f);
             _timeFormat = (Localization.instance != null ? Localization.instance.Localize("$genesisui_day") : "Day") + " {0} · {1:00}:{2:00}";
 
             // Banner: biome name, under the ring.

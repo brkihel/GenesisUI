@@ -12,7 +12,7 @@ namespace GenesisUI.Widgets
     /// </summary>
     internal sealed class TileView
     {
-        public const float CellWidth = 84f;
+        public const float CellWidth = 70f;          // tiles close together (Diego, R-046); names shrink to fit
         public const float CellHeight = 104f;
         private const float TileSize = 60f;
 
