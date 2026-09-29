@@ -133,6 +133,8 @@ namespace GenesisUI
                     "Loja dos comerciantes (Haldor, Hildir, Bruxa do Pântano) no estilo do GenesisUI. Desligado, a loja original do jogo aparece."));
                 ModuleHost.Register(new Modules.Windows.DialogsModule(), Config.Bind("Modules", "Dialogs", true,
                     "Diálogos no estilo do GenesisUI: dividir pilha, estilo do item, pedras rúnicas e corvos, nomear placas e portais."));
+                ModuleHost.Register(new Modules.Minimap.MapWindowModule(), Config.Bind("Modules", "MapWindow", true,
+                    "Mapa grande com a moldura, filtros e marcadores do GenesisUI (o mapa em si continua o do jogo)."));
                 ModuleHost.Register(new SprintModule(Config), Config.Bind("Modules", "Sprint", true,
                     "Barra pequena de vigor acima dos itens: surge quando o vigor é gasto e some só depois de cheio. Desligado, ela não aparece."));
 

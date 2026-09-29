@@ -136,11 +136,16 @@ namespace GenesisUI.Modules.Windows
             var gui = InventoryGui.instance;
             if (!EnsureBuilt(gui)) return;
             bool mapOpen = global::Minimap.IsOpen();
-            bool visible = gui != null && InventoryGui.IsVisible() && Player.m_localPlayer != null && !mapOpen;
+            // The large map is one of the windows when GenesisUI frames it (win.map): the bars show over it.
+            bool mapWindow = mapOpen && Modules.Minimap.MapWindowModule.Active && Player.m_localPlayer != null;
+            bool visible = (gui != null && InventoryGui.IsVisible() && Player.m_localPlayer != null && !mapOpen) || mapWindow;
+            OverMap(mapWindow);
+            if (mapWindow && _active != Tab.Map) Show(Tab.Map);
 
-            // The map opened from the Mapa tab is part of the windows: Q/E lead back to the tabs.
+            // The map opened from the Mapa tab (or any time it is framed) is part of the windows: Q/E lead
+            // back to the tabs.
             if (_mapFromTab && !mapOpen) _mapFromTab = false;
-            if (_mapFromTab && gui != null)
+            if ((_mapFromTab || mapWindow) && gui != null)
             {
                 int step = _previousKey.Value.IsDown() ? -1 : _nextKey.Value.IsDown() ? 1 : 0;
                 if (step != 0)
@@ -164,7 +169,7 @@ namespace GenesisUI.Modules.Windows
             // keeps the station only while the window it opened is open, so Tab near one still opens
             // the inventory, and a chest opens with the inventory as before.
             if (visible && !_wasVisible)
-                Select(Player.m_localPlayer.GetCurrentCraftingStation() != null ? Tab.Crafting : Tab.Inventory, callVanilla: false);
+                Select(mapWindow ? Tab.Map : Player.m_localPlayer.GetCurrentCraftingStation() != null ? Tab.Crafting : Tab.Inventory, callVanilla: false);
             _wasVisible = visible;
             ActiveNextKey = visible ? _nextKey.Value.MainKey : KeyCode.None;
             Showing = visible;
@@ -198,6 +203,7 @@ namespace GenesisUI.Modules.Windows
             }
             _keyHints = null;
             _mapFromTab = false;
+            _overMap = null;
             if (_root != null) Object.Destroy(_root.gameObject);
             _root = null;
             _area = null;
@@ -236,6 +242,12 @@ namespace GenesisUI.Modules.Windows
         private void Select(Tab tab, bool callVanilla)
         {
             var gui = InventoryGui.instance;
+            // Another tab picked while the framed map is open: leave the map for the windows.
+            if (callVanilla && gui != null && tab != Tab.Map && global::Minimap.IsOpen() && global::Minimap.instance != null)
+            {
+                global::Minimap.instance.SetMapMode(global::Minimap.MapMode.Small);
+                gui.Show(null);
+            }
             if (callVanilla && gui != null)
             {
                 CloseVanillaDialogs(gui);
@@ -283,9 +295,11 @@ namespace GenesisUI.Modules.Windows
             }
             if (_craftingHints != null)
             {
-                bool crafting = tab == Tab.Crafting;
+                bool crafting = tab == Tab.Crafting, map = tab == Tab.Map;
                 if (_craftingHints.gameObject.activeSelf != crafting) _craftingHints.gameObject.SetActive(crafting);
-                if (_inventoryHints.gameObject.activeSelf == crafting) _inventoryHints.gameObject.SetActive(!crafting);
+                if (_mapHints.gameObject.activeSelf != map) _mapHints.gameObject.SetActive(map);
+                bool inventory = !crafting && !map;
+                if (_inventoryHints.gameObject.activeSelf != inventory) _inventoryHints.gameObject.SetActive(inventory);
             }
             bool settings = tab == Tab.Settings && !WindowModuleBase.Handles(Tab.Settings);
             if (_settingsPage != null && _settingsPage.gameObject.activeSelf != settings) _settingsPage.gameObject.SetActive(settings);
@@ -429,9 +443,43 @@ namespace GenesisUI.Modules.Windows
                 (tabs, null, "$genesisui_hint_tabs"),
             });
             _craftingHints.gameObject.SetActive(false);
+            _mapHints = HintRow(bar, c, "Map", new[]
+            {
+                ("Esc", (string)null, "$genesisui_hint_close"),
+                (null, "icon_mouse_left", "$genesisui_hint_map_pin"),
+                (null, "icon_mouse_right", "$genesisui_hint_map_remove"),
+                ("M3", (string)null, "$genesisui_hint_map_ping"),
+                (tabs, null, "$genesisui_hint_tabs"),
+            });
+            _mapHints.gameObject.SetActive(false);
         }
 
-        private RectTransform _inventoryHints, _craftingHints;
+        private RectTransform _inventoryHints, _craftingHints, _mapHints;
+        private Canvas _overMap;
+
+        /// <summary>
+        /// Over the open map the bars must draw above the map's canvas: our own root gets a sorting
+        /// override while the map is framed, and gives it back afterwards.
+        /// </summary>
+        private void OverMap(bool map)
+        {
+            if (!map)
+            {
+                if (_overMap != null && _overMap.overrideSorting) _overMap.overrideSorting = false;
+                return;
+            }
+            var mm = global::Minimap.instance;
+            var mapCanvas = mm != null && mm.m_largeRoot != null ? mm.m_largeRoot.GetComponentInParent<Canvas>() : null;
+            if (mapCanvas == null) return;
+            if (_overMap == null)
+            {
+                _overMap = _root.gameObject.AddComponent<Canvas>();
+                _root.gameObject.AddComponent<GraphicRaycaster>();
+            }
+            _overMap.overrideSorting = true;
+            _overMap.sortingLayerID = mapCanvas.rootCanvas.sortingLayerID;
+            _overMap.sortingOrder = mapCanvas.rootCanvas.sortingOrder + 10;
+        }
 
         /// <summary>
         /// A row of hints laid out by hand, left to right, from measured widths: layout groups resolved a

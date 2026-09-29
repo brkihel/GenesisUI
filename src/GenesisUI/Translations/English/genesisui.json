@@ -197,5 +197,22 @@
   "genesisui_style_title": "Choose the style",
   "genesisui_cancel": "Cancel",
   "genesisui_ok": "Confirm",
-  "genesisui_reader_close": "[E] or Esc to close"
+  "genesisui_reader_close": "[E] or Esc to close",
+  "genesisui_module_map_window": "Map",
+  "genesisui_map_title": "World map",
+  "genesisui_map_under_cursor": "Under the cursor",
+  "genesisui_map_shared": "Group markers",
+  "genesisui_map_marker": "Marker",
+  "genesisui_map_public": "Visible to other players",
+  "genesisui_map_center": "To the player",
+  "genesisui_map_pin_fire": "Fire",
+  "genesisui_map_pin_home": "Home",
+  "genesisui_map_pin_hammer": "Hammer",
+  "genesisui_map_pin_point": "Point",
+  "genesisui_map_pin_rune": "Rune",
+  "genesisui_map_pin_boss": "Bosses",
+  "genesisui_map_pin_death": "Deaths",
+  "genesisui_hint_map_pin": "Double click: marker",
+  "genesisui_hint_map_remove": "Remove marker",
+  "genesisui_hint_map_ping": "Ping"
 }
