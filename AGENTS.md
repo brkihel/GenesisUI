@@ -8,19 +8,19 @@ is unclear, ask; do not guess.
 ## 0. Where the project is (keep this section current)
 
 - **Phase:** F3 (HUD) approved by Diego on 2026-09-28. **F4 — inventory and crafting
-  windows** is next, on branch `f4-windows`; its plan (approach "dress vanilla", steps
-  F4.0–F4.5) is [docs/F4-PLAN.md](docs/F4-PLAN.md): target ConceptArt (9)/(12), rearrange
-  and dress vanilla's windows (behaviour stays vanilla), art extracted from the concept;
-  Diego approved the revision and confirmed the concept's rights (D-025/D-026). Order after that: F5 menus (main and Esc),
-  F6 map, F7 Extension API and adapters, F8 optional gameplay package, F9 switch-over
-  (D-024). Do not start API or adapter work before the vanilla UI is done.
-- **Version:** 0.7.0, last package `0.7.0-preview.8` (R-051 window lifecycle fixes)
-  with script R-052; requires Diego's in-game check. Diego reports that preview.7 equipment
-  functionality works but found the first-open hint pileup and a vanilla inventory flash on close.
-  The minimal hotbar from preview.4 is
-  preserved at git tag `hotbar-minimal-v1`. Inventory requirements in `docs/GAMEPLAY.md` §1.
-  Next: F4.2c quick/utility + HUD row + sort, containers dressed, F4.2d modded slots,
-  F4.3 crafting.
+  windows** on branch `f4-windows`, plan in [docs/F4-PLAN.md](docs/F4-PLAN.md). **Approach since
+  2026-09-29: D-032** — GenesisUI draws its own windows on the concept's design board
+  (`WindowCanvas.Design`, ConceptArt 9 measured in 1580 x 850 units); vanilla's `InventoryGui`
+  stays open, hidden, as the engine, and our cells hand every input to the vanilla grid's own
+  callbacks. D-025 ("move and dress vanilla's slots") is replaced; Diego wants fidelity to the
+  concept's assembly, not new designs. Order after F4: F5 menus, F6 map, F7 API and adapters,
+  F8 gameplay package, F9 switch-over (D-024).
+- **Version:** 0.7.0, last package `0.7.0-preview.9` (own inventory window, D-032) with script
+  R-053; requires Diego's in-game check. The minimal hotbar from preview.4 is preserved at git
+  tag `hotbar-minimal-v1`. Inventory requirements in `docs/GAMEPLAY.md` §1.
+  Next: HUD row for quick/action slots above the hotbar + Alt hotkeys, ring/amulet swap,
+  3D character in the equipment panel, gamepad on our cells, F4.2d modded slots, F4.3 crafting
+  (same approach: own window, vanilla as engine).
 - **Art direction:** gold only (D-023). The carved-wood style was tried and rejected; do not
   propose another style unless Diego asks.
 - **Current F4.0 art source:** Diego supplied isolated UI sheets and separate background,
@@ -173,9 +173,9 @@ look): `heimdall-nexus/docs/PADROES-GENESISMODS.md`.
 - **Valheim content:** layer the game's own icons, texts, values, maps and interactions
   above the background and within the frame's declared content insets. HUD modules may
   continue reading or mirroring vanilla state while veiling the original drawing. For F4
-  windows, move and skin vanilla `InventoryGui`/`InventoryGrid` controls reversibly so
-  their item handlers, drag/drop, keyboard/gamepad navigation and other mods' hooks remain
-  intact (D-025). Patch only a proven blocking behaviour under `docs/PATCH-POLICY.md`;
+  windows, draw our own views and hand every input to vanilla's own grid callbacks, with
+  vanilla's panels hidden reversibly, so item handlers and other mods' hooks remain intact
+  (D-032, which replaced D-025's move-and-skin). Patch only a proven blocking behaviour under `docs/PATCH-POLICY.md`;
   never substitute new item-transfer logic. Precise alignment and input behavior require
   a client test at the target GUI scales, including fault/teardown restoration.
 - **Animated liquid in all three resource bars:** apply this to **HP, stamina and eitr**,

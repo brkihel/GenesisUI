@@ -92,11 +92,24 @@ namespace GenesisUI.Patches
             {
                 var targetSlot = layout.EquipmentAt(pos.x, pos.y);
                 var kind = layout.KindAt(pos.x, pos.y);
-                bool allowed = targetSlot.HasValue
-                    ? ___m_dragInventory == player.GetInventory() &&
-                      EquipmentRules.SlotFor(___m_dragItem) == targetSlot && ___m_dragItem.m_stack == 1 &&
-                      (item == null || EquipmentRules.SlotFor(item) == targetSlot)
-                    : kind == SlotKind.Ordinary;
+                bool allowed;
+                if (targetSlot.HasValue)
+                    allowed = ___m_dragInventory == player.GetInventory() &&
+                              EquipmentRules.SlotFor(___m_dragItem) == targetSlot && ___m_dragItem.m_stack == 1 &&
+                              (item == null || EquipmentRules.SlotFor(item) == targetSlot);
+                else if (!kind.HasValue) allowed = false;
+                else
+                {
+                    // Quick-use and utility (F4.2c): the dragged item must fit the target and, on a
+                    // swap, the target's item must fit where the dragged one came from.
+                    var sourceKind = ___m_dragInventory == player.GetInventory()
+                        ? layout.KindAt(___m_dragItem.m_gridPos.x, ___m_dragItem.m_gridPos.y) ?? SlotKind.Ordinary
+                        : SlotKind.Ordinary;
+                    allowed = sourceKind == SlotKind.Equipment && item != null
+                        ? false
+                        : SlotRules.AllowsMove(sourceKind == SlotKind.Equipment ? SlotKind.Ordinary : sourceKind, kind.Value,
+                            ItemCategories.Of(___m_dragItem), item != null ? ItemCategories.Of(item) : (ItemCategory?)null);
+                }
                 if (!allowed)
                 {
                     player.Message(MessageHud.MessageType.Center, "$msg_cantuseitem");

@@ -7,8 +7,8 @@ namespace GenesisUI.Widgets
     /// <summary>
     /// Where GenesisUI's windows are drawn (R-048): on vanilla's own inventory canvas, beside
     /// InventoryGui — panels behind it, bars in front — so vanilla's slots, our frames and our buttons
-    /// share one coordinate system, one scale and one raycaster. The window area is centred and takes
-    /// <see cref="Size"/> of the screen's width (Diego: about 75%, R-049).
+    /// share one coordinate system, one scale and one raycaster. The window board (<see cref="Design"/>) is centred and
+    /// scaled to <see cref="Size"/> of the screen's width (Diego: about 75%, R-049).
     /// </summary>
     internal static class WindowCanvas
     {
@@ -20,7 +20,7 @@ namespace GenesisUI.Widgets
             Size = config.Bind("Windows", "Width", 0.75f, new ConfigDescription(
                 "Largura das janelas (inventário, criação...) em fração da tela: 0,75 = 75%.", new AcceptableValueRange<float>(0.45f, 1f)));
             Height = config.Bind("Windows", "Height", 0.75f, new ConfigDescription(
-                "Altura das janelas em fração da tela, das abas até as dicas de atalho.", new AcceptableValueRange<float>(0.5f, 1f)));
+                "Altura máxima das janelas em fração da tela, das abas até as dicas de atalho (a proporção do concept é mantida).", new AcceptableValueRange<float>(0.5f, 1f)));
             // Preview.5 wrote 0.65 to existing configs. Move that exact old default once;
             // after the marker is set, a player can deliberately choose 0.65 again.
             var defaultsVersion = config.Bind("Windows", "ViewportDefaultsVersion", 0,
@@ -62,16 +62,46 @@ namespace GenesisUI.Widgets
             return rt;
         }
 
-        /// <summary>The centred window area inside a full-canvas root.</summary>
+        /// <summary>
+        /// The window's drawing board: ConceptArt (9)'s window measured in its own pixels (1580 x 850,
+        /// tab bar to hint bar). Every window lays out in these units, like the concept, and the whole
+        /// board is scaled uniformly to <see cref="Size"/> of the screen's width (or <see cref="Height"/>
+        /// of its height, whichever is smaller): the proportions stay the concept's at any resolution.
+        /// </summary>
+        internal static readonly Vector2 Design = new Vector2(1580f, 850f);
+
+        /// <summary>The centred design board inside a full-canvas root.</summary>
         internal static RectTransform Area(RectTransform root, string name)
         {
             var area = Ui.Child(root, name);
+            area.anchorMin = area.anchorMax = area.pivot = new Vector2(0.5f, 0.5f);
+            area.anchoredPosition = Vector2.zero;
+            area.sizeDelta = Design;
+            Fit(area);
+            return area;
+        }
+
+        /// <summary>Rescales the board to the current screen; cheap, called every refresh.</summary>
+        internal static void Fit(RectTransform area)
+        {
+            var parent = area.parent as RectTransform;
+            if (parent == null) return;
+            var screen = parent.rect.size;
+            if (screen.x <= 0f || screen.y <= 0f) return;
             float w = Size != null ? Size.Value : 0.75f;
             float h = Height != null ? Height.Value : 0.75f;
-            area.anchorMin = new Vector2((1f - w) / 2f, (1f - h) / 2f);
-            area.anchorMax = new Vector2((1f + w) / 2f, (1f + h) / 2f);
-            area.offsetMin = area.offsetMax = Vector2.zero;
-            return area;
+            float scale = Mathf.Min(screen.x * w / Design.x, screen.y * h / Design.y);
+            if (!Mathf.Approximately(area.localScale.x, scale)) area.localScale = new Vector3(scale, scale, 1f);
+        }
+
+        /// <summary>Places a child by its top-left corner in design units (y grows downwards, like the concept).</summary>
+        internal static RectTransform At(RectTransform parent, string name, float x, float y, float width, float height)
+        {
+            var rt = Ui.Child(parent, name);
+            rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0f, 1f);
+            rt.anchoredPosition = new Vector2(x, -y);
+            rt.sizeDelta = new Vector2(width, height);
+            return rt;
         }
     }
 }

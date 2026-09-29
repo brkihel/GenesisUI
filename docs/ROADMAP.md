@@ -29,6 +29,11 @@ Diego reports that the equipment flow works, with two window lifecycle defects: 
 up on the first opening and vanilla inventory flashes on close. Preview.8 targets those
 defects. R-052 is the client gate before F4.2b is marked approved.
 
+R-052 (2026-09-29): Diego found the windows had drifted from ConceptArt (9) — giant, empty
+panels — and that he had chosen replacement, not skins. Preview.9 implements D-032: our own
+inventory window on the concept's design board, vanilla as the hidden engine, plus quick/action
+slot rules and Organizar. R-053 is its client gate. Crafting (F4.3) follows the same approach.
+
 ## Research items (not scheduled)
 
 - 3D character figure in the inventory/character panels (render-texture camera;

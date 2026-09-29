@@ -16,44 +16,81 @@ using UnityEngine.UI;
 namespace GenesisUI.Modules.Windows
 {
     /// <summary>
-    /// The Inventory tab in ConceptArt (9)'s layout (F4.2a, D-025): our panels — inventory,
-    /// equipment, item details — drawn on vanilla's inventory canvas right behind InventoryGui, and
-    /// vanilla's own slots moved onto our grid and dressed with <see cref="VanillaSkin"/>. Every click,
-    /// drag, split and equip stays vanilla's; vanilla's panel frame, texts and tooltips are hidden
-    /// (never destroyed) and everything returns exactly on another tab, on close or on a fault.
+    /// The Inventory tab, ConceptArt (9) (D-032): GenesisUI's own window — inventory grid with
+    /// quick-use and action slots, equipment, item details, and the chest panel — drawn from the
+    /// player's inventory, laid out on the concept's design board (<see cref="WindowCanvas.Design"/>).
+    /// Vanilla's inventory panels stay alive but hidden; they are the engine: every click, drag, split,
+    /// equip and transfer is handed to the vanilla grid's own callbacks, exactly as a click on a vanilla
+    /// slot would, so item operations (and other mods' patches on them) stay vanilla's.
     /// </summary>
     [GameContract("assembly_valheim", "InventoryGui", "m_player")]
     [GameContract("assembly_valheim", "InventoryGui", "m_crafting")]
     [GameContract("assembly_valheim", "InventoryGui", "m_info")]
     [GameContract("assembly_valheim", "InventoryGui", "m_container")]
     [GameContract("assembly_valheim", "InventoryGui", "m_playerGrid")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_containerGrid")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_currentContainer")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_dragItem")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_dragAmount")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_dragGo")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_dropButton")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_takeAllButton")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_stackAllButton")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_splitDialog")]
     [GameContract("assembly_valheim", "InventoryGui", "IsContainerOpen")]
-    [GameContract("assembly_valheim", "InventoryGrid", "m_elements")]
-    [GameContract("assembly_valheim", "InventoryGrid", "GetHoveredElement")]
+    [GameContract("assembly_valheim", "SplitDialog", "get_IsActive")]
+    [GameContract("assembly_valheim", "InventoryGrid", "m_onSelected")]
+    [GameContract("assembly_valheim", "InventoryGrid", "m_onRightClick")]
+    [GameContract("assembly_valheim", "InventoryGrid", "m_onReleased")]
     [GameContract("assembly_valheim", "InventoryGrid", "GetInventory")]
-    [GameContract("assembly_valheim", "InventoryElement", "m_icon")]
-    [GameContract("assembly_valheim", "InventoryElement", "m_equiped")]
-    [GameContract("assembly_valheim", "InventoryElement", "m_button")]
-    [GameContract("assembly_valheim", "InventoryElement", "m_tooltip")]
-    [GameContract("assembly_valheim", "InventoryElement", "get_Position")]
+    [GameContract("assembly_valheim", "Container", "GetInventory")]
     [GameContract("assembly_valheim", "Inventory", "GetItemAt")]
+    [GameContract("assembly_valheim", "Inventory", "GetWidth")]
+    [GameContract("assembly_valheim", "Inventory", "GetHeight")]
+    [GameContract("assembly_valheim", "Inventory", "GetName")]
+    [GameContract("assembly_valheim", "Inventory", "GetAllItems")]
     [GameContract("assembly_valheim", "Inventory", "GetTotalWeight")]
+    [GameContract("assembly_valheim", "Inventory", "m_onChanged")]
+    [GameContract("assembly_valheim", "Humanoid", "IsItemEquiped")]
     [GameContract("assembly_valheim", "Player", "GetMaxCarryWeight")]
     [GameContract("assembly_valheim", "Player", "GetBodyArmor")]
-    [GameContract("assembly_valheim", "ItemDrop+ItemData", "GetTooltip", Parameters = new[]
-        { "ItemDrop+ItemData", "System.Int32", "System.Boolean", "System.Single", "System.Int32", "System.Boolean" })]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData", "GetIcon")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData", "GetWeight")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData", "GetMaxDurability", Parameters = new string[0])]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData", "GetArmor", Parameters = new string[0])]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData", "GetDamage", Parameters = new string[0])]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData", "GetBaseBlockPower", Parameters = new string[0])]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData", "m_durability")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData", "m_quality")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData", "m_stack")]
     [GameContract("assembly_valheim", "ItemDrop+ItemData+SharedData", "m_itemType")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData+SharedData", "m_maxStackSize")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData+SharedData", "m_maxQuality")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData+SharedData", "m_useDurability")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData+SharedData", "m_description")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData+SharedData", "m_food")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData+SharedData", "m_foodStamina")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData+SharedData", "m_foodEitr")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData+SharedData", "m_foodBurnTime")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData+SharedData", "m_value")]
+    [GameContract("assembly_valheim", "HitData+DamageTypes", "GetTotalDamage")]
+    [GameContract("assembly_utils", "ZInput", "get_pointerPosition")]
     internal sealed class InventoryWindowModule : IUiModule
     {
         private const string Owner = "module:win.inventory";
         private static readonly string[] NoRegions = new string[0];
-        private static readonly Action<InventoryWindowModule> AlignForRender = module => module.AlignVisibleSlots();
-
-        // Inside the shell's window area (WindowCanvas): below the tab bar, above the hint bar.
-        private const float BarsTop = 72f, BarsBottom = 54f, Gap = 8f;
-        private const float InventoryShare = 0.47f, EquipmentShare = 0.25f;
-        private const float CellGap = 6f, HeaderRule = 40f;
         private const float CloseHoldSeconds = 0.6f;
+
+        // ConceptArt (9), measured in the design board's units (WindowCanvas.Design).
+        private const float PanelsTop = 102f, PanelsHeight = 673f;
+        private const float InventoryX = 0f, InventoryW = 816f;
+        private const float EquipmentX = 820f, EquipmentW = 412f;
+        private const float DetailsX = 1236f, DetailsW = 344f;
+        private const float GridX = 44f, GridY = 96f, Cell = 82f, GapX = 7f, GapY = 10f;
+        private const int VisibleRows = 4;
+        private const float SmallCell = 74f, QuickX = 54f, QuickPitch = 85f, UtilityX = 445f, UtilityPitch = 82f, SpecialY = 512f;
+        private const float WornCell = 80f;
+        private const float DimAlpha = 0.22f;
 
         internal enum Filter { All, Weapons, Armor, Tools, Consumables, Materials, Ammo, Misc }
 
@@ -63,43 +100,68 @@ namespace GenesisUI.Modules.Windows
             "$genesisui_filter_consumables", "$genesisui_filter_materials", "$genesisui_filter_ammo", "$genesisui_filter_misc",
         };
 
-        private readonly VanillaSkin _skin = new VanillaSkin("module:win.inventory");
-        private readonly Vector3[] _corners = new Vector3[4];
+        private static readonly string[] UtilityKeys = { "Z", "X", "C", "V" };
+
+        // Left column like the concept (head, chest, cape, legs), then the right column.
+        private static readonly EquipSlot[] WornOrder =
+        {
+            EquipSlot.Head, EquipSlot.Chest, EquipSlot.Cape, EquipSlot.Legs,
+            EquipSlot.Trinket, EquipSlot.Belt, EquipSlot.Amulet, EquipSlot.Ring, EquipSlot.Lantern, EquipSlot.BackpackQuiver,
+        };
+
+        private readonly VanillaSkin _skin = new VanillaSkin(Owner);
+        private readonly List<ItemCell> _gridCells = new List<ItemCell>(SlotLayout.Width * VisibleRows);
+        private readonly List<ItemCell> _quickCells = new List<ItemCell>(SlotLayout.MaxQuick);
+        private readonly List<ItemCell> _utilityCells = new List<ItemCell>(SlotLayout.MaxUtility);
+        private readonly Dictionary<EquipSlot, ItemCell> _wornCells = new Dictionary<EquipSlot, ItemCell>();
+        private readonly List<ItemCell> _containerCells = new List<ItemCell>(32);
+        private readonly List<GameObject> _wornLabels = new List<GameObject>();
+        private readonly List<InventorySort.Entry> _sortEntries = new List<InventorySort.Entry>(64);
+
         private ThemeRuntime _theme;
+        private readonly BepInEx.Configuration.ConfigEntry<BepInEx.Configuration.KeyboardShortcut> _sortKey;
         private RectTransform _root;
-        private CanvasGroup _panelFade;
+        private CanvasGroup _fade;
         private RectTransform _area;
-        private RectTransform _controlsRoot;
-        private CanvasGroup _controlsFade;
-        private RectTransform _controlsArea;
-        private RectTransform _inventoryPanel;
-        private RectTransform _equipmentPanel;
-        private RectTransform _detailsPanel;
-        private RectTransform _gridArea;
+        private RectTransform _inventoryPanel, _equipmentPanel, _detailsPanel, _containerPanel;
         private RectTransform _filterList;
-        private float _cell;
-        private TextMeshProUGUI _slotsText;
-        private TextMeshProUGUI _weightText;
+        private RectTransform _scrollTrack, _scrollThumb;
+        private RectTransform _containerGrid;
+        private GameObject _quickTitle, _utilityTitle, _specialDivider;
+        private TextMeshProUGUI _slotsText, _weightText, _armorText, _filterText, _containerTitle;
         private Image _weightFill;
-        private TextMeshProUGUI _armorText;
-        private TextMeshProUGUI _filterText;
-        private Image _detailIcon;
-        private TextMeshProUGUI _detailName;
-        private TextMeshProUGUI _detailBody;
+        private Image _ghostIcon;
+        private TextMeshProUGUI _ghostAmount;
+        private RectTransform _ghost;
+        private Details _details;
+
         private Filter _filter = Filter.All;
         private bool _applied;
         private float _closedFor;
+        private int _scroll;
+        private int _builtContainerW = -1, _builtContainerH = -1, _containerScroll;
+        private int _containerVisibleRows;
         private bool _containerShown;
-        private InventoryElement _firstElement;
-        private int _elementCount;
-        private int _dressedRows = -1;
+        private ItemCell _hovered;
         private ItemDrop.ItemData _shownItem;
-        private int _shownSlots = -1, _shownWeight = -1, _shownMax = -1, _shownArmor = -1;
-        private bool _loggedElement;
-        private bool _reportedDrift;
+        private bool _droppedOnCell;
+        private string _layoutKey;
+        private int _shownSlots = -1, _shownOrdinary = -1, _shownWeight = -1, _shownMax = -1, _shownArmor = -1;
+        private GameObject _hiddenDragGo;
+        private Transform _guiAncestor;
+        private bool _behind;
 
-        private AccessTools.FieldRef<InventoryGrid, List<InventoryElement>> _elements;
-        private Func<InventoryGrid, InventoryElement> _hovered;
+        private AccessTools.FieldRef<InventoryGui, InventoryGrid> _containerGridRef;
+        private AccessTools.FieldRef<InventoryGui, Container> _containerRef;
+        private AccessTools.FieldRef<InventoryGui, ItemDrop.ItemData> _dragItem;
+        private AccessTools.FieldRef<InventoryGui, int> _dragAmount;
+        private AccessTools.FieldRef<InventoryGui, GameObject> _dragGo;
+
+        public InventoryWindowModule(BepInEx.Configuration.ConfigFile config)
+        {
+            _sortKey = config.Bind("Windows", "SortKey", new BepInEx.Configuration.KeyboardShortcut(KeyCode.R),
+                "Tecla que organiza o inventário (fora da hotbar, do consumo rápido, dos slots de ação e do equipamento).");
+        }
 
         public string Id => "win.inventory";
         public string NameToken => "$genesisui_module_inventory_window";
@@ -109,12 +171,12 @@ namespace GenesisUI.Modules.Windows
         public void Build(ModuleContext context)
         {
             _theme = context.Theme;
-            _elements = AccessTools.FieldRefAccess<InventoryGrid, List<InventoryElement>>("m_elements");
-            _hovered = AccessTools.MethodDelegate<Func<InventoryGrid, InventoryElement>>(
-                AccessTools.Method(typeof(InventoryGrid), "GetHoveredElement"));
+            _containerGridRef = AccessTools.FieldRefAccess<InventoryGui, InventoryGrid>("m_containerGrid");
+            _containerRef = AccessTools.FieldRefAccess<InventoryGui, Container>("m_currentContainer");
+            _dragItem = AccessTools.FieldRefAccess<InventoryGui, ItemDrop.ItemData>("m_dragItem");
+            _dragAmount = AccessTools.FieldRefAccess<InventoryGui, int>("m_dragAmount");
+            _dragGo = AccessTools.FieldRefAccess<InventoryGui, GameObject>("m_dragGo");
             _applied = false;
-            Canvas.willRenderCanvases += OnWillRenderCanvases;
-            // Panels are built on vanilla's canvas when it exists (EnsureBuilt).
         }
 
         public void Refresh(float deltaSeconds)
@@ -126,17 +188,14 @@ namespace GenesisUI.Modules.Windows
             {
                 if (_applied)
                 {
-                    // IsVisible becomes false after two hidden frames, while vanilla's close
-                    // animation is still drawing. Keep the vanilla graphics veiled until the
-                    // themed panel has faded away and the closing animation has settled.
+                    // Keep vanilla hidden while our window fades out with vanilla's close animation.
                     if (gui == null || player == null || InventoryGui.IsVisible() || WindowShellModule.Showing)
-                        Unapply(); // another tab, disabled shell or scene loss
+                        Unapply();
                     else
                     {
                         _closedFor += deltaSeconds;
                         SetFade(WindowShellModule.Opacity, false);
-                        if (_closedFor >= CloseHoldSeconds && WindowShellModule.Opacity <= 0.001f)
-                            Unapply();
+                        if (_closedFor >= CloseHoldSeconds && WindowShellModule.Opacity <= 0.001f) Unapply();
                     }
                 }
                 return;
@@ -144,88 +203,82 @@ namespace GenesisUI.Modules.Windows
             _closedFor = 0f;
             if (!EnsureBuilt(gui)) return;
             if (!_applied) Apply(gui);
+            WindowCanvas.Fit(_area);
             SetFade(WindowShellModule.Opacity, true);
 
-            var grid = gui.m_playerGrid;
-            var elements = _elements(grid);
-            int rows = InventoryModule.Current != null ? InventoryModule.Current.Rows : SlotLayout.MinRows;
-            if (elements.Count != _elementCount || rows != _dressedRows || (elements.Count > 0 && elements[0] != _firstElement))
-                DressElements(elements, rows); // vanilla rebuilds its elements when the size changes
-            AlignVisibleSlots(); // also correct before input; the canvas callback corrects after layout
-            ApplyFilter(grid, elements);
-            PlaceContainer(gui);
-            if (!_containerShown) UpdateDetails(grid);
-            UpdateStats(player);
+            var layout = InventoryModule.Current ?? new SlotLayout(SlotLayout.MinRows, 0, 0, null);
+            ApplyLayout(layout);
+            HideVanillaDrag(gui);
+            FollowSplitDialog(gui);
+
+            var inventory = player.GetInventory();
+            var dragged = _dragItem(gui);
+            bool container = UpdateContainer(gui, player, dragged);
+            for (int i = 0; i < _gridCells.Count; i++) UpdateCell(_gridCells[i], inventory, player, dragged);
+            for (int i = 0; i < _quickCells.Count; i++) UpdateCell(_quickCells[i], inventory, player, dragged);
+            for (int i = 0; i < _utilityCells.Count; i++) UpdateCell(_utilityCells[i], inventory, player, dragged);
+            if (!container)
+                foreach (var cell in _wornCells.Values) UpdateCell(cell, inventory, player, dragged);
+            UpdateGhost(gui, dragged);
+            if (!container) UpdateDetails(inventory);
+            UpdateStats(player, inventory, layout);
+
+            if (_sortKey.Value.IsDown()) Sort(gui, player, layout);
         }
 
         public void Teardown()
         {
-            Canvas.willRenderCanvases -= OnWillRenderCanvases;
             if (_applied) Unapply();
             if (_root != null) UnityEngine.Object.Destroy(_root.gameObject);
-            if (_controlsRoot != null) UnityEngine.Object.Destroy(_controlsRoot.gameObject);
             _root = null;
-            _controlsRoot = null;
+            _gridCells.Clear();
+            _quickCells.Clear();
+            _utilityCells.Clear();
+            _wornCells.Clear();
+            _containerCells.Clear();
+            _wornLabels.Clear();
         }
+
+        // ------------------------------------------------------------------ vanilla engine
 
         private bool EnsureBuilt(InventoryGui gui)
         {
             if (_root != null) return true;
-            _root = WindowCanvas.CreateRoot(gui, "GenesisUI.InventoryWindow", behind: true);
+            _root = WindowCanvas.CreateRoot(gui, "GenesisUI.InventoryWindow", behind: false);
             if (_root == null) return false;
-            _panelFade = _root.gameObject.AddComponent<CanvasGroup>();
-            _panelFade.alpha = 0f;
-            _area = WindowCanvas.Area(_root, "Area");
-            // Only interactive controls are drawn in front of InventoryGui. The panel art remains
-            // behind vanilla's item cells, while the filter can receive pointer events reliably.
-            _controlsRoot = WindowCanvas.CreateRoot(gui, "GenesisUI.InventoryControls", behind: false);
-            if (_controlsRoot == null)
-            {
-                UnityEngine.Object.Destroy(_root.gameObject);
-                _root = null;
-                return false;
-            }
-            _controlsFade = _controlsRoot.gameObject.AddComponent<CanvasGroup>();
-            _controlsFade.alpha = 0f;
-            _controlsArea = WindowCanvas.Area(_controlsRoot, "Area");
-            BuildPanels();
+            _fade = _root.gameObject.AddComponent<CanvasGroup>();
+            _fade.alpha = 0f;
+            _area = WindowCanvas.Area(_root, "Board");
+            Build();
             _root.gameObject.SetActive(false);
-            _controlsRoot.gameObject.SetActive(false);
             return true;
         }
-
-        // ------------------------------------------------------------------ vanilla
 
         private void Apply(InventoryGui gui)
         {
             _applied = true;
             _root.gameObject.SetActive(true);
-            _controlsRoot.gameObject.SetActive(true);
-
-            // Hide only vanilla panel graphics outside the grid. A CanvasGroup with alpha=0
-            // on m_player also suppresses its child grid on Unity 6 despite
-            // ignoreParentGroups, and breaks the slots' raycasts (R-049).
-            foreach (var graphic in gui.m_player.GetComponentsInChildren<Graphic>(true))
-                if (!graphic.transform.IsChildOf(gui.m_playerGrid.transform))
-                    _skin.Enabled(graphic).enabled = false;
-
-            // Crafting and the character info belong to other tabs.
+            // Vanilla's panels keep running (their grids are the engine) but draw nothing and take no clicks.
+            Hide(gui.m_player.gameObject);
+            Hide(gui.m_container.gameObject);
             Hide(gui.m_crafting.gameObject);
             Hide(gui.m_info.gameObject);
-            _dressedRows = -1;
-            _reportedDrift = false;
-            InventoryModule.SetEquipmentPanelVisible(true);
-        }
-
-        private void SetFade(float alpha, bool interactive)
-        {
-            if (_panelFade != null && !Mathf.Approximately(_panelFade.alpha, alpha)) _panelFade.alpha = alpha;
-            if (_controlsFade != null)
+            // Vanilla's split dialog stays vanilla's and visible even if it lives under a hidden panel;
+            // while it is open our window steps behind InventoryGui (FollowSplitDialog).
+            if (gui.m_splitDialog != null)
             {
-                if (!Mathf.Approximately(_controlsFade.alpha, alpha)) _controlsFade.alpha = alpha;
-                _controlsFade.blocksRaycasts = interactive;
-                _controlsFade.interactable = interactive;
+                var group = _skin.Group(gui.m_splitDialog.gameObject);
+                group.alpha = 1f;
+                group.blocksRaycasts = true;
+                group.interactable = true;
+                group.ignoreParentGroups = true;
             }
+            _guiAncestor = gui.transform;
+            while (_guiAncestor.parent != null && _guiAncestor.parent != _root.parent) _guiAncestor = _guiAncestor.parent;
+            _behind = true; // forces the first placement in front
+            InventoryModule.SetEquipmentPanelVisible(true);
+            FollowSplitDialog(gui);
+            GenesisLog.Info("Module:win.inventory", "window shown; vanilla panels hidden (" + _skin.Count + " change(s))");
         }
 
         private void Hide(GameObject go)
@@ -241,296 +294,280 @@ namespace GenesisUI.Modules.Windows
             _applied = false;
             _closedFor = 0f;
             InventoryModule.SetEquipmentPanelVisible(false);
-            // A moved button may never receive the pointer-exit event that clears Unity's hover
-            // transition. Clear its state before restoring its original sprite and colours.
-            var gui = InventoryGui.instance;
-            if (gui != null && gui.m_playerGrid != null && EventSystem.current != null)
-            {
-                var eventSystem = EventSystem.current;
-                var selected = eventSystem.currentSelectedGameObject;
-                if (selected != null && selected.transform.IsChildOf(gui.m_playerGrid.transform))
-                    eventSystem.SetSelectedGameObject(null);
-                var pointer = new PointerEventData(eventSystem);
-                foreach (var element in _elements(gui.m_playerGrid))
-                    if (element != null && element.m_button != null)
-                        element.m_button.OnPointerExit(pointer);
-            }
+            ShowVanillaDrag();
             _skin.Restore();
-            _firstElement = null;
-            _elementCount = 0;
-            _dressedRows = -1;
+            _hovered = null;
             _shownItem = null;
             _containerShown = false;
+            _droppedOnCell = false;
             if (_filterList != null) _filterList.gameObject.SetActive(false);
-            if (_equipmentPanel != null) _equipmentPanel.gameObject.SetActive(true);
-            if (_detailsPanel != null) _detailsPanel.gameObject.SetActive(true);
             if (_root != null) _root.gameObject.SetActive(false);
-            if (_controlsRoot != null) _controlsRoot.gameObject.SetActive(false);
+        }
+
+        private void SetFade(float alpha, bool interactive)
+        {
+            if (_fade == null) return;
+            if (!Mathf.Approximately(_fade.alpha, alpha)) _fade.alpha = alpha;
+            _fade.blocksRaycasts = interactive;
+            _fade.interactable = interactive;
         }
 
         /// <summary>
-        /// Each vanilla slot of the ordinary rows goes to its cell on our grid (same canvas: world
-        /// positions line up), wears Diego's slot under its icon, and loses its tooltip (the details
-        /// panel shows the item). Vanilla's own slot background is hidden; its "equipped" mark wears
-        /// the equipped slot. Special rows stay hidden by the inventory module.
+        /// Our window draws in front of InventoryGui; while vanilla's split dialog is open it steps just
+        /// behind it, so the dialog (vanilla's, modal) draws and clicks above our panels.
         /// </summary>
-        private void DressElements(List<InventoryElement> elements, int rows)
+        private void FollowSplitDialog(InventoryGui gui)
         {
-            _elementCount = elements.Count;
-            _firstElement = elements.Count > 0 ? elements[0] : null;
-            _dressedRows = rows;
-            var slot = _theme.Sprite("hotslot");
-            var equipped = _theme.Sprite("hotslot_equipped");
-            var layout = InventoryModule.Current;
+            bool split = gui.m_splitDialog != null && gui.m_splitDialog.IsActive;
+            if (split == _behind || _guiAncestor == null || _guiAncestor.parent != _root.parent) return;
+            _behind = split;
+            int index = _guiAncestor.GetSiblingIndex();
+            int mine = _root.GetSiblingIndex();
+            if (split) _root.SetSiblingIndex(mine < index ? index - 1 : index);
+            else _root.SetSiblingIndex(mine < index ? index : index + 1);
+        }
 
-            for (int i = 0; i < elements.Count; i++)
+        /// <summary>Vanilla's drag icon is replaced by ours; its object is vanilla's and dies on drop.</summary>
+        private void HideVanillaDrag(InventoryGui gui)
+        {
+            var go = _dragGo(gui);
+            if (go == null || go == _hiddenDragGo) return;
+            _hiddenDragGo = go;
+            var group = go.GetComponent<CanvasGroup>();
+            if (group == null) group = go.AddComponent<CanvasGroup>();
+            group.alpha = 0f;
+            group.blocksRaycasts = false;
+        }
+
+        private void ShowVanillaDrag()
+        {
+            if (_hiddenDragGo != null)
             {
-                var element = elements[i];
-                if (element == null) continue;
-                var pos = element.Position;
-                var equipment = layout != null ? layout.EquipmentAt(pos.x, pos.y) : null;
-                if (pos.y >= rows && !equipment.HasValue) continue;
-
-                var rt = _skin.Rect((RectTransform)element.transform);
-                var target = equipment.HasValue ? EquipmentCellWorld(equipment.Value) : CellWorld(pos.x, pos.y);
-                float scale = rt.parent != null ? Mathf.Max(0.0001f, rt.parent.lossyScale.x) : 1f;
-                rt.pivot = new Vector2(0.5f, 0.5f);
-                rt.sizeDelta = new Vector2(target.width, target.height) / scale;
-                rt.position = target.center;
-
-                if (!_loggedElement)
-                {
-                    _loggedElement = true;
-                    LogElement(element);
-                }
-
-                // Dress the actual button graphic. It remains the raycast target and keeps
-                // vanilla's click, drag, split and gamepad handling on the same object.
-                var rootBackground = element.GetComponent<Image>();
-                var buttonBackground = element.m_button != null ? element.m_button.targetGraphic as Image : null;
-                var background = buttonBackground != null ? buttonBackground : rootBackground;
-                if (slot != null && background != null)
-                {
-                    _skin.Image(background);
-                    background.sprite = slot;
-                    background.type = Image.Type.Sliced;
-                    background.color = Color.white;
-                    background.pixelsPerUnitMultiplier = Frame.CanvasScale(background.transform) * _theme.Size("hotslot").y / _cell;
-                    if (rootBackground != null && rootBackground != background)
-                        _skin.Enabled(rootBackground).enabled = false;
-                    if (element.m_button != null)
-                    {
-                        _skin.Button(element.m_button);
-                        var colors = element.m_button.colors;
-                        colors.normalColor = Color.white;
-                        colors.highlightedColor = new Color(1f, 0.91f, 0.70f, 1f);
-                        colors.pressedColor = new Color(1f, 0.78f, 0.46f, 1f);
-                        colors.selectedColor = colors.highlightedColor;
-                        element.m_button.colors = colors;
-                    }
-                }
-
-                // The equipped mark: Diego's equipped slot over the cell instead of vanilla's blue square.
-                if (element.m_equiped != null && equipped != null)
-                {
-                    _skin.Image(element.m_equiped);
-                    element.m_equiped.sprite = equipped;
-                    element.m_equiped.type = Image.Type.Simple;
-                    element.m_equiped.color = Color.white;
-                    var ert = _skin.Rect(element.m_equiped.rectTransform);
-                    var drawn = _theme.Size("hotslot_equipped");
-                    var c = _theme.Content("hotslot_equipped", Vector4.zero);
-                    float k = _cell / Mathf.Max(1f, drawn.x - c.x - c.z);
-                    ert.anchorMin = ert.anchorMax = ert.pivot = new Vector2(0.5f, 0.5f);
-                    ert.anchoredPosition = Vector2.zero;
-                    ert.sizeDelta = drawn * k;
-                }
-                if (element.m_tooltip != null) _skin.Enabled(element.m_tooltip).enabled = false;
+                var group = _hiddenDragGo.GetComponent<CanvasGroup>();
+                if (group != null) group.alpha = 1f;
             }
+            _hiddenDragGo = null;
         }
 
-        /// <summary>Logs one element's objects once, so a styling problem can be read in the log.</summary>
-        private static void LogElement(InventoryElement element)
+        private InventoryGrid GridOf(InventoryGui gui, ItemCell cell) => cell.Container ? _containerGridRef(gui) : gui.m_playerGrid;
+
+        private Inventory InventoryOf(InventoryGui gui, ItemCell cell)
         {
-            var sb = new System.Text.StringBuilder("inventory slot parts:");
-            foreach (var image in element.GetComponentsInChildren<Image>(true))
-                sb.Append(' ').Append(image.gameObject.name).Append('(').Append(image.sprite != null ? image.sprite.name : "none").Append(')');
-            GenesisLog.Info("Module:win.inventory", sb.ToString());
+            if (!cell.Container) return Player.m_localPlayer != null ? Player.m_localPlayer.GetInventory() : null;
+            var container = _containerRef(gui);
+            return container != null ? container.GetInventory() : null;
         }
 
-        /// <summary>A grid cell in world space.</summary>
-        private Rect CellWorld(int x, int y)
-        {
-            _gridArea.GetWorldCorners(_corners);
-            float unit = (_corners[2].x - _corners[0].x) / Mathf.Max(1f, _gridArea.rect.width);
-            float cx = _corners[1].x + (x * (_cell + CellGap) + _cell / 2f) * unit;
-            float cy = _corners[1].y - (y * (_cell + CellGap) + _cell / 2f) * unit;
-            float size = _cell * unit;
-            return new Rect(cx - size / 2f, cy - size / 2f, size, size);
-        }
+        // ------------------------------------------------------------------ input (called by CellInput)
 
-        private Rect EquipmentCellWorld(EquipSlot slot)
+        /// <summary>A press on a cell: the same call a press on vanilla's slot makes (InventoryGrid.OnLeftDown/OnRightDown).</summary>
+        internal void OnDown(ItemCell cell, PointerEventData e)
         {
-            _equipmentPanel.GetWorldCorners(_corners);
-            int index = EquipmentIndex(slot);
-            int column = index % 2;
-            int row = index / 2;
-            float width = _corners[2].x - _corners[1].x;
-            float height = _corners[1].y - _corners[0].y;
-            float x = _corners[1].x + width * (column == 0 ? 0.23f : 0.77f);
-            float y = _corners[1].y - height * (0.20f + row * 0.22f);
-            float unit = width / Mathf.Max(1f, _equipmentPanel.rect.width);
-            float size = _cell * unit;
-            return new Rect(x - size / 2f, y - size / 2f, size, size);
-        }
-
-        private static int EquipmentIndex(EquipSlot slot)
-        {
-            switch (slot)
-            {
-                case EquipSlot.Head: return 0;
-                case EquipSlot.Trinket: return 1;
-                case EquipSlot.Chest: return 2;
-                case EquipSlot.Belt: return 3;
-                case EquipSlot.Cape: return 4;
-                case EquipSlot.Legs: return 5;
-                default: return 0;
-            }
-        }
-
-        private void OnWillRenderCanvases()
-        {
-            if (!_applied || !WindowShellModule.Showing) return;
-            if (!Guard.Run(Owner, AlignForRender, this) && Guard.IsTripped(Owner)) Unapply();
-        }
-
-        /// <summary>Vanilla moves its grid after opening and when changing tabs. Keep the original
-        /// slot objects aligned with our panel after that movement and after UI layout.</summary>
-        private void AlignVisibleSlots()
-        {
-            if (!_applied || _gridArea == null) return;
             var gui = InventoryGui.instance;
-            if (gui == null || gui.m_playerGrid == null) return;
-            var elements = _elements(gui.m_playerGrid);
-            if (elements == null || elements.Count != _elementCount ||
-                (elements.Count > 0 && elements[0] != _firstElement)) return;
-            var layout = InventoryModule.Current;
-            int rows = layout != null ? layout.Rows : SlotLayout.MinRows;
-            for (int i = 0; i < elements.Count; i++)
+            if (gui == null || !_applied || !cell.Active) return;
+            var grid = GridOf(gui, cell);
+            var inventory = InventoryOf(gui, cell);
+            if (grid == null || inventory == null) return;
+            var item = inventory.GetItemAt(cell.Pos.x, cell.Pos.y);
+            if (e.button == PointerEventData.InputButton.Right)
             {
-                var element = elements[i];
-                if (element == null) continue;
-                var pos = element.Position;
-                var equipment = layout != null ? layout.EquipmentAt(pos.x, pos.y) : null;
-                if (pos.y >= rows && !equipment.HasValue) continue;
-                var rt = (RectTransform)element.transform;
-                var target = equipment.HasValue ? EquipmentCellWorld(equipment.Value) : CellWorld(pos.x, pos.y);
-                var world = target.center;
-                if (((Vector2)rt.position - world).sqrMagnitude < 0.0625f) continue;
-                if (!_reportedDrift && ((Vector2)rt.position - world).sqrMagnitude > 25f)
-                {
-                    _reportedDrift = true;
-                    GenesisLog.Info("Module:win.inventory", "vanilla grid moved after dressing; aligning cells on each canvas render");
-                }
-                rt.position = world;
+                grid.m_onRightClick?.Invoke(grid, item, cell.Pos);
+                return;
+            }
+            if (e.button != PointerEventData.InputButton.Left) return;
+            var input = BepInEx.UnityInput.Current;
+            var mod = InventoryGrid.Modifier.Select;
+            if (input.GetKey(KeyCode.LeftShift) || input.GetKey(KeyCode.RightShift)) mod = InventoryGrid.Modifier.Split;
+            else if (input.GetKey(KeyCode.LeftControl) || input.GetKey(KeyCode.RightControl)) mod = InventoryGrid.Modifier.Move;
+            grid.m_onSelected?.Invoke(grid, item, cell.Pos, mod);
+            if (_filterList != null) _filterList.gameObject.SetActive(false);
+        }
+
+        /// <summary>A drag released on a cell: vanilla's OnReleasedItem, as vanilla's own drag handler calls it.</summary>
+        internal void OnDrop(ItemCell cell)
+        {
+            var gui = InventoryGui.instance;
+            if (gui == null || !_applied || !cell.Active || _dragItem(gui) == null) return;
+            _droppedOnCell = true;
+            var grid = GridOf(gui, cell);
+            var inventory = InventoryOf(gui, cell);
+            if (grid == null || inventory == null) return;
+            grid.m_onReleased?.Invoke(grid, inventory.GetItemAt(cell.Pos.x, cell.Pos.y), cell.Pos);
+        }
+
+        /// <summary>A drag released on nothing (the world): vanilla's drop-outside button, which drops the item.</summary>
+        internal void OnEndDrag(PointerEventData e)
+        {
+            var gui = InventoryGui.instance;
+            bool onCell = _droppedOnCell;
+            _droppedOnCell = false;
+            if (gui == null || !_applied || onCell || _dragItem(gui) == null || gui.m_dropButton == null) return;
+            var under = e.pointerCurrentRaycast.gameObject;
+            if (under == null || under.transform.IsChildOf(gui.m_dropButton.transform))
+                gui.m_dropButton.onClick.Invoke();
+        }
+
+        internal void OnEnter(ItemCell cell) => _hovered = cell;
+
+        internal void OnExit(ItemCell cell)
+        {
+            if (_hovered == cell) _hovered = null;
+        }
+
+        internal void OnScroll(ItemCell cell, PointerEventData e)
+        {
+            int step = e.scrollDelta.y > 0f ? -1 : e.scrollDelta.y < 0f ? 1 : 0;
+            if (step == 0) return;
+            if (cell != null && cell.Container) _containerScroll += step;
+            else _scroll += step;
+        }
+
+        // ------------------------------------------------------------------ per frame
+
+        /// <summary>Binds cells to inventory positions for the admin's layout; rebuilt only when it changes.</summary>
+        private void ApplyLayout(SlotLayout layout)
+        {
+            int maxScroll = Mathf.Max(0, layout.Rows - VisibleRows);
+            _scroll = Mathf.Clamp(_scroll, 0, maxScroll);
+            for (int i = 0; i < _gridCells.Count; i++)
+            {
+                var cell = _gridCells[i];
+                int x = i % SlotLayout.Width, y = i / SlotLayout.Width + _scroll;
+                cell.Bind(new Vector2i(x, y), y < layout.Rows, y == 0 ? (x + 1).ToString() : null);
+            }
+            UpdateScrollbar(layout.Rows);
+
+            string key = layout.Rows + "/" + layout.Quick + "/" + layout.Utility + "/" + layout.Equipment.Count;
+            if (key == _layoutKey) return;
+            _layoutKey = key;
+            for (int i = 0; i < _quickCells.Count; i++)
+            {
+                var p = layout.QuickPosition(i);
+                _quickCells[i].Bind(new Vector2i(p.X, p.Y), i < layout.Quick, null);
+                _quickCells[i].Root.gameObject.SetActive(i < layout.Quick);
+            }
+            for (int i = 0; i < _utilityCells.Count; i++)
+            {
+                var p = layout.UtilityPosition(i);
+                _utilityCells[i].Bind(new Vector2i(p.X, p.Y), i < layout.Utility, null);
+                _utilityCells[i].Root.gameObject.SetActive(i < layout.Utility);
+            }
+            _quickTitle.SetActive(layout.Quick > 0);
+            _utilityTitle.SetActive(layout.Utility > 0);
+            _specialDivider.SetActive(layout.Quick > 0 && layout.Utility > 0);
+
+            // Worn cells: the layout's slots, left column first (4), then the right column.
+            int placed = 0;
+            foreach (var label in _wornLabels) label.SetActive(false);
+            foreach (var slot in WornOrder)
+            {
+                if (!_wornCells.TryGetValue(slot, out var cell)) continue;
+                var p = layout.EquipmentPosition(slot);
+                bool present = p.X >= 0 && placed < 8;
+                cell.Root.gameObject.SetActive(present);
+                if (!present) continue;
+                cell.Bind(new Vector2i(p.X, p.Y), true, null);
+                PlaceWorn(cell, placed);
+                placed++;
+            }
+            GenesisLog.Info("Module:win.inventory", "layout bound: " + key);
+        }
+
+        private void PlaceWorn(ItemCell cell, int index)
+        {
+            int column = index < 4 ? 0 : 1, row = index % 4;
+            float x = column == 0 ? 24f : EquipmentW - 24f - WornCell;
+            float y = 96f + row * 120f;
+            cell.Root.anchoredPosition = new Vector2(x, -y);
+            if (cell.Label != null)
+            {
+                var rt = (RectTransform)cell.Label.transform;
+                rt.anchoredPosition = new Vector2(x - 20f, -(y + WornCell + 4f));
+                cell.Label.gameObject.SetActive(true);
             }
         }
 
-        private void PlaceContainer(InventoryGui gui)
+        private void UpdateScrollbar(int rows)
         {
-            bool open = gui.IsContainerOpen() && gui.m_container.gameObject.activeInHierarchy;
+            bool show = rows > VisibleRows;
+            if (_scrollTrack.gameObject.activeSelf != show) _scrollTrack.gameObject.SetActive(show);
+            if (!show) return;
+            float track = _scrollTrack.rect.height;
+            float thumb = track * VisibleRows / rows;
+            float y = (track - thumb) * _scroll / Mathf.Max(1, rows - VisibleRows);
+            _scrollThumb.sizeDelta = new Vector2(_scrollThumb.sizeDelta.x, thumb);
+            _scrollThumb.anchoredPosition = new Vector2(0f, -y);
+        }
+
+        private void UpdateCell(ItemCell cell, Inventory inventory, Player player, ItemDrop.ItemData dragged)
+        {
+            var item = cell.Active && inventory != null ? inventory.GetItemAt(cell.Pos.x, cell.Pos.y) : null;
+            bool dim = item != null && (item == dragged || (_filter != Filter.All && !Matches(item, _filter)));
+            cell.Show(item, player != null && item != null && player.IsItemEquiped(item), cell == _hovered, dim ? DimAlpha : 1f);
+        }
+
+        private void UpdateGhost(InventoryGui gui, ItemDrop.ItemData dragged)
+        {
+            bool show = dragged != null;
+            if (_ghost.gameObject.activeSelf != show) _ghost.gameObject.SetActive(show);
+            if (!show) return;
+            var icon = dragged.GetIcon();
+            if (_ghostIcon.sprite != icon) _ghostIcon.sprite = icon;
+            int amount = _dragAmount(gui);
+            if (amount > 1) _ghostAmount.SetText("{0}", amount);
+            else if (_ghostAmount.text.Length > 0) _ghostAmount.text = "";
+            _ghost.position = ZInput.pointerPosition;
+        }
+
+        /// <summary>The chest panel over equipment and details (ConceptArt 9 keeps the inventory on the left).</summary>
+        private bool UpdateContainer(InventoryGui gui, Player player, ItemDrop.ItemData dragged)
+        {
+            var container = _containerRef(gui);
+            bool open = gui.IsContainerOpen() && container != null;
             if (open != _containerShown)
             {
                 _containerShown = open;
                 _equipmentPanel.gameObject.SetActive(!open);
                 _detailsPanel.gameObject.SetActive(!open);
+                _containerPanel.gameObject.SetActive(open);
+                _containerScroll = 0;
             }
-            if (!open) return;
-            var rt = _skin.Rect(gui.m_container);
-            _equipmentPanel.GetWorldCorners(_corners);
-            var left = _corners[1];
-            _detailsPanel.GetWorldCorners(_corners);
-            var right = _corners[2];
-            var target = new Vector3((left.x + right.x) / 2f, left.y, 0f);
-            if (rt.pivot != new Vector2(0.5f, 1f)) rt.pivot = new Vector2(0.5f, 1f);
-            if ((rt.position - target).sqrMagnitude > 0.25f) rt.position = target;
+            if (!open) return false;
+            var inventory = container.GetInventory();
+            if (inventory == null) return true;
+            int w = inventory.GetWidth(), h = inventory.GetHeight();
+            if (w != _builtContainerW || h != _builtContainerH) BuildContainerCells(w, h);
+            _containerScroll = Mathf.Clamp(_containerScroll, 0, Mathf.Max(0, h - _containerVisibleRows));
+            for (int i = 0; i < _containerCells.Count; i++)
+            {
+                var cell = _containerCells[i];
+                int x = i % w, y = i / w + _containerScroll;
+                cell.Bind(new Vector2i(x, y), y < h, null);
+                UpdateCell(cell, inventory, null, dragged);
+            }
+            string name = Localize(inventory.GetName());
+            if (_containerTitle.text != name) _containerTitle.text = name.ToUpperInvariant();
+            return true;
         }
 
-        // ------------------------------------------------------------------ filter, details, stats
-
-        private void ApplyFilter(InventoryGrid grid, List<InventoryElement> elements)
+        private void UpdateDetails(Inventory inventory)
         {
-            var inventory = grid.GetInventory();
-            for (int i = 0; i < elements.Count; i++)
-            {
-                var element = elements[i];
-                if (element == null || element.m_icon == null) continue;
-                var p = element.Position;
-                var item = inventory.GetItemAt(p.x, p.y);
-                float alpha = _filter == Filter.All || item == null || Matches(item, _filter) ? 1f : 0.22f;
-                var renderer = element.m_icon.canvasRenderer;
-                if (!Mathf.Approximately(renderer.GetAlpha(), alpha))
-                {
-                    _skin.RendererAlpha(renderer);
-                    renderer.SetAlpha(alpha);
-                }
-            }
-        }
-
-        internal static bool Matches(ItemDrop.ItemData item, Filter filter)
-        {
-            var t = item.m_shared.m_itemType;
-            switch (filter)
-            {
-                case Filter.Weapons:
-                    return t == ItemDrop.ItemData.ItemType.OneHandedWeapon || t == ItemDrop.ItemData.ItemType.TwoHandedWeapon ||
-                           t == ItemDrop.ItemData.ItemType.TwoHandedWeaponLeft || t == ItemDrop.ItemData.ItemType.Bow ||
-                           t == ItemDrop.ItemData.ItemType.Torch;
-                case Filter.Armor:
-                    return t == ItemDrop.ItemData.ItemType.Helmet || t == ItemDrop.ItemData.ItemType.Chest ||
-                           t == ItemDrop.ItemData.ItemType.Legs || t == ItemDrop.ItemData.ItemType.Shoulder ||
-                           t == ItemDrop.ItemData.ItemType.Hands || t == ItemDrop.ItemData.ItemType.Utility ||
-                           t == ItemDrop.ItemData.ItemType.Trinket || t == ItemDrop.ItemData.ItemType.Shield;
-                case Filter.Tools: return t == ItemDrop.ItemData.ItemType.Tool;
-                case Filter.Consumables: return t == ItemDrop.ItemData.ItemType.Consumable;
-                case Filter.Materials: return t == ItemDrop.ItemData.ItemType.Material;
-                case Filter.Ammo: return t == ItemDrop.ItemData.ItemType.Ammo || t == ItemDrop.ItemData.ItemType.AmmoNonEquipable;
-                case Filter.Misc:
-                    return !Matches(item, Filter.Weapons) && !Matches(item, Filter.Armor) && !Matches(item, Filter.Tools) &&
-                           !Matches(item, Filter.Consumables) && !Matches(item, Filter.Materials) && !Matches(item, Filter.Ammo);
-                default: return true;
-            }
-        }
-
-        private void UpdateDetails(InventoryGrid grid)
-        {
-            var element = _hovered(grid);
-            ItemDrop.ItemData item = null;
-            if (element != null)
-            {
-                var p = element.Position;
-                item = grid.GetInventory().GetItemAt(p.x, p.y);
-            }
+            var item = _hovered != null && _hovered.Active ? InventoryOf(InventoryGui.instance, _hovered)?.GetItemAt(_hovered.Pos.x, _hovered.Pos.y) : null;
             if (item == null || item == _shownItem) return; // the last item stays, like a selection
             _shownItem = item;
-            _detailIcon.sprite = item.GetIcon();
-            _detailIcon.enabled = true;
-            _detailName.text = Localize(item.m_shared.m_name).ToUpperInvariant();
-            _detailBody.text = Localize(ItemDrop.ItemData.GetTooltip(item, item.m_quality, false, item.m_worldLevel, -1, false));
+            _details.Show(item);
         }
 
-        private void UpdateStats(Player player)
+        private void UpdateStats(Player player, Inventory inventory, SlotLayout layout)
         {
-            var inventory = player.GetInventory();
-            var layout = InventoryModule.Current;
-            int ordinary = layout != null ? layout.OrdinarySlots : inventory.GetWidth() * inventory.GetHeight();
             int used = 0;
             foreach (var item in inventory.GetAllItems())
-                if (layout == null || layout.IsOrdinary(item.m_gridPos.x, item.m_gridPos.y)) used++;
-            if (used != _shownSlots)
+                if (layout.IsOrdinary(item.m_gridPos.x, item.m_gridPos.y)) used++;
+            if (used != _shownSlots || layout.OrdinarySlots != _shownOrdinary)
             {
                 _shownSlots = used;
-                _slotsText.SetText("{0}/{1}", used, ordinary);
+                _shownOrdinary = layout.OrdinarySlots;
+                _slotsText.text = Localize("$genesisui_slots_in_use").Replace("{0}", used.ToString()).Replace("{1}", layout.OrdinarySlots.ToString()).ToUpperInvariant();
             }
 
             int weight = Mathf.CeilToInt(inventory.GetTotalWeight());
@@ -552,166 +589,293 @@ namespace GenesisUI.Modules.Windows
             }
         }
 
-        // ------------------------------------------------------------------ our panels
+        // ------------------------------------------------------------------ sort and filter
 
-        private void BuildPanels()
+        /// <summary>Organizar: positions only, below the hotbar, planned in Core (InventorySort).</summary>
+        private void Sort(InventoryGui gui, Player player, SlotLayout layout)
+        {
+            if (_dragItem(gui) != null) return; // never while an item is held
+            var inventory = player.GetInventory();
+            var all = inventory.GetAllItems();
+            _sortEntries.Clear();
+            for (int i = 0; i < all.Count; i++)
+                _sortEntries.Add(new InventorySort.Entry
+                {
+                    Id = i, X = all[i].m_gridPos.x, Y = all[i].m_gridPos.y,
+                    Category = ItemCategories.Of(all[i]), Name = Localize(all[i].m_shared.m_name), Stack = all[i].m_stack,
+                });
+            var moves = InventorySort.Plan(layout, _sortEntries);
+            foreach (var move in moves) all[move.Id].m_gridPos = new Vector2i(move.X, move.Y);
+            if (moves.Count > 0) inventory.m_onChanged?.Invoke();
+            GenesisLog.Info("Module:win.inventory", "sorted: moved " + moves.Count + " item(s); items " + all.Count + " before and after");
+        }
+
+        internal static bool Matches(ItemDrop.ItemData item, Filter filter)
+        {
+            var c = ItemCategories.Of(item);
+            switch (filter)
+            {
+                case Filter.Weapons: return c == ItemCategory.Weapon;
+                case Filter.Armor: return c == ItemCategory.Armor || c == ItemCategory.Shield;
+                case Filter.Tools: return c == ItemCategory.Tool;
+                case Filter.Consumables: return c == ItemCategory.Consumable;
+                case Filter.Materials: return c == ItemCategory.Material;
+                case Filter.Ammo: return c == ItemCategory.Ammo;
+                case Filter.Misc: return c == ItemCategory.Trophy || c == ItemCategory.Misc;
+                default: return true;
+            }
+        }
+
+        // ------------------------------------------------------------------ building
+
+        private void Build()
         {
             var t = _theme.Tokens;
-            var content = Ui.Child(_area, "Panels");
-            content.anchorMin = Vector2.zero;
-            content.anchorMax = Vector2.one;
-            content.offsetMin = new Vector2(0f, BarsBottom);
-            content.offsetMax = new Vector2(0f, -BarsTop);
+            var panels = WindowCanvas.At(_area, "Panels", 0f, PanelsTop, WindowCanvas.Design.x, PanelsHeight);
+            _inventoryPanel = Panel(panels, "Inventory", InventoryX, InventoryW, "$genesisui_panel_inventory", 88f, 26f, TextAlignmentOptions.Left);
+            _equipmentPanel = Panel(panels, "Equipment", EquipmentX, EquipmentW, "$genesisui_panel_equipment", 54f, 23f, TextAlignmentOptions.Left);
+            _detailsPanel = Panel(panels, "Details", DetailsX, DetailsW, "$genesisui_panel_details", 0f, 19f, TextAlignmentOptions.Center);
+            _containerPanel = Panel(panels, "Container", EquipmentX, WindowCanvas.Design.x - EquipmentX, "$genesisui_panel_container", 54f, 23f, TextAlignmentOptions.Left);
+            _containerTitle = _containerPanel.Find("Title").GetComponent<TextMeshProUGUI>();
+            _containerPanel.gameObject.SetActive(false);
 
-            _inventoryPanel = Panel(content, "Inventory", 0f, InventoryShare, "$genesisui_panel_inventory");
-            _equipmentPanel = Panel(content, "Equipment", InventoryShare, InventoryShare + EquipmentShare, "$genesisui_panel_equipment");
-            _detailsPanel = Panel(content, "Details", InventoryShare + EquipmentShare, 1f, "$genesisui_panel_details");
+            BuildInventory(t);
+            BuildEquipment(t);
+            _details = new Details(this, _detailsPanel);
+            BuildContainer(t);
 
-            // The grid fits both axes, including six rows on shorter screens.
-            float panelWidth = _area.rect.width * InventoryShare - Gap;
-            float panelHeight = _area.rect.height - BarsTop - BarsBottom;
-            float byWidth = (panelWidth - 60f - (SlotLayout.Width - 1) * CellGap) / SlotLayout.Width;
-            float byHeight = (panelHeight - 80f - 70f - (SlotLayout.MaxRows - 1) * CellGap) / SlotLayout.MaxRows;
-            _cell = Mathf.Floor(Mathf.Max(16f, Mathf.Min(64f, Mathf.Min(byWidth, byHeight))));
-            float gridWidth = SlotLayout.Width * _cell + (SlotLayout.Width - 1) * CellGap;
-            float gridHeight = SlotLayout.MaxRows * _cell + (SlotLayout.MaxRows - 1) * CellGap;
-            _gridArea = Ui.Place(Ui.Child(_inventoryPanel, "Grid"), new Vector2(0.5f, 1f), new Vector2(0f, -(HeaderRule + 40f)), new Vector2(gridWidth, gridHeight));
-            _gridArea.pivot = new Vector2(0.5f, 1f);
+            // The held item follows the pointer above everything in the window.
+            _ghost = Ui.Child(_area, "Held");
+            _ghost.sizeDelta = new Vector2(Cell, Cell);
+            _ghostIcon = Ui.Image(Ui.Fill(Ui.Child(_ghost, "Icon"), 8f, 8f, 8f, 8f), null, Color.white);
+            _ghostIcon.preserveAspect = true;
+            _ghostAmount = Label(_ghost, "Amount", FontRole.Display, 18f, t.TextTitle, 0f, Cell - 26f, Cell - 6f, 24f, TextAlignmentOptions.Right);
+            var ghostGroup = _ghost.gameObject.AddComponent<CanvasGroup>();
+            ghostGroup.blocksRaycasts = false;
+            ghostGroup.interactable = false;
+            _ghost.gameObject.SetActive(false);
+        }
 
-            _slotsText = Label(_inventoryPanel, "Slots", FontRole.Label, 13f, t.TextFlavor, new Vector2(28f, -(HeaderRule + 10f)), new Vector2(200f, 20f), TextAlignmentOptions.Left);
+        private void BuildInventory(ThemeTokens t)
+        {
+            var p = _inventoryPanel;
+            _slotsText = Label(p, "Slots", FontRole.Label, 15f, t.TextFlavor, 46f, 60f, 360f, 22f, TextAlignmentOptions.Left);
+            _slotsText.characterSpacing = 4f;
 
-            // The filter: a small field that opens a list of categories.
-            var controls = Ui.Child(_controlsArea, "PanelControls");
-            controls.anchorMin = Vector2.zero;
-            controls.anchorMax = Vector2.one;
-            controls.offsetMin = new Vector2(0f, BarsBottom);
-            controls.offsetMax = new Vector2(0f, -BarsTop);
-            var filter = Ui.Place(Ui.Child(controls, "Filter"), new Vector2(InventoryShare, 1f),
-                new Vector2(-24f - Gap / 2f, -(HeaderRule + 6f)), new Vector2(150f, 26f));
-            filter.pivot = new Vector2(1f, 1f);
-            Frame.Dress(filter, _theme, "keycap_wide", "Windows", 26f);
-            _filterText = Ui.Text(filter, "Text", _theme, FontRole.Body, 15f, ThemeRuntime.ToUnity(t.TextTitle), TextAlignmentOptions.Center);
-            Ui.Fill((RectTransform)_filterText.transform, 8f, 0f, 8f, 0f);
+            // Filter list and sort, top right like the concept.
+            var filter = WindowCanvas.At(p, "Filter", 526f, 30f, 140f, 38f);
+            Frame.Dress(filter, _theme, "keycap_wide", "Windows", 38f);
+            _filterText = Label(filter, "Text", FontRole.Body, 17f, t.TextTitle, 12f, 0f, 116f, 38f, TextAlignmentOptions.Left);
             Clickable(filter, "inventory filter", ToggleFilterList);
-            BuildFilterList(filter);
-            ShowFilter();
+            var sort = WindowCanvas.At(p, "Sort", 678f, 30f, 100f, 38f);
+            Frame.Dress(sort, _theme, "keycap_wide", "Windows", 38f);
+            Label(sort, "Text", FontRole.Body, 16f, t.TextTitle, 0f, 0f, 100f, 38f, TextAlignmentOptions.Center).text = Localize("$genesisui_sort");
+            Clickable(sort, "inventory sort", () =>
+            {
+                var gui = InventoryGui.instance;
+                if (gui != null && Player.m_localPlayer != null && InventoryModule.Current != null) Sort(gui, Player.m_localPlayer, InventoryModule.Current);
+            });
 
-            var weight = Ui.Child(_inventoryPanel, "Weight");
-            weight.anchorMin = new Vector2(0f, 0f);
-            weight.anchorMax = new Vector2(1f, 0f);
-            weight.pivot = new Vector2(0.5f, 0f);
-            weight.offsetMin = new Vector2(30f, 26f);
-            weight.offsetMax = new Vector2(-30f, 50f);
-            Label(weight, "Label", FontRole.Label, 13f, t.TextFlavor, Vector2.zero, new Vector2(60f, 24f), TextAlignmentOptions.Left, anchor: new Vector2(0f, 0.5f)).text =
+            // The grid: eight columns, four rows in view, the rest by scrolling.
+            var grid = WindowCanvas.At(p, "Grid", GridX, GridY, SlotLayout.Width * Cell + (SlotLayout.Width - 1) * GapX,
+                VisibleRows * Cell + (VisibleRows - 1) * GapY);
+            var gridHit = Ui.Image(grid, null, new Color(0f, 0f, 0f, 0f), raycast: true);
+            gridHit.gameObject.AddComponent<CellInput>().Init(this, null);
+            for (int y = 0; y < VisibleRows; y++)
+                for (int x = 0; x < SlotLayout.Width; x++)
+                    _gridCells.Add(MakeCell(grid, "Cell " + x + "," + y, x * (Cell + GapX), y * (Cell + GapY), Cell, null));
+
+            _scrollTrack = WindowCanvas.At(p, "Scroll", GridX + SlotLayout.Width * Cell + (SlotLayout.Width - 1) * GapX + 12f, GridY, 3f, grid.sizeDelta.y);
+            Ui.Image(_scrollTrack, null, ThemeRuntime.ToUnity(t.AccentGold).WithA(0.25f));
+            _scrollThumb = WindowCanvas.At(_scrollTrack, "Thumb", -1f, 0f, 5f, 40f);
+            Ui.Image(_scrollThumb, null, ThemeRuntime.ToUnity(t.AccentGold).WithA(0.85f));
+
+            // Quick-use and action slots, smaller, under the grid.
+            _quickTitle = Label(p, "QuickTitle", FontRole.Label, 15f, t.AccentGoldBright, QuickX + 2f, SpecialY - 34f, 330f, 22f, TextAlignmentOptions.Left).gameObject;
+            _quickTitle.GetComponent<TextMeshProUGUI>().text = Localize("$genesisui_quick_title").ToUpperInvariant();
+            _quickTitle.GetComponent<TextMeshProUGUI>().characterSpacing = 5f;
+            for (int i = 0; i < SlotLayout.MaxQuick; i++)
+            {
+                var cell = MakeCell(p, "Quick " + i, QuickX + i * QuickPitch, SpecialY, SmallCell, null);
+                cell.ShowMax = true;
+                _quickCells.Add(cell);
+            }
+            _specialDivider = WindowCanvas.At(p, "Divider", 422f, SpecialY - 30f, 1f, SmallCell + 34f).gameObject;
+            Ui.Image((RectTransform)_specialDivider.transform, null, ThemeRuntime.ToUnity(t.AccentGold).WithA(0.35f));
+            _utilityTitle = Label(p, "UtilityTitle", FontRole.Label, 15f, t.AccentGoldBright, UtilityX, SpecialY - 34f, 330f, 22f, TextAlignmentOptions.Left).gameObject;
+            _utilityTitle.GetComponent<TextMeshProUGUI>().text = Localize("$genesisui_utility_title").ToUpperInvariant();
+            _utilityTitle.GetComponent<TextMeshProUGUI>().characterSpacing = 5f;
+            for (int i = 0; i < SlotLayout.MaxUtility; i++)
+                _utilityCells.Add(MakeCell(p, "Utility " + i, UtilityX + i * UtilityPitch, SpecialY, SmallCell, UtilityKeys[i]));
+
+            // Weight, at the bottom like the concept.
+            Label(p, "WeightLabel", FontRole.Label, 16f, t.TextFlavor, 56f, 626f, 90f, 26f, TextAlignmentOptions.Left).text =
                 Localize("$genesisui_weight").ToUpperInvariant();
-            var track = Ui.Child(weight, "Track");
-            track.anchorMin = new Vector2(0f, 0.5f);
-            track.anchorMax = new Vector2(1f, 0.5f);
-            track.offsetMin = new Vector2(64f, -2f);
-            track.offsetMax = new Vector2(-104f, 2f);
-            Ui.Image(track, null, new Color(0f, 0f, 0f, 0.55f));
+            var track = WindowCanvas.At(p, "WeightTrack", 130f, 636f, 450f, 6f);
+            Ui.Image(track, null, new Color(0f, 0f, 0f, 0.6f));
             _weightFill = Ui.Image(Ui.Fill(Ui.Child(track, "Fill")), _theme.Sprite("bar_fill"), ThemeRuntime.ToUnity(t.AccentGold));
             _weightFill.type = Image.Type.Filled;
             _weightFill.fillMethod = Image.FillMethod.Horizontal;
-            _weightText = Label(weight, "Value", FontRole.Label, 14f, t.TextTitle, Vector2.zero, new Vector2(100f, 24f), TextAlignmentOptions.Right, anchor: new Vector2(1f, 0.5f));
+            _weightText = Label(p, "WeightValue", FontRole.Label, 17f, t.TextTitle, 600f, 626f, 170f, 26f, TextAlignmentOptions.Left);
 
-            // Equipment: real cells and the total protection readout.
-            // Six real vanilla cells, placed around the centre of the panel. Their item
-            // icons, durability, drag handlers and click handlers remain the game's own.
-            var equipmentOrder = new[]
+            BuildFilterList(p, filter);
+            ShowFilter();
+        }
+
+        private void BuildEquipment(ThemeTokens t)
+        {
+            var p = _equipmentPanel;
+            string[] tokens =
             {
-                EquipSlot.Head, EquipSlot.Trinket, EquipSlot.Chest,
-                EquipSlot.Belt, EquipSlot.Cape, EquipSlot.Legs,
+                "$genesisui_slot_head", "$genesisui_slot_chest", "$genesisui_slot_cape", "$genesisui_slot_legs",
+                "$genesisui_slot_trinket", "$genesisui_slot_belt", "$genesisui_slot_amulet", "$genesisui_slot_ring",
+                "$genesisui_slot_lantern", "$genesisui_slot_backpack",
             };
-            var equipmentNames = new[]
+            for (int i = 0; i < WornOrder.Length; i++)
             {
-                "$genesisui_slot_head", "$genesisui_slot_trinket", "$genesisui_slot_chest",
-                "$genesisui_slot_belt", "$genesisui_slot_cape", "$genesisui_slot_legs",
-            };
-            for (int i = 0; i < equipmentOrder.Length; i++)
-            {
-                int column = i % 2;
-                int row = i / 2;
-                var anchor = new Vector2(column == 0 ? 0.23f : 0.77f, 1f);
-                float fromTop = (_area.rect.height - BarsTop - BarsBottom) * (0.20f + row * 0.22f) + _cell * 0.5f + 4f;
-                var label = Ui.Fit(Ui.Text(_equipmentPanel, "Equipment " + equipmentOrder[i], _theme,
-                    FontRole.Label, 13f, ThemeRuntime.ToUnity(t.TextTitle), TextAlignmentOptions.Center), 11f);
-                var labelRt = Ui.Place((RectTransform)label.transform, anchor,
-                    new Vector2(0f, -fromTop), new Vector2(112f, 19f));
-                labelRt.pivot = new Vector2(0.5f, 1f);
-                label.text = Localize(equipmentNames[i]);
+                var cell = MakeCell(p, "Worn " + WornOrder[i], 0f, 0f, WornCell, null);
+                cell.Label = Label(p, "Label " + WornOrder[i], FontRole.Body, 16f, t.TextTitle, 0f, 0f, WornCell + 40f, 22f, TextAlignmentOptions.Center);
+                cell.Label.text = Localize(tokens[i]);
+                cell.Label.gameObject.SetActive(false);
+                _wornLabels.Add(cell.Label.gameObject);
+                cell.Root.gameObject.SetActive(false);
+                _wornCells[WornOrder[i]] = cell;
             }
-            Label(_equipmentPanel, "ArmorLabel", FontRole.Label, 12f, t.TextFlavor, new Vector2(0f, 70f), new Vector2(240f, 18f), TextAlignmentOptions.Center, anchor: new Vector2(0.5f, 0f)).text =
-                Localize("$genesisui_armor_total").ToUpperInvariant();
-            _armorText = Label(_equipmentPanel, "Armor", FontRole.Display, 26f, t.TextTitle, new Vector2(0f, 34f), new Vector2(160f, 34f), TextAlignmentOptions.Center, anchor: new Vector2(0.5f, 0f));
+            var armorLabel = Label(p, "ArmorLabel", FontRole.Label, 14f, t.TextFlavor, 0f, 586f, EquipmentW, 20f, TextAlignmentOptions.Center);
+            armorLabel.text = Localize("$genesisui_armor_total").ToUpperInvariant();
+            armorLabel.characterSpacing = 5f;
+            _armorText = Label(p, "Armor", FontRole.Display, 34f, t.TextTitle, 0f, 610f, EquipmentW, 42f, TextAlignmentOptions.Center);
+        }
 
-            // Details: icon, name, and vanilla's own text for the hovered item.
-            var iconRt = Ui.Place(Ui.Child(_detailsPanel, "Icon"), new Vector2(0.5f, 1f), new Vector2(0f, -(HeaderRule + 20f)), new Vector2(96f, 96f));
-            iconRt.pivot = new Vector2(0.5f, 1f);
-            _detailIcon = Ui.Image(iconRt, null, Color.white);
-            _detailIcon.preserveAspect = true;
-            _detailIcon.enabled = false;
-            _detailName = Label(_detailsPanel, "Name", FontRole.Display, 17f, t.AccentGoldBright, new Vector2(0f, -(HeaderRule + 124f)), new Vector2(260f, 24f), TextAlignmentOptions.Center, anchor: new Vector2(0.5f, 1f));
-            _detailBody = Ui.Text(_detailsPanel, "Body", _theme, FontRole.Body, 15f, ThemeRuntime.ToUnity(t.TextBody), TextAlignmentOptions.TopLeft);
-            _detailBody.textWrappingMode = TextWrappingModes.Normal;
-            _detailBody.overflowMode = TextOverflowModes.Ellipsis;
-            var body = (RectTransform)_detailBody.transform;
-            body.anchorMin = new Vector2(0f, 0f);
-            body.anchorMax = new Vector2(1f, 1f);
-            body.offsetMin = new Vector2(26f, 30f);
-            body.offsetMax = new Vector2(-26f, -(HeaderRule + 156f));
+        private void BuildContainer(ThemeTokens t)
+        {
+            var p = _containerPanel;
+            float w = WindowCanvas.Design.x - EquipmentX;
+            var take = WindowCanvas.At(p, "TakeAll", w - 24f - 150f, 30f, 150f, 38f);
+            Frame.Dress(take, _theme, "keycap_wide", "Windows", 38f);
+            Label(take, "Text", FontRole.Body, 16f, t.TextTitle, 0f, 0f, 150f, 38f, TextAlignmentOptions.Center).text = Localize("$genesisui_take_all");
+            Clickable(take, "container take all", () => { var gui = InventoryGui.instance; if (gui != null) gui.m_takeAllButton.onClick.Invoke(); });
+            var stack = WindowCanvas.At(p, "StackAll", w - 24f - 150f - 12f - 150f, 30f, 150f, 38f);
+            Frame.Dress(stack, _theme, "keycap_wide", "Windows", 38f);
+            Label(stack, "Text", FontRole.Body, 16f, t.TextTitle, 0f, 0f, 150f, 38f, TextAlignmentOptions.Center).text = Localize("$genesisui_stack_all");
+            Clickable(stack, "container stack all", () => { var gui = InventoryGui.instance; if (gui != null) gui.m_stackAllButton.onClick.Invoke(); });
+            _containerGrid = WindowCanvas.At(p, "Grid", 0f, GridY, w, PanelsHeight - GridY - 40f);
+            var hit = Ui.Image(_containerGrid, null, new Color(0f, 0f, 0f, 0f), raycast: true);
+            hit.gameObject.AddComponent<CellInput>().Init(this, null).ContainerScroll = true;
+        }
+
+        /// <summary>Chest cells for its size: vanilla chests are up to 8 x 4; bigger ones scroll.</summary>
+        private void BuildContainerCells(int width, int height)
+        {
+            foreach (var cell in _containerCells) UnityEngine.Object.Destroy(cell.Root.gameObject);
+            _containerCells.Clear();
+            _builtContainerW = width;
+            _builtContainerH = height;
+            var area = _containerGrid.sizeDelta;
+            float size = Mathf.Floor(Mathf.Min(Cell, (area.x - 80f - (width - 1) * GapX) / Mathf.Max(1, width)));
+            _containerVisibleRows = Mathf.Max(1, Mathf.Min(height, Mathf.FloorToInt((area.y + GapY) / (size + GapY))));
+            float gridW = width * size + (width - 1) * GapX;
+            float x0 = (area.x - gridW) / 2f;
+            for (int y = 0; y < _containerVisibleRows; y++)
+                for (int x = 0; x < width; x++)
+                {
+                    var cell = MakeCell(_containerGrid, "Cell " + x + "," + y, x0 + x * (size + GapX), y * (size + GapY), size, null);
+                    cell.Container = true;
+                    _containerCells.Add(cell);
+                }
+            GenesisLog.Info("Module:win.inventory", "chest panel " + width + "x" + height + ", " + _containerVisibleRows + " row(s) in view, cell " + size);
         }
 
         /// <summary>
-        /// A panel over a share of the width: Diego's finest frame without its mid-edge diamonds
-        /// (R-048: unnecessary and misplaced), the title above the header rule and the whole tab marker
-        /// centred on that rule as its divider.
+        /// A panel of the concept: Diego's finest frame, the title on the header rule (left like
+        /// Inventário/Equipamento, centred for the details) and the whole tab marker as the rule.
         /// </summary>
-        private RectTransform Panel(RectTransform parent, string name, float from, float to, string titleToken)
+        private RectTransform Panel(RectTransform parent, string name, float x, float width, string titleToken, float titleX, float titleSize,
+                                    TextAlignmentOptions align)
         {
-            var rt = Ui.Child(parent, name);
-            rt.anchorMin = new Vector2(from, 0f);
-            rt.anchorMax = new Vector2(to, 1f);
-            rt.offsetMin = new Vector2(from > 0f ? Gap / 2f : 0f, 0f);
-            rt.offsetMax = new Vector2(to < 1f ? -Gap / 2f : 0f, 0f);
+            var rt = WindowCanvas.At(parent, name, x, 0f, width, PanelsHeight);
+            // The panel takes the pointer: a click on its empty parts must not reach vanilla's
+            // drop-outside button behind the window (that would throw a held item on the ground).
+            Ui.Image(rt, null, new Color(0f, 0f, 0f, 0f), raycast: true);
             Frame.Dress(rt, _theme, "window_panel", "Windows");
-
-            float rule = _theme.Inset("window_panel_rule_knot");
-            if (rule <= 0f) rule = 38f;
-            var title = Label(rt, "Title", FontRole.Display, 16f, _theme.Tokens.AccentGoldBright, new Vector2(0f, -(rule - 26f)), new Vector2(300f, 20f), TextAlignmentOptions.Center, anchor: new Vector2(0.5f, 1f));
-            title.characterSpacing = 8f;
+            bool centred = align == TextAlignmentOptions.Center;
+            var title = Label(rt, "Title", FontRole.Display, titleSize, _theme.Tokens.AccentGoldBright,
+                centred ? 60f : titleX, 12f, centred ? width - 120f : width - titleX - 70f, 36f, align);
+            title.characterSpacing = centred ? 5f : 8f;
             title.text = Localize(titleToken).ToUpperInvariant();
 
             var marker = _theme.Sprite("tab_marker");
             if (marker != null)
             {
-                var mrt = Ui.Child(rt, "Divider");
-                mrt.anchorMin = new Vector2(0.2f, 1f);
-                mrt.anchorMax = new Vector2(0.8f, 1f);
-                mrt.pivot = new Vector2(0.5f, 0.5f);
-                mrt.anchoredPosition = new Vector2(0f, -rule);
-                mrt.sizeDelta = new Vector2(0f, 8f);
+                float mw = centred ? width * 0.6f : Mathf.Min(300f, width * 0.5f);
+                var mrt = WindowCanvas.At(rt, "Rule", centred ? (width - mw) / 2f : titleX - 6f, 48f, mw, 8f);
                 var img = Ui.Image(mrt, marker, Color.white);
                 img.pixelsPerUnitMultiplier = _theme.Size("tab_marker").y / 8f * Frame.CanvasScale(mrt);
             }
             return rt;
         }
 
-        private void BuildFilterList(RectTransform field)
+        private ItemCell MakeCell(RectTransform parent, string name, float x, float y, float size, string key)
         {
             var t = _theme.Tokens;
-            const float row = 24f;
-            _filterList = Ui.Place(Ui.Child(field, "List"), new Vector2(0f, 0f), new Vector2(0f, -2f), new Vector2(150f, row * FilterTokens.Length + 12f));
-            _filterList.pivot = new Vector2(0f, 1f);
+            var cell = new ItemCell { Root = WindowCanvas.At(parent, name, x, y, size, size) };
+            var hit = Ui.Image(cell.Root, null, new Color(0f, 0f, 0f, 0f), raycast: true);
+            Frame.Dress(cell.Root, _theme, "hotslot", "Windows", size);
+            cell.Icon = Ui.Image(Ui.Fill(Ui.Child(cell.Root, "Icon"), size * 0.13f, size * 0.13f, size * 0.13f, size * 0.13f), null, Color.white);
+            cell.Icon.preserveAspect = true;
+            cell.Icon.enabled = false;
+            cell.Hover = Overlay(cell.Root, "hotslot_selected", size);
+            cell.Equipped = Overlay(cell.Root, "hotslot_equipped", size);
+
+            cell.DurBack = Ui.Image(WindowCanvas.At(cell.Root, "Durability", size * 0.14f, size * 0.86f, size * 0.72f, Mathf.Max(3f, size * 0.045f)),
+                null, new Color(0f, 0f, 0f, 0.6f));
+            cell.Dur = Ui.Image(Ui.Fill(Ui.Child((RectTransform)cell.DurBack.transform, "Fill")), _theme.Sprite("bar_fill"), ThemeRuntime.ToUnity(t.StatePositive));
+            cell.Dur.type = Image.Type.Filled;
+            cell.Dur.fillMethod = Image.FillMethod.Horizontal;
+            cell.DurBack.gameObject.SetActive(false);
+            cell.Good = ThemeRuntime.ToUnity(t.StatePositive);
+            cell.Bad = ThemeRuntime.ToUnity(t.StateDanger);
+
+            cell.Amount = Label(cell.Root, "Amount", FontRole.Display, size * 0.22f, t.TextTitle, size * 0.08f, size * 0.62f, size * 0.84f, size * 0.3f, TextAlignmentOptions.BottomRight);
+            cell.Quality = Label(cell.Root, "Quality", FontRole.Display, size * 0.2f, t.AccentGoldBright, size * 0.5f, size * 0.06f, size * 0.42f, size * 0.26f, TextAlignmentOptions.TopRight);
+            cell.Index = Label(cell.Root, "Index", FontRole.Label, size * 0.2f, t.TextTitle, size * 0.1f, size * 0.05f, size * 0.4f, size * 0.26f, TextAlignmentOptions.TopLeft);
+            if (key != null)
+            {
+                var cap = WindowCanvas.At(cell.Root, "Key", 4f, 4f, 20f, 20f);
+                Frame.Dress(cap, _theme, "keycap", "Windows", 20f);
+                Label(cap, "Text", FontRole.Label, 12f, t.TextTitle, 0f, 0f, 20f, 20f, TextAlignmentOptions.Center).text = key;
+            }
+            hit.gameObject.AddComponent<CellInput>().Init(this, cell);
+            return cell;
+        }
+
+        /// <summary>A state frame from Diego's sheet laid over the cell, its window matching the cell.</summary>
+        private Image Overlay(RectTransform cell, string sprite, float size)
+        {
+            var s = _theme.Sprite(sprite);
+            if (s == null) return null;
+            var drawn = _theme.Size(sprite);
+            var c = _theme.Content(sprite, Vector4.zero);
+            float k = size / Mathf.Max(1f, drawn.x - c.x - c.z);
+            var rt = Ui.Place(Ui.Child(cell, sprite), new Vector2(0.5f, 0.5f), Vector2.zero, drawn * k);
+            var img = Ui.Image(rt, s, Color.white);
+            img.type = Image.Type.Simple;
+            img.enabled = false;
+            return img;
+        }
+
+        private void BuildFilterList(RectTransform panel, RectTransform field)
+        {
+            var t = _theme.Tokens;
+            const float row = 28f;
+            _filterList = WindowCanvas.At(panel, "FilterList", field.anchoredPosition.x, -field.anchoredPosition.y + field.sizeDelta.y + 2f,
+                170f, row * FilterTokens.Length + 16f);
             Frame.Dress(_filterList, _theme, "card", "Windows");
             for (int i = 0; i < FilterTokens.Length; i++)
             {
                 var choice = (Filter)i;
-                var rt = Ui.Place(Ui.Child(_filterList, "Option " + choice), new Vector2(0f, 1f), new Vector2(10f, -6f - i * row), new Vector2(130f, row));
-                rt.pivot = new Vector2(0f, 1f);
-                var text = Ui.Text(rt, "Text", _theme, FontRole.Body, 15f, ThemeRuntime.ToUnity(t.TextTitle), TextAlignmentOptions.Left);
-                Ui.Fill((RectTransform)text.transform, 6f, 0f, 0f, 0f);
-                text.text = Localize(FilterTokens[i]);
+                var rt = WindowCanvas.At(_filterList, "Option " + choice, 12f, 8f + i * row, 146f, row);
+                Label(rt, "Text", FontRole.Body, 17f, t.TextTitle, 6f, 0f, 140f, row, TextAlignmentOptions.Left).text = Localize(FilterTokens[i]);
                 Clickable(rt, "filter option", () => SelectFilter(choice));
             }
             _filterList.gameObject.SetActive(false);
@@ -731,7 +895,6 @@ namespace GenesisUI.Modules.Windows
             bool show = !_filterList.gameObject.activeSelf;
             _filterList.gameObject.SetActive(show);
             if (show) _filterList.SetAsLastSibling();
-            GenesisLog.Info("Module:win.inventory", "filter list " + (show ? "opened" : "closed"));
         }
 
         private void SelectFilter(Filter filter)
@@ -744,16 +907,252 @@ namespace GenesisUI.Modules.Windows
 
         private void ShowFilter() => _filterText.text = Localize(FilterTokens[(int)_filter]) + "  ◆";
 
-        private TextMeshProUGUI Label(RectTransform parent, string name, FontRole role, float size, ColorRgba color, Vector2 position, Vector2 box,
-                                     TextAlignmentOptions alignment, Vector2? anchor = null)
+        /// <summary>A text placed by its top-left corner in design units.</summary>
+        private TextMeshProUGUI Label(RectTransform parent, string name, FontRole role, float size, ColorRgba color,
+                                     float x, float y, float width, float height, TextAlignmentOptions alignment)
         {
             var text = Ui.Fit(Ui.Text(parent, name, _theme, role, size, ThemeRuntime.ToUnity(color), alignment, outlined: true), Mathf.Min(10f, size));
-            var a = anchor ?? new Vector2(0f, 1f);
-            var rt = Ui.Place((RectTransform)text.transform, a, position, box);
-            rt.pivot = a;
+            var rt = (RectTransform)text.transform;
+            rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0f, 1f);
+            rt.anchoredPosition = new Vector2(x, -y);
+            rt.sizeDelta = new Vector2(width, height);
             return text;
         }
 
         private static string Localize(string text) => Localization.instance != null ? Localization.instance.Localize(text) : text;
+
+        // ------------------------------------------------------------------ views
+
+        /// <summary>One item cell of our window, bound to an inventory position.</summary>
+        internal sealed class ItemCell
+        {
+            public RectTransform Root;
+            public Image Icon, Hover, Equipped, DurBack, Dur;
+            public TextMeshProUGUI Amount, Quality, Index, Label;
+            public Color Good, Bad;
+            public bool Container, ShowMax;
+            public Vector2i Pos;
+            public bool Active;
+
+            private ItemDrop.ItemData _item;
+            private int _stack = -1, _quality = -1;
+            private float _durability = -2f, _alpha = -1f;
+            private bool _equipped, _hover;
+            private string _index;
+
+            public void Bind(Vector2i pos, bool active, string index)
+            {
+                Pos = pos;
+                Active = active;
+                if (index != _index)
+                {
+                    _index = index;
+                    Index.text = index ?? "";
+                }
+            }
+
+            public void Show(ItemDrop.ItemData item, bool equipped, bool hover, float alpha)
+            {
+                if (item != _item)
+                {
+                    _item = item;
+                    Icon.sprite = item != null ? item.GetIcon() : null;
+                    Icon.enabled = item != null;
+                    _stack = _quality = -1;
+                    _durability = -2f;
+                }
+                if (item != null && !Mathf.Approximately(alpha, _alpha))
+                {
+                    _alpha = alpha;
+                    Icon.color = new Color(1f, 1f, 1f, alpha);
+                }
+
+                int stack = item != null && item.m_shared.m_maxStackSize > 1 ? item.m_stack : 0;
+                if (stack != _stack)
+                {
+                    _stack = stack;
+                    if (stack <= 0) Amount.text = "";
+                    else if (ShowMax) Amount.SetText("{0}/{1}", stack, item.m_shared.m_maxStackSize);
+                    else Amount.SetText("{0}", stack);
+                }
+                int quality = item != null && item.m_shared.m_maxQuality > 1 ? item.m_quality : 0;
+                if (quality != _quality)
+                {
+                    _quality = quality;
+                    if (quality <= 0) Quality.text = "";
+                    else Quality.SetText("{0}", quality);
+                }
+                float durability = item != null && item.m_shared.m_useDurability
+                    ? Mathf.Clamp01(item.m_durability / Mathf.Max(1f, item.GetMaxDurability())) : -1f;
+                if (!Mathf.Approximately(durability, _durability))
+                {
+                    _durability = durability;
+                    bool bar = durability >= 0f && durability < 0.999f;
+                    if (DurBack.gameObject.activeSelf != bar) DurBack.gameObject.SetActive(bar);
+                    if (bar)
+                    {
+                        Dur.fillAmount = durability;
+                        Dur.color = durability < 0.25f ? Bad : Good;
+                    }
+                }
+                if (equipped != _equipped)
+                {
+                    _equipped = equipped;
+                    if (Equipped != null) Equipped.enabled = equipped;
+                }
+                if (hover != _hover)
+                {
+                    _hover = hover;
+                    if (Hover != null) Hover.enabled = hover;
+                }
+            }
+        }
+
+        /// <summary>Pointer events of one cell, handed to the module (and from there to vanilla).</summary>
+        internal sealed class CellInput : MonoBehaviour, IPointerDownHandler, IPointerEnterHandler, IPointerExitHandler,
+            IBeginDragHandler, IDragHandler, IEndDragHandler, IDropHandler, IScrollHandler
+        {
+            private InventoryWindowModule _owner;
+            private ItemCell _cell;
+            internal bool ContainerScroll;
+
+            internal CellInput Init(InventoryWindowModule owner, ItemCell cell)
+            {
+                _owner = owner;
+                _cell = cell;
+                return this;
+            }
+
+            public void OnPointerDown(PointerEventData e) { if (_cell != null) Guard.Try("inventory cell press", () => _owner.OnDown(_cell, e)); }
+            public void OnPointerEnter(PointerEventData e) { if (_cell != null) _owner.OnEnter(_cell); }
+            public void OnPointerExit(PointerEventData e) { if (_cell != null) _owner.OnExit(_cell); }
+            public void OnBeginDrag(PointerEventData e) { }
+            public void OnDrag(PointerEventData e) { }
+            public void OnEndDrag(PointerEventData e) => Guard.Try("inventory drag end", () => _owner.OnEndDrag(e));
+            public void OnDrop(PointerEventData e) { if (_cell != null) Guard.Try("inventory drop", () => _owner.OnDrop(_cell)); }
+
+            public void OnScroll(PointerEventData e)
+            {
+                if (_cell != null) _owner.OnScroll(_cell, e);
+                else if (ContainerScroll) _owner._containerScroll += e.scrollDelta.y > 0f ? -1 : e.scrollDelta.y < 0f ? 1 : 0;
+                else _owner.OnScroll(null, e);
+            }
+        }
+
+        /// <summary>The details panel (replaces vanilla's tooltip): icon, name, type, description, stats.</summary>
+        private sealed class Details
+        {
+            private const int MaxRows = 8;
+            private readonly InventoryWindowModule _m;
+            private readonly Image _icon;
+            private readonly TextMeshProUGUI _name, _type, _description, _empty;
+            private readonly TextMeshProUGUI[] _labels = new TextMeshProUGUI[MaxRows];
+            private readonly TextMeshProUGUI[] _values = new TextMeshProUGUI[MaxRows];
+            private readonly GameObject[] _rows = new GameObject[MaxRows];
+            private readonly Image _durBack, _dur;
+            private readonly GameObject _body;
+
+            internal Details(InventoryWindowModule m, RectTransform p)
+            {
+                _m = m;
+                var t = m._theme.Tokens;
+                const float pad = 24f, w = DetailsW - 2f * pad;
+                _body = WindowCanvas.At(p, "Body", 0f, 0f, DetailsW, PanelsHeight).gameObject;
+                var body = (RectTransform)_body.transform;
+                _icon = Ui.Image(WindowCanvas.At(body, "Icon", pad, 74f, w, 150f), null, Color.white);
+                _icon.preserveAspect = true;
+                _name = m.Label(body, "Name", FontRole.Display, 24f, t.AccentGoldBright, pad, 236f, w, 32f, TextAlignmentOptions.Left);
+                _type = m.Label(body, "Type", FontRole.Body, 17f, t.TextFlavor, pad, 268f, w, 22f, TextAlignmentOptions.Left);
+                _description = Ui.Text(body, "Description", m._theme, FontRole.Body, 16f, ThemeRuntime.ToUnity(t.TextBody), TextAlignmentOptions.TopLeft);
+                var drt = (RectTransform)_description.transform;
+                drt.anchorMin = drt.anchorMax = drt.pivot = new Vector2(0f, 1f);
+                drt.anchoredPosition = new Vector2(pad, -298f);
+                drt.sizeDelta = new Vector2(w, 70f);
+                _description.textWrappingMode = TextWrappingModes.Normal;
+                _description.overflowMode = TextOverflowModes.Ellipsis;
+                Ui.Image(WindowCanvas.At(body, "Rule", pad, 376f, w, 1f), null, ThemeRuntime.ToUnity(t.AccentGold).WithA(0.35f));
+                for (int i = 0; i < MaxRows; i++)
+                {
+                    var row = WindowCanvas.At(body, "Row " + i, pad, 386f + i * 34f, w, 32f);
+                    _rows[i] = row.gameObject;
+                    _labels[i] = m.Label(row, "Label", FontRole.Body, 17f, t.TextBody, 0f, 0f, w * 0.55f, 26f, TextAlignmentOptions.Left);
+                    _values[i] = m.Label(row, "Value", FontRole.Body, 17f, t.TextTitle, w * 0.45f, 0f, w * 0.55f, 26f, TextAlignmentOptions.Right);
+                    Ui.Image(WindowCanvas.At(row, "Line", 0f, 31f, w, 1f), null, ThemeRuntime.ToUnity(t.AccentGold).WithA(0.12f));
+                    row.gameObject.SetActive(false);
+                }
+                _durBack = Ui.Image(WindowCanvas.At(body, "DurabilityBar", pad + w * 0.45f, 0f, w * 0.55f, 4f), null, new Color(0f, 0f, 0f, 0.6f));
+                _dur = Ui.Image(Ui.Fill(Ui.Child((RectTransform)_durBack.transform, "Fill")), m._theme.Sprite("bar_fill"), ThemeRuntime.ToUnity(t.AccentGold));
+                _dur.type = Image.Type.Filled;
+                _dur.fillMethod = Image.FillMethod.Horizontal;
+                _durBack.gameObject.SetActive(false);
+                _body.SetActive(false);
+
+                _empty = m.Label(p, "Empty", FontRole.Body, 17f, t.TextFlavor, pad, 300f, w, 60f, TextAlignmentOptions.Center);
+                _empty.textWrappingMode = TextWrappingModes.Normal;
+                _empty.text = Localize("$genesisui_details_empty");
+            }
+
+            internal void Show(ItemDrop.ItemData item)
+            {
+                _empty.gameObject.SetActive(false);
+                _body.SetActive(true);
+                var s = item.m_shared;
+                _icon.sprite = item.GetIcon();
+                _name.text = Localize(s.m_name).ToUpperInvariant();
+                _type.text = Localize(TypeToken(ItemCategories.Of(item)));
+                _description.text = Localize(s.m_description);
+
+                int n = 0;
+                _durBack.gameObject.SetActive(false);
+                Row(ref n, "$genesisui_stat_weight", item.GetWeight(-1).ToString("0.0"));
+                if (s.m_useDurability)
+                {
+                    float max = item.GetMaxDurability();
+                    Row(ref n, "$genesisui_stat_durability", Mathf.CeilToInt(item.m_durability) + " / " + Mathf.CeilToInt(max));
+                    var bar = (RectTransform)_durBack.transform;
+                    bar.anchoredPosition = new Vector2(bar.anchoredPosition.x, -(386f + (n - 1) * 34f + 26f));
+                    _dur.fillAmount = max > 0f ? Mathf.Clamp01(item.m_durability / max) : 0f;
+                    _durBack.gameObject.SetActive(true);
+                }
+                if (s.m_maxQuality > 1) Row(ref n, "$genesisui_stat_quality", item.m_quality + " / " + s.m_maxQuality);
+                float armor = item.GetArmor();
+                if (armor > 0f) Row(ref n, "$genesisui_stat_armor", armor.ToString("0"));
+                float damage = item.GetDamage().GetTotalDamage();
+                if (damage > 0f) Row(ref n, "$genesisui_stat_damage", damage.ToString("0"));
+                float block = item.GetBaseBlockPower();
+                if (block > 0f) Row(ref n, "$genesisui_stat_block", block.ToString("0"));
+                if (s.m_food > 0f) Row(ref n, "$genesisui_stat_food_health", s.m_food.ToString("0"));
+                if (s.m_foodStamina > 0f) Row(ref n, "$genesisui_stat_food_stamina", s.m_foodStamina.ToString("0"));
+                if (s.m_foodEitr > 0f) Row(ref n, "$genesisui_stat_food_eitr", s.m_foodEitr.ToString("0"));
+                if (s.m_foodBurnTime > 0f) Row(ref n, "$genesisui_stat_duration", Mathf.RoundToInt(s.m_foodBurnTime / 60f) + " min");
+                if (s.m_value > 0) Row(ref n, "$genesisui_stat_value", s.m_value.ToString());
+                for (int i = n; i < MaxRows; i++) if (_rows[i].activeSelf) _rows[i].SetActive(false);
+            }
+
+            private void Row(ref int n, string token, string value)
+            {
+                if (n >= MaxRows) return;
+                _labels[n].text = Localize(token);
+                _values[n].text = value;
+                if (!_rows[n].activeSelf) _rows[n].SetActive(true);
+                n++;
+            }
+
+            private static string TypeToken(ItemCategory c)
+            {
+                switch (c)
+                {
+                    case ItemCategory.Weapon: return "$genesisui_type_weapon";
+                    case ItemCategory.Shield: return "$genesisui_type_shield";
+                    case ItemCategory.Tool: return "$genesisui_type_tool";
+                    case ItemCategory.Ammo: return "$genesisui_type_ammo";
+                    case ItemCategory.Consumable: return "$genesisui_type_consumable";
+                    case ItemCategory.Armor: return "$genesisui_type_armor";
+                    case ItemCategory.Material: return "$genesisui_type_material";
+                    case ItemCategory.Trophy: return "$genesisui_type_trophy";
+                    default: return "$genesisui_type_misc";
+                }
+            }
+        }
     }
 }

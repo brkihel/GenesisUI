@@ -218,7 +218,7 @@ F9.
 menus included; adapting other mods only makes sense once the vanilla screens they plug into
 exist in our form.
 
-## D-025 — Windows: rearrange and dress vanilla, keep its behaviour
+## D-025 — Windows: rearrange and dress vanilla, keep its behaviour (replaced by D-032)
 
 **Decision (2026-09-28):** the F4 windows reach the concept layout by moving, resizing and
 restyling vanilla's own panels (`VanillaSkin`, reversible like the veil) plus our own panels
@@ -320,3 +320,25 @@ The banned-API test allows the merged `ServerSync.` namespace its RPC, PatchAll 
 **Why:** Diego's admin must set the inventory size and slot counts for everyone on a server; the
 house standard for that is ServerSync (Jötunn does not ship it). The visual modules still register
 no RPC of their own.
+
+## D-032 — Windows: GenesisUI draws its own window; vanilla stays the engine (replaces D-025)
+
+**Decision (2026-09-29):** the F4 windows are GenesisUI's own views, laid out on the concept's
+design board (ConceptArt 9 measured: 1580 x 850 units, `WindowCanvas.Design`, scaled uniformly to
+the screen). The inventory tab draws every cell itself from the player's inventory — grid with
+scroll, quick-use and action slots, equipment, details, the chest panel — and no longer moves or
+reskins vanilla's slots. Vanilla's `InventoryGui` still opens, updates and owns every item
+operation, with its panels hidden (CanvasGroup, restored exactly): a press, right click or drag
+release on our cell invokes the vanilla grid's own `m_onSelected` / `m_onRightClick` /
+`m_onReleased` callbacks with the cell's inventory position, exactly as vanilla's slot would, and a
+drag released over the world presses vanilla's drop button. Vanilla's split dialog stays vanilla's,
+lifted above our window. Our code still never adds, removes, splits or transfers an item; only the
+inventory module's position plans (D-028/D-030) and "Organizar" (positions only, Core
+`InventorySort`) move items.
+**Why:** Diego chose replacement over skins because GenesisUI's features do not fit vanilla's
+window; D-025's "move and dress vanilla's slots" never reached the concept (giant, empty panels
+around small vanilla cells, alignment drift, a vanilla flash on close). Handing input to vanilla's
+callbacks keeps D-025's safety (item loss and duplication live only in vanilla code, and other
+mods' patches on those handlers still run) without its layout limits.
+**Cost:** gamepad navigation of the inventory is not wired to our cells yet (vanilla's gamepad
+selection lives on its hidden grid); vanilla tooltips are replaced by the details panel.

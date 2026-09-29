@@ -293,10 +293,15 @@ def main(out_path):
 
 
 def window_mock(out_path):
-    """The window shell (F4.1): top bar with title and six tabs, key-hint bar, over the backdrop."""
+    """The Inventory tab (D-032) on the design board (WindowCanvas.Design, ConceptArt 9 measured),
+    scaled to 75% of the screen width like the plugin. Keep in sync with WindowShellModule and
+    InventoryWindowModule: every number below is theirs."""
     st = Style()
     src = Image.open(BACKDROP).convert("RGBA") if os.path.exists(BACKDROP) else Image.new("RGBA", (W, H), (46, 58, 44, 255))
-    bg = src.resize((W, H), Image.LANCZOS)
+    screen = src.resize((W, H), Image.LANCZOS)
+    BW, BH = 1580, 850
+    bg = Image.new("RGBA", (BW, BH))
+    gold, flavor, title = (247, 226, 131, 255), (186, 153, 92, 255), (251, 243, 218, 255)
 
     def size(name):
         return st.meta[name]["width"], st.meta[name]["height"]
@@ -311,109 +316,159 @@ def window_mock(out_path):
         out.alpha_composite(st.nine(name, w, h, k))
         return out
 
-    def text(x, y, s, f, fill=(251, 243, 218, 255), anchor="mm"):
+    def put(im, x, y):
+        bg.alpha_composite(im, (int(round(x)), int(round(y))))
+
+    def text(x, y, s, f, fill=title, anchor="mm"):
         ImageDraw.Draw(bg).text((x, y), s, font=f, fill=fill, anchor=anchor, stroke_width=1, stroke_fill=(0, 0, 0, 200))
 
     def icon(name, cx, top, h):
         w0, h0 = size(name)
         im = st.img(name).resize((max(1, int(w0 * h / h0)), int(h)), Image.LANCZOS)
-        bg.alpha_composite(im, (int(cx - im.width / 2), int(top)))
+        put(im, cx - im.width / 2, top)
+        return im.width
 
-    def key(x, cy, label):
-        w = 26 if len(label) <= 2 else max(40, 12 * len(label) + 6)
-        bg.alpha_composite(dressed("keycap" if w == 26 else "keycap_wide", w, 26, fit=26), (int(x), int(cy - 13)))
-        text(x + w / 2, cy, label, font("Cinzel-Medium", 13))
+    def key(x, cy, label, h=30):
+        w = h if len(label) <= 2 else max(46, 13 * len(label) + 8)
+        put(dressed("keycap" if w == h else "keycap_wide", w, h, fit=h), x, cy - h / 2)
+        text(x + w / 2, cy, label, font("Cinzel-Medium", 15 if h >= 30 else 12))
         return w
 
-    # Match WindowCanvas (75% of both axes), WindowShell and InventoryWindowModule.
-    area_w, area_h = int(W * 0.75), int(H * 0.75)
-    side_, area_top = (W - area_w) // 2, (H - area_h) // 2
-    top, bar_h, bw = area_top, 64, area_w
-    bg.alpha_composite(dressed("window_topbar", bw, bar_h, fit=bar_h), (side_, top))
+    def cell(x, y, c, state=None, glyph=None, amount=None):
+        put(dressed("hotslot", c, c, fit=c), x, y)
+        if glyph:
+            ImageDraw.Draw(bg).ellipse((x + c * 0.28, y + c * 0.28, x + c * 0.72, y + c * 0.72), fill=glyph)
+        if amount:
+            text(x + c - c * 0.1, y + c - c * 0.1, amount, font("Cinzel-SemiBold", int(c * 0.2)), anchor="rs")
+        if state:
+            drawn = size(state)
+            l, b, r, t = st.content(state, (0, 0, 0, 0))
+            k = c / max(1, drawn[0] - l - r)
+            im = st.img(state).resize((int(drawn[0] * k), int(drawn[1] * k)), Image.LANCZOS)
+            put(im, x + c / 2 - im.width / 2, y + c / 2 - im.height / 2)
+
+    def panel(x, w, ttl, tx, size_, centred=False):
+        put(dressed("window_panel", w, 673), x, 102)
+        f = font("Cinzel-SemiBold", size_)
+        if centred:
+            text(x + w / 2, 102 + 30, ttl, f, fill=gold)
+            mw = w * 0.6
+            put(st.nine("tab_marker", int(mw), 8, 8 / size("tab_marker")[1]), x + (w - mw) / 2, 102 + 48)
+        else:
+            text(x + tx, 102 + 30, ttl, f, fill=gold, anchor="lm")
+            mw = min(300, w * 0.5)
+            put(st.nine("tab_marker", int(mw), 8, 8 / size("tab_marker")[1]), x + tx - 6, 102 + 48)
+
+    # Top bar (WindowShellModule: 90 high, keycaps 30, icons 32, labels 16).
+    bar_h = 90
+    put(dressed("window_topbar", BW, bar_h, fit=bar_h), 0, 0)
     k = bar_h / size("window_topbar")[1]
     cl, cb, cr, ct = (v * k for v in st.content("window_topbar", (150, 12, 150, 12)))
-    key(side_ + cl + 4, top + bar_h / 2, "Q")
-    x0, x1 = side_ + cl + 44, side_ + bw - cr - 44
-    key(side_ + bw - cr + 4 - 26, top + bar_h / 2, "E")
+    key(cl + 4, bar_h / 2, "Q")
+    key(BW - cr + 4 - 30, bar_h / 2, "E")
+    x0, x1 = cl + 50, BW - cr - 50
     tabs = [("icon_inventory", "INVENTÁRIO"), ("icon_skills", "HABILIDADES"), ("icon_map", "MAPA"), ("icon_crafting", "CRIAÇÃO"),
             ("icon_achievements", "CONQUISTAS"), ("icon_settings", "CONFIGURAÇÕES")]
     tw = (x1 - x0) / len(tabs)
     kw, kh = size("tab_knot")
     for i, (ic, label) in enumerate(tabs):
         cx = x0 + tw * (i + 0.5)
-        icon(ic, cx, top + ct + 3, 24)
-        text(cx, top + bar_h - cb - 12, label, font("Cinzel-Medium", 14), fill=(247, 226, 131, 255) if i == 0 else (186, 153, 92, 255))
+        icon(ic, cx, ct + 4, 32)
+        text(cx, bar_h - cb - 8 - 11, label, font("Cinzel-Medium", 16), fill=gold if i == 0 else flavor)
         if i:
-            knot = st.img("tab_knot").resize((max(1, int(kw * 8 / kh)), 8), Image.LANCZOS)
-            bg.alpha_composite(knot, (int(x0 + tw * i - knot.width / 2), int(top + bar_h / 2 - 4)))
+            knot = st.img("tab_knot").resize((max(1, int(kw * 10 / kh)), 10), Image.LANCZOS)
+            put(knot, x0 + tw * i - knot.width / 2, bar_h / 2 - 5)
         if i == 0:
-            m = st.nine("tab_marker", int(tw * 0.76), 10, 10 / size("tab_marker")[1])
-            bg.alpha_composite(m, (int(x0 + tw * 0.12), int(top + bar_h - cb - 7)))
+            put(st.nine("tab_marker", int(tw * 0.76), 10, 10 / size("tab_marker")[1]), x0 + tw * 0.12, bar_h - cb - 7)
 
-    # Inventory tab (F4.2a): three panels between the bars, vanilla's slots dressed on the grid.
-    top_, gap_ = area_top + 72, 8
-    ph = area_h - 72 - 54
-    shares = [0.47, 0.25, 0.28]
-    widths = [int(area_w * shares[0] - gap_ / 2), int(area_w * shares[1] - gap_),
-              int(area_w * shares[2] - gap_ / 2)]
-    titles = ["INVENTÁRIO", "EQUIPAMENTO", "DETALHES DO ITEM"]
-    x = side_
-    for w, ttl in zip(widths, titles):
-        bg.alpha_composite(dressed("window_panel", w, ph), (int(x), top_))
-        rule = st.meta["window_panel_rule_knot"].get("inset", 38)
-        text(x + w / 2, top_ + rule - 26 + 10, ttl, font("Cinzel-SemiBold", 16), fill=(247, 226, 131, 255))
-        marker = st.nine("tab_marker", int(w * 0.6), 8, 8 / size("tab_marker")[1])
-        bg.alpha_composite(marker, (int(x + w * 0.2), int(top_ + rule - 4)))
-        x += w + gap_
-    cell, cg = min(64, int((widths[0] - 60 - 7 * 6) / 8), int((ph - 80 - 70 - 5 * 6) / 6)), 6
-    gw = 8 * cell + 7 * cg
-    gx0, gy0 = side_ + widths[0] / 2 - gw / 2, top_ + 80
-    text(side_ + 28, top_ + 50, "17/32", font("Cinzel-Medium", 13), fill=(186, 153, 92, 255), anchor="lm")
-    bg.alpha_composite(dressed("keycap_wide", 150, 26, fit=26), (int(side_ + widths[0] - 24 - 150), top_ + 46))
-    text(side_ + widths[0] - 24 - 75, top_ + 59, "Todos  ◆", font("CormorantGaramond-SemiBold", 15))
+    # Panels (InventoryWindowModule constants).
+    panel(0, 816, "INVENTÁRIO", 88, 26)
+    panel(820, 412, "EQUIPAMENTO", 54, 23)
+    panel(1236, 344, "DETALHES DO ITEM", 0, 19, centred=True)
+    top = 102
+    text(46, top + 71, "17/32 SLOTS EM USO", font("Cinzel-Medium", 15), fill=flavor, anchor="lm")
+    put(dressed("keycap_wide", 140, 38, fit=38), 526, top + 30)
+    text(538, top + 49, "Todos  ◆", font("CormorantGaramond-SemiBold", 17), anchor="lm")
+    put(dressed("keycap_wide", 100, 38, fit=38), 678, top + 30)
+    text(728, top + 49, "Organizar", font("CormorantGaramond-SemiBold", 16))
+    rng = random.Random(3)
+    colours = [(170, 120, 70, 255), (140, 150, 160, 255), (120, 160, 90, 255), (190, 80, 70, 255)]
     for r in range(4):
         for c in range(8):
-            bg.alpha_composite(dressed("hotslot", cell, cell, fit=cell), (int(gx0 + c * (cell + cg)), int(gy0 + r * (cell + cg))))
-    wy = top_ + ph - 38
-    text(side_ + 30, wy, "PESO", font("Cinzel-Medium", 13), fill=(186, 153, 92, 255), anchor="lm")
-    ImageDraw.Draw(bg).rectangle((side_ + 94, wy - 2, side_ + widths[0] - 104, wy + 2), fill=(0, 0, 0, 140))
-    ImageDraw.Draw(bg).rectangle((side_ + 94, wy - 2, side_ + 94 + (widths[0] - 198) * 0.7, wy + 2), fill=(190, 140, 60, 255))
-    text(side_ + widths[0] - 30, wy, "151 / 300", font("Cinzel-Medium", 14), anchor="rm")
-    ex = side_ + widths[0] + gap_
-    equipment = ["CABEÇA", "TRINKET", "PEITO", "CINTO", "CAPA", "PERNAS"]
-    for i, label in enumerate(equipment):
-        column, row = i % 2, i // 2
-        cx = ex + widths[1] * (0.23 if column == 0 else 0.77)
-        cy = top_ + ph * (0.20 + row * 0.22)
-        bg.alpha_composite(dressed("hotslot", cell, cell, fit=cell),
-                           (int(cx - cell / 2), int(cy - cell / 2)))
-        text(cx, cy + cell / 2 + 13, label, font("Cinzel-Medium", 11),
-             fill=(186, 153, 92, 255))
-    text(ex + widths[1] / 2, top_ + ph - 70, "PROTEÇÃO TOTAL", font("Cinzel-Medium", 12), fill=(186, 153, 92, 255))
-    text(ex + widths[1] / 2, top_ + ph - 42, "24", font("Cinzel-SemiBold", 26))
+            full = rng.random() < 0.55
+            state = "hotslot_selected" if (r, c) == (0, 0) else "hotslot_equipped" if (r, c) == (0, 1) else None
+            cell(44 + c * 89, top + 96 + r * 92, 82, state, rng.choice(colours) if full else None,
+                 str(rng.randint(2, 50)) if full and rng.random() < 0.6 else None)
+            if r == 0:
+                text(44 + c * 89 + 10, top + 96 + 6, str(c + 1), font("Cinzel-Medium", 16), anchor="lt")
+    text(56, top + 512 - 23, "CONSUMO RÁPIDO", font("Cinzel-Medium", 15), fill=gold, anchor="lm")
+    text(445, top + 512 - 23, "SLOTS DE AÇÃO", font("Cinzel-Medium", 15), fill=gold, anchor="lm")
+    ImageDraw.Draw(bg).line((422, top + 482, 422, top + 586), fill=(190, 140, 60, 90))
+    for i in range(4):
+        cell(54 + i * 85, top + 512, 74, None, colours[3], f"{rng.randint(2, 10)}/10")
+        cell(445 + i * 82, top + 512, 74, None, colours[1])
+        key(445 + i * 82 + 4, top + 512 + 14, "ZXCV"[i], h=20)
+    wy = top + 639
+    text(56, wy, "PESO", font("Cinzel-Medium", 16), fill=flavor, anchor="lm")
+    ImageDraw.Draw(bg).rectangle((130, wy - 3, 580, wy + 3), fill=(0, 0, 0, 150))
+    ImageDraw.Draw(bg).rectangle((130, wy - 3, 130 + 450 * 0.62, wy + 3), fill=(190, 140, 60, 255))
+    text(600, wy, "186 / 300", font("Cinzel-Medium", 17), anchor="lm")
 
-    hint_h = 46
-    hy = area_top + area_h - hint_h
-    bg.alpha_composite(dressed("window_hintbar", bw, hint_h, fit=hint_h), (side_, hy))
-    items = [("Esc", None, "Fechar"), (None, "icon_mouse_left", "Mover"), (None, "icon_mouse_right", "Usar / Equipar"),
-             ("Shift", "icon_mouse_left", "Dividir pilha"), ("Ctrl", "icon_mouse_left", "Transferir"), ("Q/E", None, "Abas")]
-    f = font("CormorantGaramond-SemiBold", 17)
+    worn = [("CABEÇA", 0), ("PEITO", 1), ("CAPA", 2), ("PERNAS", 3), ("TRINKET", 4), ("CINTO", 5)]
+    for label, i in worn:
+        column, row = (0 if i < 4 else 1), i % 4
+        x = 820 + (24 if column == 0 else 412 - 24 - 80)
+        y = top + 96 + row * 120
+        cell(x, y, 80, "hotslot_equipped" if i < 2 else None, colours[1] if i < 2 else None)
+        text(x + 40, y + 80 + 15, label.title(), font("CormorantGaramond-SemiBold", 16))
+    text(820 + 206, top + 596, "PROTEÇÃO TOTAL", font("Cinzel-Medium", 14), fill=flavor)
+    text(820 + 206, top + 631, "24", font("Cinzel-SemiBold", 34))
+
+    dx = 1236
+    ImageDraw.Draw(bg).ellipse((dx + 172 - 60, top + 90, dx + 172 + 60, top + 210), fill=colours[0])
+    text(dx + 24, top + 252, "TOCHA", font("Cinzel-SemiBold", 24), fill=gold, anchor="lm")
+    text(dx + 24, top + 279, "Arma", font("CormorantGaramond-SemiBold", 17), fill=flavor, anchor="lm")
+    text(dx + 24, top + 308, "Ilumina os arredores e mantém", font("CormorantGaramond-Medium", 16), anchor="lm")
+    text(dx + 24, top + 328, "os perigos da escuridão afastados.", font("CormorantGaramond-Medium", 16), anchor="lm")
+    ImageDraw.Draw(bg).line((dx + 24, top + 376, dx + 320, top + 376), fill=(190, 140, 60, 90))
+    for i, (a, b) in enumerate([("Peso", "1,0"), ("Durabilidade", "80 / 100"), ("Qualidade", "1 / 4"), ("Dano", "19"), ("Valor", "0")]):
+        y = top + 386 + i * 34 + 13
+        text(dx + 24, y, a, font("CormorantGaramond-SemiBold", 17), anchor="lm")
+        text(dx + 320, y, b, font("CormorantGaramond-SemiBold", 17), anchor="rm")
+        ImageDraw.Draw(bg).line((dx + 24, y + 18, dx + 320, y + 18), fill=(190, 140, 60, 30))
+    ImageDraw.Draw(bg).rectangle((dx + 24 + 133, top + 386 + 34 + 26, dx + 320, top + 386 + 34 + 29), fill=(190, 140, 60, 255))
+
+    # Hint bar (62 high, laid out by hand from measured widths).
+    hint_h, hy = 62, 850 - 62
+    put(dressed("window_hintbar", BW, hint_h, fit=hint_h), 0, hy)
+    items = [("Esc", None, "Fechar"), (None, "icon_mouse_right", "Usar / Equipar"), (None, "icon_mouse_left", "Mover"),
+             ("Shift", "icon_mouse_left", "Dividir pilha"), ("Ctrl", "icon_mouse_left", "Transferir"), ("R", None, "Organizar"), ("Q/E", None, "Abas")]
+    f = font("CormorantGaramond-SemiBold", 19)
     widths = []
     for kname, mouse, label in items:
-        w = (len(kname) * 12 + 18 if kname and len(kname) > 2 else 26 if kname else 0) + (22 if mouse else 0) + (16 if kname and mouse else 0) + f.getlength(label) + 12
+        w = ((30 if len(kname) <= 2 else max(46, 13 * len(kname) + 8)) + 6 if kname else 0) + (18 if kname and mouse else 0) + (26 if mouse else 0) + f.getlength(label) + 4
         widths.append(w)
-    x = W / 2 - (sum(widths) + 26 * (len(items) - 1)) / 2
+    kk = hint_h / size("window_hintbar")[1]
+    hl, _, hr, _ = (v * kk for v in st.content("window_hintbar", (70, 10, 70, 10)))
+    avail = BW - hl - hr - 20
+    gap = max(16, (avail - sum(widths)) / len(items))
+    x = hl + 10 + (avail - sum(widths) - gap * (len(items) - 1)) / 2
     cy = hy + hint_h / 2
     for (kname, mouse, label), w in zip(items, widths):
+        start = x
         if kname:
             x += key(x, cy, kname) + 6
         if kname and mouse:
-            text(x + 4, cy, "+", font("CormorantGaramond-Medium", 16)); x += 16
+            text(x + 6, cy, "+", font("CormorantGaramond-Medium", 18)); x += 18
         if mouse:
-            icon(mouse, x + 8, cy - 12, 24); x += 22
+            x += icon(mouse, x + 10, cy - 14, 28) + 8
         text(x, cy, label, f, anchor="lm")
-        x += f.getlength(label) + 12 + 26
-    bg.save(out_path)
+        x = start + w + gap
+
+    scale = min(W * 0.75 / BW, H * 0.75 / BH)
+    board = bg.resize((int(BW * scale), int(BH * scale)), Image.LANCZOS)
+    screen.alpha_composite(board, ((W - board.width) // 2, (H - board.height) // 2))
+    screen.save(out_path)
     print("window mock written to " + out_path)
 
 

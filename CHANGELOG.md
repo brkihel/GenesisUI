@@ -1,5 +1,32 @@
 # Changelog
 
+## 0.7.0-preview.9 — Own inventory window on the concept's layout (D-032)
+
+### Changed
+- The Inventory tab is GenesisUI's own window instead of vanilla's slots moved and reskinned
+  (D-032, replaces D-025). It is laid out on ConceptArt (9)'s design board (1580 x 850,
+  measured from the concept) and scaled uniformly to `[Windows] Width` of the screen, so its
+  proportions are the concept's at any resolution: 8-column grid filling the inventory panel
+  (four rows in view, scroll for the admin's fifth and sixth), quick-use and action slots
+  (Z/X/C/V) under it, weight at the bottom; equipment in two columns with labels and total
+  protection; details with icon, name, type, description and a stat table (weight,
+  durability bar, quality, armour, damage, block, food, value); the chest panel over
+  equipment and details with Take all / Stack.
+- Every click, right click, drag and drop on our cells is handed to the vanilla grid's own
+  callbacks; vanilla's panels are hidden, not moved. Vanilla's split dialog stays on top.
+- Tab bar 90 and hint bar 62 units like the concept; the hint bar is laid out from measured
+  widths (no more hints piled up in the middle) and shows R Organizar.
+
+### Added
+- Quick-use slots accept consumables; action slots accept weapons, shields, tools and ammo
+  (Core `SlotRules`, enforced in the existing D-030 selection prefix, swaps included).
+- Organizar (button and `[Windows] SortKey`, R): packs the rows below the hotbar by category,
+  name and stack. Positions only; hotbar, quick-use, action and equipment never move.
+
+### Verification
+- Core (140) and contract (8) tests pass; the window mock (`tools/art/mock.py`) was compared
+  with ConceptArt (9). Everything in game needs Diego's client test (R-053).
+
 ## 0.7.0-preview.8 — R-051 window lifecycle fixes
 
 ### Fixed

@@ -36,8 +36,10 @@ namespace GenesisUI.Modules.Windows
     [GameContract("assembly_valheim", "KeyHints", "instance")]
     internal sealed class WindowShellModule : IUiModule
     {
-        private const float BarHeight = 64f;
-        private const float HintHeight = 46f;
+        // ConceptArt (9) in design-board units (WindowCanvas.Design): tab bar 90, hint bar 62.
+        private const float BarHeight = 90f;
+        private const float HintHeight = 62f;
+        private const float CapSize = 30f;
         private const float FadeSpeed = 8f;
 
         private static readonly string[] NoRegions = new string[0];
@@ -173,6 +175,7 @@ namespace GenesisUI.Modules.Windows
 
             if (_previousKey.Value.IsDown()) Select(Step(-1), callVanilla: true);
             else if (_nextKey.Value.IsDown()) Select(Step(+1), callVanilla: true);
+            WindowCanvas.Fit(_area);
             FollowVanilla(gui);
         }
 
@@ -287,6 +290,7 @@ namespace GenesisUI.Modules.Windows
             bar.pivot = new Vector2(0.5f, 1f);
             bar.offsetMin = new Vector2(0f, -BarHeight);
             bar.offsetMax = new Vector2(0f, 0f);
+            Ui.Image(bar, null, new Color(0f, 0f, 0f, 0f), raycast: true); // a held item is not dropped by a click on the bar
             Frame.Dress(bar, _theme, "window_topbar", "Windows", BarHeight);
 
             var drawn = _theme.Size("window_topbar");
@@ -300,8 +304,8 @@ namespace GenesisUI.Modules.Windows
             var strip = Ui.Child(bar, "Tabs");
             strip.anchorMin = new Vector2(0f, 0f);
             strip.anchorMax = new Vector2(1f, 1f);
-            strip.offsetMin = new Vector2(c.x + 44f, c.y);
-            strip.offsetMax = new Vector2(-c.z - 44f, -c.w);
+            strip.offsetMin = new Vector2(c.x + 50f, c.y);
+            strip.offsetMax = new Vector2(-c.z - 50f, -c.w);
             KeyCap(bar, new Vector2(1f, 0.5f), new Vector2(-c.z + 4f, 0f), KeyName(_nextKey.Value.MainKey));
 
             for (int i = 0; i < Tabs.Length; i++)
@@ -319,7 +323,7 @@ namespace GenesisUI.Modules.Windows
                 if (knot != null && i > 0)
                 {
                     var d = _theme.Size("tab_knot");
-                    float h = 8f;
+                    float h = 10f;
                     var drt = Ui.Place(Ui.Child(strip, "Knot" + i), new Vector2(x0, 0.5f), Vector2.zero, new Vector2(d.x * h / Mathf.Max(1f, d.y), h));
                     drt.pivot = new Vector2(0.5f, 0.5f);
                     Ui.Image(drt, knot, Color.white);
@@ -341,20 +345,20 @@ namespace GenesisUI.Modules.Windows
             if (iconSprite != null)
             {
                 var s = _theme.Size(icon);
-                float h = 24f;
-                var irt = Ui.Place(Ui.Child(cell, "Icon"), new Vector2(0.5f, 1f), new Vector2(0f, -3f), new Vector2(s.x * h / Mathf.Max(1f, s.y), h));
+                float h = 32f;
+                var irt = Ui.Place(Ui.Child(cell, "Icon"), new Vector2(0.5f, 1f), new Vector2(0f, -4f), new Vector2(s.x * h / Mathf.Max(1f, s.y), h));
                 irt.pivot = new Vector2(0.5f, 1f);
                 view.Icon = Ui.Image(irt, iconSprite, Color.white);
             }
-            view.Label = Ui.Fit(Ui.Text(cell, "Label", _theme, FontRole.Label, 14f, ThemeRuntime.ToUnity(_theme.Tokens.TextFlavor),
+            view.Label = Ui.Fit(Ui.Text(cell, "Label", _theme, FontRole.Label, 16f, ThemeRuntime.ToUnity(_theme.Tokens.TextFlavor),
                 TextAlignmentOptions.Bottom, outlined: true), 10f);
             view.Label.characterSpacing = 6f;
             var lrt = (RectTransform)view.Label.transform;
             lrt.anchorMin = new Vector2(0f, 0f);
             lrt.anchorMax = new Vector2(1f, 0f);
             lrt.pivot = new Vector2(0.5f, 0f);
-            lrt.anchoredPosition = new Vector2(0f, 6f);
-            lrt.sizeDelta = new Vector2(-8f, 18f);
+            lrt.anchoredPosition = new Vector2(0f, 8f);
+            lrt.sizeDelta = new Vector2(-8f, 22f);
             view.Label.text = Localize(token).ToUpperInvariant();
 
             var marker = _theme.Sprite("tab_marker");
@@ -381,6 +385,7 @@ namespace GenesisUI.Modules.Windows
             bar.pivot = new Vector2(0.5f, 0f);
             bar.offsetMin = new Vector2(0f, 0f);
             bar.offsetMax = new Vector2(0f, HintHeight);
+            Ui.Image(bar, null, new Color(0f, 0f, 0f, 0f), raycast: true);
             Frame.Dress(bar, _theme, "window_hintbar", "Windows", HintHeight);
 
             var drawn = _theme.Size("window_hintbar");
@@ -391,45 +396,63 @@ namespace GenesisUI.Modules.Windows
             row.anchorMax = Vector2.one;
             row.offsetMin = new Vector2(c.x + 10f, c.y);
             row.offsetMax = new Vector2(-c.z - 10f, -c.w);
-            // Fixed cells avoid a first-frame size cycle between nested HorizontalLayoutGroups
-            // and ContentSizeFitters. Each hint has a stable sixth of the bar from the start.
-            Hint(row, 0, "Esc", null, "$genesisui_hint_close");
-            Hint(row, 1, null, "icon_mouse_left", "$genesisui_hint_move");
-            Hint(row, 2, null, "icon_mouse_right", "$genesisui_hint_use");
-            Hint(row, 3, "Shift", "icon_mouse_left", "$genesisui_hint_split");
-            Hint(row, 4, "Ctrl", "icon_mouse_left", "$genesisui_hint_transfer");
-            Hint(row, 5, KeyName(_previousKey.Value.MainKey) + "/" + KeyName(_nextKey.Value.MainKey), null, "$genesisui_hint_tabs");
+            // Laid out by hand, left to right, from measured widths: layout groups resolved a frame
+            // late and piled every hint in the middle on the first open (R-052 print).
+            var hints = new List<RectTransform>
+            {
+                Hint(row, "Esc", null, "$genesisui_hint_close"),
+                Hint(row, null, "icon_mouse_right", "$genesisui_hint_use"),
+                Hint(row, null, "icon_mouse_left", "$genesisui_hint_move"),
+                Hint(row, "Shift", "icon_mouse_left", "$genesisui_hint_split"),
+                Hint(row, "Ctrl", "icon_mouse_left", "$genesisui_hint_transfer"),
+                Hint(row, "R", null, "$genesisui_hint_sort"),
+                Hint(row, KeyName(_previousKey.Value.MainKey) + "/" + KeyName(_nextKey.Value.MainKey), null, "$genesisui_hint_tabs"),
+            };
+            float total = 0f;
+            foreach (var h in hints) total += h.sizeDelta.x;
+            float width = WindowCanvas.Design.x - c.x - c.z - 20f;
+            float gap = Mathf.Max(16f, (width - total) / hints.Count);
+            float x = (width - total - gap * (hints.Count - 1)) / 2f;
+            foreach (var h in hints)
+            {
+                h.anchoredPosition = new Vector2(x, 0f);
+                x += h.sizeDelta.x + gap;
+            }
         }
 
-        private void Hint(RectTransform row, int index, string key, string mouse, string token)
+        /// <summary>One hint: key cap and/or mouse icon, then its label; returns its row, sized to its content.</summary>
+        private RectTransform Hint(RectTransform row, string key, string mouse, string token)
         {
             var group = Ui.Child(row, "Hint " + token);
-            group.anchorMin = new Vector2(index / 6f, 0f);
-            group.anchorMax = new Vector2((index + 1f) / 6f, 1f);
-            group.offsetMin = group.offsetMax = Vector2.zero;
-            var layout = group.gameObject.AddComponent<HorizontalLayoutGroup>();
-            layout.spacing = 4f;
-            layout.childAlignment = TextAnchor.MiddleCenter;
-            layout.childControlWidth = layout.childControlHeight = false;
-            layout.childForceExpandWidth = layout.childForceExpandHeight = false;
-
-            if (key != null) KeyCap(group, new Vector2(0f, 0.5f), Vector2.zero, key);
+            group.anchorMin = new Vector2(0f, 0f);
+            group.anchorMax = new Vector2(0f, 1f);
+            group.pivot = new Vector2(0f, 0.5f);
+            float x = 0f;
+            if (key != null)
+            {
+                var cap = KeyCap(group, new Vector2(0f, 0.5f), new Vector2(x, 0f), key);
+                x += cap.sizeDelta.x + 6f;
+            }
             if (key != null && mouse != null)
             {
-                var plus = Ui.Text(group, "Plus", _theme, FontRole.Body, 16f, ThemeRuntime.ToUnity(_theme.Tokens.TextFlavor), TextAlignmentOptions.Center);
-                ((RectTransform)plus.transform).sizeDelta = new Vector2(10f, 24f);
+                var plus = Ui.Text(group, "Plus", _theme, FontRole.Body, 18f, ThemeRuntime.ToUnity(_theme.Tokens.TextFlavor), TextAlignmentOptions.Center);
+                Ui.Place((RectTransform)plus.transform, new Vector2(0f, 0.5f), new Vector2(x, 0f), new Vector2(12f, 26f));
                 plus.text = "+";
+                x += 18f;
             }
             if (mouse != null && _theme.Sprite(mouse) != null)
             {
                 var s = _theme.Size(mouse);
-                var mrt = Ui.Child(group, "Mouse");
-                mrt.sizeDelta = new Vector2(s.x * 24f / Mathf.Max(1f, s.y), 24f);
-                Ui.Image(mrt, _theme.Sprite(mouse), Color.white);
+                var size = new Vector2(s.x * 28f / Mathf.Max(1f, s.y), 28f);
+                Ui.Image(Ui.Place(Ui.Child(group, "Mouse"), new Vector2(0f, 0.5f), new Vector2(x, 0f), size), _theme.Sprite(mouse), Color.white);
+                x += size.x + 8f;
             }
-            var label = Ui.Text(group, "Label", _theme, FontRole.Body, 17f, ThemeRuntime.ToUnity(_theme.Tokens.TextTitle), TextAlignmentOptions.MidlineLeft, outlined: true);
+            var label = Ui.Text(group, "Label", _theme, FontRole.Body, 19f, ThemeRuntime.ToUnity(_theme.Tokens.TextTitle), TextAlignmentOptions.MidlineLeft, outlined: true);
             label.text = Localize(token);
-            ((RectTransform)label.transform).sizeDelta = new Vector2(label.GetPreferredValues(label.text).x + 4f, 26f);
+            float w = label.GetPreferredValues(label.text).x + 4f;
+            Ui.Place((RectTransform)label.transform, new Vector2(0f, 0.5f), new Vector2(x, 0f), new Vector2(w, 30f));
+            group.sizeDelta = new Vector2(x + w, 0f);
+            return group;
         }
 
         /// <summary>A blank key cap from the sheet with the key's name written on it (rebinding keeps working).</summary>
@@ -439,12 +462,12 @@ namespace GenesisUI.Modules.Windows
             var rt = Ui.Child(parent, "Key " + key);
             // The cap first, the text after it: in uGUI later siblings draw on top.
             var cap = Ui.Fill(Ui.Child(rt, "Cap"));
-            Frame.Dress(cap, _theme, wide ? "keycap_wide" : "keycap", "Windows", 26f);
-            var label = Ui.Text(rt, "Text", _theme, FontRole.Label, 13f, ThemeRuntime.ToUnity(_theme.Tokens.TextTitle), TextAlignmentOptions.Center);
+            Frame.Dress(cap, _theme, wide ? "keycap_wide" : "keycap", "Windows", CapSize);
+            var label = Ui.Text(rt, "Text", _theme, FontRole.Label, 15f, ThemeRuntime.ToUnity(_theme.Tokens.TextTitle), TextAlignmentOptions.Center);
             label.text = key;
             Ui.Fill((RectTransform)label.transform);
-            float w = wide ? Mathf.Max(40f, label.GetPreferredValues(key).x + 18f) : 26f;
-            Ui.Place(rt, anchor, position, new Vector2(w, 26f));
+            float w = wide ? Mathf.Max(46f, label.GetPreferredValues(key).x + 20f) : CapSize;
+            Ui.Place(rt, anchor, position, new Vector2(w, CapSize));
             rt.pivot = new Vector2(anchor.x, 0.5f);
             return rt;
         }

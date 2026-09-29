@@ -42,6 +42,9 @@ research works), item details on the right, weight bar, footer with key hints.
 ConceptArt (12) is the crafting target, with search and category filters. SeneaL UI shows the
 same kind of layout, built as its own UI (studied by screenshots only; nothing reused).
 
+> **Superseded on 2026-09-29 by D-032:** GenesisUI draws its own window on the concept's design
+> board; vanilla stays the hidden engine. The text below records the earlier approach.
+
 **Approach: rearrange and dress vanilla, keep its behaviour** (proposed D-025). Diego
 rejected "only restyle in place" because it would not reach the concept. The layout freedom
 comes from moving vanilla's panels, not from rewriting them:
