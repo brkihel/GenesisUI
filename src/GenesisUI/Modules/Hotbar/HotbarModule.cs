@@ -61,7 +61,7 @@ namespace GenesisUI.Modules.Hotbar
                 new ConfigDescription("Distância da barra de itens até a borda de baixo da tela, em pontos de interface.", new AcceptableValueRange<int>(0, 900)));
             _scale = config.Bind("Hotbar", "Scale", 1f,
                 new ConfigDescription("Tamanho da barra de itens (1 = padrão).", new AcceptableValueRange<float>(0.5f, 2f)));
-            _keyHintsLift = config.Bind("Hotbar", "KeyHintsLift", 72,
+            _keyHintsLift = config.Bind("Hotbar", "KeyHintsLift", 76,
                 new ConfigDescription("Quanto as dicas de atalho do jogo sobem para não ficar atrás da barra de itens (0 = não mexer).",
                     new AcceptableValueRange<int>(0, 600)));
         }
@@ -145,7 +145,7 @@ namespace GenesisUI.Modules.Hotbar
                     slot.SetIcon(null);
                     slot.SetAmount(0);
                     slot.SetBar(-1f);
-                    slot.SetActive(i == gamepadSelected);
+                    slot.SetState(i == gamepadSelected, false);
                     continue;
                 }
 
@@ -157,7 +157,7 @@ namespace GenesisUI.Modules.Hotbar
                 else if (item.m_durability <= 0f) slot.SetBar(blink > 0.5f ? 1f : -1f, danger: true); // broken: blinks red, like vanilla
                 else slot.SetBar(item.GetDurabilityPercentage());
 
-                slot.SetActive(item.m_equipped || i == gamepadSelected);
+                slot.SetState(i == gamepadSelected, item.m_equipped);
             }
         }
 

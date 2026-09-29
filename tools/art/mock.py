@@ -174,15 +174,13 @@ def main(out_path):
     vx, vy = 36, 72
     wh = bar(vx, vy + 22, "vital_health", "liquid_health", 0.66, 0.74, 148, (255, 158, 66))
     ws = bar(vx + wh + 6, vy + 22, "vital_stamina", "liquid_stamina", 0.8, 0.8, 132, (255, 236, 150))
-    bar(vx + wh + ws + 12, vy + 22, "vital_eitr", "liquid_eitr", 0.5, 0.5, 66, (175, 238, 255))
-    mw, mh = size("medallion")
-    put(dressed("medallion", mw, mh), vx + wh / 2 - mw / 2, H - (vy + 22 - mh + 4) - mh)
+    bar(vx + wh + ws + 12, vy + 22, "vital_stamina", "liquid_eitr", 0.5, 0.5, 66, (175, 238, 255))
 
-    # Food [Food] OffsetX 190, OffsetY 94.
+    # Food [Food] OffsetX 172, OffsetY 90.
     for i, t in enumerate(("13m", "23m", "28m")):
-        x = 190 + i * 66
-        put(dressed("slot", 58, 58, fit=58), x, H - (94 + 58))
-        text(x + 49, H - 94 - 8, t, font("Cinzel-SemiBold", 14), anchor="rs")
+        x = 172 + i * 66
+        put(dressed("slot", 58, 58, fit=58), x, H - (90 + 58))
+        text(x + 49, H - 90 - 8, t, font("Cinzel-SemiBold", 14), anchor="rs")
 
     # Hotbar [Hotbar] OffsetY 20, bottom centre: Diego's eight-cell piece at its own size.
     pw, ph = size("hotbar_frame")
@@ -194,14 +192,18 @@ def main(out_path):
     for i in range(8):
         x = px + cl + i * (cw + gap)
         text(x + cw * 0.12, ptop + ct + chh * 0.18, str(i + 1), font("Cinzel-Medium", 13), anchor="lm")
-        if i == 2:
-            put(st.img("cell_glow").resize((int(cw - 2), int(chh - 2)), Image.LANCZOS), x + 1, ptop + ct + 1)
+        state = {0: "slot_equipped", 2: "slot_selected"}.get(i)
+        if state:
+            sw_, sh_ = size(state)
+            scl, sbt, scr, sct = st.content(state, (0, 0, 0, 0))
+            kk = cw / (sw_ - scl - scr)
+            put(st.img(state).resize((int(sw_ * kk), int(sh_ * kk)), Image.LANCZOS), x - scl * kk, ptop + ct - sct * kk)
 
-    # Stamina readout [Sprint] OffsetY 120: Diego's frame, 220 wide at its own proportions.
+    # Stamina readout [Sprint] OffsetY 142: Diego's frame, 220 wide at its own proportions.
     fw, fh = size("sprint_frame")
     k = 220 / fw
     sw, sh = int(fw * k), int(fh * k)
-    sx, stop = W / 2 - sw / 2, H - (120 + sh)
+    sx, stop = W / 2 - sw / 2, H - (142 + sh)
     frame_img = dressed("sprint_frame", sw, sh)
     cl, cb, cr, ct = (v * k for v in st.content("sprint_frame", (40, 10, 40, 33)))
     tw, thh = int(sw - cl - cr), int(sh - cb - ct)
@@ -211,7 +213,6 @@ def main(out_path):
     frame_img.paste(lq, (0, 0), ImageChops.multiply(opening, lq.split()[3]))
     frame_img.alpha_composite(st.img("sprint_frame").resize((sw, sh), Image.LANCZOS))
     put(frame_img, sx, stop)
-    text(W / 2, stop + (6 * k + (sh - ct)) / 2 + 1, "93", font("Cinzel-SemiBold", 15))
 
     # Minimap [Minimap] OffsetX 24, OffsetY 20, top-right.
     gx, ring_top = W - 24 - 250, 20 + 40
@@ -245,7 +246,7 @@ def main(out_path):
 
     # Boss plate [Boss] OffsetY 18, top centre, 520 x 74, Diego's plate.
     bw, bh = 520, 74
-    bx, btop = W / 2 - bw / 2, 18
+    bx, btop = W / 2 - bw / 2, 12
     put(dressed("boss_plate", bw, bh, fit=bh), bx, btop)
     cl, cb, cr, ct = st.content("boss_plate", (22, 12, 22, 12))
     ch = bh - cb - ct

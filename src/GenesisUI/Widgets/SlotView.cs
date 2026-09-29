@@ -28,6 +28,8 @@ namespace GenesisUI.Widgets
         private char _shownUnit;
         private float _shownBar = -1f;
         private bool _shownActive;
+        private bool _shownEquipped;
+        private readonly Image _equipped;
         private bool _hasIcon;
 
         public SlotView(RectTransform parent, string name, ThemeRuntime theme, Vector2 anchor, Vector2 position, float size, string indexLabel)
@@ -69,12 +71,19 @@ namespace GenesisUI.Widgets
             _bar.fillOrigin = (int)Image.OriginHorizontal.Left;
             _barBack.gameObject.SetActive(false);
 
-            // The selected cell glows from inside (a light, not a second frame over the art's own).
-            var glow = theme.Sprite("cell_glow");
-            if (glow == null) glow = theme.Sprite("slot_active");
-            _active = Ui.Image(Ui.Fill(Ui.Child(Root, "Active"), 1f, 1f, 1f, 1f), glow,
-                               glow != null ? Color.white : ThemeRuntime.ToUnity(t.AccentGold).WithA(0.35f));
-            _active.type = Image.Type.Simple;
+            // States drawn by Diego (R-042): the lit gold cell when selected, the green one when
+            // equipped, laid over the cell with their window on the cell's. Else a soft inner glow.
+            _active = State(theme, "slot_selected", cell);
+            if (_active == null)
+            {
+                var glow = theme.Sprite("cell_glow");
+                if (glow == null) glow = theme.Sprite("slot_active");
+                _active = Ui.Image(Ui.Fill(Ui.Child(Root, "Active"), 1f, 1f, 1f, 1f), glow,
+                                   glow != null ? Color.white : ThemeRuntime.ToUnity(t.AccentGold).WithA(0.35f));
+                _active.type = Image.Type.Simple;
+            }
+            _equipped = State(theme, "slot_equipped", cell);
+            if (_equipped == null) _equipped = _active;
             _active.enabled = false;
 
             if (indexLabel != null)
@@ -150,11 +159,38 @@ namespace GenesisUI.Widgets
             if (_bar.color != c) _bar.color = c;
         }
 
-        public void SetActive(bool active)
+        public void SetActive(bool active) => SetState(active, false);
+
+        /// <summary>Selected wins over equipped when both apply (the focus is what the player acts on).</summary>
+        public void SetState(bool selected, bool equipped)
         {
-            if (active == _shownActive) return;
-            _shownActive = active;
-            _active.enabled = active;
+            if (selected == _shownActive && equipped == _shownEquipped) return;
+            _shownActive = selected;
+            _shownEquipped = equipped;
+            _active.enabled = selected;
+            if (_equipped != _active) _equipped.enabled = equipped && !selected;
+            else _active.enabled = selected || equipped;
+        }
+
+        /// <summary>
+        /// A state frame over the cell, uniformly scaled so its window matches the cell's width and
+        /// centred on it; null when the art lacks it.
+        /// </summary>
+        private Image State(ThemeRuntime theme, string sprite, Vector2 cell)
+        {
+            var s = theme.Sprite(sprite);
+            if (s == null) return null;
+            var drawn = theme.Size(sprite);
+            var c = theme.Content(sprite, Vector4.zero);
+            float window = drawn.x - c.x - c.z;
+            if (window <= 0f) return null;
+            float k = cell.x / window;
+            var rt = Ui.Place(Ui.Child(Root, sprite), new Vector2(0.5f, 0.5f), Vector2.zero, drawn * k);
+            // The window's centre may sit off the sprite's centre by a pixel or two: follow the window.
+            rt.anchoredPosition = new Vector2((c.x - c.z) * k / 2f, (c.y - c.w) * k / 2f);
+            var img = Ui.Image(rt, s, Color.white);
+            img.enabled = false;
+            return img;
         }
     }
 

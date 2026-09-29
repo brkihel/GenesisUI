@@ -35,8 +35,6 @@ namespace GenesisUI.Modules.Sprint
         private Image _fill;
         private RectTransform _liquidMask;
         private LiquidLayer _liquid;
-        private TextMeshProUGUI _value;
-        private int _shownValue = int.MinValue;
         private BarAnimator _bar;
         private float _linger;
         private int _appliedY = int.MinValue;
@@ -44,7 +42,7 @@ namespace GenesisUI.Modules.Sprint
 
         public SprintModule(ConfigFile config)
         {
-            _offsetY = config.Bind("Sprint", "OffsetY", 120,
+            _offsetY = config.Bind("Sprint", "OffsetY", 142,
                 new ConfigDescription("Distância da barra de corrida até a borda inferior da tela.",
                     new AcceptableValueRange<int>(0, 900)));
             _scale = config.Bind("Sprint", "Scale", 1f,
@@ -144,18 +142,13 @@ namespace GenesisUI.Modules.Sprint
                 if (!Mathf.Approximately(_liquidMask.anchorMax.x, _bar.Fast)) _liquidMask.anchorMax = new Vector2(_bar.Fast, 1f);
                 _liquid.Scroll(deltaSeconds);
             }
-            int shown = Mathf.CeilToInt(stamina);
-            if (_value != null && shown != _shownValue)
-            {
-                _shownValue = shown;
-                _value.SetText("{0}", shown);
-            }
+
             if (!Mathf.Approximately(_trail.fillAmount, _bar.Slow)) _trail.fillAmount = _bar.Slow;
         }
 
         /// <summary>
-        /// Diego's readout (D-027): knot ends, a window for the number above, the liquid channel
-        /// below. Drawn at its own proportions, as wide as the generated one; returns the channel.
+        /// Diego's readout (D-027, R-042): knot ends and one channel for the liquid, drawn at its own
+        /// proportions, as wide as the generated one; returns the channel.
         /// </summary>
         private RectTransform SheetFrame(ThemeRuntime theme, Vector2 drawn)
         {
@@ -169,13 +162,7 @@ namespace GenesisUI.Modules.Sprint
             Ui.Image(Ui.Fill(Ui.Child(frame, "Art")), theme.Sprite("sprint_frame"), Color.white);
 
             var c = theme.Content("sprint_frame", new Vector4(40f, 10f, 40f, 33f)) * k;
-            var track = Ui.Fill(Ui.Child(opening, "Track"), c.x, c.y, c.z, c.w);
-            // The number sits in the window above the channel.
-            _value = Ui.Fit(Ui.Text(frame, "Value", theme, FontRole.Display, 15f, ThemeRuntime.ToUnity(theme.Tokens.TextTitle),
-                TextAlignmentOptions.Center, outlined: true), 10f);
-            Ui.Fill((RectTransform)_value.transform, c.x, _group.sizeDelta.y - c.w + 1f, c.z, 6f * k);
-            _shownValue = int.MinValue;
-            return track;
+            return Ui.Fill(Ui.Child(opening, "Track"), c.x, c.y, c.z, c.w);
         }
 
         /// <summary>The generated frame (no sheet art): 9-sliced, shrunk with the readout.</summary>
@@ -199,7 +186,6 @@ namespace GenesisUI.Modules.Sprint
             _trail = _fill = null;
             _liquid = null;
             _liquidMask = null;
-            _value = null;
             _bar = null;
         }
     }

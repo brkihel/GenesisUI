@@ -34,6 +34,10 @@ from PIL import Image, ImageDraw, ImageFilter, ImageOps
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 SRC = os.path.expanduser("~/GenesisUI-Concept/GenesisUI-textures")
+# Every element is also written here at the sheet's full resolution, before scaling, so Diego can
+# retouch it (colour, light) and hand it back: a file with the same name and size in `edited/`
+# replaces the cut from the sheet. Outside the repository, like the sheets.
+CUTS = os.path.expanduser("~/GenesisUI-Concept/GenesisUI-cuts")
 OUT = os.path.join(ROOT, "art", "src", "sheets")
 SCALE = 2                     # PNGs are written at 2x design size (render.py)
 K = 226 / 712                 # design units per sheet pixel: the health frame is 226 tall (approved size)
@@ -127,6 +131,7 @@ def frame(p):
     trimmed = trim_box(a[..., 3])
     a = a[trimmed[1]:trimmed[3], trimmed[0]:trimmed[2]].copy()
     ox, oy = p["box"][0] + trimmed[0], p["box"][1] + trimmed[1]
+    a = retouched(p.get("cut", p["name"]), a)
     original = a.copy()
 
     ornaments = {}
@@ -183,6 +188,17 @@ def frame(p):
         ys, xs = np.nonzero(hole)
         content = (xs.min() * sx, (h - 1 - ys.max()) * sy, (w - 1 - xs.max()) * sx, ys.min() * sy)
 
+    if "cells" in p:
+        # The cells' own windows: content spans them, gap is the mean space between neighbours.
+        boxes = holes(alpha, p["cells"])
+        if len(boxes) != p["cells"]:
+            sys.exit(f"{p['name']}: found {len(boxes)} cells, expected {p['cells']}")
+        x0, y0 = min(b[0] for b in boxes), min(b[1] for b in boxes)
+        x1, y1 = max(b[2] for b in boxes), max(b[3] for b in boxes)
+        content = (x0 * sx, (h - y1) * sy, (w - x1) * sx, y0 * sy)
+        gaps = [boxes[i + 1][0] - boxes[i][2] for i in range(len(boxes) - 1)]
+        p = dict(p, gap=sum(gaps) / len(gaps))
+        print(f"  {p['name']}: cells {[b[2] - b[0] for b in boxes]} px wide, gaps {gaps}")
     if "content" in p:                           # explicit insets in crop pixels (left, bottom, right, top)
         c = p["content"]
         content = (c[0] * sx, c[1] * sy, c[2] * sx, c[3] * sy)
@@ -210,11 +226,42 @@ def frame(p):
     return out_meta
 
 
+def retouched(name, a):
+    """Exports the element as cut; returns Diego's edited version instead when there is one."""
+    os.makedirs(os.path.join(CUTS, "original"), exist_ok=True)
+    Image.fromarray(a, "RGBA").save(os.path.join(CUTS, "original", name + ".png"))
+    edited = os.path.join(CUTS, "edited", name + ".png")
+    if not os.path.exists(edited):
+        return a
+    e = np.asarray(Image.open(edited).convert("RGBA")).copy()
+    if e.shape != a.shape:
+        sys.exit(f"{edited} is {e.shape[1]}x{e.shape[0]}, the cut is {a.shape[1]}x{a.shape[0]}: keep the size")
+    print(f"  {name}: using Diego's edited cut")
+    return e
+
+
+def holes(alpha, count, min_area=400):
+    """The `count` largest see-through regions enclosed by metal (the hotbar's cells), left to right."""
+    free = (alpha < SOLID) & ~outside(alpha)
+    found = []
+    for _ in range(400):
+        ys, xs = np.nonzero(free)
+        if len(xs) == 0:
+            break
+        region = region_at(alpha, (xs[0], ys[0]))
+        free &= ~region
+        if region.sum() >= min_area:
+            ry, rx = np.nonzero(region)
+            found.append((region.sum(), (rx.min(), ry.min(), rx.max() + 1, ry.max() + 1)))
+    found.sort(key=lambda f: -f[0])
+    return sorted((b for _, b in found[:count]), key=lambda b: b[0])
+
+
 def ring(p):
     """A round frame at any diameter from a small one: every pixel samples the source ring at
     the same angle and the same distance from the rail (so the rail keeps its thickness, bevel
     and light direction); the four cardinal diamonds are cut whole and put back at scale."""
-    src = sheet(p["sheet"]).crop(p["box"])
+    src = Image.fromarray(retouched(p["name"], np.asarray(sheet(p["sheet"]).crop(p["box"])).copy()), "RGBA")
     a = np.asarray(src).astype(np.float32)
     cx, cy, r0 = p["centre"][0] - p["box"][0], p["centre"][1] - p["box"][1], p["radius"]
     s = p.get("scale", K) * SCALE                  # output px per sheet px (rail thickness)
@@ -351,12 +398,18 @@ PIECES = [
     # Vital bars (sheet 3): three sizes as Diego drew them, one scale, no slicing.
     {"name": "vital_health", "kind": "frame", "sheet": 3, "box": (36, 104, 184, 824), "opening": (110, 460)},
     {"name": "vital_stamina", "kind": "frame", "sheet": 3, "box": (200, 152, 332, 820), "opening": (266, 480)},
-    {"name": "vital_eitr", "kind": "frame", "sheet": 3, "box": (348, 204, 468, 816), "opening": (408, 500)},
-    # The stamina readout (sheet 1, bottom): knot ends, a window for the number, a thin channel.
-    {"name": "sprint_frame", "kind": "frame", "sheet": 1, "box": (304, 876, 1144, 1044), "opening": (700, 991)},
+    # Eitr uses the stamina frame: only health is bigger (Diego, R-042).
+    # The stamina readout (sheet 3, first bar, Diego R-042): knot ends, one channel for the liquid.
+    {"name": "sprint_frame", "kind": "frame", "sheet": 3, "box": (488, 172, 1424, 300), "opening": (956, 236),
+     "cut": "enemy_plate"},
     # The hotbar (sheet 4, top): eight cells in one fixed piece; `content` spans the cells.
-    {"name": "hotbar_frame", "kind": "frame", "sheet": 4, "box": (12, 72, 1444, 280), "scale": 0.4,
-     "content": (80, 31, 80, 31), "gap": 10},
+    {"name": "hotbar_frame", "kind": "frame", "sheet": 4, "box": (12, 72, 1444, 280), "scale": 0.4, "cells": 8},
+    # Cell states (sheet 4, second row): lit gold = selected (and hover, later), green = equipped.
+    # Drawn over a cell, their window lined up with the cell's; the glow is kept as drawn.
+    {"name": "slot_selected", "kind": "frame", "sheet": 4, "box": (404, 320, 720, 620), "scale": 0.4,
+     "opening": (562, 470), "opening_grow": 0, "glow": True},
+    {"name": "slot_equipped", "kind": "frame", "sheet": 4, "box": (748, 320, 1068, 620), "scale": 0.4,
+     "opening": (908, 470), "opening_grow": 0, "glow": True},
     # Food slot (sheet 2) and status tile (sheet 5): square frames with four diamonds.
     {"name": "slot", "kind": "frame", "sheet": 2, "box": (256, 600, 480, 820), "scale": 0.29,
      "border": (46, 46, 46, 46), "content": (26, 26, 26, 26)},
@@ -384,8 +437,6 @@ PIECES = [
     # The minimap ring, rebuilt at 250 from the small ring of sheet 2.
     {"name": "map_ring", "kind": "ring", "sheet": 2, "box": (488, 604, 708, 820), "centre": (598, 712), "scale": 0.5,
      "radius": 92, "diameter": 226, "pad": 12, "guard": 16, "diamond": 20, "window": 9, "band": 16},
-    # The vitals medallion: the small ring of sheet 2 as it is.
-    {"name": "medallion", "kind": "frame", "sheet": 2, "box": (488, 604, 708, 820), "scale": 0.27},
     {"name": "cell_glow", "kind": "glow", "size": (60, 56), "radius": 8, "rgb": (255, 214, 120)},
     # Materials.
     {"name": "liquid_health", "kind": "liquid", "file": "hp_texture.png", "band": (0.12, 0.86), "across": 96},

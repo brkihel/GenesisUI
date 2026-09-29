@@ -64,12 +64,12 @@ namespace GenesisUI.Modules.Vitals
             var theme = context.Theme;
             _group = Ui.Place(Ui.Child(context.Root, "Vitals"), Vector2.zero, Vector2.zero, new Vector2(150f, 260f));
 
-            // Health is the widest and tallest bar; stamina and eitr sit to its right. Each frame is
-            // drawn at the size Diego drew it (one scale for the three, no stretching, D-027).
+            // Health is the widest and tallest bar; stamina and eitr share one smaller frame and sit to
+            // its right (Diego, R-042). Frames are drawn at the size Diego drew them, never stretched.
             // Larger, translucent bubbles: calm for health, livelier for stamina, parallax for eitr.
             var health = new BarMotion { Speed = 0.035f, PatternAlpha = 0.05f, Hot = new Color(1f, 0.62f, 0.26f), Frame = "vital_health", Liquid = "liquid_health" };
             var stamina = new BarMotion { Speed = 0.05f, PatternAlpha = 0.05f, Hot = new Color(1f, 0.93f, 0.62f), Frame = "vital_stamina", Liquid = "liquid_stamina" };
-            var eitr = new BarMotion { Speed = 0.04f, PatternAlpha = 0.06f, CounterSpeed = 0.025f, Hot = new Color(0.72f, 0.95f, 1f), Frame = "vital_eitr", Liquid = "liquid_eitr" };
+            var eitr = new BarMotion { Speed = 0.04f, PatternAlpha = 0.06f, CounterSpeed = 0.025f, Hot = new Color(0.72f, 0.95f, 1f), Frame = "vital_stamina", Liquid = "liquid_eitr" };
             var hs = BarSize(theme, health.Frame, new Vector2(46f, 226f));
             var ss = BarSize(theme, stamina.Frame, new Vector2(38f, 196f));
             var es = BarSize(theme, eitr.Frame, new Vector2(38f, 196f));
@@ -77,14 +77,6 @@ namespace GenesisUI.Modules.Vitals
             _healthView = new VitalBarView(_group, "Health", theme, theme.Tokens.BarHealth, new Vector2(0f, bottom), hs, health);
             _staminaView = new VitalBarView(_group, "Stamina", theme, theme.Tokens.BarStamina, new Vector2(hs.x + gap, bottom), ss, stamina);
             _eitrView = new VitalBarView(_group, "Eitr", theme, theme.Tokens.BarEitr, new Vector2(hs.x + ss.x + 2f * gap, bottom), es, eitr);
-
-            var medallion = theme.Sprite("medallion");
-            if (medallion != null)
-            {
-                var size = BarSize(theme, "medallion", new Vector2(58f, 58f));
-                var m = Ui.Place(Ui.Child(_group, "Medallion"), Vector2.zero, new Vector2(hs.x / 2f - size.x / 2f, bottom - size.y + 4f), size);
-                Frame.Dress(m, theme, "medallion", "Vitals");
-            }
 
             ApplyLayout();
         }

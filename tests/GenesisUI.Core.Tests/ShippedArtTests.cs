@@ -31,7 +31,7 @@ namespace GenesisUI.Core.Tests
             Assert.Empty(SpriteManifestValidator.Validate(manifest));
             Assert.Contains(manifest.sprites, s => s.name == "bar_frame");
             // The pieces cut from Diego's texture sheets (D-027), with what their views rely on.
-            foreach (var name in new[] { "vital_health", "vital_stamina", "vital_eitr" })
+            foreach (var name in new[] { "vital_health", "vital_stamina" })
             {
                 Assert.Contains(manifest.sprites, s => s.name == name && s.HasContent);
                 Assert.Contains(manifest.sprites, s => s.name == name + "_opening");
@@ -41,6 +41,10 @@ namespace GenesisUI.Core.Tests
                 Assert.Contains(manifest.sprites, s => s.name == name && s.wrap == "repeat");
             Assert.Contains(manifest.sprites, s => s.name == "hotbar_frame" && s.HasContent && s.gap >= 0);
             Assert.Contains(manifest.sprites, s => s.name == "card_knot_left" && s.inset >= 0);
+            // Cell states line their window up with the cell: they need content insets.
+            Assert.Contains(manifest.sprites, s => s.name == "slot_selected" && s.HasContent);
+            Assert.Contains(manifest.sprites, s => s.name == "slot_equipped" && s.HasContent);
+            Assert.Contains(manifest.sprites, s => s.name == "sprint_frame_opening");
             // Every frame's shape has the frame's size and 9-slice, or the background would not line up.
             foreach (var fill in manifest.sprites)
             {

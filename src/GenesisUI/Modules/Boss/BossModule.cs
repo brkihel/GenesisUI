@@ -53,7 +53,7 @@ namespace GenesisUI.Modules.Boss
 
         public BossModule(ConfigFile config)
         {
-            _offsetY = config.Bind("Boss", "OffsetY", 18,
+            _offsetY = config.Bind("Boss", "OffsetY", 12,
                 new ConfigDescription("Distância da placa do chefe até o topo da tela.", new AcceptableValueRange<int>(0, 900)));
         }
 

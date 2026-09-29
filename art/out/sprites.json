@@ -12,6 +12,16 @@
       "borderTop": 0
     },
     {
+      "name": "medallion",
+      "file": "medallion.png",
+      "width": 64,
+      "height": 64,
+      "borderLeft": 0,
+      "borderBottom": 0,
+      "borderRight": 0,
+      "borderTop": 0
+    },
+    {
       "name": "badge_cooldown",
       "file": "badge_cooldown.png",
       "width": 20,
@@ -264,11 +274,11 @@
       "borderBottom": 0,
       "borderRight": 0,
       "borderTop": 0,
-      "contentLeft": 32,
-      "contentBottom": 12,
-      "contentRight": 32,
-      "contentTop": 12,
-      "gap": 4
+      "contentLeft": 42,
+      "contentBottom": 16,
+      "contentRight": 42,
+      "contentTop": 16,
+      "gap": 10
     },
     {
       "name": "hotbar_frame_shape",
@@ -430,26 +440,6 @@
       "borderTop": 0
     },
     {
-      "name": "medallion",
-      "file": "medallion.png",
-      "width": 58,
-      "height": 57,
-      "borderLeft": 0,
-      "borderBottom": 0,
-      "borderRight": 0,
-      "borderTop": 0
-    },
-    {
-      "name": "medallion_shape",
-      "file": "medallion_shape.png",
-      "width": 58,
-      "height": 57,
-      "borderLeft": 0,
-      "borderBottom": 0,
-      "borderRight": 0,
-      "borderTop": 0
-    },
-    {
       "name": "notice_plate",
       "file": "notice_plate.png",
       "width": 70,
@@ -499,6 +489,74 @@
       "contentTop": 8
     },
     {
+      "name": "slot_equipped",
+      "file": "slot_equipped.png",
+      "width": 126,
+      "height": 118,
+      "borderLeft": 0,
+      "borderBottom": 0,
+      "borderRight": 0,
+      "borderTop": 0,
+      "contentLeft": 17,
+      "contentBottom": 20,
+      "contentRight": 17,
+      "contentTop": 20
+    },
+    {
+      "name": "slot_equipped_opening",
+      "file": "slot_equipped_opening.png",
+      "width": 126,
+      "height": 118,
+      "borderLeft": 0,
+      "borderBottom": 0,
+      "borderRight": 0,
+      "borderTop": 0
+    },
+    {
+      "name": "slot_equipped_shape",
+      "file": "slot_equipped_shape.png",
+      "width": 126,
+      "height": 118,
+      "borderLeft": 0,
+      "borderBottom": 0,
+      "borderRight": 0,
+      "borderTop": 0
+    },
+    {
+      "name": "slot_selected",
+      "file": "slot_selected.png",
+      "width": 124,
+      "height": 118,
+      "borderLeft": 0,
+      "borderBottom": 0,
+      "borderRight": 0,
+      "borderTop": 0,
+      "contentLeft": 18,
+      "contentBottom": 20,
+      "contentRight": 17,
+      "contentTop": 20
+    },
+    {
+      "name": "slot_selected_opening",
+      "file": "slot_selected_opening.png",
+      "width": 124,
+      "height": 118,
+      "borderLeft": 0,
+      "borderBottom": 0,
+      "borderRight": 0,
+      "borderTop": 0
+    },
+    {
+      "name": "slot_selected_shape",
+      "file": "slot_selected_shape.png",
+      "width": 124,
+      "height": 118,
+      "borderLeft": 0,
+      "borderBottom": 0,
+      "borderRight": 0,
+      "borderTop": 0
+    },
+    {
       "name": "slot_shape",
       "file": "slot_shape.png",
       "width": 63,
@@ -511,22 +569,22 @@
     {
       "name": "sprint_frame",
       "file": "sprint_frame.png",
-      "width": 265,
-      "height": 52,
+      "width": 295,
+      "height": 38,
       "borderLeft": 0,
       "borderBottom": 0,
       "borderRight": 0,
       "borderTop": 0,
-      "contentLeft": 40,
-      "contentBottom": 10,
-      "contentRight": 41,
-      "contentTop": 33
+      "contentLeft": 28,
+      "contentBottom": 12,
+      "contentRight": 28,
+      "contentTop": 12
     },
     {
       "name": "sprint_frame_opening",
       "file": "sprint_frame_opening.png",
-      "width": 265,
-      "height": 52,
+      "width": 295,
+      "height": 38,
       "borderLeft": 0,
       "borderBottom": 0,
       "borderRight": 0,
@@ -535,8 +593,8 @@
     {
       "name": "sprint_frame_shape",
       "file": "sprint_frame_shape.png",
-      "width": 265,
-      "height": 52,
+      "width": 295,
+      "height": 38,
       "borderLeft": 0,
       "borderBottom": 0,
       "borderRight": 0,
@@ -565,40 +623,6 @@
       "borderBottom": 13,
       "borderRight": 13,
       "borderTop": 13
-    },
-    {
-      "name": "vital_eitr",
-      "file": "vital_eitr.png",
-      "width": 36,
-      "height": 193,
-      "borderLeft": 0,
-      "borderBottom": 0,
-      "borderRight": 0,
-      "borderTop": 0,
-      "contentLeft": 10,
-      "contentBottom": 19,
-      "contentRight": 9,
-      "contentTop": 19
-    },
-    {
-      "name": "vital_eitr_opening",
-      "file": "vital_eitr_opening.png",
-      "width": 36,
-      "height": 193,
-      "borderLeft": 0,
-      "borderBottom": 0,
-      "borderRight": 0,
-      "borderTop": 0
-    },
-    {
-      "name": "vital_eitr_shape",
-      "file": "vital_eitr_shape.png",
-      "width": 36,
-      "height": 193,
-      "borderLeft": 0,
-      "borderBottom": 0,
-      "borderRight": 0,
-      "borderTop": 0
     },
     {
       "name": "vital_health",

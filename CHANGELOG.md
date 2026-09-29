@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.6.0-preview.2 — R-042 adjustments; F4.0 approved
+
+### Changed
+- Eitr uses the stamina frame: only health is bigger.
+- The horizontal stamina readout uses the right piece (sheet 3's slim bar with knot ends) and
+  shows only the liquid.
+- Hotbar: cells are measured from the art's own windows (items no longer sit to the left);
+  the selected cell uses Diego's lit gold frame and an equipped item his green one.
+- Defaults for 1920×1080 from Diego's layout: `[Boss] OffsetY 12`, `[Food] OffsetX 172`,
+  `[Food] OffsetY 90`, `[Hotbar] KeyHintsLift 76`, `[Sprint] OffsetY 142` (existing config
+  files keep their values).
+
+### Removed
+- The medallion under the health bar.
+
+### Art pipeline
+- `tools/art/sheets.py` exports every element at the sheet's resolution to
+  `~/GenesisUI-Concept/GenesisUI-cuts/original/`; a retouched copy with the same name and size
+  in `edited/` replaces the cut.
+
 ## 0.6.0-preview.1 — F4.0: Diego's textures on the whole HUD
 
 ### Changed

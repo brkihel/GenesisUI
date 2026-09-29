@@ -117,13 +117,13 @@
    0
   ],
   "content": [
-   32,
-   12,
-   32,
-   12
+   42,
+   16,
+   42,
+   16
   ],
   "from": "hotbar_frame",
-  "gap": 4,
+  "gap": 10,
   "sheet": 4
  },
  "hotbar_frame_shape": {
@@ -291,26 +291,6 @@
   "from": "map_ring",
   "sheet": 2
  },
- "medallion": {
-  "border": [
-   0,
-   0,
-   0,
-   0
-  ],
-  "from": "medallion",
-  "sheet": 2
- },
- "medallion_shape": {
-  "border": [
-   0,
-   0,
-   0,
-   0
-  ],
-  "from": "medallion",
-  "sheet": 2
- },
  "notice_plate": {
   "border": [
    22,
@@ -364,6 +344,78 @@
   "from": "slot",
   "sheet": 2
  },
+ "slot_equipped": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "content": [
+   17,
+   20,
+   17,
+   20
+  ],
+  "from": "slot_equipped",
+  "sheet": 4
+ },
+ "slot_equipped_opening": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "slot_equipped",
+  "sheet": 4
+ },
+ "slot_equipped_shape": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "slot_equipped",
+  "sheet": 4
+ },
+ "slot_selected": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "content": [
+   18,
+   20,
+   17,
+   20
+  ],
+  "from": "slot_selected",
+  "sheet": 4
+ },
+ "slot_selected_opening": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "slot_selected",
+  "sheet": 4
+ },
+ "slot_selected_shape": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "slot_selected",
+  "sheet": 4
+ },
  "slot_shape": {
   "border": [
    13,
@@ -382,13 +434,13 @@
    0
   ],
   "content": [
-   40,
-   10,
-   41,
-   33
+   28,
+   12,
+   28,
+   12
   ],
   "from": "sprint_frame",
-  "sheet": 1
+  "sheet": 3
  },
  "sprint_frame_opening": {
   "border": [
@@ -398,7 +450,7 @@
    0
   ],
   "from": "sprint_frame",
-  "sheet": 1
+  "sheet": 3
  },
  "sprint_frame_shape": {
   "border": [
@@ -408,7 +460,7 @@
    0
   ],
   "from": "sprint_frame",
-  "sheet": 1
+  "sheet": 3
  },
  "tile": {
   "border": [
@@ -435,42 +487,6 @@
   ],
   "from": "tile",
   "sheet": 5
- },
- "vital_eitr": {
-  "border": [
-   0,
-   0,
-   0,
-   0
-  ],
-  "content": [
-   10,
-   19,
-   9,
-   19
-  ],
-  "from": "vital_eitr",
-  "sheet": 3
- },
- "vital_eitr_opening": {
-  "border": [
-   0,
-   0,
-   0,
-   0
-  ],
-  "from": "vital_eitr",
-  "sheet": 3
- },
- "vital_eitr_shape": {
-  "border": [
-   0,
-   0,
-   0,
-   0
-  ],
-  "from": "vital_eitr",
-  "sheet": 3
  },
  "vital_health": {
   "border": [

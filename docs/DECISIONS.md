@@ -258,4 +258,9 @@ the sheets lack (value plate, wind disk and arrow, stars, badge).
 **Why:** Diego drew isolated, clean pieces after the concept crops kept scenery and the
 generated redraws flattened the metal; AGENTS.md §2b sets the rules (no deformation,
 independent background opacity, animated liquid in all three bars).
+**Amended after R-042:** eitr shares the stamina frame; the horizontal stamina readout is sheet
+3's slim bar; hotbar cells are measured from the art (`cells`), with Diego's selected and
+equipped cell frames. Every element is exported unscaled to `~/GenesisUI-Concept/GenesisUI-cuts/
+original/`, and a same-size retouched copy in `edited/` replaces the cut: Diego adjusts colour
+there without anything being cut again.
 
