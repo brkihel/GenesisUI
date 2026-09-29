@@ -119,6 +119,7 @@ namespace GenesisUI.Modules.Windows
         private readonly List<InventorySort.Entry> _sortEntries = new List<InventorySort.Entry>(64);
 
         private ThemeRuntime _theme;
+        private WindowParts _parts;
         private readonly BepInEx.Configuration.ConfigEntry<BepInEx.Configuration.KeyboardShortcut> _sortKey;
         private RectTransform _root;
         private CanvasGroup _fade;
@@ -171,6 +172,7 @@ namespace GenesisUI.Modules.Windows
         public void Build(ModuleContext context)
         {
             _theme = context.Theme;
+            _parts = new WindowParts(_theme);
             _containerGridRef = AccessTools.FieldRefAccess<InventoryGui, InventoryGrid>("m_containerGrid");
             _containerRef = AccessTools.FieldRefAccess<InventoryGui, Container>("m_currentContainer");
             _dragItem = AccessTools.FieldRefAccess<InventoryGui, ItemDrop.ItemData>("m_dragItem");
@@ -811,45 +813,7 @@ namespace GenesisUI.Modules.Windows
             GenesisLog.Info("Module:win.inventory", "chest panel " + width + "x" + height + ", " + _containerVisibleRows + " row(s) in view, cell " + size);
         }
 
-        /// <summary>
-        /// A panel of the concept: Diego's finest frame, the title on the header rule (left like
-        /// Inventário/Equipamento, centred for the details) and the whole tab marker as the rule.
-        /// </summary>
-        private RectTransform Panel(RectTransform parent, string name, float x, float width, string titleToken, float titleX, float titleSize,
-                                    TextAlignmentOptions align)
-        {
-            var rt = WindowCanvas.At(parent, name, x, 0f, width, PanelsHeight);
-            // The panel takes the pointer: a click on its empty parts must not reach vanilla's
-            // drop-outside button behind the window (that would throw a held item on the ground).
-            Ui.Image(rt, null, new Color(0f, 0f, 0f, 0f), raycast: true);
-            Frame.Dress(rt, _theme, "window_panel", "Windows");
-            bool centred = align == TextAlignmentOptions.Center;
-            var title = Label(rt, "Title", FontRole.Display, titleSize, _theme.Tokens.AccentGoldBright,
-                centred ? 60f : titleX, 12f, centred ? width - 120f : width - titleX - 70f, 36f, align);
-            title.characterSpacing = centred ? 5f : 8f;
-            title.text = Localize(titleToken).ToUpperInvariant();
 
-            var marker = _theme.Sprite("tab_marker");
-            if (marker != null)
-            {
-                float mw = centred ? width * 0.6f : Mathf.Min(300f, width * 0.5f);
-                var mrt = WindowCanvas.At(rt, "Rule", centred ? (width - mw) / 2f : titleX - 6f, 48f, mw, 8f);
-                var img = Ui.Image(mrt, marker, Color.white);
-                img.pixelsPerUnitMultiplier = _theme.Size("tab_marker").y / 8f * Frame.CanvasScale(mrt);
-                Knot(mrt, 12f);
-            }
-            return rt;
-        }
-
-        /// <summary>The rule's centre knot at its own size (a 9-sliced rule would stretch it).</summary>
-        private void Knot(RectTransform rule, float height)
-        {
-            var knot = _theme.Sprite("tab_knot");
-            if (knot == null) return;
-            var d = _theme.Size("tab_knot");
-            var krt = Ui.Place(Ui.Child(rule, "Knot"), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(d.x * height / Mathf.Max(1f, d.y), height));
-            Ui.Image(krt, knot, Color.white);
-        }
 
         private ItemCell MakeCell(RectTransform parent, string name, float x, float y, float size, string key)
         {
@@ -917,14 +881,6 @@ namespace GenesisUI.Modules.Windows
             _filterList.gameObject.SetActive(false);
         }
 
-        private static void Clickable(RectTransform rt, string what, Action onClick)
-        {
-            var hit = Ui.Image(Ui.Fill(Ui.Child(rt, "Hit")), null, new Color(0f, 0f, 0f, 0f), raycast: true);
-            var button = rt.gameObject.AddComponent<Button>();
-            button.targetGraphic = hit;
-            button.transition = Selectable.Transition.None;
-            button.onClick.AddListener(() => Guard.Try(what, onClick));
-        }
 
         private void ToggleFilterList()
         {
@@ -943,19 +899,18 @@ namespace GenesisUI.Modules.Windows
 
         private void ShowFilter() => _filterText.text = Localize(FilterTokens[(int)_filter]) + "  ◆";
 
-        /// <summary>A text placed by its top-left corner in design units.</summary>
-        private TextMeshProUGUI Label(RectTransform parent, string name, FontRole role, float size, ColorRgba color,
-                                     float x, float y, float width, float height, TextAlignmentOptions alignment)
-        {
-            var text = Ui.Fit(Ui.Text(parent, name, _theme, role, size, ThemeRuntime.ToUnity(color), alignment, outlined: true), Mathf.Min(10f, size));
-            var rt = (RectTransform)text.transform;
-            rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0f, 1f);
-            rt.anchoredPosition = new Vector2(x, -y);
-            rt.sizeDelta = new Vector2(width, height);
-            return text;
-        }
 
-        private static string Localize(string text) => Localization.instance != null ? Localization.instance.Localize(text) : text;
+        private RectTransform Panel(RectTransform parent, string name, float x, float width, string titleToken, float titleX, float titleSize,
+                                    TextAlignmentOptions align) =>
+            _parts.Panel(parent, name, x, 0f, width, PanelsHeight, titleToken, titleX, titleSize, align);
+
+        private void Clickable(RectTransform rt, string what, Action onClick) => _parts.Clickable(rt, what, onClick);
+
+        private TextMeshProUGUI Label(RectTransform parent, string name, FontRole role, float size, ColorRgba color,
+                                     float x, float y, float width, float height, TextAlignmentOptions alignment) =>
+            _parts.Label(parent, name, role, size, color, x, y, width, height, alignment);
+
+        private static string Localize(string text) => WindowParts.Localize(text);
 
         // ------------------------------------------------------------------ views
 
@@ -1087,6 +1042,7 @@ namespace GenesisUI.Modules.Windows
             private readonly GameObject[] _rows = new GameObject[MaxRows];
             private readonly Image _durBack, _dur;
             private readonly GameObject _body;
+            private readonly List<StatRow> _stats = new List<StatRow>(12);
 
             internal Details(InventoryWindowModule m, RectTransform p)
             {
@@ -1135,33 +1091,21 @@ namespace GenesisUI.Modules.Windows
                 var s = item.m_shared;
                 _icon.sprite = item.GetIcon();
                 _name.text = Localize(s.m_name).ToUpperInvariant();
-                _type.text = Localize(TypeToken(ItemCategories.Of(item)));
+                _type.text = Localize(ItemStats.TypeToken(item));
                 _description.text = Localize(s.m_description);
 
                 int n = 0;
                 _durBack.gameObject.SetActive(false);
-                Row(ref n, "$genesisui_stat_weight", item.GetWeight(-1).ToString("0.0"));
-                if (s.m_useDurability)
+                ItemStats.Collect(item, item.m_quality, crafting: false, _stats);
+                foreach (var row in _stats)
                 {
-                    float max = item.GetMaxDurability();
-                    Row(ref n, "$genesisui_stat_durability", Mathf.CeilToInt(item.m_durability) + " / " + Mathf.CeilToInt(max));
+                    Row(ref n, row.Token, row.Value);
+                    if (row.Bar < 0f) continue;
                     var bar = (RectTransform)_durBack.transform;
                     bar.anchoredPosition = new Vector2(bar.anchoredPosition.x, -(386f + (n - 1) * 34f + 26f));
-                    _dur.fillAmount = max > 0f ? Mathf.Clamp01(item.m_durability / max) : 0f;
+                    _dur.fillAmount = row.Bar;
                     _durBack.gameObject.SetActive(true);
                 }
-                if (s.m_maxQuality > 1) Row(ref n, "$genesisui_stat_quality", item.m_quality + " / " + s.m_maxQuality);
-                float armor = item.GetArmor();
-                if (armor > 0f) Row(ref n, "$genesisui_stat_armor", armor.ToString("0"));
-                float damage = item.GetDamage().GetTotalDamage();
-                if (damage > 0f) Row(ref n, "$genesisui_stat_damage", damage.ToString("0"));
-                float block = item.GetBaseBlockPower();
-                if (block > 0f) Row(ref n, "$genesisui_stat_block", block.ToString("0"));
-                if (s.m_food > 0f) Row(ref n, "$genesisui_stat_food_health", s.m_food.ToString("0"));
-                if (s.m_foodStamina > 0f) Row(ref n, "$genesisui_stat_food_stamina", s.m_foodStamina.ToString("0"));
-                if (s.m_foodEitr > 0f) Row(ref n, "$genesisui_stat_food_eitr", s.m_foodEitr.ToString("0"));
-                if (s.m_foodBurnTime > 0f) Row(ref n, "$genesisui_stat_duration", Mathf.RoundToInt(s.m_foodBurnTime / 60f) + " min");
-                if (s.m_value > 0) Row(ref n, "$genesisui_stat_value", s.m_value.ToString());
                 for (int i = n; i < MaxRows; i++) if (_rows[i].activeSelf) _rows[i].SetActive(false);
             }
 
@@ -1174,21 +1118,6 @@ namespace GenesisUI.Modules.Windows
                 n++;
             }
 
-            private static string TypeToken(ItemCategory c)
-            {
-                switch (c)
-                {
-                    case ItemCategory.Weapon: return "$genesisui_type_weapon";
-                    case ItemCategory.Shield: return "$genesisui_type_shield";
-                    case ItemCategory.Tool: return "$genesisui_type_tool";
-                    case ItemCategory.Ammo: return "$genesisui_type_ammo";
-                    case ItemCategory.Consumable: return "$genesisui_type_consumable";
-                    case ItemCategory.Armor: return "$genesisui_type_armor";
-                    case ItemCategory.Material: return "$genesisui_type_material";
-                    case ItemCategory.Trophy: return "$genesisui_type_trophy";
-                    default: return "$genesisui_type_misc";
-                }
-            }
         }
     }
 }

@@ -119,6 +119,8 @@ namespace GenesisUI
                     "Moldura das janelas: barra de abas em cima (Inventário, Habilidades, Mapa, Criação, Conquistas, Configurações) e dicas de atalho embaixo, com o inventário aberto. Desligado, as janelas ficam como no jogo."));
                 ModuleHost.Register(new Modules.Windows.InventoryWindowModule(Config), Config.Bind("Modules", "InventoryWindow", true,
                     "Janela de inventário no layout do GenesisUI (inventário, equipamento, detalhes do item), por cima do inventário do jogo. Desligado, o inventário do jogo aparece como é."));
+                ModuleHost.Register(new Modules.Windows.CraftingWindowModule(), Config.Bind("Modules", "CraftingWindow", true,
+                    "Aba Criação no layout do concept: lista de receitas com busca e categorias, detalhes e materiais. Desligado, a aba mostra a criação original do jogo."));
                 ModuleHost.Register(new SprintModule(Config), Config.Bind("Modules", "Sprint", true,
                     "Barra pequena de vigor acima dos itens: surge quando o vigor é gasto e some só depois de cheio. Desligado, ela não aparece."));
 
@@ -132,6 +134,7 @@ namespace GenesisUI
                 GuardedPatcher.Apply(_harmony, typeof(Patches.InventorySizePatch));
                 GuardedPatcher.Apply(_harmony, typeof(Patches.InventoryPlacementPatches));
                 GuardedPatcher.Apply(_harmony, typeof(Patches.EquipmentPatches));
+                GuardedPatcher.Apply(_harmony, typeof(Patches.CraftingListPatch));
 
 #if GENESIS_DIAGNOSTICS
                 Diagnostics.Watermark.Install(Build.Channel, Build.FullVersion);

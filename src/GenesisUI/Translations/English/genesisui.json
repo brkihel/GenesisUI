@@ -94,5 +94,17 @@
   "genesisui_type_armor": "Armor",
   "genesisui_type_material": "Material",
   "genesisui_type_trophy": "Trophy",
-  "genesisui_type_misc": "Miscellaneous"
+  "genesisui_type_misc": "Miscellaneous",
+  "genesisui_module_crafting_window": "Crafting window",
+  "genesisui_panel_crafting": "Crafting",
+  "genesisui_tab_craft": "Craft",
+  "genesisui_tab_upgrade": "Upgrade",
+  "genesisui_repair": "Repair",
+  "genesisui_style": "Style",
+  "genesisui_search_recipe": "Search recipe...",
+  "genesisui_crafting_none": "No recipes here. Find a crafting station.",
+  "genesisui_crafting_nomatch": "No recipe matches this filter.",
+  "genesisui_level": "Level",
+  "genesisui_station_level": "Station level:",
+  "genesisui_materials_needed": "Materials needed"
 }

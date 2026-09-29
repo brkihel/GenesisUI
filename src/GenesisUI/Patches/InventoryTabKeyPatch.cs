@@ -20,6 +20,13 @@ namespace GenesisUI.Patches
         [HarmonyPrefix]
         private static void Prefix()
         {
+            // Typing in a GenesisUI text field (recipe search): Tab and E must not close the inventory.
+            if (TextInputFocus.Active)
+            {
+                ZInput.ResetButtonStatus("Inventory");
+                ZInput.ResetButtonStatus("Use");
+                return;
+            }
             var key = WindowShellModule.ActiveNextKey;
             if (key != KeyCode.None && BepInEx.UnityInput.Current.GetKeyDown(key)) ZInput.ResetButtonStatus("Use");
         }

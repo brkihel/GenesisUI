@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.7.0-preview.12 — Crafting tab on ConceptArt (12) (F4.3, D-032)
+
+### Added
+- The Crafting tab is GenesisUI's own window (`win.crafting`), laid out from ConceptArt (12):
+  the Criar/Aprimorar sub-tabs, the station name and level, Reparar when the station repairs,
+  a recipe search, category chips, the recipe list (unavailable recipes dimmed, upgrade level
+  shown), a details card (icon, name, type, description, stat table, required station level,
+  vanilla's upgrade note), the required materials with have/need, the style button and Criar
+  with its progress.
+- Vanilla stays the engine: its recipe list (other mods' recipes included), requirement checks,
+  crafting, upgrading, repairing and style dialog. Our row presses vanilla's row; Criar, the tabs,
+  Reparar and Estilo press vanilla's buttons. A postfix on `UpdateRecipeList` (counts rebuilds,
+  changes nothing) tells the window when to re-read the list.
+- Typing in the search takes an input lease and keeps Tab/E from closing the window.
+- `WindowParts` and `ItemStats`: the panel, label, button, rule and stat-table pieces shared by
+  the inventory and crafting windows.
+
+### Not yet
+- The Construção panel on the right of ConceptArt (12) (the hammer's pieces) is the next step;
+  the multi-craft stepper (− 1 +) is not wired yet.
+
+### Verification
+- Core and contract tests pass; a mock of the tab was compared with ConceptArt (12). In game:
+  Diego's R-056.
+
 ## 0.7.0-preview.11 — R-054 fixes: picking up a single item, re-enable after a fault
 
 ### Fixed

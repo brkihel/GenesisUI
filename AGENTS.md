@@ -15,7 +15,7 @@ is unclear, ask; do not guess.
   callbacks. D-025 ("move and dress vanilla's slots") is replaced; Diego wants fidelity to the
   concept's assembly, not new designs. Order after F4: F5 menus, F6 map, F7 API and adapters,
   F8 gameplay package, F9 switch-over (D-024).
-- **Version:** 0.7.0, last package `0.7.0-preview.11` (R-054 fixes; art of preview.10 approved:
+- **Version:** 0.7.0, last package `0.7.0-preview.12` (Crafting tab, F4.3, script R-056); before it `0.7.0-preview.11` (R-054 fixes; art of preview.10 approved:
   "melhorou 250%") with script R-055. preview.10: thin-line metal frames, burn as light,
   darker theme, D-033, R-054; preview.9 (own inventory window, D-032, R-053) was
   not reported on separately. Shaders: source in `unity/`, built on `win-teste` (Unity

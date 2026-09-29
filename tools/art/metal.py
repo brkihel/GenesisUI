@@ -388,6 +388,121 @@ def bars(out_path):
     return out_path
 
 
+def crafting(out_path):
+    """The Crafting tab (CraftingWindowModule's numbers) on the design board, for comparison with ConceptArt (12)."""
+    BW, BH = 1580, 850
+    m = Metal(BW, BH)
+    board = Image.new("RGBA", (BW, BH))
+    under = Image.new("RGBA", (BW, BH))
+    title, flavor, body, gold = (214, 178, 108, 255), (140, 118, 82, 255), (196, 186, 164, 255), (170, 124, 58, 255)
+    bg = Image.open(os.path.join(OUT, "panel_bg.png")).convert("RGBA")
+
+    def plate(x, y, w, h, cut, alpha=0.9):
+        x, y, w, h = int(x), int(y), int(w), int(h)
+        mask = Image.new("L", (w, h))
+        ImageDraw.Draw(mask).polygon(chamfer(0, 0, w, h, cut), fill=int(255 * alpha))
+        tile = bg.resize((512, 512 * bg.height // bg.width))
+        mat = Image.new("RGBA", (w, h))
+        for yy in range(0, h, tile.height):
+            for xx in range(0, w, tile.width):
+                mat.paste(tile, (xx, yy))
+        mat = Image.blend(mat, Image.new("RGBA", (w, h), (6, 6, 5, 255)), 0.45)
+        under.paste(mat, (x, y), mask)
+
+    def frame(x, y, w, h, cut=14, knots=True, inner=True):
+        plate(x, y, w, h, cut)
+        m.chamfer_rect(x + 0.5, y + 0.5, w - 1, h - 1, cut, 1.8 if knots else 1.0)
+        if inner:
+            m.chamfer_rect(x + 6, y + 6, w - 12, h - 12, cut - 4, 0.8)
+        if knots:
+            for cx, cy, sx, sy in ((x, y, 1, 1), (x + w, y, -1, 1), (x, y + h, 1, -1), (x + w, y + h, -1, -1)):
+                m.diamond(cx + sx * cut * 0.5, cy + sy * cut * 0.5, 3.2)
+
+    def rule(x, y, w):
+        m.line([(x, y), (x + w / 2 - 9, y)], 0.8)
+        m.line([(x + w / 2 + 9, y), (x + w, y)], 0.8)
+        m.diamond(x + w / 2, y, 4.5, 3.2)
+
+    def text(x, y, s, f, fill=body, anchor="lm"):
+        ImageDraw.Draw(board).text((x, y), s, font=f, fill=fill, anchor=anchor)
+
+    def blob(x, y, r, colour):
+        ImageDraw.Draw(board).ellipse((x - r, y - r, x + r, y + r), fill=colour)
+
+    frame(0, 0, BW, 90, 16)
+    for i, name in enumerate(["INVENTÁRIO", "HABILIDADES", "MAPA", "CRIAÇÃO", "CONQUISTAS", "CONFIGURAÇÕES"]):
+        cx = 190 + i * 240
+        text(cx, 58, name, font("Cinzel-Medium", 16), title if i == 3 else flavor, anchor="mm")
+        if i == 3:
+            rule(cx - 80, 78, 160)
+    frame(0, 788, BW, 62, 14)
+    px, top = 284, 102
+    frame(px, top, 750, 673)
+    X = lambda v: px + v
+    Y = lambda v: top + v
+    text(X(68), Y(30), "CRIAÇÃO", font("Cinzel-SemiBold", 26), title)
+    rule(X(62), Y(48), 300)
+    text(X(720), Y(32), "Bancada  ·  Nível 2", font("CormorantGaramond-SemiBold", 17), flavor, anchor="rm")
+    text(X(125), Y(77), "CRIAR", font("Cinzel-Medium", 17), title, anchor="mm")
+    rule(X(50), Y(96), 150)
+    text(X(325), Y(77), "APRIMORAR", font("Cinzel-Medium", 17), flavor, anchor="mm")
+    m.chamfer_rect(X(600), Y(62), 128, 32, 5, 1.0)
+    text(X(664), Y(78), "Reparar", font("CormorantGaramond-SemiBold", 16), body, anchor="mm")
+    m.chamfer_rect(X(22), Y(108), 706, 36, 6, 1.0)
+    text(X(38), Y(126), "Pesquisar receita...", font("CormorantGaramond-MediumItalic", 17), flavor)
+    cx = 22
+    f = font("CormorantGaramond-SemiBold", 16)
+    for i, chip in enumerate(["Todos", "Armas", "Ferramentas", "Munição", "Armaduras", "Consumíveis", "Materiais"]):
+        w = f.getlength(chip) + 26
+        m.chamfer_rect(X(cx), Y(156), w, 32, 5, 1.0)
+        text(X(cx + w / 2), Y(172), chip, f, title if i == 0 else flavor, anchor="mm")
+        cx += w + 8
+    recipes = [("Tocha", "Ferramenta"), ("Machado de Pedra", "Arma"), ("Picareta de Pedra", "Ferramenta"), ("Arco de Madeira", "Arma"),
+               ("Flecha de Madeira", "Munição"), ("Martelo", "Ferramenta"), ("Porrete", "Arma"), ("Escudo de Madeira", "Escudo")]
+    colours = [(170, 110, 60, 255), (140, 140, 150, 255), (120, 100, 80, 255), (150, 120, 70, 255)]
+    for i, (n, ty) in enumerate(recipes):
+        ry = Y(202 + i * 57)
+        m.chamfer_rect(X(20), ry, 290, 54, 5, 1.0)
+        if i == 0:
+            ImageDraw.Draw(under).rectangle((X(23), ry + 3, X(307), ry + 51), fill=(170, 124, 58, 36))
+        blob(X(29 + 21), ry + 27, 15, colours[i % 4])
+        text(X(80), ry + 17, n, font("CormorantGaramond-SemiBold", 17), title if i == 0 else body)
+        text(X(80), ry + 38, ty, font("CormorantGaramond-SemiBold", 14), flavor)
+    frame(X(325), Y(202), 407, 268, 8, inner=False)
+    blob(X(325 + 73), Y(202 + 97), 48, colours[0])
+    text(X(471), Y(233), "TOCHA", font("Cinzel-SemiBold", 22), title)
+    text(X(471), Y(257), "Ferramenta", font("CormorantGaramond-SemiBold", 16), flavor)
+    text(X(471), Y(282), "Ilumina os arredores e mantém", font("CormorantGaramond-Medium", 15), body)
+    text(X(471), Y(300), "os perigos da escuridão afastados.", font("CormorantGaramond-Medium", 15), body)
+    for i, (a, b) in enumerate([("Peso", "1,0"), ("Durabilidade", "100"), ("Dano", "4"), ("Valor", "0")]):
+        yy = Y(202 + 134 + i * 26 + 11)
+        text(X(471), yy, a, font("CormorantGaramond-SemiBold", 16), body)
+        text(X(716), yy, b, font("CormorantGaramond-SemiBold", 16), body, anchor="rm")
+    text(X(339), Y(202 + 250), "Nível da estação: 1", font("CormorantGaramond-SemiBold", 15), gold)
+    text(X(339), Y(490), "MATERIAIS NECESSÁRIOS", font("Cinzel-Medium", 14), title)
+    for i, (n, have, need) in enumerate([("Madeira", 12, 1), ("Resina", 4, 1)]):
+        bx = X(339 + i * 96)
+        m.chamfer_rect(bx, Y(506), 88, 88, 5, 1.0)
+        blob(bx + 44, Y(506 + 28), 18, colours[2 + i])
+        text(bx + 44, Y(506 + 57), n, font("CormorantGaramond-SemiBold", 13), body, anchor="mm")
+        text(bx + 44, Y(506 + 75), f"{have} / {need}", font("Cinzel-SemiBold", 14), (130, 200, 110, 255), anchor="mm")
+    m.chamfer_rect(X(502), Y(612), 230, 44, 6, 1.2)
+    text(X(617), Y(634), "CRIAR", font("Cinzel-SemiBold", 20), title, anchor="mm")
+    m.glint(700, 100, 1.0)
+    metal = m.render()
+    src = Image.open(os.path.expanduser("~/GenesisUI-Concept/ConceptArt (12).png")).convert("RGBA").resize((1920, 1080))
+    screen = Image.blend(src, Image.new("RGBA", src.size, (0, 0, 0, 255)), 0.35)
+    full = Image.new("RGBA", (BW, BH))
+    full.alpha_composite(under)
+    full.alpha_composite(metal)
+    full.alpha_composite(board)
+    scale = min(1920 * 0.75 / BW, 1080 * 0.75 / BH)
+    full = full.resize((int(BW * scale), int(BH * scale)), Image.LANCZOS)
+    screen.alpha_composite(full, ((1920 - full.width) // 2, (1080 - full.height) // 2))
+    screen.save(out_path)
+    return out_path
+
+
 # ---------------------------------------------------------------- shipped pieces (D-033)
 
 SCALE = 2  # like render.py: sprites at 2x design units
@@ -503,3 +618,4 @@ if __name__ == "__main__":
     os.makedirs(out_dir, exist_ok=True)
     print(window(os.path.join(out_dir, "window-metal.png")))
     print(bars(os.path.join(out_dir, "bars-burn.png")))
+    print(crafting(os.path.join(out_dir, "crafting-metal.png")))
