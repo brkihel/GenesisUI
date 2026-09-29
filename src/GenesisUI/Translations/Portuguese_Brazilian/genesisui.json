@@ -300,5 +300,13 @@
   "genesisui_hint_map_pin": "Duplo clique: marcador",
   "genesisui_hint_map_remove": "Remover marcador",
   "genesisui_hint_map_ping": "Sinalizar",
-  "genesisui_cfg_Modules_MapWindow": "Mapa (moldura e marcadores)"
+  "genesisui_cfg_Modules_MapWindow": "Mapa (moldura e marcadores)",
+  "genesisui_module_pause_menu": "Menu de pausa",
+  "genesisui_menu_title": "Menu",
+  "genesisui_menu_continue": "Continuar",
+  "genesisui_menu_yes": "Sim",
+  "genesisui_menu_no": "Não",
+  "genesisui_menu_confirm_quit": "Sair do jogo agora?",
+  "genesisui_menu_confirm_logout": "Voltar ao menu principal?",
+  "genesisui_cfg_Modules_PauseMenu": "Menu de pausa (Esc)"
 }

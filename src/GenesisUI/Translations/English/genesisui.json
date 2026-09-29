@@ -214,5 +214,12 @@
   "genesisui_map_pin_death": "Deaths",
   "genesisui_hint_map_pin": "Double click: marker",
   "genesisui_hint_map_remove": "Remove marker",
-  "genesisui_hint_map_ping": "Ping"
+  "genesisui_hint_map_ping": "Ping",
+  "genesisui_module_pause_menu": "Pause menu",
+  "genesisui_menu_title": "Menu",
+  "genesisui_menu_continue": "Continue",
+  "genesisui_menu_yes": "Yes",
+  "genesisui_menu_no": "No",
+  "genesisui_menu_confirm_quit": "Quit the game now?",
+  "genesisui_menu_confirm_logout": "Back to the main menu?"
 }
