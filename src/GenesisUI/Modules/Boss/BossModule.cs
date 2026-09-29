@@ -41,6 +41,8 @@ namespace GenesisUI.Modules.Boss
         private RectTransform _barArea;
         private Image _fill;
         private Image _trail;
+        private RectTransform _liquidMask;
+        private LiquidLayer _liquid;
         private TextMeshProUGUI _name;
         private TextMeshProUGUI _value;
         private Character _shownBoss;
@@ -65,8 +67,8 @@ namespace GenesisUI.Modules.Boss
             var theme = context.Theme;
             var t = theme.Tokens;
             _group = Ui.Place(Ui.Child(context.Root, "Boss"), new Vector2(0.5f, 1f), Vector2.zero, new Vector2(Width, Height));
-            var plate = theme.Sprite("boss_plate");
-            Ui.Image(Ui.Fill(Ui.Child(_group, "Plate")), plate, plate != null ? Color.white : ThemeRuntime.ToUnity(t.PanelBackground));
+            // Diego's plate at its drawn height; only its straight rails stretch to the width (D-027).
+            Frame.Dress(Ui.Fill(Ui.Child(_group, "Plate")), theme, "boss_plate", "Boss", Height);
             var c = theme.Content("boss_plate", new Vector4(22f, 12f, 22f, 12f));
             var content = Ui.Fill(Ui.Child(_group, "Content"), c.x, c.y, c.z, c.w);
 
@@ -103,6 +105,26 @@ namespace GenesisUI.Modules.Boss
             _fill.type = Image.Type.Filled;
             _fill.fillMethod = Image.FillMethod.Horizontal;
             _fill.fillOrigin = (int)Image.OriginHorizontal.Left;
+
+            // Diego's health liquid, drifting sideways, cut at the level by a mask (the plain fill
+            // stays as the fallback when the texture is missing).
+            _liquid = null;
+            var liquid = theme.Texture("liquid_health_h");
+            if (liquid != null)
+            {
+                _fill.enabled = false;
+                _liquidMask = Ui.Child(_barArea, "Liquid");
+                _liquidMask.anchorMin = Vector2.zero;
+                _liquidMask.anchorMax = Vector2.one;
+                _liquidMask.pivot = new Vector2(0f, 0.5f);
+                _liquidMask.offsetMin = _liquidMask.offsetMax = Vector2.zero;
+                _liquidMask.gameObject.AddComponent<RectMask2D>();
+                float barWidth = Width - c.x - c.z - 12f, barHeight = (Height - c.y - c.w) * 0.45f - 4f;
+                var layer = Ui.Place(Ui.Child(_liquidMask, "Flow"), new Vector2(0f, 0.5f), Vector2.zero, new Vector2(barWidth, barHeight));
+                layer.pivot = new Vector2(0f, 0.5f);
+                _liquid = new LiquidLayer(layer, liquid, new Vector2(barWidth, barHeight), theme.Size("liquid_health_h"), 1.4f,
+                    Color.white, new Vector2(0.01f, 0f), new Vector2(0f, 0.3f), mirror: false);
+            }
 
             _value = Ui.Fit(Ui.Text(_barArea, "Value", theme, FontRole.Label, 12f, ThemeRuntime.ToUnity(t.TextTitle), TextAlignmentOptions.Center, outlined: true), 9f);
             Ui.Fill((RectTransform)_value.transform);
@@ -147,6 +169,11 @@ namespace GenesisUI.Modules.Boss
             float health = boss.GetHealth(), max = boss.GetMaxHealth();
             _bar.Update(health, max, deltaSeconds);
             _fill.fillAmount = _bar.Fast;
+            if (_liquid != null)
+            {
+                if (!Mathf.Approximately(_liquidMask.anchorMax.x, _bar.Fast)) _liquidMask.anchorMax = new Vector2(_bar.Fast, 1f);
+                _liquid.Scroll(deltaSeconds);
+            }
 
             _trail.fillAmount = _bar.Slow;
 
@@ -163,6 +190,8 @@ namespace GenesisUI.Modules.Boss
         {
             if (_group != null) Object.Destroy(_group.gameObject);
             _group = null;
+            _liquid = null;
+            _liquidMask = null;
             _shownBoss = null;
         }
     }

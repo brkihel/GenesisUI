@@ -6,6 +6,7 @@ using Jotunn.Managers;
 using TMPro;
 using UnityEngine;
 using UnityEngine.TextCore.LowLevel;
+using UnityEngine.UI;
 
 namespace GenesisUI.Theme
 {
@@ -67,6 +68,51 @@ namespace GenesisUI.Theme
             _entries.TryGetValue(name, out var e) && e.HasContent
                 ? new Vector4(e.contentLeft, e.contentBottom, e.contentRight, e.contentTop)
                 : fallback;
+
+        /// <summary>A sprite's design size (art/sprites.json); zero when missing.</summary>
+        public Vector2 Size(string name) =>
+            _entries.TryGetValue(name, out var e) ? new Vector2(e.width, e.height) : Vector2.zero;
+
+        /// <summary>A sprite's 9-slice border in design units (left, bottom, right, top); zero when missing.</summary>
+        public Vector4 Border(string name) =>
+            _entries.TryGetValue(name, out var e) ? new Vector4(e.borderLeft, e.borderBottom, e.borderRight, e.borderTop) : Vector4.zero;
+
+        /// <summary>An edge ornament's distance from the frame's edge to its centre; 0 when not declared.</summary>
+        public float Inset(string name) => _entries.TryGetValue(name, out var e) && e.inset >= 0 ? e.inset : 0f;
+
+        /// <summary>Space between repeated cells of a frame; <paramref name="fallback"/> when not declared.</summary>
+        public float Gap(string name, float fallback) => _entries.TryGetValue(name, out var e) && e.gap >= 0 ? e.gap : fallback;
+
+        // ---- panel backgrounds: own opacity per panel (AGENTS.md §2b)
+
+        private readonly List<KeyValuePair<Image, string>> _backgrounds = new List<KeyValuePair<Image, string>>();
+
+        /// <summary>Opacity of a panel's background, by panel key; set by the plugin from [Backgrounds].</summary>
+        public Func<string, float> BackgroundOpacity = _ => 0.85f;
+
+        public int BackgroundCount => _backgrounds.Count;
+
+        public void RegisterBackground(Image image, string panel)
+        {
+            Apply(image, panel);
+            _backgrounds.Add(new KeyValuePair<Image, string>(image, panel));
+        }
+
+        /// <summary>Re-reads every live background's opacity (a [Backgrounds] value changed); forgets destroyed ones.</summary>
+        public void RefreshBackgrounds()
+        {
+            _backgrounds.RemoveAll(kv => kv.Key == null);
+            foreach (var kv in _backgrounds) Apply(kv.Key, kv.Value);
+        }
+
+        private void Apply(Image image, string panel)
+        {
+            float a = Mathf.Clamp01(BackgroundOpacity(panel));
+            image.color = new Color(1f, 1f, 1f, a);
+            // Fully transparent: skip drawing it (and its stencil mask) altogether.
+            var clip = image.transform.parent;
+            if (clip != null && clip.gameObject.activeSelf != a > 0f) clip.gameObject.SetActive(a > 0f);
+        }
 
         public static Color ToUnity(ColorRgba c) => new Color(c.R, c.G, c.B, c.A);
 

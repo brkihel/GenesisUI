@@ -33,10 +33,12 @@ namespace GenesisUI.Modules.Notice
             _opacity = _rt.gameObject.AddComponent<CanvasGroup>();
             _opacity.blocksRaycasts = false;
             _opacity.interactable = false;
-            var sprite = theme.Sprite("card");
-            Ui.Image(Ui.Fill(Ui.Child(_rt, "Card")), sprite, sprite != null ? Color.white : ThemeRuntime.ToUnity(t.PanelBackground));
-            var c = theme.Content("card", new Vector4(12f, 12f, 12f, 12f));
-            _content = new Vector4(Mathf.Min(c.x, 10f), 0f, Mathf.Min(c.z, 10f), 0f);
+            // A slim plate (D-027) scaled to the card's height; only its straight rails stretch.
+            string plate = theme.Sprite("notice_plate") != null ? "notice_plate" : "card";
+            Frame.Dress(Ui.Fill(Ui.Child(_rt, "Card")), theme, plate, "Notice", plate == "notice_plate" ? height : 0f);
+            var drawn = theme.Size(plate);
+            var c = theme.Content(plate, new Vector4(12f, 12f, 12f, 12f)) * (plate == "notice_plate" && drawn.y > 0f ? height / drawn.y : 1f);
+            _content = plate == "notice_plate" ? new Vector4(c.x, 0f, c.z, 0f) : new Vector4(Mathf.Min(c.x, 10f), 0f, Mathf.Min(c.z, 10f), 0f);
 
             var iconRt = Ui.Place(Ui.Child(_rt, "Icon"), new Vector2(0f, 0.5f), new Vector2(_content.x + 6f, 0f), new Vector2(IconSize, IconSize));
             iconRt.pivot = new Vector2(0f, 0.5f);

@@ -18,10 +18,19 @@ namespace GenesisUI.Modules.Vitals
         public float CounterSpeed;
         /// <summary>Colour of the burn and its embers where the bar is consumed.</summary>
         public Color Hot;
+        /// <summary>The bar's frame (art/sprites.json) and its liquid texture (tools/art/sheets.py).</summary>
+        public string Frame;
+        public string Liquid;
     }
 
     /// <summary>
-    /// One vertical vital bar, v3 (R-032 references: internal blood texture, burn when consumed;
+    /// One vertical vital bar, v4 (F4.0, D-027: frame and liquid from Diego's texture sheets).
+    ///
+    /// The frame is drawn at its own size, never stretched; the panel material sits behind it,
+    /// clipped to the frame's silhouette, with its own opacity. The liquid is Diego's texture in
+    /// two drifting layers, clipped to the frame's opening and to the level.
+    ///
+    /// Earlier, v3 (R-032 references: internal blood texture, burn when consumed;
     /// R-040 comparison: calm liquid, compact value plate).
     ///
     /// Inside the frame's content area (declared in art/sprites.json): a liquid in a mask that
@@ -37,6 +46,8 @@ namespace GenesisUI.Modules.Vitals
         private const float MaxBurnHeight = 9f;         // the burn is a short bright edge, never a long trail (R-040)
         private const float PlateAt = 0.26f;            // plate centre, as a fraction of the liquid's height
         private const float PlateWidth = 0.92f;         // plate width, as a fraction of the bar's width
+        private const float LiquidDensity = 1.4f;       // texture units per bar unit: the texture's detail, a little finer
+        private const float LiquidPace = 0.45f;         // the texture drifts slower than the old patterns: it is richer
 
         public readonly RectTransform Root;
         private readonly Image _frame;
@@ -45,6 +56,8 @@ namespace GenesisUI.Modules.Vitals
         private readonly RawImage _burn;
         private readonly RawImage _mottle;
         private readonly RawImage _veins;
+        private readonly LiquidLayer _liquid;
+        private readonly LiquidLayer _liquidShimmer;
         private readonly RawImage _bubbles;
         private readonly RawImage _counterBubbles;
         private readonly Image _surface;
@@ -90,18 +103,37 @@ namespace GenesisUI.Modules.Vitals
             _random = new System.Random(name.GetHashCode());
             Root = Ui.Place(Ui.Child(parent, name), new Vector2(0f, 0f), position, size);
 
-            var frameSprite = theme.Sprite("bar_frame");
+            // The frame of this bar's size when the art has it; else the shared generic frame.
+            string frameName = motion.Frame != null && theme.Sprite(motion.Frame) != null ? motion.Frame : "bar_frame";
+            Widgets.Frame.Background(Root, theme, frameName, "Vitals");
+            var frameSprite = theme.Sprite(frameName);
             _frameColor = frameSprite != null ? Color.white : ThemeRuntime.ToUnity(theme.Tokens.PanelBackground);
             _dangerColor = ThemeRuntime.ToUnity(theme.Tokens.StateDanger);
             _frame = Ui.Image(Ui.Fill(Ui.Child(Root, "Frame")), frameSprite, _frameColor);
 
             // The content area comes from art/sprites.json; the fallback matches the frame drawn today.
-            var c = theme.Content("bar_frame", new Vector4(10f, 24f, 10f, 32f));
+            var c = theme.Content(frameName, new Vector4(10f, 24f, 10f, 32f));
             _areaLeft = c.x;
             _areaBottom = c.y;
             _areaWidth = size.x - c.x - c.z;
             _areaHeight = size.y - c.y - c.w;
-            var area = Ui.Fill(Ui.Child(Root, "FillArea"), c.x, c.y, c.z, c.w);
+
+            // When the art provides the shape of the frame's inner opening (same size and 9-slice
+            // as the frame), the liquid and its effects are clipped by that shape: they reach into
+            // the arch and the point, with no black corners (Diego, F4.0). Otherwise a rectangle.
+            Transform areaParent = Root;
+            var openingSprite = theme.Sprite(frameName + "_opening");
+            if (openingSprite != null)
+            {
+                var opening = Ui.Fill(Ui.Child(Root, "Opening"));
+                Ui.Image(opening, openingSprite, Color.white);
+                opening.gameObject.AddComponent<Mask>().showMaskGraphic = false;
+                areaParent = opening;
+                // The frame's opening is transparent in this art: draw the frame over the liquid,
+                // so its inner rim overlaps the liquid's edge.
+                _frame.transform.SetAsLastSibling();
+            }
+            var area = Ui.Fill(Ui.Child(areaParent, "FillArea"), c.x, c.y, c.z, c.w);
 
             var color = ThemeRuntime.ToUnity(barColor);
             _light = Color.Lerp(color, Color.white, 0.4f);
@@ -126,14 +158,29 @@ namespace GenesisUI.Modules.Vitals
             _mask = Ui.Child(area, "Liquid");
             Bottom(_mask, 0f, 0f);
             _mask.gameObject.AddComponent<RectMask2D>();
-            Ui.Image(FullHeight(Ui.Child(_mask, "Body")), fillSprite, color);
-
             _tileHeightUv = _areaWidth > 0f ? _areaHeight / (2f * _areaWidth) : 1f;
-            // Calm and rich, not busy: large dark clouds and a few small crack fragments in a darker
-            // shade of the liquid, so they sit inside it instead of glowing on top (R-040).
-            var shade = Color.Lerp(color, Color.black, 0.55f);
-            _mottle = Layer("Clots", theme.Texture("bar_mottle"), new Color(0f, 0f, 0f, 0.32f), 0f);
-            _veins = Layer("Veins", theme.Texture("bar_veins"), new Color(shade.r, shade.g, shade.b, 0.3f), 0.3f);
+            var liquidTexture = motion.Liquid != null ? theme.Texture(motion.Liquid) : null;
+            if (liquidTexture != null)
+            {
+                // Diego's liquid: a slow body and a mirrored, fainter layer drifting at another pace,
+                // so the surface seems to move inside without ever repeating in step.
+                var area2 = new Vector2(_areaWidth, _areaHeight);
+                var texSize = theme.Size(motion.Liquid);
+                float across = Mathf.Max(0f, 1f - _areaWidth * LiquidDensity / Mathf.Max(1f, texSize.x));
+                _liquid = new LiquidLayer(FullHeight(Ui.Child(_mask, "Liquid")), liquidTexture, area2, texSize, LiquidDensity,
+                    Color.white, new Vector2(0f, motion.Speed * LiquidPace), new Vector2(across * 0.5f, 0f), mirror: false);
+                _liquidShimmer = new LiquidLayer(FullHeight(Ui.Child(_mask, "Shimmer")), liquidTexture, area2, texSize, LiquidDensity * 0.8f,
+                    new Color(1f, 1f, 1f, 0.35f), new Vector2(0f, motion.Speed * LiquidPace * 0.55f), new Vector2(across * 0.2f, 0.43f), mirror: true);
+            }
+            else
+            {
+                Ui.Image(FullHeight(Ui.Child(_mask, "Body")), fillSprite, color);
+                // Calm and rich, not busy: large dark clouds and a few small crack fragments in a darker
+                // shade of the liquid, so they sit inside it instead of glowing on top (R-040).
+                var shade = Color.Lerp(color, Color.black, 0.55f);
+                _mottle = Layer("Clots", theme.Texture("bar_mottle"), new Color(0f, 0f, 0f, 0.32f), 0f);
+                _veins = Layer("Veins", theme.Texture("bar_veins"), new Color(shade.r, shade.g, shade.b, 0.3f), 0.3f);
+            }
             _bubbles = Layer("Bubbles", theme.Texture("bar_bubbles"), new Color(_light.r, _light.g, _light.b, motion.PatternAlpha), 0f);
             if (motion.CounterSpeed != 0f)
                 _counterBubbles = Layer("CounterBubbles", theme.Texture("bar_bubbles"), new Color(_light.r, _light.g, _light.b, motion.PatternAlpha * 0.6f), 0.5f);
@@ -247,6 +294,8 @@ namespace GenesisUI.Modules.Vitals
                 _glintRt.anchoredPosition = new Vector2(_glintTravel * Mathf.Sin(_time * 0.72f), -2.5f);
             }
 
+            if (_liquid != null) _liquid.Scroll(deltaSeconds);
+            if (_liquidShimmer != null) _liquidShimmer.Scroll(deltaSeconds);
             Drift(_veins, _motion.Speed, 0.3f, 0.012f, deltaSeconds);
             Drift(_mottle, _motion.Speed * 0.55f, 0f, 0.008f, deltaSeconds);
             Drift(_bubbles, _motion.Speed * 1.6f, 0f, 0.018f, deltaSeconds);

@@ -30,6 +30,28 @@ namespace GenesisUI.Core.Tests
             Assert.Empty(errors);
             Assert.Empty(SpriteManifestValidator.Validate(manifest));
             Assert.Contains(manifest.sprites, s => s.name == "bar_frame");
+            // The pieces cut from Diego's texture sheets (D-027), with what their views rely on.
+            foreach (var name in new[] { "vital_health", "vital_stamina", "vital_eitr" })
+            {
+                Assert.Contains(manifest.sprites, s => s.name == name && s.HasContent);
+                Assert.Contains(manifest.sprites, s => s.name == name + "_opening");
+                Assert.Contains(manifest.sprites, s => s.name == name + "_shape");
+            }
+            foreach (var name in new[] { "liquid_health", "liquid_stamina", "liquid_eitr", "liquid_health_h", "liquid_stamina_h", "panel_bg" })
+                Assert.Contains(manifest.sprites, s => s.name == name && s.wrap == "repeat");
+            Assert.Contains(manifest.sprites, s => s.name == "hotbar_frame" && s.HasContent && s.gap >= 0);
+            Assert.Contains(manifest.sprites, s => s.name == "card_knot_left" && s.inset >= 0);
+            // Every frame's shape has the frame's size and 9-slice, or the background would not line up.
+            foreach (var fill in manifest.sprites)
+            {
+                if (!fill.name.EndsWith("_shape", StringComparison.Ordinal)) continue;
+                var frame = Array.Find(manifest.sprites, s => s.name == fill.name.Substring(0, fill.name.Length - 6));
+                Assert.NotNull(frame);
+                Assert.Equal(frame.width, fill.width);
+                Assert.Equal(frame.height, fill.height);
+                Assert.Equal(frame.borderLeft, fill.borderLeft);
+                Assert.Equal(frame.borderTop, fill.borderTop);
+            }
 
             foreach (var s in manifest.sprites)
             {

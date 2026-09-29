@@ -1,0 +1,547 @@
+{
+ "boss_plate": {
+  "border": [
+   51,
+   18,
+   51,
+   18
+  ],
+  "content": [
+   44,
+   13,
+   44,
+   13
+  ],
+  "from": "boss_plate",
+  "sheet": 3
+ },
+ "boss_plate_shape": {
+  "border": [
+   51,
+   18,
+   51,
+   18
+  ],
+  "from": "boss_plate",
+  "sheet": 3
+ },
+ "card": {
+  "border": [
+   27,
+   27,
+   27,
+   27
+  ],
+  "content": [
+   8,
+   7,
+   8,
+   7
+  ],
+  "from": "card",
+  "sheet": 5
+ },
+ "card_knot_left": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "card",
+  "inset": 6,
+  "sheet": 5
+ },
+ "card_knot_right": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "card",
+  "inset": 5,
+  "sheet": 5
+ },
+ "card_shape": {
+  "border": [
+   27,
+   27,
+   27,
+   27
+  ],
+  "from": "card",
+  "sheet": 5
+ },
+ "cell_glow": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "cell_glow",
+  "sheet": 0
+ },
+ "enemy_plate": {
+  "border": [
+   34,
+   10,
+   34,
+   10
+  ],
+  "content": [
+   30,
+   8,
+   30,
+   8
+  ],
+  "from": "enemy_plate",
+  "sheet": 3
+ },
+ "enemy_plate_shape": {
+  "border": [
+   34,
+   10,
+   34,
+   10
+  ],
+  "from": "enemy_plate",
+  "sheet": 3
+ },
+ "hotbar_frame": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "content": [
+   32,
+   12,
+   32,
+   12
+  ],
+  "from": "hotbar_frame",
+  "gap": 4,
+  "sheet": 4
+ },
+ "hotbar_frame_shape": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "hotbar_frame",
+  "sheet": 4
+ },
+ "liquid_eitr": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "liquid_eitr",
+  "sheet": 0,
+  "wrap": "repeat"
+ },
+ "liquid_eitr_h": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "liquid_eitr",
+  "sheet": 0,
+  "wrap": "repeat"
+ },
+ "liquid_health": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "liquid_health",
+  "sheet": 0,
+  "wrap": "repeat"
+ },
+ "liquid_health_h": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "liquid_health",
+  "sheet": 0,
+  "wrap": "repeat"
+ },
+ "liquid_stamina": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "liquid_stamina",
+  "sheet": 0,
+  "wrap": "repeat"
+ },
+ "liquid_stamina_h": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "liquid_stamina",
+  "sheet": 0,
+  "wrap": "repeat"
+ },
+ "map_banner": {
+  "border": [
+   19,
+   11,
+   19,
+   11
+  ],
+  "content": [
+   13,
+   6,
+   13,
+   6
+  ],
+  "from": "map_banner",
+  "sheet": 4
+ },
+ "map_banner_shape": {
+  "border": [
+   19,
+   11,
+   19,
+   11
+  ],
+  "from": "map_banner",
+  "sheet": 4
+ },
+ "map_crest": {
+  "border": [
+   13,
+   10,
+   13,
+   16
+  ],
+  "content": [
+   8,
+   6,
+   8,
+   11
+  ],
+  "from": "map_crest",
+  "sheet": 4
+ },
+ "map_crest_knot": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "map_crest",
+  "inset": 4,
+  "sheet": 4
+ },
+ "map_crest_shape": {
+  "border": [
+   13,
+   10,
+   13,
+   16
+  ],
+  "from": "map_crest",
+  "sheet": 4
+ },
+ "map_ring": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "content": [
+   16,
+   16,
+   16,
+   16
+  ],
+  "from": "map_ring",
+  "sheet": 2
+ },
+ "map_ring_opening": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "map_ring",
+  "sheet": 2
+ },
+ "medallion": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "medallion",
+  "sheet": 2
+ },
+ "medallion_shape": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "medallion",
+  "sheet": 2
+ },
+ "notice_plate": {
+  "border": [
+   22,
+   13,
+   14,
+   13
+  ],
+  "content": [
+   13,
+   7,
+   8,
+   7
+  ],
+  "from": "notice_plate",
+  "sheet": 4
+ },
+ "notice_plate_shape": {
+  "border": [
+   22,
+   13,
+   14,
+   13
+  ],
+  "from": "notice_plate",
+  "sheet": 4
+ },
+ "panel_bg": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "panel_bg",
+  "sheet": 0,
+  "wrap": "repeat"
+ },
+ "slot": {
+  "border": [
+   13,
+   13,
+   13,
+   13
+  ],
+  "content": [
+   8,
+   8,
+   8,
+   8
+  ],
+  "from": "slot",
+  "sheet": 2
+ },
+ "slot_shape": {
+  "border": [
+   13,
+   13,
+   13,
+   13
+  ],
+  "from": "slot",
+  "sheet": 2
+ },
+ "sprint_frame": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "content": [
+   40,
+   10,
+   41,
+   33
+  ],
+  "from": "sprint_frame",
+  "sheet": 1
+ },
+ "sprint_frame_opening": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "sprint_frame",
+  "sheet": 1
+ },
+ "sprint_frame_shape": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "sprint_frame",
+  "sheet": 1
+ },
+ "tile": {
+  "border": [
+   13,
+   13,
+   13,
+   13
+  ],
+  "content": [
+   9,
+   9,
+   9,
+   9
+  ],
+  "from": "tile",
+  "sheet": 5
+ },
+ "tile_shape": {
+  "border": [
+   13,
+   13,
+   13,
+   13
+  ],
+  "from": "tile",
+  "sheet": 5
+ },
+ "vital_eitr": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "content": [
+   10,
+   19,
+   9,
+   19
+  ],
+  "from": "vital_eitr",
+  "sheet": 3
+ },
+ "vital_eitr_opening": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "vital_eitr",
+  "sheet": 3
+ },
+ "vital_eitr_shape": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "vital_eitr",
+  "sheet": 3
+ },
+ "vital_health": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "content": [
+   10,
+   21,
+   10,
+   21
+  ],
+  "from": "vital_health",
+  "sheet": 3
+ },
+ "vital_health_opening": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "vital_health",
+  "sheet": 3
+ },
+ "vital_health_shape": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "vital_health",
+  "sheet": 3
+ },
+ "vital_stamina": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "content": [
+   10,
+   20,
+   9,
+   20
+  ],
+  "from": "vital_stamina",
+  "sheet": 3
+ },
+ "vital_stamina_opening": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "vital_stamina",
+  "sheet": 3
+ },
+ "vital_stamina_shape": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "vital_stamina",
+  "sheet": 3
+ }
+}

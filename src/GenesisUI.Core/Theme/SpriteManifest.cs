@@ -36,6 +36,16 @@ namespace GenesisUI.Theme
         public int contentRight = -1;
         public int contentTop = -1;
 
+        /// <summary>
+        /// Edge ornament (e.g. card_knot_left): distance in design units from the frame's outer
+        /// edge to the ornament's centre, so a view can put it on the rail at any frame size.
+        /// -1 = not an ornament.
+        /// </summary>
+        public int inset = -1;
+
+        /// <summary>Space between repeated cells inside the content area (the hotbar's eight cells); -1 = none.</summary>
+        public int gap = -1;
+
         public bool HasContent => contentLeft >= 0 && contentBottom >= 0 && contentRight >= 0 && contentTop >= 0;
     }
 
@@ -96,6 +106,8 @@ namespace GenesisUI.Theme
                     case "contentBottom": e.contentBottom = Int(kv.Value, where, errors); break;
                     case "contentRight": e.contentRight = Int(kv.Value, where, errors); break;
                     case "contentTop": e.contentTop = Int(kv.Value, where, errors); break;
+                    case "inset": e.inset = Int(kv.Value, where, errors); break;
+                    case "gap": e.gap = Int(kv.Value, where, errors); break;
                     default: errors.Add("unknown property '" + where + "'"); break;
                 }
             }
@@ -137,6 +149,8 @@ namespace GenesisUI.Theme
                 if (anyContent && !s.HasContent) errors.Add(id + ": content insets must be given all four or none");
                 if (s.HasContent && (s.contentLeft + s.contentRight >= s.width || s.contentTop + s.contentBottom >= s.height))
                     errors.Add(id + ": content insets leave no room");
+                if (s.inset < -1 || s.inset > MaxDesignSize) errors.Add(id + ": inset out of range");
+                if (s.gap < -1 || s.gap > MaxDesignSize) errors.Add(id + ": gap out of range");
             }
             return errors;
         }

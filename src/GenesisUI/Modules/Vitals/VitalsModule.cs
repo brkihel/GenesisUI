@@ -64,23 +64,35 @@ namespace GenesisUI.Modules.Vitals
             var theme = context.Theme;
             _group = Ui.Place(Ui.Child(context.Root, "Vitals"), Vector2.zero, Vector2.zero, new Vector2(150f, 260f));
 
-            // Health is the widest and tallest bar; stamina and eitr sit to its right.
+            // Health is the widest and tallest bar; stamina and eitr sit to its right. Each frame is
+            // drawn at the size Diego drew it (one scale for the three, no stretching, D-027).
             // Larger, translucent bubbles: calm for health, livelier for stamina, parallax for eitr.
-            _healthView = new VitalBarView(_group, "Health", theme, theme.Tokens.BarHealth, new Vector2(0f, 22f), new Vector2(46f, 226f),
-                new BarMotion { Speed = 0.035f, PatternAlpha = 0.07f, Hot = new Color(1f, 0.62f, 0.26f) });
-            _staminaView = new VitalBarView(_group, "Stamina", theme, theme.Tokens.BarStamina, new Vector2(52f, 22f), new Vector2(38f, 196f),
-                new BarMotion { Speed = 0.05f, PatternAlpha = 0.07f, Hot = new Color(1f, 0.93f, 0.62f) });
-            _eitrView = new VitalBarView(_group, "Eitr", theme, theme.Tokens.BarEitr, new Vector2(96f, 22f), new Vector2(38f, 196f),
-                new BarMotion { Speed = 0.04f, PatternAlpha = 0.08f, CounterSpeed = 0.025f, Hot = new Color(0.72f, 0.95f, 1f) });
+            var health = new BarMotion { Speed = 0.035f, PatternAlpha = 0.05f, Hot = new Color(1f, 0.62f, 0.26f), Frame = "vital_health", Liquid = "liquid_health" };
+            var stamina = new BarMotion { Speed = 0.05f, PatternAlpha = 0.05f, Hot = new Color(1f, 0.93f, 0.62f), Frame = "vital_stamina", Liquid = "liquid_stamina" };
+            var eitr = new BarMotion { Speed = 0.04f, PatternAlpha = 0.06f, CounterSpeed = 0.025f, Hot = new Color(0.72f, 0.95f, 1f), Frame = "vital_eitr", Liquid = "liquid_eitr" };
+            var hs = BarSize(theme, health.Frame, new Vector2(46f, 226f));
+            var ss = BarSize(theme, stamina.Frame, new Vector2(38f, 196f));
+            var es = BarSize(theme, eitr.Frame, new Vector2(38f, 196f));
+            const float gap = 6f, bottom = 22f;
+            _healthView = new VitalBarView(_group, "Health", theme, theme.Tokens.BarHealth, new Vector2(0f, bottom), hs, health);
+            _staminaView = new VitalBarView(_group, "Stamina", theme, theme.Tokens.BarStamina, new Vector2(hs.x + gap, bottom), ss, stamina);
+            _eitrView = new VitalBarView(_group, "Eitr", theme, theme.Tokens.BarEitr, new Vector2(hs.x + ss.x + 2f * gap, bottom), es, eitr);
 
             var medallion = theme.Sprite("medallion");
             if (medallion != null)
             {
-                var m = Ui.Place(Ui.Child(_group, "Medallion"), Vector2.zero, new Vector2(-6f, 0f), new Vector2(58f, 58f));
-                Ui.Image(m, medallion, Color.white);
+                var size = BarSize(theme, "medallion", new Vector2(58f, 58f));
+                var m = Ui.Place(Ui.Child(_group, "Medallion"), Vector2.zero, new Vector2(hs.x / 2f - size.x / 2f, bottom - size.y + 4f), size);
+                Frame.Dress(m, theme, "medallion", "Vitals");
             }
 
             ApplyLayout();
+        }
+
+        private static Vector2 BarSize(Theme.ThemeRuntime theme, string sprite, Vector2 fallback)
+        {
+            var size = theme.Size(sprite);
+            return size.x > 0f ? size : fallback;
         }
 
         public void Refresh(float deltaSeconds)

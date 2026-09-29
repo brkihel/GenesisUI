@@ -166,6 +166,8 @@ namespace GenesisUI.Diagnostics
             sb.Append("\n<color=#F7E283>").Append(L("$genesisui_diag_faults")).Append("</color> ").Append(faults.Count).Append('\n');
             foreach (var f in faults) sb.Append("• ").Append(f.Owner).Append(" x").Append(f.Count).Append(": ").Append(f.FirstMessage).Append('\n');
 
+            // Art from the texture sheets: how many sprites loaded and how many panel backgrounds are alive.
+            sb.Append("\nArt: ").Append(_theme.SpriteCount).Append(" sprites, ").Append(_theme.BackgroundCount).Append(" backgrounds");
             sb.Append("\n").Append(L("$genesisui_diag_input")).Append(' ').Append(InputLeases.ActiveCount);
             if (_status.Length > 0) sb.Append("\n\n<color=#A2DC88>").Append(_status).Append("</color>");
             _body.text = sb.ToString();

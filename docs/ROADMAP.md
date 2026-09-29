@@ -17,7 +17,7 @@ are met.
 | **F8 — Gameplay package (optional)** | Separate package with server authority: extra slots, quick/action slots, crafting from chests… | Own design docs; server validates every action |
 | **F9 — Switch-over** | GenesisUI replaces SeneaL UI on GenesisHeim | Release checklist + rollout in [RELEASE.md](RELEASE.md) |
 
-F3 was approved by Diego on 2026-09-28 (R-040 on 0.5.0-preview.3; fixes in preview.4).
+F3 was approved by Diego on 2026-09-28 (R-040 on 0.5.0-preview.3; fixes in preview.4). F4.0 (textures from Diego's sheets on the whole HUD, D-027) is in 0.6.0-preview.1, script R-042.
 The whole vanilla UI comes before any mod integration (D-024): F4 windows, F5 menus, F6 map,
 then the Extension API and adapters in F7. The modpack performance check from the F3 exit
 criteria moves to the first F4 test run. The F4 plan is in [F4-PLAN.md](F4-PLAN.md).

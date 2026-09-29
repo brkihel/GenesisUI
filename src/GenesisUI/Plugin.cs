@@ -86,6 +86,7 @@ namespace GenesisUI
                 RegisterDiagnosticsKey();
 
                 _theme = new ThemeRuntime(Path.GetDirectoryName(Info.Location));
+                BindBackgrounds(_theme);
                 ModuleHost.Init(_theme, Enabled.Value);
                 Enabled.SettingChanged += (_, __) => Guard.Try("master toggle", () => ModuleHost.SetMasterEnabled(Enabled.Value));
 
@@ -157,6 +158,41 @@ namespace GenesisUI
             RedactReports = Config.Bind("Diagnostics", "RedactReports", true,
                 "Esconde dados pessoais nos relatórios (nome do personagem, mundo, endereço do servidor, " +
                 "IDs de plataforma, usuário do Windows). Deixe ligado ao enviar relatórios para alguém.");
+        }
+
+        /// <summary>
+        /// [Backgrounds]: the panel material's opacity, one default and an override per panel
+        /// (-1 = use the default). Only the material fades; frames, texts and icons do not.
+        /// </summary>
+        private void BindBackgrounds(ThemeRuntime theme)
+        {
+            var shared = Config.Bind("Backgrounds", "Default", 0.85f,
+                new ConfigDescription("Opacidade do fundo de pedra escura dentro das molduras (0 = sem fundo, 1 = opaco). " +
+                    "Só o fundo fica transparente; moldura, textos e ícones não.", new AcceptableValueRange<float>(0f, 1f)));
+            var panels = new Dictionary<string, ConfigEntry<float>>();
+            foreach (var kv in new[]
+            {
+                new KeyValuePair<string, string>("Vitals", "barras de vida, vigor e eitr (parte vazia) e o medalhão"),
+                new KeyValuePair<string, string>("Food", "espaços de comida"),
+                new KeyValuePair<string, string>("Hotbar", "barra de itens"),
+                new KeyValuePair<string, string>("Minimap", "placas de dia/hora e de bioma do minimapa"),
+                new KeyValuePair<string, string>("Boss", "placa do chefe"),
+                new KeyValuePair<string, string>("Enemy", "placas das criaturas"),
+                new KeyValuePair<string, string>("Hover", "cartão de interação"),
+                new KeyValuePair<string, string>("Notice", "notificações"),
+                new KeyValuePair<string, string>("Status", "quadros de efeitos"),
+                new KeyValuePair<string, string>("Sprint", "barra de corrida"),
+            })
+            {
+                panels[kv.Key] = Config.Bind("Backgrounds", kv.Key, -1f,
+                    new ConfigDescription("Opacidade do fundo: " + kv.Value + ". -1 = usa o valor de Default.",
+                        new AcceptableValueRange<float>(-1f, 1f)));
+            }
+            theme.BackgroundOpacity = panel =>
+                panel != null && panels.TryGetValue(panel, out var e) && e.Value >= 0f ? e.Value : shared.Value;
+            System.EventHandler changed = (_, __) => Guard.Try("background opacity", theme.RefreshBackgrounds);
+            shared.SettingChanged += changed;
+            foreach (var e in panels.Values) e.SettingChanged += changed;
         }
 
         private void RegisterDiagnosticsKey()

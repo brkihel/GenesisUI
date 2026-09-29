@@ -16,7 +16,7 @@ namespace GenesisUI.Modules.Enemy
     {
         private const float Width = 112f;
         private const float PlateHeight = 18f;
-        private const float PlateScale = 0.3f;          // the boss plate's ornament, drawn small
+        private const float PlateScale = 0.3f;          // fallback: the ornament's scale when the art has no size
         private const float NameGap = 1f;
 
         private readonly RectTransform _root;
@@ -74,11 +74,14 @@ namespace GenesisUI.Modules.Enemy
             group.interactable = false;
 
             var plateRt = Ui.Place(Ui.Child(_root, "Plate"), new Vector2(0.5f, 0f), Vector2.zero, new Vector2(Width, PlateHeight));
-            var plateSprite = theme.Sprite("boss_plate");
-            var plate = Ui.Image(plateRt, plateSprite, plateSprite != null ? Color.white : ThemeRuntime.ToUnity(t.PanelBackground));
-            plate.pixelsPerUnitMultiplier = 1f / PlateScale;
+            // Diego's creature plate (D-027), drawn small: the whole ornament scales to the plate's
+            // height and only its straight rails stretch. The boss plate is the fallback.
+            string plateName = theme.Sprite("enemy_plate") != null ? "enemy_plate" : "boss_plate";
+            var drawn = theme.Size(plateName);
+            float scale = drawn.y > 0f ? PlateHeight / drawn.y : PlateScale;
+            Frame.Dress(plateRt, theme, plateName, "Enemy", PlateHeight);
 
-            var c = theme.Content("boss_plate", new Vector4(22f, 12f, 22f, 12f)) * PlateScale;
+            var c = theme.Content(plateName, new Vector4(22f, 12f, 22f, 12f)) * scale;
             var bar = Ui.Fill(Ui.Child(plateRt, "Bar"), c.x + 1f, c.y + 1f, c.z + 1f, c.w + 1f);
             Ui.Image(Ui.Fill(Ui.Child(bar, "Back")), null, new Color(0f, 0f, 0f, 0.55f));
             var fillSprite = theme.Sprite("bar_fill");

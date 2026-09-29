@@ -40,10 +40,13 @@ namespace GenesisUI.Widgets
             _frameColor = sprite != null ? Color.white : ThemeRuntime.ToUnity(t.PanelBackground);
             _readyColor = ThemeRuntime.ToUnity(t.AccentGoldBright);
             _dangerColor = ThemeRuntime.ToUnity(t.StateDanger);
-            var frameRt = Ui.Place(Ui.Child(Root, "Frame"), new Vector2(0.5f, 1f), Vector2.zero, new Vector2(TileSize, TileSize));
-            _frame = Ui.Image(frameRt, sprite, _frameColor);
+            var frameRt = Ui.Place(Ui.Child(Root, "Tile"), new Vector2(0.5f, 1f), Vector2.zero, new Vector2(TileSize, TileSize));
+            _frame = Frame.Dress(frameRt, theme, "tile", "Status", TileSize);
 
-            _icon = Ui.Image(Ui.Fill(Ui.Child(frameRt, "Icon"), 13f, 10f, 13f, 16f), null, Color.white);
+            // The icon sits inside the frame's declared content (scaled like the frame).
+            var drawn = theme.Size("tile");
+            var c = theme.Content("tile", new Vector4(13f, 10f, 13f, 16f)) * (drawn.y > 0f ? TileSize / drawn.y : 1f);
+            _icon = Ui.Image(Ui.Fill(Ui.Child(frameRt, "Icon"), c.x + 2f, c.y + 2f, c.z + 2f, c.w + 2f), null, Color.white);
             _icon.preserveAspect = true;
 
             // Small corner badge (the guardian power's cooldown): top-right of the tile.

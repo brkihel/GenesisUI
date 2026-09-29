@@ -74,15 +74,33 @@ namespace GenesisUI.Modules.Hotbar
         public void Build(ModuleContext context)
         {
             var theme = context.Theme;
-            float width = SlotCount * SlotSize + (SlotCount - 1) * Gap + 2 * SidePadding;
-            _plate = Ui.Place(Ui.Child(context.Root, "Hotbar"), new Vector2(0.5f, 0f), Vector2.zero, new Vector2(width, SlotSize + 24f));
-            var plateSprite = theme.Sprite("plate");
-            Ui.Image(Ui.Fill(Ui.Child(_plate, "Plate")), plateSprite, plateSprite != null ? Color.white : ThemeRuntime.ToUnity(theme.Tokens.PanelBackground));
-
-            for (int i = 0; i < SlotCount; i++)
+            // Diego's eight-cell bar is one fixed piece (D-027): drawn at its own proportions, the
+            // cells sit where the art draws them (content area split by the declared gap).
+            var drawn = theme.Size("hotbar_frame");
+            if (drawn.x > 0f)
             {
-                var pos = new Vector2(SidePadding + i * (SlotSize + Gap), 12f);
-                _slots[i] = new SlotView(_plate, "Slot" + (i + 1), theme, Vector2.zero, pos, SlotSize, (i + 1).ToString());
+                _plate = Ui.Place(Ui.Child(context.Root, "Hotbar"), new Vector2(0.5f, 0f), Vector2.zero, drawn);
+                Frame.Dress(_plate, theme, "hotbar_frame", "Hotbar");
+                var c = theme.Content("hotbar_frame", new Vector4(32f, 12f, 32f, 12f));
+                float gap = theme.Gap("hotbar_frame", 4f);
+                var cell = new Vector2((drawn.x - c.x - c.z - (SlotCount - 1) * gap) / SlotCount, drawn.y - c.y - c.w);
+                for (int i = 0; i < SlotCount; i++)
+                {
+                    var pos = new Vector2(c.x + i * (cell.x + gap), c.y);
+                    _slots[i] = new SlotView(_plate, "Slot" + (i + 1), theme, Vector2.zero, pos, cell, (i + 1).ToString(), null, "Hotbar");
+                }
+            }
+            else
+            {
+                float width = SlotCount * SlotSize + (SlotCount - 1) * Gap + 2 * SidePadding;
+                _plate = Ui.Place(Ui.Child(context.Root, "Hotbar"), new Vector2(0.5f, 0f), Vector2.zero, new Vector2(width, SlotSize + 24f));
+                var plateSprite = theme.Sprite("plate");
+                Ui.Image(Ui.Fill(Ui.Child(_plate, "Plate")), plateSprite, plateSprite != null ? Color.white : ThemeRuntime.ToUnity(theme.Tokens.PanelBackground));
+                for (int i = 0; i < SlotCount; i++)
+                {
+                    var pos = new Vector2(SidePadding + i * (SlotSize + Gap), 12f);
+                    _slots[i] = new SlotView(_plate, "Slot" + (i + 1), theme, Vector2.zero, pos, SlotSize, (i + 1).ToString());
+                }
             }
 
             _selected = AccessTools.FieldRefAccess<HotkeyBar, int>("m_selected");

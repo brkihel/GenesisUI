@@ -14,18 +14,20 @@ is unclear, ask; do not guess.
   Diego approved the revision and confirmed the concept's rights (D-025/D-026). Order after that: F5 menus (main and Esc),
   F6 map, F7 Extension API and adapters, F8 optional gameplay package, F9 switch-over
   (D-024). Do not start API or adapter work before the vanilla UI is done.
-- **Version:** 0.5.0, last package `0.5.0-preview.4` with script R-041 (R-040 fixes), not
-  yet run by Diego. `main` holds F0–F3 (fast-forwarded by Diego to `479a11e`);
+- **Version:** 0.6.0, last package `0.6.0-preview.1` with script R-042 (F4.0: Diego's
+  textures on the whole HUD), not yet run by Diego. R-041 (0.5.0-preview.4) was never run
+  and is superseded by R-042. `main` holds F0–F3 (fast-forwarded by Diego to `479a11e`);
   `f4-windows` branches from it. Fast-forwarding `main` needs Diego: the agent's permissions block merges
   into `main`, so give him the command.
 - **Art direction:** gold only (D-023). The carved-wood style was tried and rejected; do not
   propose another style unless Diego asks.
 - **Current F4.0 art source:** Diego supplied isolated UI sheets and separate background,
   health, stamina and eitr textures at
-  `/home/diego/GenesisUI-Concept/GenesisUI-textures/`. Use these as the source for new
-  integration work (§2b). The earlier concept crops/review candidates are superseded for
-  pieces Diego rejected; only the reviewed vertical-bar shapes were approved visually.
-  None of these new sheets is integrated or tested in game yet.
+  `/home/diego/GenesisUI-Concept/GenesisUI-textures/`. `tools/art/sheets.py` cuts every HUD
+  piece from them into `art/src/sheets/` (D-027); `tools/art/sheets_preview.py` draws the
+  contact sheet for the §2b quality gate. All 11 HUD modules use them (frames, `_shape`
+  backgrounds with `[Backgrounds]` opacity, `_opening` masks, liquids). Integrated and
+  mocked, **not yet seen in game** (R-042). Next: F4.1 window shell.
 - **HUD modules (11):** `hud.vitals`, `hud.food`, `hud.hotbar`, `hud.minimap`, `hud.boss`,
   `hud.enemy`, `hud.hover`, `hud.notice`, `hud.status`, `hud.sprint`, plus the key-hint nudge
   owned by `hud.hotbar`. Each has a `[Modules]` toggle and its own config section.

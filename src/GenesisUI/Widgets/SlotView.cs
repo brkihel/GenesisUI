@@ -31,12 +31,27 @@ namespace GenesisUI.Widgets
         private bool _hasIcon;
 
         public SlotView(RectTransform parent, string name, ThemeRuntime theme, Vector2 anchor, Vector2 position, float size, string indexLabel)
+            : this(parent, name, theme, anchor, position, new Vector2(size, size), indexLabel, "slot", null)
+        {
+        }
+
+        /// <param name="frameSprite">
+        /// The cell's own frame and background, or null when the cell is part of a larger piece that
+        /// already draws it (the hotbar's eight cells, D-027).
+        /// </param>
+        /// <param name="panel">The background's key in [Backgrounds].</param>
+        public SlotView(RectTransform parent, string name, ThemeRuntime theme, Vector2 anchor, Vector2 position, Vector2 cell,
+                        string indexLabel, string frameSprite, string panel)
         {
             var t = theme.Tokens;
-            Root = Ui.Place(Ui.Child(parent, name), anchor, position, new Vector2(size, size));
+            float size = Mathf.Min(cell.x, cell.y);
+            Root = Ui.Place(Ui.Child(parent, name), anchor, position, cell);
 
-            var frame = theme.Sprite("slot");
-            Ui.Image(Ui.Fill(Ui.Child(Root, "Frame")), frame, frame != null ? Color.white : ThemeRuntime.ToUnity(t.PanelBackground));
+            if (frameSprite != null)
+            {
+                // Corners and diamonds scale with the cell's height; only plain rails stretch.
+                Widgets.Frame.Dress(Root, theme, frameSprite, panel, cell.y);
+            }
 
             float pad = size * 0.14f;
             _icon = Ui.Image(Ui.Fill(Ui.Child(Root, "Icon"), pad, pad, pad, pad), null, Color.white);
@@ -54,8 +69,12 @@ namespace GenesisUI.Widgets
             _bar.fillOrigin = (int)Image.OriginHorizontal.Left;
             _barBack.gameObject.SetActive(false);
 
-            _active = Ui.Image(Ui.Fill(Ui.Child(Root, "Active"), -3f, -3f, -3f, -3f), theme.Sprite("slot_active"),
-                               theme.Sprite("slot_active") != null ? Color.white : ThemeRuntime.ToUnity(t.AccentGold).WithA(0.35f));
+            // The selected cell glows from inside (a light, not a second frame over the art's own).
+            var glow = theme.Sprite("cell_glow");
+            if (glow == null) glow = theme.Sprite("slot_active");
+            _active = Ui.Image(Ui.Fill(Ui.Child(Root, "Active"), 1f, 1f, 1f, 1f), glow,
+                               glow != null ? Color.white : ThemeRuntime.ToUnity(t.AccentGold).WithA(0.35f));
+            _active.type = Image.Type.Simple;
             _active.enabled = false;
 
             if (indexLabel != null)

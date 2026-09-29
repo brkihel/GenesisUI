@@ -101,130 +101,185 @@ def main(out_path):
     def text(x, y, s, f, fill=(251, 243, 218, 255), anchor="mm"):
         ImageDraw.Draw(bg).text((x, y), s, font=f, fill=fill, anchor=anchor, stroke_width=1, stroke_fill=(0, 0, 0, 200))
 
-    # Vital bars [Vitals] OffsetX 36, OffsetY 72 (UI y grows upward).
-    def bar(x, y, w, h, rgb, frac, trail, value, hot):
+    def size(name):
+        return st.meta[name]["width"], st.meta[name]["height"]
+
+    def dressed(name, w, h, fit=None, alpha=0.85):
+        """Frame over the panel material clipped to <name>_shape (Widgets/Frame.Dress)."""
+        k = fit / size(name)[1] if fit else 1.0
+        w, h = int(round(w)), int(round(h))
+        out = Image.new("RGBA", (w, h))
+        if st.has(name + "_shape") and st.has("panel_bg"):
+            mat = tiled(st.img("panel_bg"), w, h, size("panel_bg")[0])
+            mask = st.nine(name + "_shape", w, h, k).split()[3].point(lambda v: int(v * alpha))
+            out.paste(mat, (0, 0), mask)
+        out.alpha_composite(st.nine(name, w, h, k))
+        return out
+
+    def ornament(frame_x, frame_top, w, h, name, edge, k=1.0):
+        ow, oh = (v * k for v in size(name))
+        inset = st.meta[name].get("inset", 0) * k
+        cx, cy = {"left": (inset, h / 2), "right": (w - inset, h / 2), "top": (w / 2, inset), "bottom": (w / 2, h - inset)}[edge]
+        put(st.img(name).resize((max(1, int(ow)), max(1, int(oh))), Image.LANCZOS), frame_x + cx - ow / 2, frame_top + cy - oh / 2)
+
+    def liquid_v(name, aw, ah, density=1.4, offset=0.0):
+        """A vertical liquid layer as the plugin's uvRect shows it (LiquidLayer)."""
+        tex = st.img(name)
+        tw, th = size(name)
+        uw, uh = aw * density / tw, ah * density / th
+        px = tex.width
+        crop = tex.crop((int(offset * px), 0, int((offset + uw) * px), int(uh * tex.height) if uh <= 1 else tex.height))
+        return crop.resize((aw, ah), Image.LANCZOS)
+
+    def liquid_h(name, aw, ah, density=1.4, voff=0.3):
+        tex = st.img(name)
+        tw, th = size(name)
+        uw, uh = aw * density / tw, ah * density / th
+        reps = int(uw) + 1
+        strip = Image.new("RGBA", (tex.width * reps, tex.height))
+        for i in range(reps):
+            strip.paste(tex, (i * tex.width, 0))
+        y0 = int((1 - voff - uh) * tex.height)
+        return strip.crop((0, y0, int(uw * tex.width), y0 + int(uh * tex.height))).resize((aw, ah), Image.LANCZOS)
+
+    # Vital bars [Vitals] OffsetX 36, OffsetY 72 (UI y grows upward), Diego's three frames.
+    def bar(x, y, frame, liq, frac, trail, value, hot):
+        w, h = size(frame)
         top = H - (y + h)
-        put(st.nine("bar_frame", w, h), x, top)
-        cl, cb, cr, ct = (int(round(v)) for v in st.content("bar_frame", (10, 24, 10, 32)))
+        cl, cb, cr, ct = (int(round(v)) for v in st.content(frame, (10, 24, 10, 32)))
         aw, ah = int(w - cl - cr), int(h - cb - ct)
         fh, th = int(ah * frac), int(ah * trail)
-        light = tuple(int(c + (255 - c) * 0.4) for c in rgb)
-        liquid = tint(st.img("bar_fill").resize((aw, ah)), rgb)
-        for name, color, alpha in (("bar_mottle", (0, 0, 0), 0.32), ("bar_veins", tuple(int(c * 0.45) for c in rgb), 0.3), ("bar_bubbles", light, 0.07)):
-            if st.has(name):
-                liquid.alpha_composite(tint(tiled(st.img(name), aw, ah, aw), color, alpha))
-        put(liquid.crop((0, ah - fh, aw, ah)), x + cl, top + ct + ah - fh)
+        layer = Image.new("RGBA", (w, h))
+        layer.alpha_composite(dressed(frame, w, h))                       # material behind the empty part
+        body = liquid_v(liq, aw, ah)
+        body.alpha_composite(tint(liquid_v(liq, aw, ah, 1.12, 0.2).transpose(Image.FLIP_LEFT_RIGHT), (255, 255, 255), 0.35))
+        lq = Image.new("RGBA", (w, h))
+        lq.paste(body.crop((0, ah - fh, aw, ah)), (cl, ct + ah - fh))
         if th > fh and st.has("bar_burn"):
-            bh = min(th - fh, 9)                          # the plugin caps the burn at 9 units
-            put(tint(st.img("bar_burn").resize((aw, bh)), hot, 0.95), x + cl, top + ct + ah - fh - bh)
-        put(Image.new("RGBA", (aw, 2), light + (220,)), x + cl, top + ct + ah - fh)
+            bh = min(th - fh, 9)
+            lq.alpha_composite(tint(st.img("bar_burn").resize((aw, bh)), hot, 0.95), (cl, ct + ah - fh - bh))
+        lq.alpha_composite(Image.new("RGBA", (aw, 2), (255, 255, 255, 90)), (cl, ct + ah - fh))
+        opening = st.img(frame + "_opening").resize((w, h), Image.LANCZOS).split()[3]
+        layer.paste(lq, (0, 0), ImageChops.multiply(opening, lq.split()[3]))
+        layer.alpha_composite(st.img(frame).resize((w, h), Image.LANCZOS))
+        put(layer, x, top)
         if st.has("bar_value"):
             pw = int(w * 0.92)
             ph = int(pw * st.meta["bar_value"]["height"] / st.meta["bar_value"]["width"])
             py = top + ct + ah - int(ah * 0.26) - ph // 2
             put(st.img("bar_value").resize((pw, ph), Image.LANCZOS), x + (w - pw) / 2, py)
             text(x + w / 2, py + ph / 2 - 1, str(value), font("Cinzel-SemiBold", 17 if w > 40 else 15))
-        else:
-            text(x + w / 2, top + ct + ah / 2, str(value), font("Cinzel-SemiBold", 17))
+        return w
 
     vx, vy = 36, 72
-    bar(vx, vy + 22, 46, 226, (0xB8, 0x1E, 0x20), 0.66, 0.78, 148, (255, 158, 66))
-    bar(vx + 52, vy + 22, 38, 196, (0xC8, 0x92, 0x24), 0.8, 0.8, 132, (255, 236, 150))
-    bar(vx + 96, vy + 22, 38, 196, (0x24, 0x8A, 0xB8), 0.5, 0.5, 66, (175, 238, 255))
-    if st.has("medallion"):
-        put(st.img("medallion").resize((58, 58), Image.LANCZOS), vx - 6, H - (vy + 58))
+    wh = bar(vx, vy + 22, "vital_health", "liquid_health", 0.66, 0.74, 148, (255, 158, 66))
+    ws = bar(vx + wh + 6, vy + 22, "vital_stamina", "liquid_stamina", 0.8, 0.8, 132, (255, 236, 150))
+    bar(vx + wh + ws + 12, vy + 22, "vital_eitr", "liquid_eitr", 0.5, 0.5, 66, (175, 238, 255))
+    mw, mh = size("medallion")
+    put(dressed("medallion", mw, mh), vx + wh / 2 - mw / 2, H - (vy + 22 - mh + 4) - mh)
 
     # Food [Food] OffsetX 190, OffsetY 94.
     for i, t in enumerate(("13m", "23m", "28m")):
         x = 190 + i * 66
-        put(st.img("slot").resize((58, 58), Image.LANCZOS), x, H - (94 + 58))
+        put(dressed("slot", 58, 58, fit=58), x, H - (94 + 58))
         text(x + 49, H - 94 - 8, t, font("Cinzel-SemiBold", 14), anchor="rs")
 
-    # Hotbar [Hotbar] OffsetY 20, bottom centre.
-    pw = 8 * 56 + 7 * 8 + 60
-    px = W / 2 - pw / 2
-    put(st.nine("plate", pw, 80), px, H - (20 + 80))
+    # Hotbar [Hotbar] OffsetY 20, bottom centre: Diego's eight-cell piece at its own size.
+    pw, ph = size("hotbar_frame")
+    px, ptop = W / 2 - pw / 2, H - (20 + ph)
+    put(dressed("hotbar_frame", pw, ph), px, ptop)
+    cl, cb, cr, ct = st.content("hotbar_frame", (32, 12, 32, 12))
+    gap = st.meta["hotbar_frame"].get("gap", 4)
+    cw, chh = (pw - cl - cr - 7 * gap) / 8, ph - cb - ct
     for i in range(8):
-        x = px + 30 + i * 64
-        put(st.img("slot").resize((56, 56), Image.LANCZOS), x, H - (20 + 12 + 56))
-        text(x + 8, H - (20 + 12 + 56) + 11, str(i + 1), font("Cinzel-Medium", 13), anchor="lm")
-    put(st.img("slot_active").resize((62, 62), Image.LANCZOS), px + 30 + 2 * 64 - 3, H - (20 + 12 + 56) - 3)
+        x = px + cl + i * (cw + gap)
+        text(x + cw * 0.12, ptop + ct + chh * 0.18, str(i + 1), font("Cinzel-Medium", 13), anchor="lm")
+        if i == 2:
+            put(st.img("cell_glow").resize((int(cw - 2), int(chh - 2)), Image.LANCZOS), x + 1, ptop + ct + 1)
 
-    # Stamina readout [Sprint] OffsetY 120, 220 x 22.
-    sw, sh = 220, 22
+    # Stamina readout [Sprint] OffsetY 120: Diego's frame, 220 wide at its own proportions.
+    fw, fh = size("sprint_frame")
+    k = 220 / fw
+    sw, sh = int(fw * k), int(fh * k)
     sx, stop = W / 2 - sw / 2, H - (120 + sh)
-    k = sh / 36
-    put(st.nine("sprint_frame", sw, sh, k), sx, stop)
-    cl, cb, cr, ct = (v * k for v in st.content("sprint_frame", (24, 12, 24, 12)))
+    frame_img = dressed("sprint_frame", sw, sh)
+    cl, cb, cr, ct = (v * k for v in st.content("sprint_frame", (40, 10, 40, 33)))
     tw, thh = int(sw - cl - cr), int(sh - cb - ct)
-    put(tint(st.img("bar_fill").resize((tw, thh)), (0xC8, 0x92, 0x24)).crop((0, 0, int(tw * 0.62), thh)), sx + cl, stop + ct)
+    lq = Image.new("RGBA", (sw, sh))
+    lq.paste(liquid_h("liquid_stamina_h", tw, thh, 1.2).crop((0, 0, int(tw * 0.62), thh)), (int(cl), int(ct)))
+    opening = st.img("sprint_frame_opening").resize((sw, sh), Image.LANCZOS).split()[3]
+    frame_img.paste(lq, (0, 0), ImageChops.multiply(opening, lq.split()[3]))
+    frame_img.alpha_composite(st.img("sprint_frame").resize((sw, sh), Image.LANCZOS))
+    put(frame_img, sx, stop)
+    text(W / 2, stop + (6 * k + (sh - ct)) / 2 + 1, "93", font("Cinzel-SemiBold", 15))
 
     # Minimap [Minimap] OffsetX 24, OffsetY 20, top-right.
     gx, ring_top = W - 24 - 250, 20 + 40
-    world = Image.new("RGBA", (222, 222), (90, 120, 70, 255))
+    cl, cb, cr, ct = st.content("map_ring", (14, 14, 14, 14))
+    ms = int(250 - cl - cr)
+    world = Image.new("RGBA", (ms, ms), (90, 120, 70, 255))
     wd = ImageDraw.Draw(world)
     for _ in range(120):
-        x, y = rng.randrange(222), rng.randrange(222)
+        x, y = rng.randrange(ms), rng.randrange(ms)
         wd.ellipse((x, y, x + 24, y + 24), fill=(70 + rng.randrange(40), 110 + rng.randrange(30), 60, 255))
-    bg.paste(world, (gx + 14, ring_top + 14), st.img("map_mask").split()[3].resize((222, 222)))
+    bg.paste(world, (int(gx + cl), int(ring_top + ct)), st.img("map_mask").split()[3].resize((ms, ms)))
     put(st.img("map_ring").resize((250, 250), Image.LANCZOS), gx, ring_top)
-    crest_top = ring_top - 34
-    put(st.img("map_crest").resize((200, 52), Image.LANCZOS), gx + 25, crest_top)
-    put(st.img("wind_disk").resize((30, 30), Image.LANCZOS), gx + 125 - 64 - 15, crest_top + 52 - 8 - 30)
-    put(st.img("wind_arrow").resize((24, 24), Image.LANCZOS).rotate(-40, resample=Image.BICUBIC), gx + 125 - 64 - 12, crest_top + 52 - 8 - 27)
-    text(gx + 137, crest_top + 52 - 22, "Dia 4 · 07:26", font("Cinzel-SemiBold", 14))
-    put(st.img("map_banner").resize((180, 32), Image.LANCZOS), gx + 35, ring_top + 250 - 18)
+    crest_h = 44
+    crest_top = ring_top + 18 - crest_h                                 # its bottom sits 18 into the ring
+    put(dressed("map_crest", 200, crest_h, fit=crest_h), gx + 25, crest_top)
+    ornament(gx + 25, crest_top, 200, crest_h, "map_crest_knot", "top", crest_h / size("map_crest")[1])
+    put(st.img("wind_disk").resize((30, 30), Image.LANCZOS), gx + 125 - 64 - 15, crest_top + crest_h - 8 - 30)
+    put(st.img("wind_arrow").resize((24, 24), Image.LANCZOS).rotate(-40, resample=Image.BICUBIC), gx + 125 - 64 - 12, crest_top + crest_h - 8 - 27)
+    text(gx + 137, crest_top + crest_h - 22, "Dia 4 · 07:26", font("Cinzel-SemiBold", 14))
+    put(dressed("map_banner", 180, 32, fit=32), gx + 35, ring_top + 250 - 18)
     text(gx + 125, ring_top + 250 - 2, "PRADO", font("Cinzel-Medium", 14), fill=(247, 226, 131, 255))
     text(gx + 125, ring_top + 22, "N", font("Cinzel-SemiBold", 13), fill=(247, 226, 131, 255))
 
     # Status [Status] OffsetX 24, OffsetY 340, right to left.
     for i, (name, t) in enumerate((("Eikthyr", "19:54"), ("Molhado(a)", "1:50"), ("Frio", ""))):
         x = W - 24 - 84 - i * 84
-        put(st.img("tile").resize((60, 60), Image.LANCZOS), x + 12, 340)
+        put(dressed("tile", 60, 60, fit=60), x + 12, 340)
         text(x + 42, 340 + 71, name, font("CormorantGaramond-SemiBold", 15))
         text(x + 42, 340 + 89, t, font("Cinzel-Medium", 13))
     put(st.img("badge_cooldown").resize((20, 20), Image.LANCZOS), W - 24 - 84 + 12 + 44, 338)
 
-    # Boss plate [Boss] OffsetY 18, top centre, 520 x 74.
-    if st.has("boss_plate"):
-        bw, bh = 520, 74
-        bx, btop = W / 2 - bw / 2, 18
-        put(st.nine("boss_plate", bw, bh), bx, btop)
-        cl, cb, cr, ct = st.content("boss_plate", (22, 12, 22, 12))
-        ch = bh - cb - ct
-        text(W / 2, btop + ct + ch * 0.25, "Troll das Montanhas", font("Cinzel-SemiBold", 20))
-        barx, bary, barw, barh = bx + cl + 6, btop + ct + ch * 0.55 + 2, bw - cl - cr - 12, ch * 0.45 - 4
-        put(Image.new("RGBA", (int(barw), int(barh)), (0, 0, 0, 140)), barx, bary)
-        put(tint(st.img("bar_fill").resize((int(barw * 0.76), int(barh))), (0xB8, 0x1E, 0x20)), barx, bary)
-        text(W / 2, bary + barh / 2, "1370 / 1800", font("Cinzel-Medium", 12))
-        for i in range(2):
-            put(st.img("star").resize((13, 13), Image.LANCZOS), W / 2 - 7.5 + (i - 0.5) * 15 - 6, btop - 6)
+    # Boss plate [Boss] OffsetY 18, top centre, 520 x 74, Diego's plate.
+    bw, bh = 520, 74
+    bx, btop = W / 2 - bw / 2, 18
+    put(dressed("boss_plate", bw, bh, fit=bh), bx, btop)
+    cl, cb, cr, ct = st.content("boss_plate", (22, 12, 22, 12))
+    ch = bh - cb - ct
+    text(W / 2, btop + ct + ch * 0.25, "Troll das Montanhas", font("Cinzel-SemiBold", 20))
+    barx, bary, barw, barh = bx + cl + 6, btop + ct + ch * 0.55 + 2, int(bw - cl - cr - 12), int(ch * 0.45 - 4)
+    put(Image.new("RGBA", (barw, barh), (0, 0, 0, 140)), barx, bary)
+    put(liquid_h("liquid_health_h", barw, barh).crop((0, 0, int(barw * 0.76), barh)), barx, bary)
+    text(W / 2, bary + barh / 2, "1370 / 1800", font("Cinzel-Medium", 12))
 
-    # Creature plate [Enemy]: the boss plate drawn at 0.3, inside vanilla's plate over a head.
-    if st.has("boss_plate"):
-        ew, eh, k = 112, 18, 0.3
-        ex, etop = 700, 560
-        put(st.nine("boss_plate", ew, eh, k), ex, etop)
-        cl, cb, cr, ct = (v * k for v in st.content("boss_plate", (22, 12, 22, 12)))
-        bx, by, bw, bh = ex + cl + 1, etop + ct + 1, int(ew - cl - cr - 2), int(eh - cb - ct - 2)
-        put(Image.new("RGBA", (bw, bh), (0, 0, 0, 140)), bx, by)
-        put(tint(st.img("bar_fill").resize((int(bw * 0.8), bh)), (0xA5, 0x1C, 0x1E)), bx, by)
-        put(st.img("star").resize((10, 10), Image.LANCZOS), ex + ew / 2 - 5, etop - 5)
-        text(ex + ew / 2, etop - 14, "Anão Cinzento", font("Cinzel-Medium", 14))
-        text(ex - 8, etop + eh / 2, "!", font("Cinzel-SemiBold", 16), fill=(224, 100, 60, 255))
+    # Creature plate [Enemy]: Diego's slim plate scaled to 18 high.
+    ew, eh = 112, 18
+    ex, etop = 700, 560
+    k = eh / size("enemy_plate")[1]
+    put(dressed("enemy_plate", ew, eh, fit=eh), ex, etop)
+    cl, cb, cr, ct = (v * k for v in st.content("enemy_plate", (22, 12, 22, 12)))
+    bx2, by2, bw2, bh2 = ex + cl + 1, etop + ct + 1, int(ew - cl - cr - 2), max(1, int(eh - cb - ct - 2))
+    put(Image.new("RGBA", (bw2, bh2), (0, 0, 0, 140)), bx2, by2)
+    put(tint(st.img("bar_fill").resize((int(bw2 * 0.8), bh2)), (0xA5, 0x1C, 0x1E)), bx2, by2)
+    put(st.img("star").resize((10, 10), Image.LANCZOS), ex + ew / 2 - 5, etop - 5)
+    text(ex + ew / 2, etop - 14, "Anão Cinzento", font("Cinzel-Medium", 14))
+    text(ex - 8, etop + eh / 2, "!", font("Cinzel-SemiBold", 16), fill=(224, 100, 60, 255))
 
     # Hover card [Hover] OffsetX 60, OffsetY 30 from the centre.
-    if st.has("card"):
-        cw, chh = 190, 70
-        hx, htop = W / 2 + 60, H / 2 - 30 - chh / 2
-        put(st.nine("card", cw, chh), hx, htop)
-        text(hx + 26, htop + 24, "Baú de Madeira", font("Cinzel-Medium", 16), fill=(247, 226, 131, 255), anchor="lm")
-        text(hx + 26, htop + 47, "[E] Abrir", font("CormorantGaramond-SemiBold", 17), anchor="lm")
+    cw, chh = 200, 70
+    hx, htop = W / 2 + 60, H / 2 - 30 - chh / 2
+    put(dressed("card", cw, chh), hx, htop)
+    ornament(hx, htop, cw, chh, "card_knot_left", "left")
+    ornament(hx, htop, cw, chh, "card_knot_right", "right")
+    text(hx + 28, htop + 25, "Baú de Madeira", font("Cinzel-Medium", 16), fill=(247, 226, 131, 255), anchor="lm")
+    text(hx + 28, htop + 47, "[E] Abrir", font("CormorantGaramond-SemiBold", 17), anchor="lm")
 
-    # Notice [Notice] OffsetX 24, OffsetY 24, top-left.
-    if st.has("card"):
-        put(st.nine("card", 230, 46), 24, 24)
-        text(24 + 58, 24 + 23, "Madeira  x5", font("CormorantGaramond-SemiBold", 18), anchor="lm")
+    # Notice [Notice] OffsetX 24, OffsetY 24, top-left: the slim plate at 46 high.
+    put(dressed("notice_plate", 230, 46, fit=46), 24, 24)
+    text(24 + 64, 24 + 23, "Madeira  x5", font("CormorantGaramond-SemiBold", 18), anchor="lm")
 
     bg.save(out_path)
     base, ext = os.path.splitext(out_path)

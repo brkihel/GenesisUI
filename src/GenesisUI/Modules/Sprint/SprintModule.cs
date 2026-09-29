@@ -22,7 +22,7 @@ namespace GenesisUI.Modules.Sprint
     internal sealed class SprintModule : IUiModule
     {
         private const float Width = 220f;
-        private const float Height = 22f;
+        private const float Height = 22f;             // the generated frame's height; Diego's frame keeps its own proportions
         private const float FullHoldSeconds = 0.8f;   // stays a moment after stamina is full...
         private const float FadeSeconds = 0.4f;       // ...then fades
         private static readonly string[] NoVanillaRegions = new string[0];
@@ -33,6 +33,10 @@ namespace GenesisUI.Modules.Sprint
         private CanvasGroup _opacity;
         private Image _trail;
         private Image _fill;
+        private RectTransform _liquidMask;
+        private LiquidLayer _liquid;
+        private TextMeshProUGUI _value;
+        private int _shownValue = int.MinValue;
         private BarAnimator _bar;
         private float _linger;
         private int _appliedY = int.MinValue;
@@ -63,16 +67,10 @@ namespace GenesisUI.Modules.Sprint
             _opacity.interactable = false;
             _opacity.blocksRaycasts = false;
 
-            // The frame is drawn 36 high; this readout is smaller, so the whole frame (its
-            // 9-slice ends and its content area) shrinks with it instead of being squashed.
-            float k = Height / 36f;
-            var frame = Ui.Fill(Ui.Child(_group, "Frame"));
-            var frameImage = Ui.Image(frame, theme.Sprite("sprint_frame"), Color.white);
-            frameImage.pixelsPerUnitMultiplier = 1f / k;
-
-            // The track fills the frame's content area, as art/sprites.json declares it.
-            var c = theme.Content("sprint_frame", new Vector4(24f, 12f, 24f, 12f)) * k;
-            var track = Ui.Fill(Ui.Child(frame, "Track"), c.x, c.y, c.z, c.w);
+            var drawn = theme.Size("sprint_frame");
+            var track = drawn.x > 0f && theme.Sprite("sprint_frame_opening") != null
+                ? SheetFrame(theme, drawn)
+                : GeneratedFrame(theme);
             var fillSprite = theme.Sprite("bar_fill");
             var stamina = ThemeRuntime.ToUnity(theme.Tokens.BarStamina);
             _trail = Ui.Image(Ui.Fill(Ui.Child(track, "Trail")), fillSprite,
@@ -84,6 +82,24 @@ namespace GenesisUI.Modules.Sprint
             _fill.type = Image.Type.Filled;
             _fill.fillMethod = Image.FillMethod.Horizontal;
             _fill.fillAmount = 0f;
+
+            // Diego's stamina liquid drifting along the channel, cut at the level (D-027).
+            _liquid = null;
+            var liquid = theme.Texture("liquid_stamina_h");
+            if (liquid != null)
+            {
+                _fill.enabled = false;
+                _liquidMask = Ui.Child(track, "Liquid");
+                _liquidMask.anchorMin = Vector2.zero;
+                _liquidMask.anchorMax = new Vector2(0f, 1f);
+                _liquidMask.offsetMin = _liquidMask.offsetMax = Vector2.zero;
+                _liquidMask.gameObject.AddComponent<RectMask2D>();
+                var area = track.rect.size;
+                var flow = Ui.Place(Ui.Child(_liquidMask, "Flow"), new Vector2(0f, 0.5f), Vector2.zero, area);
+                flow.pivot = new Vector2(0f, 0.5f);
+                _liquid = new LiquidLayer(flow, liquid, area, theme.Size("liquid_stamina_h"), 1.2f, Color.white,
+                    new Vector2(0.02f, 0f), new Vector2(0f, 0.35f), mirror: false);
+            }
 
             _bar = new BarAnimator();
             _linger = 0f;
@@ -123,7 +139,56 @@ namespace GenesisUI.Modules.Sprint
             if (!Mathf.Approximately(_opacity.alpha, alpha)) _opacity.alpha = alpha;
             _bar.Update(stamina, max, deltaSeconds);
             if (!Mathf.Approximately(_fill.fillAmount, _bar.Fast)) _fill.fillAmount = _bar.Fast;
+            if (_liquid != null)
+            {
+                if (!Mathf.Approximately(_liquidMask.anchorMax.x, _bar.Fast)) _liquidMask.anchorMax = new Vector2(_bar.Fast, 1f);
+                _liquid.Scroll(deltaSeconds);
+            }
+            int shown = Mathf.CeilToInt(stamina);
+            if (_value != null && shown != _shownValue)
+            {
+                _shownValue = shown;
+                _value.SetText("{0}", shown);
+            }
             if (!Mathf.Approximately(_trail.fillAmount, _bar.Slow)) _trail.fillAmount = _bar.Slow;
+        }
+
+        /// <summary>
+        /// Diego's readout (D-027): knot ends, a window for the number above, the liquid channel
+        /// below. Drawn at its own proportions, as wide as the generated one; returns the channel.
+        /// </summary>
+        private RectTransform SheetFrame(ThemeRuntime theme, Vector2 drawn)
+        {
+            float k = Width / drawn.x;
+            _group.sizeDelta = drawn * k;
+            var frame = Ui.Fill(Ui.Child(_group, "Frame"));
+            Frame.Background(frame, theme, "sprint_frame", "Sprint");
+            var opening = Ui.Fill(Ui.Child(frame, "Opening"));
+            Ui.Image(opening, theme.Sprite("sprint_frame_opening"), Color.white);
+            opening.gameObject.AddComponent<Mask>().showMaskGraphic = false;
+            Ui.Image(Ui.Fill(Ui.Child(frame, "Art")), theme.Sprite("sprint_frame"), Color.white);
+
+            var c = theme.Content("sprint_frame", new Vector4(40f, 10f, 40f, 33f)) * k;
+            var track = Ui.Fill(Ui.Child(opening, "Track"), c.x, c.y, c.z, c.w);
+            // The number sits in the window above the channel.
+            _value = Ui.Fit(Ui.Text(frame, "Value", theme, FontRole.Display, 15f, ThemeRuntime.ToUnity(theme.Tokens.TextTitle),
+                TextAlignmentOptions.Center, outlined: true), 10f);
+            Ui.Fill((RectTransform)_value.transform, c.x, _group.sizeDelta.y - c.w + 1f, c.z, 6f * k);
+            _shownValue = int.MinValue;
+            return track;
+        }
+
+        /// <summary>The generated frame (no sheet art): 9-sliced, shrunk with the readout.</summary>
+        private RectTransform GeneratedFrame(ThemeRuntime theme)
+        {
+            // The frame is drawn 36 high; this readout is smaller, so the whole frame (its
+            // 9-slice ends and its content area) shrinks with it instead of being squashed.
+            float k = Height / 36f;
+            var frame = Ui.Fill(Ui.Child(_group, "Frame"));
+            var frameImage = Ui.Image(frame, theme.Sprite("sprint_frame"), Color.white);
+            frameImage.pixelsPerUnitMultiplier = 1f / k;
+            var c = theme.Content("sprint_frame", new Vector4(24f, 12f, 24f, 12f)) * k;
+            return Ui.Fill(Ui.Child(frame, "Track"), c.x, c.y, c.z, c.w);
         }
 
         public void Teardown()
@@ -132,6 +197,9 @@ namespace GenesisUI.Modules.Sprint
             _group = null;
             _opacity = null;
             _trail = _fill = null;
+            _liquid = null;
+            _liquidMask = null;
+            _value = null;
             _bar = null;
         }
     }

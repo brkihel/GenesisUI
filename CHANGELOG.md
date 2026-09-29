@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.6.0-preview.1 — F4.0: Diego's textures on the whole HUD
+
+### Changed
+- Every HUD frame now comes from Diego's isolated texture sheets (D-027): the three vital
+  bars (three sizes, as drawn), the stamina readout, the eight-cell hotbar, food slots,
+  status tiles, the interaction card, notices, boss and creature plates, the minimap ring,
+  its day/time and biome plates, and the vitals medallion. Nothing is stretched except plain
+  straight rails; the card's side diamonds and the crest's top diamond are separate pieces.
+- Health, stamina and eitr are filled with Diego's liquids, two layers drifting at different
+  paces inside each frame's opening; the burn, embers, surface glint and low-health pulse stay.
+  The stamina readout and the boss bar use the liquids too, and the readout shows the number.
+- The selected hotbar cell glows from inside instead of drawing a second frame.
+
+### Added
+- The dark stone panel material behind every frame, clipped to the frame's silhouette, with
+  its own opacity: `[Backgrounds] Default` and one override per panel (-1 = default). Only
+  the material fades; frames, texts and icons stay.
+- F8 panel: sprite and live background counts.
+
 ## 0.5.0-preview.4 — R-040 fixes; F3 approved
 
 ### Added

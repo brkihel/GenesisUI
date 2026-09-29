@@ -39,7 +39,8 @@ namespace GenesisUI.Modules.Minimap
     internal sealed class MinimapModule : IUiModule
     {
         private const float RingSize = 250f;
-        private const float MapSize = 222f;           // window radius 111 of 125 (art/src/map_ring.svg)
+        private const float DefaultMapSize = 222f;    // window radius 111 of 125 (art/src/map_ring.svg)
+        private float MapSize = DefaultMapSize;       // the ring's declared window (content insets) when the art has one
         private const int MaxPins = 256;
 
         private static readonly string[] OwnedRegions = { "hud.minimap" };
@@ -96,8 +97,12 @@ namespace GenesisUI.Modules.Minimap
             var t = theme.Tokens;
             var mm = global::Minimap.instance;
 
+            // The map window: what the ring's art declares (D-027), else the generated ring's.
+            var window = theme.Content("map_ring", new Vector4((RingSize - DefaultMapSize) / 2f, 0f, (RingSize - DefaultMapSize) / 2f, 0f));
+            MapSize = RingSize - window.x - window.z;
+
             // Group pivot at the top-right; the crest sits above the ring.
-            _group = Ui.Place(Ui.Child(context.Root, "Minimap"), new Vector2(1f, 1f), Vector2.zero, new Vector2(RingSize, RingSize + 40f));
+            _group =Ui.Place(Ui.Child(context.Root, "Minimap"), new Vector2(1f, 1f), Vector2.zero, new Vector2(RingSize, RingSize + 40f));
 
             _mapRoot = Ui.Place(Ui.Child(_group, "MapWindow"), new Vector2(0.5f, 0f), new Vector2(0f, (RingSize - MapSize) / 2f), new Vector2(MapSize, MapSize));
             var mapRt = Ui.Fill(Ui.Child(_mapRoot, "Map"));
@@ -129,7 +134,18 @@ namespace GenesisUI.Modules.Minimap
 
             // Crest: wind arrow + "Dia 4 · 07:26", resting on the ring's top.
             var crestRt = Ui.Place(Ui.Child(_group, "Crest"), new Vector2(0.5f, 0f), new Vector2(0f, RingSize - 18f), new Vector2(200f, 52f));
-            Ui.Image(crestRt, theme.Sprite("map_crest"), theme.Sprite("map_crest") != null ? Color.white : ThemeRuntime.ToUnity(t.PanelBackground));
+            if (theme.Sprite("map_crest_knot") != null)
+            {
+                // Diego's plate (D-027) at a fixed height; its top diamond is a separate piece, so it
+                // stays whole at any width.
+                const float crestHeight = 44f;
+                crestRt.sizeDelta = new Vector2(200f, crestHeight);
+                Frame.Dress(crestRt, theme, "map_crest", "Minimap", crestHeight);
+                var drawn = theme.Size("map_crest");
+                Frame.Ornament(crestRt, theme, "map_crest_knot", Edge.Top, drawn.y > 0f ? crestHeight / drawn.y : 1f);
+            }
+            else
+                Ui.Image(crestRt, theme.Sprite("map_crest"), theme.Sprite("map_crest") != null ? Color.white : ThemeRuntime.ToUnity(t.PanelBackground));
             // The wind sits in its own small cell on the crest, so the arrow reads at a glance (R-030).
             var disk = Ui.Place(Ui.Child(crestRt, "WindDisk"), new Vector2(0.5f, 0f), new Vector2(-64f, 8f), new Vector2(30f, 30f));
             disk.pivot = new Vector2(0.5f, 0f);
@@ -143,7 +159,7 @@ namespace GenesisUI.Modules.Minimap
 
             // Banner: biome name, under the ring.
             var bannerRt = Ui.Place(Ui.Child(_group, "Banner"), new Vector2(0.5f, 0f), new Vector2(0f, -14f), new Vector2(180f, 32f));
-            Ui.Image(bannerRt, theme.Sprite("map_banner"), theme.Sprite("map_banner") != null ? Color.white : ThemeRuntime.ToUnity(t.PanelBackground));
+            Frame.Dress(bannerRt, theme, "map_banner", "Minimap", 32f);
             _biome = Ui.Text(bannerRt, "Biome", theme, FontRole.Label, 14f, ThemeRuntime.ToUnity(t.AccentGoldBright), TextAlignmentOptions.Center, outlined: true);
             Ui.Fill((RectTransform)_biome.transform, 18f, 2f, 18f, 2f);
 

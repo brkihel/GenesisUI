@@ -23,6 +23,7 @@ namespace GenesisUI.Modules.Hover
         private const float MaxWidth = 340f;
         private const float Pad = 14f;
         private const float Gap = 3f;
+        private Vector2 _minSize;
 
         private static readonly string[] OwnedRegions = { "hud.hover" };
 
@@ -57,9 +58,15 @@ namespace GenesisUI.Modules.Hover
             _card.pivot = new Vector2(0f, 0.5f);
             _opacity = _card.gameObject.AddComponent<CanvasGroup>();
             _opacity.blocksRaycasts = false;
-            var sprite = theme.Sprite("card");
-            Ui.Image(Ui.Fill(Ui.Child(_card, "Card")), sprite, sprite != null ? Color.white : ThemeRuntime.ToUnity(t.PanelBackground));
+            var frame = Ui.Fill(Ui.Child(_card, "Card"));
+            Frame.Dress(frame, theme, "card", "Hover");
+            // The side diamonds are separate pieces so they never stretch with the card (D-027).
+            Frame.Ornament(frame, theme, "card_knot_left", Edge.Left);
+            Frame.Ornament(frame, theme, "card_knot_right", Edge.Right);
             _content = theme.Content("card", new Vector4(12f, 12f, 12f, 12f));
+            var border = theme.Border("card");
+            // The knotted corners must never overlap: the card is at least their size.
+            _minSize = new Vector2(border.x + border.z + 24f, border.y + border.w + 8f);
 
             _title = Ui.Text(_card, "Title", theme, FontRole.Label, 17f, ThemeRuntime.ToUnity(t.AccentGoldBright), TextAlignmentOptions.TopLeft, outlined: true);
             _body = Ui.Text(_card, "Actions", theme, FontRole.BodyStrong, 17f, ThemeRuntime.ToUnity(t.TextTitle), TextAlignmentOptions.TopLeft, outlined: true);
@@ -114,9 +121,13 @@ namespace GenesisUI.Modules.Hover
             Vector2 bs = body.Length > 0 ? _body.GetPreferredValues(body, inner, 0f) : Vector2.zero;
             float width = Mathf.Min(inner, Mathf.Max(ts.x, bs.x)) + _content.x + _content.z + 2f * Pad;
             float height = ts.y + (body.Length > 0 ? Gap + bs.y : 0f) + _content.y + _content.w + 2f * Pad * 0.6f;
+            width = Mathf.Max(width, _minSize.x);
+            height = Mathf.Max(height, _minSize.y);
             _card.sizeDelta = new Vector2(width, height);
 
-            float left = _content.x + Pad, top = _content.w + Pad * 0.6f;
+            // Centred vertically: a short card may be taller than its text (the corners' minimum).
+            float textHeight = ts.y + (body.Length > 0 ? Gap + bs.y : 0f);
+            float left = _content.x + Pad, top = (height - textHeight) / 2f;
             Place(_title.rectTransform, left, top, width - left - _content.z - Pad, ts.y);
             Place(_body.rectTransform, left, top + ts.y + Gap, width - left - _content.z - Pad, bs.y);
             _body.gameObject.SetActive(body.Length > 0);

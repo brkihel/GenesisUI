@@ -105,6 +105,9 @@ tone, and the result stretches as a 9-slice at any size without deforming the co
   of the frame's inner opening (a mask sprite extracted with the frame) instead of a
   rectangle, so it reaches into the arch and the point and leaves no black corners; burn,
   veins and embers live inside the same shape.
+- **Superseded for the HUD by Diego's isolated sheets (D-027):** `tools/art/sheets.py` cuts
+  every HUD piece from `~/GenesisUI-Concept/GenesisUI-textures/`; F4.0 ships them
+  (0.6.0-preview.1, R-042). The window frames of F4.1+ come from the same sheets.
 - **HUD first:** the HUD pieces are redone from the concept (chest card, minimap layout,
   bars, hotbar, stamina readout) as step F4.0, then the window frames come from ConceptArt
   (7), (9), (12) and (1).

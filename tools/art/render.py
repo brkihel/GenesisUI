@@ -68,6 +68,23 @@ def main() -> int:
             img.save(os.path.join(out, name + ".png"))
             manifest["sprites"].append(entry(name, img.width // SCALE, img.height // SCALE, meta["border"], meta.get("content")))
 
+    # Pieces cut from Diego's isolated texture sheets (tools/art/sheets.py, D-027) take priority
+    # over both: frames, their fill and opening masks, edge ornaments, liquids and the panel material.
+    sheets_dir = os.path.join(ROOT, "art", "src", "sheets")
+    sheets_path = os.path.join(sheets_dir, "pieces.json")
+    if os.path.exists(sheets_path):
+        with open(sheets_path) as f:
+            pieces = json.load(f)
+        manifest["sprites"] = [e for e in manifest["sprites"] if e["name"] not in pieces]
+        for name, meta in sorted(pieces.items()):
+            img = Image.open(os.path.join(sheets_dir, name + ".png"))
+            img.save(os.path.join(out, name + ".png"))
+            e = entry(name, img.width // SCALE, img.height // SCALE, meta["border"], meta.get("content"), meta.get("wrap", "clamp"))
+            for key in ("inset", "gap"):
+                if key in meta:
+                    e[key] = meta[key]
+            manifest["sprites"].append(e)
+
     patterns.main(out)
     for name, (pw, ph, wrap, border, _) in patterns.PATTERNS.items():
         manifest["sprites"].append(entry(name, pw // SCALE, ph // SCALE, border or (0, 0, 0, 0), wrap=wrap))

@@ -238,3 +238,24 @@ never taken from the concept. This amends D-020 (shapes generated only) for thes
 patterns and anything the concept does not show are still generated.
 **Why:** Diego wants the concept's exact ornaments; a test on the chest card showed they can be
 isolated and stretched cleanly.
+
+## D-027 — HUD art from Diego's isolated texture sheets
+
+**Decision (2026-09-28):** every HUD piece that Diego's sheets
+(`~/GenesisUI-Concept/GenesisUI-textures/`) contain is cut from them by `tools/art/sheets.py`
+into `art/src/sheets/` and replaces the generated or concept sprite of the same role. The
+script resamples the metal (one uniform, premultiplied scale per piece; the three vital
+frames share one) and never redraws it. Variable-size frames are 9-sliced only across plain
+straight rails; an ornament in the middle of an edge is cut out as its own sprite (`inset` in
+the manifest) and put back at the edge's midpoint. Each frame ships `<name>_shape` (its
+silhouette: the panel material is clipped to it and has its own opacity per panel,
+`[Backgrounds]`) and, when it has a window, `<name>_opening`. The minimap ring is rebuilt at
+250 from the sheet's small ring by sampling its rail at the same angle and rail distance, with
+the four diamonds cut whole. The liquids and the panel material are made seamless by
+cross-fading their wrap before they scroll or tile. The manifest gains two optional integers,
+`inset` and `gap` (the hotbar's cell spacing). Concept crops (D-026) remain only for pieces
+the sheets lack (value plate, wind disk and arrow, stars, badge).
+**Why:** Diego drew isolated, clean pieces after the concept crops kept scenery and the
+generated redraws flattened the metal; AGENTS.md §2b sets the rules (no deformation,
+independent background opacity, animated liquid in all three bars).
+
