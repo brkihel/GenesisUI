@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.7.0-preview.11 — R-054 fixes: picking up a single item, re-enable after a fault
+
+### Fixed
+- Picking up an item with a stack of 1 faulted the inventory window: the held-item icon read
+  the length of a TMP text that is null until first assigned. The diagnostic HUD dump had the
+  same pattern and is fixed too.
+- After a fault and an F8 re-enable, the rebuilt window kept the previous build's layout key and
+  chest size, so quick-use and action cells never bound (they refused every item) and the
+  equipment cells stayed hidden. All window state now resets on build and teardown.
+
+### Verification
+- Core and contract tests pass; Diego's client test R-055 covers pick-up, special cells and the
+  F8 re-enable path.
+
 ## 0.7.0-preview.10 — Thin-line metal, burn as light, darker theme (D-033)
 
 ### Changed

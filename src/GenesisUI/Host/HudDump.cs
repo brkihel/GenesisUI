@@ -37,7 +37,11 @@ namespace GenesisUI.Host
             var img = t.GetComponent<Image>();
             if (img != null) sb.Append(" image:").Append(img.sprite != null ? img.sprite.name : "none").Append(img.enabled ? "" : "(off)");
             var text = t.GetComponent<TMP_Text>();
-            if (text != null) sb.Append(" text:\"").Append(text.text.Length > 20 ? text.text.Substring(0, 20) : text.text).Append('"');
+            if (text != null)
+            {
+                string value = text.text ?? ""; // a TMP text never assigned is null
+                sb.Append(" text:\"").Append(value.Length > 20 ? value.Substring(0, 20) : value).Append('"');
+            }
             lines.Add(sb.ToString());
             if (depth >= maxDepth) return;
             foreach (Transform child in t) Walk(child, depth + 1, maxDepth, lines);

@@ -176,7 +176,7 @@ namespace GenesisUI.Modules.Windows
             _dragItem = AccessTools.FieldRefAccess<InventoryGui, ItemDrop.ItemData>("m_dragItem");
             _dragAmount = AccessTools.FieldRefAccess<InventoryGui, int>("m_dragAmount");
             _dragGo = AccessTools.FieldRefAccess<InventoryGui, GameObject>("m_dragGo");
-            _applied = false;
+            ResetState();
         }
 
         public void Refresh(float deltaSeconds)
@@ -226,11 +226,34 @@ namespace GenesisUI.Modules.Windows
             if (_sortKey.Value.IsDown()) Sort(gui, player, layout);
         }
 
+        /// <summary>
+        /// Everything that describes the built window goes back to "not built": after a fault and an F8
+        /// re-enable the window is rebuilt, and stale keys once left the special and worn cells unbound
+        /// (R-054: quick-use/action refused every item, the equipment cells were gone).
+        /// </summary>
+        private void ResetState()
+        {
+            _applied = false;
+            _closedFor = 0f;
+            _layoutKey = null;
+            _builtContainerW = _builtContainerH = -1;
+            _containerScroll = _scroll = 0;
+            _containerShown = false;
+            _hovered = null;
+            _shownItem = null;
+            _droppedOnCell = false;
+            _hiddenDragGo = null;
+            _guiAncestor = null;
+            _behind = false;
+            _shownSlots = _shownOrdinary = _shownWeight = _shownMax = _shownArmor = -1;
+        }
+
         public void Teardown()
         {
             if (_applied) Unapply();
             if (_root != null) UnityEngine.Object.Destroy(_root.gameObject);
             _root = null;
+            ResetState();
             _gridCells.Clear();
             _quickCells.Clear();
             _utilityCells.Clear();
@@ -517,7 +540,7 @@ namespace GenesisUI.Modules.Windows
             if (_ghostIcon.sprite != icon) _ghostIcon.sprite = icon;
             int amount = _dragAmount(gui);
             if (amount > 1) _ghostAmount.SetText("{0}", amount);
-            else if (_ghostAmount.text.Length > 0) _ghostAmount.text = "";
+            else if (!string.IsNullOrEmpty(_ghostAmount.text)) _ghostAmount.text = ""; // a new TMP text is null (R-054)
             _ghost.position = ZInput.pointerPosition;
         }
 
