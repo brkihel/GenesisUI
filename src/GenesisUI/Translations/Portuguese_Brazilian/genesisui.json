@@ -41,5 +41,19 @@
   "genesisui_hint_tabs": "Abas",
   "genesisui_settings_soon": "As configurações do GenesisUI morarão aqui, forjadas numa próxima etapa. Por ora, use o F1 (Configuration Manager).",
   "genesisui_module_inventory": "Inventário (espaços)",
-  "genesisui_inventory_refused": "O novo tamanho do inventário não coube: {0} item(ns) ficariam sem lugar. Libere espaço; o tamanho anterior continua."
+  "genesisui_inventory_refused": "O novo tamanho do inventário não coube: {0} item(ns) ficariam sem lugar. Libere espaço; o tamanho anterior continua.",
+  "genesisui_module_inventory_window": "Janela do inventário",
+  "genesisui_panel_inventory": "Inventário",
+  "genesisui_panel_equipment": "Equipamento",
+  "genesisui_panel_details": "Detalhes do item",
+  "genesisui_weight": "Peso",
+  "genesisui_armor_total": "Proteção total",
+  "genesisui_filter_all": "Todos",
+  "genesisui_filter_weapons": "Armas",
+  "genesisui_filter_armor": "Armaduras",
+  "genesisui_filter_tools": "Ferramentas",
+  "genesisui_filter_consumables": "Consumíveis",
+  "genesisui_filter_materials": "Materiais",
+  "genesisui_filter_ammo": "Munição",
+  "genesisui_filter_misc": "Diversos"
 }

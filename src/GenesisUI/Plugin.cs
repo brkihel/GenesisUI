@@ -114,6 +114,8 @@ namespace GenesisUI
                     "Desligado, o inventário volta ao do jogo; itens nos espaços especiais aparecem nas linhas de baixo."));
                 ModuleHost.Register(new Modules.Windows.WindowShellModule(Config), Config.Bind("Modules", "Windows", true,
                     "Moldura das janelas: barra de abas em cima (Inventário, Habilidades, Mapa, Criação, Conquistas, Configurações) e dicas de atalho embaixo, com o inventário aberto. Desligado, as janelas ficam como no jogo."));
+                ModuleHost.Register(new Modules.Windows.InventoryWindowModule(), Config.Bind("Modules", "InventoryWindow", true,
+                    "Janela de inventário no layout do GenesisUI (inventário, equipamento, detalhes do item), por cima do inventário do jogo. Desligado, o inventário do jogo aparece como é."));
                 ModuleHost.Register(new SprintModule(Config), Config.Bind("Modules", "Sprint", true,
                     "Barra pequena de vigor acima dos itens: surge quando o vigor é gasto e some só depois de cheio. Desligado, ela não aparece."));
 

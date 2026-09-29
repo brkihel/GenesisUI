@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.7.0-preview.4 — F4.2a (part 2): the inventory window
+
+### Added
+- **Inventory window** (`win.inventory`, `[Modules] InventoryWindow`): in the Inventário tab,
+  ConceptArt (9)'s three panels — Inventário, Equipamento, Detalhes do item — in Diego's finest
+  panel frame (its mid-edge diamonds as separate pieces), drawn behind vanilla's window. Vanilla's
+  own slots are moved onto the panel's grid and wear the thin slot; every click, drag, split and
+  equip is still vanilla's. Vanilla's panel frame, texts and tooltips are hidden (never destroyed)
+  and come back exactly on another tab, on close or on a fault (`VanillaSkin`, D-025).
+- Slots in use (`17/32`), a filter that **dims** other categories in place (click to cycle:
+  Todos, Armas, Armaduras, Ferramentas, Consumíveis, Materiais, Munição, Diversos), the weight
+  bar, total protection, and the hovered item's icon, name and vanilla text in the details panel.
+- A chest, cart or ship opens vanilla's container panel over the equipment and details panels
+  (dressing it comes next).
+
 ## 0.7.0-preview.3 — R-046 fixes
 
 ### Fixed

@@ -1053,6 +1053,74 @@
       "borderTop": 14
     },
     {
+      "name": "window_panel",
+      "file": "window_panel.png",
+      "width": 487,
+      "height": 334,
+      "borderLeft": 67,
+      "borderBottom": 67,
+      "borderRight": 67,
+      "borderTop": 67,
+      "contentLeft": 21,
+      "contentBottom": 21,
+      "contentRight": 21,
+      "contentTop": 51
+    },
+    {
+      "name": "window_panel_bottom_knot",
+      "file": "window_panel_bottom_knot.png",
+      "width": 26,
+      "height": 25,
+      "borderLeft": 0,
+      "borderBottom": 0,
+      "borderRight": 0,
+      "borderTop": 0,
+      "inset": 9
+    },
+    {
+      "name": "window_panel_knot_left",
+      "file": "window_panel_knot_left.png",
+      "width": 21,
+      "height": 45,
+      "borderLeft": 0,
+      "borderBottom": 0,
+      "borderRight": 0,
+      "borderTop": 0,
+      "inset": 10
+    },
+    {
+      "name": "window_panel_knot_right",
+      "file": "window_panel_knot_right.png",
+      "width": 21,
+      "height": 45,
+      "borderLeft": 0,
+      "borderBottom": 0,
+      "borderRight": 0,
+      "borderTop": 0,
+      "inset": 10
+    },
+    {
+      "name": "window_panel_rule_knot",
+      "file": "window_panel_rule_knot.png",
+      "width": 26,
+      "height": 24,
+      "borderLeft": 0,
+      "borderBottom": 0,
+      "borderRight": 0,
+      "borderTop": 0,
+      "inset": 38
+    },
+    {
+      "name": "window_panel_shape",
+      "file": "window_panel_shape.png",
+      "width": 487,
+      "height": 334,
+      "borderLeft": 67,
+      "borderBottom": 67,
+      "borderRight": 67,
+      "borderTop": 67
+    },
+    {
       "name": "window_topbar",
       "file": "window_topbar.png",
       "width": 1287,

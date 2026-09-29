@@ -344,6 +344,41 @@ def window_mock(out_path):
             m = st.nine("tab_marker", int(tw * 0.76), 10, 10 / size("tab_marker")[1])
             bg.alpha_composite(m, (int(x0 + tw * 0.12), int(top + bar_h - cb - 7)))
 
+    # Inventory tab (F4.2a): three panels between the bars, vanilla's slots dressed on the grid.
+    top_, bottom_, side_, gap_ = 100, 76, 36, 10
+    ph = H - top_ - bottom_
+    widths = [900, 470, W - 2 * side_ - 900 - 470 - 2 * gap_]
+    titles = ["INVENTÁRIO", "EQUIPAMENTO", "DETALHES DO ITEM"]
+    x = side_
+    k1 = 1.0
+    for w, ttl in zip(widths, titles):
+        bg.alpha_composite(dressed("window_panel", w, ph), (int(x), top_))
+        for name, edge in (("window_panel_rule_knot", "top"), ("window_panel_bottom_knot", "bottom"),
+                           ("window_panel_knot_left", "left"), ("window_panel_knot_right", "right")):
+            ow, oh = size(name)
+            ins = st.meta[name].get("inset", 0)
+            cx, cy = {"left": (ins, ph / 2), "right": (w - ins, ph / 2), "top": (w / 2, ins), "bottom": (w / 2, ph - ins)}[edge]
+            bg.alpha_composite(st.img(name).resize((ow, oh), Image.LANCZOS), (int(x + cx - ow / 2), int(top_ + cy - oh / 2)))
+        text(x + 34, top_ + 29, ttl, font("Cinzel-SemiBold", 20), fill=(247, 226, 131, 255), anchor="lm")
+        x += w + gap_
+    cell, cg = 74, 8
+    gw = 8 * cell + 7 * cg
+    gx0, gy0 = side_ + 900 / 2 - gw / 2, top_ + 64 + 26
+    text(side_ + 34, top_ + 68, "17/32", font("Cinzel-Medium", 13), fill=(186, 153, 92, 255), anchor="lm")
+    bg.alpha_composite(dressed("keycap_wide", 170, 30, fit=30), (int(side_ + 900 - 36 - 170), top_ + 18))
+    text(side_ + 900 - 36 - 85, top_ + 33, "Todos  ◆", font("CormorantGaramond-SemiBold", 16))
+    for r in range(4):
+        for c in range(8):
+            bg.alpha_composite(dressed("hotslot", cell, cell, fit=cell), (int(gx0 + c * (cell + cg)), int(gy0 + r * (cell + cg))))
+    wy = top_ + ph - 34 - 12
+    text(side_ + 40, wy, "PESO", font("Cinzel-Medium", 14), fill=(186, 153, 92, 255), anchor="lm")
+    ImageDraw.Draw(bg).rectangle((side_ + 120, wy - 3, side_ + 900 - 170, wy + 3), fill=(0, 0, 0, 140))
+    ImageDraw.Draw(bg).rectangle((side_ + 120, wy - 3, side_ + 120 + (900 - 290) * 0.7, wy + 3), fill=(190, 140, 60, 255))
+    text(side_ + 900 - 40, wy, "151 / 300", font("Cinzel-Medium", 15), anchor="rm")
+    ex = side_ + 900 + gap_
+    text(ex + 235, top_ + ph - 92 - 10, "PROTEÇÃO TOTAL", font("Cinzel-Medium", 13), fill=(186, 153, 92, 255))
+    text(ex + 235, top_ + ph - 50 - 20, "24", font("Cinzel-SemiBold", 30))
+
     hint_h = 52
     hy = H - 14 - hint_h
     bg.alpha_composite(dressed("window_hintbar", bw, hint_h, fit=hint_h), (margin, hy))

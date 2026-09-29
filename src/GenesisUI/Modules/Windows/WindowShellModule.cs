@@ -92,6 +92,10 @@ namespace GenesisUI.Modules.Windows
         public IReadOnlyList<string> Regions => NoRegions;
         public float RefreshRate => 0f; // every frame: tab keys
 
+        /// <summary>Whether the shell is showing a window, and which tab: read by the window modules.</summary>
+        internal static bool Showing { get; private set; }
+        internal static Tab ActiveTab { get; private set; } = Tab.Inventory;
+
         /// <summary>The next-tab key, while the shell is showing; read by the Use guard patch.</summary>
         internal static KeyCode ActiveNextKey { get; private set; } = KeyCode.None;
 
@@ -147,6 +151,7 @@ namespace GenesisUI.Modules.Windows
             if (visible && !_wasVisible) Select(Tab.Inventory, callVanilla: false);
             _wasVisible = visible;
             ActiveNextKey = visible ? _nextKey.Value.MainKey : KeyCode.None;
+            Showing = visible;
 
             float target = visible ? 1f : 0f;
             float alpha = Mathf.MoveTowards(_fade.alpha, target, deltaSeconds * FadeSpeed);
@@ -164,6 +169,7 @@ namespace GenesisUI.Modules.Windows
         public void Teardown()
         {
             ActiveNextKey = KeyCode.None;
+            Showing = false;
             ModuleHost.SetHudAlpha(1f);
             _hudAlpha = 1f;
             if (_keyHints != null)
@@ -243,6 +249,7 @@ namespace GenesisUI.Modules.Windows
         private void Show(Tab tab)
         {
             _active = tab;
+            ActiveTab = tab;
             var gold = ThemeRuntime.ToUnity(_theme.Tokens.AccentGoldBright);
             var muted = ThemeRuntime.ToUnity(_theme.Tokens.TextFlavor);
             for (int i = 0; i < _tabs.Length; i++)

@@ -930,6 +930,76 @@
   "from": "window_hintbar",
   "sheet": 101
  },
+ "window_panel": {
+  "border": [
+   67,
+   67,
+   67,
+   67
+  ],
+  "content": [
+   21,
+   21,
+   21,
+   51
+  ],
+  "from": "window_panel",
+  "sheet": 101
+ },
+ "window_panel_bottom_knot": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "window_panel",
+  "inset": 9,
+  "sheet": 101
+ },
+ "window_panel_knot_left": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "window_panel",
+  "inset": 10,
+  "sheet": 101
+ },
+ "window_panel_knot_right": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "window_panel",
+  "inset": 10,
+  "sheet": 101
+ },
+ "window_panel_rule_knot": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "window_panel",
+  "inset": 38,
+  "sheet": 101
+ },
+ "window_panel_shape": {
+  "border": [
+   67,
+   67,
+   67,
+   67
+  ],
+  "from": "window_panel",
+  "sheet": 101
+ },
  "window_topbar": {
   "border": [
    152,

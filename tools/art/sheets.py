@@ -520,6 +520,14 @@ PIECES = [
      "opening": (296, 112), "opening_grow": 0, "glow": True},
     {"name": "hotslot_equipped", "kind": "frame", "win": 3, "box": (206, 24, 386, 200), "scale": 0.35,
      "opening": (296, 112), "opening_grow": 0, "glow": True, "recolor": (90, 200, 70), "cut": "hotslot_selected"},
+    # The window panel (sheet 1, the finest): knot corners and a header rule; its four mid-edge
+    # diamonds are separate pieces so the panel takes any size without stretching them.
+    {"name": "window_panel", "kind": "frame", "win": 1, "box": (474, 138, 1084, 560),
+     "border": (84, 84, 84, 84), "content": (26, 26, 26, 64),
+     "ornaments": [{"name": "window_panel_rule_knot", "edge": "top", "box": (764, 170, 796, 200), "clean": 700},
+                   {"name": "window_panel_bottom_knot", "edge": "bottom", "box": (764, 528, 796, 560), "clean": 700},
+                   {"name": "window_panel_knot_left", "edge": "left", "box": (474, 324, 500, 380), "clean": 290},
+                   {"name": "window_panel_knot_right", "edge": "right", "box": (1058, 324, 1084, 380), "clean": 290}]},
     # Tab icons and mouse hints (sheet 7).
     {"name": "icon_logo", "kind": "frame", "win": 7, "box": (28, 8, 194, 160), "scale": 0.3},
     {"name": "icon_inventory", "kind": "frame", "win": 7, "box": (236, 26, 336, 140), "scale": 0.3},

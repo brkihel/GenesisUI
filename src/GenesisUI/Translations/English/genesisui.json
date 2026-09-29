@@ -41,5 +41,19 @@
   "genesisui_hint_tabs": "Tabs",
   "genesisui_settings_soon": "GenesisUI's settings will live here, forged in a coming step. For now, use F1 (Configuration Manager).",
   "genesisui_module_inventory": "Inventory (slots)",
-  "genesisui_inventory_refused": "The new inventory size does not fit: {0} item(s) would have no place. Free some space; the previous size stays."
+  "genesisui_inventory_refused": "The new inventory size does not fit: {0} item(s) would have no place. Free some space; the previous size stays.",
+  "genesisui_module_inventory_window": "Inventory window",
+  "genesisui_panel_inventory": "Inventory",
+  "genesisui_panel_equipment": "Equipment",
+  "genesisui_panel_details": "Item details",
+  "genesisui_weight": "Weight",
+  "genesisui_armor_total": "Total protection",
+  "genesisui_filter_all": "All",
+  "genesisui_filter_weapons": "Weapons",
+  "genesisui_filter_armor": "Armour",
+  "genesisui_filter_tools": "Tools",
+  "genesisui_filter_consumables": "Consumables",
+  "genesisui_filter_materials": "Materials",
+  "genesisui_filter_ammo": "Ammunition",
+  "genesisui_filter_misc": "Other"
 }
