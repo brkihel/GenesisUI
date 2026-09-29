@@ -43,6 +43,8 @@ namespace GenesisUI.Widgets
             img.color = color;
             img.raycastTarget = raycast;
             if (sprite != null && sprite.border != Vector4.zero) img.type = UnityEngine.UI.Image.Type.Sliced;
+            // Thin-line frames are lit by the metal shader when it is available (D-033).
+            ThemeRuntime.Current?.Metalize(img);
             return img;
         }
 

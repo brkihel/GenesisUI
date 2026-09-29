@@ -273,7 +273,7 @@ namespace GenesisUI.Modules.Windows
                 var t = _tabs[i];
                 if (t.Label.color != (on ? gold : muted)) t.Label.color = on ? gold : muted;
                 if (t.Icon != null) t.Icon.color = on ? Color.white : new Color(0.75f, 0.72f, 0.66f, 0.85f);
-                if (t.Marker != null && t.Marker.enabled != on) t.Marker.enabled = on;
+                if (t.Marker != null && t.Marker.gameObject.activeSelf != on) t.Marker.gameObject.SetActive(on);
             }
             bool settings = tab == Tab.Settings;
             if (_settingsPage != null && _settingsPage.gameObject.activeSelf != settings) _settingsPage.gameObject.SetActive(settings);
@@ -372,7 +372,13 @@ namespace GenesisUI.Modules.Windows
                 mrt.sizeDelta = new Vector2(0f, 10f);
                 view.Marker = Ui.Image(mrt, marker, Color.white);
                 view.Marker.pixelsPerUnitMultiplier = _theme.Size("tab_marker").y / 10f * Frame.CanvasScale(mrt);
-                view.Marker.enabled = false;
+                var knot = _theme.Sprite("tab_knot");
+                if (knot != null)
+                {
+                    var d = _theme.Size("tab_knot");
+                    Ui.Image(Ui.Place(Ui.Child(mrt, "Knot"), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(d.x * 12f / Mathf.Max(1f, d.y), 12f)), knot, Color.white);
+                }
+                mrt.gameObject.SetActive(false);
             }
             return view;
         }

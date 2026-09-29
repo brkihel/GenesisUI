@@ -88,6 +88,29 @@ def main() -> int:
                     e[key] = meta[key]
             manifest["sprites"].append(e)
 
+    # Thin-line metal pieces (tools/art/metal.py, D-033) take priority over everything above; each
+    # frame ships lit (fallback) plus a linear relief map for the GenesisUI/Metal shader.
+    metal_dir = os.path.join(ROOT, "art", "src", "metal")
+    metal_path = os.path.join(metal_dir, "pieces.json")
+    if os.path.exists(metal_path):
+        with open(metal_path) as f:
+            metal = json.load(f)
+        # A replaced frame's old silhouette and opening masks no longer match it: they go too.
+        drop = set(metal["pieces"]) | set(metal.get("retire", []))
+        drop |= {n + suffix for n in metal["pieces"] for suffix in ("_shape", "_opening")} - set(metal["pieces"])
+        manifest["sprites"] = [e for e in manifest["sprites"] if e["name"] not in drop]
+        for name in drop - set(metal["pieces"]):
+            path = os.path.join(out, name + ".png")
+            if os.path.exists(path):
+                os.remove(path)
+        for name, meta in sorted(metal["pieces"].items()):
+            img = Image.open(os.path.join(metal_dir, name + ".png"))
+            img.save(os.path.join(out, name + ".png"))
+            e = entry(name, img.width // SCALE, img.height // SCALE, meta["border"], meta.get("content"))
+            if meta.get("color", "srgb") != "srgb":
+                e["color"] = meta["color"]
+            manifest["sprites"].append(e)
+
     for alias, source in ALIASES.items():
         w, h, border, content = sources[source]
         cairosvg.svg2png(url=os.path.join(ROOT, "art", "src", source + ".svg"), write_to=os.path.join(out, alias + ".png"),

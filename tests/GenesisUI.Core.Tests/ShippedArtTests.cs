@@ -1,3 +1,4 @@
+using System.Linq;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -39,7 +40,15 @@ namespace GenesisUI.Core.Tests
             }
             foreach (var name in new[] { "liquid_health", "liquid_stamina", "liquid_eitr", "liquid_health_h", "liquid_stamina_h", "panel_bg" })
                 Assert.Contains(manifest.sprites, s => s.name == name && s.wrap == "repeat");
-            Assert.Contains(manifest.sprites, s => s.name == "hotbar_frame" && s.HasContent && s.gap >= 0);
+            // D-033: the sheet's heavy hotbar is retired; thin-line frames ship a linear relief map for the metal shader.
+            Assert.DoesNotContain(manifest.sprites, s => s.name == "hotbar_frame");
+            foreach (var name in new[] { "window_panel", "window_topbar", "window_hintbar", "hotslot", "keycap", "keycap_wide", "card", "tab_marker" })
+            {
+                var lit = manifest.sprites.Single(s => s.name == name);
+                var relief = manifest.sprites.Single(s => s.name == name + "_relief");
+                Assert.Equal("linear", relief.color);
+                Assert.Equal((lit.width, lit.height, lit.borderLeft, lit.borderTop), (relief.width, relief.height, relief.borderLeft, relief.borderTop));
+            }
             Assert.Contains(manifest.sprites, s => s.name == "card_knot_left" && s.inset >= 0);
             // Cell states line their window up with the cell: they need content insets.
             Assert.Contains(manifest.sprites, s => s.name == "slot_selected" && s.HasContent);

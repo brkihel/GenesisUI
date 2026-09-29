@@ -46,6 +46,12 @@ namespace GenesisUI.Theme
         /// <summary>Space between repeated cells inside the content area (the hotbar's eight cells); -1 = none.</summary>
         public int gap = -1;
 
+        /// <summary>
+        /// "srgb" (colour art, the default) or "linear" (data read by a shader, such as the metal
+        /// relief maps: normal and height must not be gamma-corrected).
+        /// </summary>
+        public string color = "srgb";
+
         public bool HasContent => contentLeft >= 0 && contentBottom >= 0 && contentRight >= 0 && contentTop >= 0;
     }
 
@@ -108,6 +114,7 @@ namespace GenesisUI.Theme
                     case "contentTop": e.contentTop = Int(kv.Value, where, errors); break;
                     case "inset": e.inset = Int(kv.Value, where, errors); break;
                     case "gap": e.gap = Int(kv.Value, where, errors); break;
+                    case "color": e.color = kv.Value as string; if (e.color == null) errors.Add(where + " must be a string"); break;
                     default: errors.Add("unknown property '" + where + "'"); break;
                 }
             }
@@ -145,6 +152,7 @@ namespace GenesisUI.Theme
                 if (s.borderLeft < 0 || s.borderRight < 0 || s.borderTop < 0 || s.borderBottom < 0) errors.Add(id + ": negative border");
                 if (s.borderLeft + s.borderRight > s.width || s.borderTop + s.borderBottom > s.height) errors.Add(id + ": borders larger than the sprite");
                 if (s.wrap != "clamp" && s.wrap != "repeat") errors.Add(id + ": wrap must be 'clamp' or 'repeat'");
+                if (s.color != "srgb" && s.color != "linear") errors.Add(id + ": color must be 'srgb' or 'linear'");
                 bool anyContent = s.contentLeft >= 0 || s.contentBottom >= 0 || s.contentRight >= 0 || s.contentTop >= 0;
                 if (anyContent && !s.HasContent) errors.Add(id + ": content insets must be given all four or none");
                 if (s.HasContent && (s.contentLeft + s.contentRight >= s.width || s.contentTop + s.contentBottom >= s.height))

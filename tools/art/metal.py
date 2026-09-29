@@ -2,6 +2,9 @@
 
     tools/.venv/bin/python tools/art/metal.py [out_dir]
 
+Writes the shipped thin-line pieces to art/src/metal/ (render.py merges them over the sheet
+pieces) and two review images to out_dir.
+
 Prototype for Diego's review (2026-09-29): frames drawn as thin centre lines and small
 ornaments, lit as polished metal (a rounded bead profile per line, light from the top left,
 bronze-to-gold ramp, specular highlight and a travelling glint). This is what the planned
@@ -9,6 +12,7 @@ Unity UI shader "GenesisUI/Metal" will do at runtime from a distance field; the 
 version exists so the look can be judged before any Unity work. Writes window-metal.png
 (the Inventory tab on the design board) and bars-burn.png (the new burn light).
 """
+import json
 import os
 import random
 import sys
@@ -77,48 +81,70 @@ class Metal:
     def glint(self, cx, cy, strength=1.0):
         self.glints.append((cx, cy, strength))
 
-    def render(self):
+    def _fields(self):
+        """Coverage, height and unit normals (image space, y down) at the supersampled size."""
         s = self.ss
         H, W = self.h * s, self.w * s
         height = np.zeros((H, W), np.float32)
         cover = np.zeros((H, W), np.float32)
         for width, img in self.lines.items():
             centre = np.asarray(img) > 0
+            if not centre.any():
+                continue
             d = ndimage.distance_transform_edt(~centre) / s  # design units to the centre line
             r = width / 2.0
-            cover = np.maximum(cover, np.clip(r + 0.5 / s * s * 0.5 - d, 0.0, 1.0))
+            cover = np.maximum(cover, np.clip((r - d) * s + 0.5, 0.0, 1.0))
             height = np.maximum(height, np.sqrt(np.clip(1.0 - (d / (r + 0.35)) ** 2, 0.0, 1.0)))
         fill = np.asarray(self.fills) > 0
         if fill.any():
             inside = ndimage.distance_transform_edt(fill) / s
             outside = ndimage.distance_transform_edt(~fill) / s
-            cover = np.maximum(cover, np.clip(0.5 + inside - outside, 0.0, 1.0))
+            cover = np.maximum(cover, np.clip(0.5 + (inside - outside) * s, 0.0, 1.0))
             height = np.maximum(height, np.clip(inside / 1.4, 0.0, 1.0) ** 0.6)
         height = ndimage.gaussian_filter(height, 0.6 * s)
-
         gy, gx = np.gradient(height * 1.4 * s)
         n = np.dstack([-gx, -gy, np.ones_like(height)])
         n /= np.linalg.norm(n, axis=2, keepdims=True)
+        return cover, height, n
+
+    def render(self, out_scale=1, glints=True):
+        """The lit metal as colour (what the shader draws; also the fallback sprite)."""
+        s = self.ss
+        cover, height, n = self._fields()
+        H, W = cover.shape
         l = LIGHT / np.linalg.norm(LIGHT)
         diffuse = np.clip((n * l).sum(axis=2), 0.0, 1.0)
         half = l + np.array([0.0, 0.0, 1.0])
         half /= np.linalg.norm(half)
         spec = np.clip((n * half).sum(axis=2), 0.0, 1.0) ** 48
-        # A soft reflection of a bright sky above and dark ground below: the "polished" look.
-        yy = np.linspace(0.0, 1.0, H)[:, None]
-        env = 0.08 * (1.0 - yy) * n[..., 2]
-        value = 0.18 + 0.62 * diffuse + env
+        value = 0.18 + 0.62 * diffuse + 0.08 * n[..., 2]
         rgb = ramp(value)
         glint = np.zeros((H, W), np.float32)
-        ys, xs = np.mgrid[0:H, 0:W]
-        for cx, cy, st in self.glints:
-            band = np.exp(-(((xs / s - cx) + (ys / s - cy)) ** 2) / (2 * 14.0 ** 2))
-            near = np.exp(-(((xs / s - cx) ** 2 + (ys / s - cy) ** 2)) / (2 * 120.0 ** 2))
-            glint = np.maximum(glint, band * near * st)
-        light = spec * 0.9 + glint * (0.35 + 0.65 * diffuse)
-        rgb = rgb + light[..., None] * np.array([255, 236, 196]) * 0.8
+        if glints and self.glints:
+            ys, xs = np.mgrid[0:H, 0:W]
+            for cx, cy, st in self.glints:
+                band = np.exp(-(((xs / s - cx) + (ys / s - cy)) ** 2) / (2 * 14.0 ** 2))
+                near = np.exp(-(((xs / s - cx) ** 2 + (ys / s - cy) ** 2)) / (2 * 120.0 ** 2))
+                glint = np.maximum(glint, band * near * st)
+        light = (spec * 0.9 + glint * (0.35 + 0.65 * diffuse)) * height
+        rgb = rgb + light[..., None] * np.array([250, 230, 182]) * 0.8
         rgba = np.dstack([np.clip(rgb, 0, 255), cover * 255]).astype(np.uint8)
-        return Image.fromarray(rgba, "RGBA").resize((self.w, self.h), Image.LANCZOS)
+        return Image.fromarray(rgba, "RGBA").resize((self.w * out_scale, self.h * out_scale), Image.LANCZOS)
+
+    def relief(self, out_scale=1):
+        """The shader's input: RG = normal xy in Unity's space (y up), B = height, A = coverage. Linear data."""
+        cover, height, n = self._fields()
+        r = n[..., 0] * 0.5 + 0.5
+        g = -n[..., 1] * 0.5 + 0.5  # image y grows down, Unity's up
+        data = np.dstack([r * 255, g * 255, height * 255, cover * 255]).astype(np.float32)
+        # Average in premultiplied form so the transparent surroundings do not bleed into the edge normals.
+        a = data[..., 3:4] / 255.0
+        pre = np.dstack([data[..., :3] * a, data[..., 3:4]])
+        img = Image.fromarray(np.clip(pre, 0, 255).astype(np.uint8), "RGBA").resize((self.w * out_scale, self.h * out_scale), Image.BOX)
+        arr = np.asarray(img).astype(np.float32)
+        a2 = np.maximum(arr[..., 3:4] / 255.0, 1e-4)
+        rgb = np.where(arr[..., 3:4] > 0, arr[..., :3] / a2, np.array([127.5, 127.5, 0.0]))
+        return Image.fromarray(np.dstack([np.clip(rgb, 0, 255), arr[..., 3:4]]).astype(np.uint8), "RGBA")
 
 
 def font(name, size):
@@ -362,7 +388,117 @@ def bars(out_path):
     return out_path
 
 
+# ---------------------------------------------------------------- shipped pieces (D-033)
+
+SCALE = 2  # like render.py: sprites at 2x design units
+PIECES_DIR = os.path.join(ROOT, "art", "src", "metal")
+# Sheet pieces the thin-line language replaces without a direct successor.
+RETIRE = ["hotbar_frame", "hotbar_frame_shape"]
+
+
+def chamfer(x, y, w, h, cut):
+    return [(x + cut, y), (x + w - cut, y), (x + w, y + cut), (x + w, y + h - cut), (x + w - cut, y + h),
+            (x + cut, y + h), (x, y + h - cut), (x, y + cut)]
+
+
+def frame_piece(w, h, cut, tick_h=26, tick_v=26, outer=1.8, inner=0.8, gap=6, knot=3.2):
+    """A window frame: chamfered outer line, fine inner line, a small diamond and two ticks per corner."""
+    m = Metal(w, h, ss=4)
+    o = 1.5
+    m.line(chamfer(o, o, w - 2 * o, h - 2 * o, cut), outer, closed=True)
+    if inner:
+        m.line(chamfer(o + gap, o + gap, w - 2 * (o + gap), h - 2 * (o + gap), max(2, cut - 4)), inner, closed=True)
+    if knot:
+        for cx, cy, sx, sy in ((o, o, 1, 1), (w - o, o, -1, 1), (o, h - o, 1, -1), (w - o, h - o, -1, -1)):
+            m.diamond(cx + sx * cut * 0.5, cy + sy * cut * 0.5, knot)
+            if tick_h:
+                m.line([(cx + sx * (cut + 6), cy + sy * 3), (cx + sx * (cut + tick_h), cy + sy * 3)], 0.7)
+            if tick_v:
+                m.line([(cx + sx * 3, cy + sy * (cut + 6)), (cx + sx * 3, cy + sy * (cut + tick_v))], 0.7)
+    shape = Image.new("L", (w * SCALE, h * SCALE))
+    ImageDraw.Draw(shape).polygon([(x * SCALE, y * SCALE) for x, y in chamfer(o, o, w - 2 * o, h - 2 * o, cut)], fill=255)
+    return m, shape
+
+
+def slot_piece(w, cut, line=1.0):
+    m = Metal(w, w, ss=4)
+    o = 1.0
+    m.line(chamfer(o, o, w - 2 * o, w - 2 * o, cut), line, closed=True)
+    shape = Image.new("L", (w * SCALE, w * SCALE))
+    ImageDraw.Draw(shape).polygon([(x * SCALE, y * SCALE) for x, y in chamfer(o, o, w - 2 * o, w - 2 * o, cut)], fill=255)
+    return m, shape
+
+
+def pieces():
+    """Writes art/src/metal/: <name>.png (lit, the fallback), <name>_relief.png (the shader's input),
+    <name>_shape.png (the panel material's silhouette) and pieces.json for render.py."""
+    os.makedirs(PIECES_DIR, exist_ok=True)
+    for f in os.listdir(PIECES_DIR):
+        os.remove(os.path.join(PIECES_DIR, f))
+    meta = {}
+
+    def save(name, m, shape, border, content=None):
+        m.render(SCALE, glints=False).save(os.path.join(PIECES_DIR, name + ".png"))
+        m.relief(SCALE).save(os.path.join(PIECES_DIR, name + "_relief.png"))
+        meta[name] = {"border": border}
+        if content:
+            meta[name]["content"] = content
+        meta[name + "_relief"] = {"border": border, "color": "linear"}
+        if shape is not None:
+            rgba = Image.new("RGBA", shape.size, (255, 255, 255, 0))
+            rgba.putalpha(shape)
+            rgba.save(os.path.join(PIECES_DIR, name + "_shape.png"))
+            meta[name + "_shape"] = {"border": border}
+
+    m, sh = frame_piece(160, 160, 14)
+    save("window_panel", m, sh, [46, 46, 46, 46], [18, 18, 18, 18])
+    m, sh = frame_piece(200, 90, 16, tick_v=0)
+    save("window_topbar", m, sh, [46, 44, 46, 44], [40, 10, 40, 10])
+    m, sh = frame_piece(200, 62, 14, tick_v=0)
+    save("window_hintbar", m, sh, [46, 30, 46, 30], [40, 8, 40, 8])
+    m, sh = frame_piece(100, 100, 8, tick_h=16, tick_v=16, outer=1.4, inner=0.6, gap=4, knot=2.4)
+    save("card", m, sh, [30, 30, 30, 30], [10, 10, 10, 10])
+
+    m, sh = slot_piece(56, 5)
+    save("hotslot", m, sh, [12, 12, 12, 12], [4, 4, 4, 4])
+    m, sh = slot_piece(30, 5)
+    save("keycap", m, sh, [9, 9, 9, 9], [6, 6, 6, 6])
+    m = Metal(60, 30, ss=4)
+    m.line(chamfer(1, 1, 58, 28, 5), 1.0, closed=True)
+    sh = Image.new("L", (60 * SCALE, 30 * SCALE))
+    ImageDraw.Draw(sh).polygon([(x * SCALE, y * SCALE) for x, y in chamfer(1, 1, 58, 28, 5)], fill=255)
+    save("keycap_wide", m, sh, [12, 9, 12, 9], [10, 6, 10, 6])
+
+    # States over a 56-unit cell (content insets = where the cell sits).
+    m = Metal(64, 64, ss=4)
+    m.line(chamfer(1.2, 1.2, 61.6, 61.6, 8), 0.8, closed=True)
+    m.line(chamfer(4, 4, 56, 56, 5), 1.3, closed=True)
+    m.diamond(32, 2.2, 3.6, 2.2)
+    m.diamond(32, 61.8, 3.6, 2.2)
+    save("hotslot_selected", m, None, [0, 0, 0, 0], [4, 4, 4, 4])
+    m = Metal(60, 60, ss=4)
+    m.diamond(30, 2.4, 3.8, 2.4)
+    for sx in (-1, 1):
+        m.line([(30 + sx * 6, 2), (30 + sx * 14, 2)], 0.8)
+    save("hotslot_equipped", m, None, [0, 0, 0, 0], [2, 2, 2, 2])
+
+    # The rule under titles and tabs (its knot is the separate tab_knot, never stretched).
+    m = Metal(120, 8, ss=4)
+    m.line([(2.5, 4), (117.5, 4)], 0.8)
+    m.dot(2.2, 4, 1.4)
+    m.dot(117.8, 4, 1.4)
+    save("tab_marker", m, None, [8, 0, 8, 0])
+    m = Metal(10, 14, ss=4)
+    m.diamond(5, 7, 4.2, 6.2)
+    save("tab_knot", m, None, [0, 0, 0, 0])
+
+    with open(os.path.join(PIECES_DIR, "pieces.json"), "w") as f:
+        json.dump({"pieces": meta, "retire": RETIRE}, f, indent=1, sort_keys=True)
+    return len(meta)
+
+
 if __name__ == "__main__":
+    print(str(pieces()) + " metal pieces -> art/src/metal")
     out_dir = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "dist")
     os.makedirs(out_dir, exist_ok=True)
     print(window(os.path.join(out_dir, "window-metal.png")))

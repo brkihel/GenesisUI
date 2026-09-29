@@ -89,6 +89,8 @@ namespace GenesisUI
 
                 _theme = new ThemeRuntime(Path.GetDirectoryName(Info.Location));
                 BindBackgrounds(_theme);
+                _theme.MetalEnabled = Config.Bind("Theme", "MetalShader", true,
+                    "Molduras com o shader de metal (luz, relevo e brilho que passa). Desligado, as molduras usam a versão pintada, sem movimento. Vale ao reiniciar o jogo.").Value;
                 ModuleHost.Init(_theme, Enabled.Value);
                 Enabled.SettingChanged += (_, __) => Guard.Try("master toggle", () => ModuleHost.SetMasterEnabled(Enabled.Value));
 

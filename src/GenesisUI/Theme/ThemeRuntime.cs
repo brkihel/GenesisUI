@@ -58,6 +58,69 @@ namespace GenesisUI.Theme
         public ThemeRuntime(string pluginDir)
         {
             _pluginDir = pluginDir;
+            Current = this;
+        }
+
+        /// <summary>The theme in use, for helpers that build images without a theme parameter (Ui.Image).</summary>
+        internal static ThemeRuntime Current { get; private set; }
+
+        // ---- shaders (D-033): metal frames and the burn light, from art/genesisui.shaders
+
+        private const long MaxBundleBytes = 8L * 1024 * 1024;
+        private readonly Dictionary<Sprite, Sprite> _relief = new Dictionary<Sprite, Sprite>();
+        private Material _metal;
+        private Shader _burnShader;
+
+        /// <summary>[Theme] MetalShader: frames lit by the metal shader when it is available.</summary>
+        public bool MetalEnabled = true;
+
+        /// <summary>Whether frames are drawn by the metal shader (bundle loaded, supported, enabled).</summary>
+        public bool MetalActive => MetalEnabled && _metal != null;
+
+        public bool BurnAvailable => _burnShader != null;
+
+        /// <summary>
+        /// Swaps a frame's lit sprite for its relief map and the metal material. Frames without a relief
+        /// map, or with the shader unavailable, keep their lit sprite: the same look, without the motion.
+        /// </summary>
+        public bool Metalize(Image image)
+        {
+            if (!MetalActive || image == null || image.sprite == null) return false;
+            if (!_relief.TryGetValue(image.sprite, out var relief)) return false;
+            image.sprite = relief;
+            image.material = _metal;
+            return true;
+        }
+
+        /// <summary>A new material for one bar's burn light; null when the shader is not available.</summary>
+        public Material NewBurnMaterial() =>
+            _burnShader != null ? new Material(_burnShader) { name = "GenesisUI burn light", hideFlags = HideFlags.DontSave } : null;
+
+        private void LoadShaders()
+        {
+            string path = Path.Combine(Path.Combine(_pluginDir, "art"), "genesisui.shaders");
+            var info = new FileInfo(path);
+            if (!info.Exists) { GenesisLog.Info("Theme", "no shader bundle: frames use their lit sprites"); return; }
+            if (info.Length > MaxBundleBytes) { GenesisLog.Warn("Theme", "shader bundle too large; ignored"); return; }
+            // An AssetBundle holds assets only (no code); this one holds our two shaders.
+            var bundle = AssetBundle.LoadFromFile(path);
+            if (bundle == null) { GenesisLog.Warn("Theme", "shader bundle could not be loaded (other platform or game version?)"); return; }
+            try
+            {
+                foreach (var shader in bundle.LoadAllAssets<Shader>())
+                {
+                    if (shader == null) continue;
+                    if (!shader.isSupported) { GenesisLog.Warn("Theme", "shader not supported on this GPU/API: " + shader.name); continue; }
+                    if (shader.name == "GenesisUI/Metal") _metal = new Material(shader) { name = "GenesisUI metal", hideFlags = HideFlags.DontSave };
+                    else if (shader.name == "GenesisUI/Burn") _burnShader = shader;
+                }
+            }
+            finally
+            {
+                bundle.Unload(false); // keeps the loaded shaders
+            }
+            GenesisLog.Info("Theme", "shaders: metal " + (_metal != null ? "on" : "off") + ", burn " + (_burnShader != null ? "on" : "off") +
+                " (" + SystemInfo.graphicsDeviceType + ")");
         }
 
         /// <summary>
@@ -92,6 +155,9 @@ namespace GenesisUI.Theme
 
         public int BackgroundCount => _backgrounds.Count;
 
+        /// <summary>Brightness of the panel material (1 = as painted).</summary>
+        public const float BackgroundShade = 0.55f;
+
         public void RegisterBackground(Image image, string panel)
         {
             Apply(image, panel);
@@ -108,7 +174,8 @@ namespace GenesisUI.Theme
         private void Apply(Image image, string panel)
         {
             float a = Mathf.Clamp01(BackgroundOpacity(panel));
-            image.color = new Color(1f, 1f, 1f, a);
+            // Diego's stone, darker (D-033: "a UI toda mais escura").
+            image.color = new Color(BackgroundShade, BackgroundShade, BackgroundShade, a);
             // Fully transparent: skip drawing it (and its stencil mask) altogether.
             var clip = image.transform.parent;
             if (clip != null && clip.gameObject.activeSelf != a > 0f) clip.gameObject.SetActive(a > 0f);
@@ -125,6 +192,7 @@ namespace GenesisUI.Theme
 
             Guard.Try("load fonts", LoadFonts);
             Guard.Try("load sprites", LoadSprites);
+            Guard.Try("load shaders", LoadShaders);
         }
 
         public TMP_FontAsset Font(FontRole role) => _fonts.TryGetValue(role, out var f) ? f : _vanilla;
@@ -239,7 +307,7 @@ namespace GenesisUI.Theme
                 var info = new FileInfo(path);
                 if (!info.Exists || info.Length > MaxImageBytes) { GenesisLog.Warn("Theme", "sprite file missing or too large: " + entry.file); continue; }
 
-                var tex = new Texture2D(2, 2, TextureFormat.RGBA32, false)
+                var tex = new Texture2D(2, 2, TextureFormat.RGBA32, false, entry.color == "linear")
                 {
                     name = "GenesisUI " + entry.name,
                     filterMode = FilterMode.Bilinear,
@@ -262,7 +330,11 @@ namespace GenesisUI.Theme
                 _sprites[entry.name] = sprite;
                 _entries[entry.name] = entry;
             }
-            GenesisLog.Info("Theme", "sprites loaded " + _sprites.Count + "/" + manifest.sprites.Length);
+            foreach (var kv in _sprites)
+                if (kv.Key.EndsWith("_relief", StringComparison.Ordinal) &&
+                    _sprites.TryGetValue(kv.Key.Substring(0, kv.Key.Length - "_relief".Length), out var lit))
+                    _relief[lit] = kv.Value;
+            GenesisLog.Info("Theme", "sprites loaded " + _sprites.Count + "/" + manifest.sprites.Length + ", " + _relief.Count + " with relief maps");
         }
     }
 }

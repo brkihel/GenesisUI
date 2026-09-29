@@ -36,6 +36,7 @@ namespace GenesisUI.Modules.Sprint
         private Image _fill;
         private RectTransform _liquidMask;
         private RectTransform _burnRt;
+        private BurnLight _burnLight;
         private RawImage _burn;
         private RectTransform _glowRt;
         private Image _glow;
@@ -111,8 +112,10 @@ namespace GenesisUI.Modules.Sprint
                     new Vector2(0.02f, 0f), new Vector2(0f, 0.35f), mirror: false);
             }
 
-            // The horizontal burn has its own vertical leading line and sparks trailing right.
-            var burnTex = theme.Texture("bar_burn_h");
+            // The burn as light (D-033), outside the frame's mask so the halo leaks past it. Without the
+            // shader: the earlier leading line and sparks.
+            _burnLight = BurnLight.Create(theme, _group, track, vertical: false);
+            var burnTex = _burnLight == null ? theme.Texture("bar_burn_h") : null;
             if (burnTex != null)
             {
                 _burnRt = Ui.Child(track, "Burn");
@@ -217,6 +220,8 @@ namespace GenesisUI.Modules.Sprint
 
             float trail = Mathf.Min(_bar.Slow, _displayed + 0.04f);
             if (!Mathf.Approximately(_trail.fillAmount, trail)) _trail.fillAmount = trail;
+            if (_burnLight != null)
+                _burnLight.Set(_displayed, Mathf.Max(_displayed, _bar.Slow), Mathf.Clamp01(_burnTime / 0.25f));
             if (_burn != null)
             {
                 float to = Mathf.Min(1f, _displayed + 0.04f);
@@ -290,6 +295,8 @@ namespace GenesisUI.Modules.Sprint
         {
             if (_group != null) Object.Destroy(_group.gameObject);
             if (_additive != null) Object.Destroy(_additive);
+            if (_burnLight != null) _burnLight.Destroy();
+            _burnLight = null;
             _group = null;
             _opacity = null;
             _trail = _fill = null;

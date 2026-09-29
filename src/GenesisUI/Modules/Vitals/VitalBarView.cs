@@ -235,7 +235,14 @@ namespace GenesisUI.Modules.Vitals
                 Ui.Fill((RectTransform)_number.transform, c.x - 1f, c.y, c.z - 1f, c.w);
                 _valueRoot = _number.gameObject;
             }
+
+            // The burn as light (D-033) replaces the grain band and the rising burn embers when the shader
+            // is available; outside the opening mask so its halo can leak past the frame.
+            _burnLight = BurnLight.Create(theme, Root, area, vertical: true);
+            if (_burnLight != null && _burn != null) _burn.enabled = false;
         }
+
+        private readonly BurnLight _burnLight;
 
         /// <summary>Shows or hides the number (and its plate): <c>[Vitals] ShowValues</c>.</summary>
         public void ShowValue(bool show)
@@ -267,7 +274,8 @@ namespace GenesisUI.Modules.Vitals
             float burning = Mathf.Max(0f, bar.Slow - bar.Fast);
             _burnMask.anchoredPosition = new Vector2(0f, _areaHeight * bar.Fast);
             _burnMask.sizeDelta = new Vector2(0f, Mathf.Min(_areaHeight * burning, MaxBurnHeight));
-            if (_burn != null)
+            if (_burnLight != null) _burnLight.Set(bar.Fast, bar.Slow, Mathf.Clamp01(burning * 10f));
+            else if (_burn != null)
             {
                 var uv = _burn.uvRect;
                 uv.x = Mathf.Repeat(uv.x + deltaSeconds * 0.35f, 1f);   // the grains shimmer sideways
@@ -303,7 +311,7 @@ namespace GenesisUI.Modules.Vitals
 
             // Embers: from the burning surface while something is being consumed, and along the
             // sides while health is low.
-            _emitBurn += deltaSeconds * Mathf.Clamp01(burning * 6f) * 22f;
+            if (_burnLight == null) _emitBurn += deltaSeconds * Mathf.Clamp01(burning * 6f) * 22f;
             _emitSides += deltaSeconds * (danger > 0f ? 5f : 0f);
             while (_emitBurn >= 1f) { _emitBurn -= 1f; Emit(fromSides: false, bar.Fast); }
             while (_emitSides >= 1f) { _emitSides -= 1f; Emit(fromSides: true, bar.Fast); }

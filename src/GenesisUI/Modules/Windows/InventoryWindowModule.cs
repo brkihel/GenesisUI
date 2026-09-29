@@ -248,6 +248,8 @@ namespace GenesisUI.Modules.Windows
             if (_root == null) return false;
             _fade = _root.gameObject.AddComponent<CanvasGroup>();
             _fade.alpha = 0f;
+            // The world dims behind the open window, so the panels read as one dark surface.
+            Ui.Image(Ui.Fill(Ui.Child(_root, "Dim")), null, new Color(0f, 0f, 0f, 0.35f));
             _area = WindowCanvas.Area(_root, "Board");
             Build();
             _root.gameObject.SetActive(false);
@@ -811,8 +813,19 @@ namespace GenesisUI.Modules.Windows
                 var mrt = WindowCanvas.At(rt, "Rule", centred ? (width - mw) / 2f : titleX - 6f, 48f, mw, 8f);
                 var img = Ui.Image(mrt, marker, Color.white);
                 img.pixelsPerUnitMultiplier = _theme.Size("tab_marker").y / 8f * Frame.CanvasScale(mrt);
+                Knot(mrt, 12f);
             }
             return rt;
+        }
+
+        /// <summary>The rule's centre knot at its own size (a 9-sliced rule would stretch it).</summary>
+        private void Knot(RectTransform rule, float height)
+        {
+            var knot = _theme.Sprite("tab_knot");
+            if (knot == null) return;
+            var d = _theme.Size("tab_knot");
+            var krt = Ui.Place(Ui.Child(rule, "Knot"), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(d.x * height / Mathf.Max(1f, d.y), height));
+            Ui.Image(krt, knot, Color.white);
         }
 
         private ItemCell MakeCell(RectTransform parent, string name, float x, float y, float size, string key)

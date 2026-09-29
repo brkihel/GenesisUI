@@ -9,12 +9,12 @@ namespace GenesisUI.Theme
     {
         public ColorRgba PanelBackground = ColorRgba.FromHex("#151816EB");
         public ColorRgba LineFrame = ColorRgba.FromHex("#705B3F");
-        public ColorRgba AccentGold = ColorRgba.FromHex("#FACF72");
-        public ColorRgba AccentGoldBright = ColorRgba.FromHex("#F7E283");
-        public ColorRgba TextTitle = ColorRgba.FromHex("#FBF3DA");
-        public ColorRgba TextBody = ColorRgba.FromHex("#D5D2CA");
+        public ColorRgba AccentGold = ColorRgba.FromHex("#D2AA5E");
+        public ColorRgba AccentGoldBright = ColorRgba.FromHex("#D8B76C");
+        public ColorRgba TextTitle = ColorRgba.FromHex("#E4D9C0");
+        public ColorRgba TextBody = ColorRgba.FromHex("#C2BAAB");
         public ColorRgba TextMuted = ColorRgba.FromHex("#EDE8DDB3");
-        public ColorRgba TextFlavor = ColorRgba.FromHex("#BA995C");
+        public ColorRgba TextFlavor = ColorRgba.FromHex("#98804F");
         public ColorRgba StatePositive = ColorRgba.FromHex("#A2DC88");
         public ColorRgba StateDanger = ColorRgba.FromHex("#E0643C");
 

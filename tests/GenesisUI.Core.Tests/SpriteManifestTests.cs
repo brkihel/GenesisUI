@@ -55,6 +55,20 @@ namespace GenesisUI.Core.Tests
         }
 
         [Fact]
+        public void Color_space_is_srgb_or_linear()
+        {
+            var m = Valid();
+            m.sprites[0].color = "linear";
+            Assert.Empty(SpriteManifestValidator.Validate(m));
+            m.sprites[0].color = "hdr";
+            Assert.Contains(SpriteManifestValidator.Validate(m), e => e.Contains("color"));
+            var parsed = SpriteManifestValidator.Parse(
+                "{\"scale\":2,\"sprites\":[{\"name\":\"a\",\"file\":\"a.png\",\"width\":4,\"height\":4,\"borderLeft\":0,\"borderBottom\":0,\"borderRight\":0,\"borderTop\":0,\"color\":\"linear\"}]}",
+                new System.Collections.Generic.List<string>());
+            Assert.Equal("linear", parsed.sprites[0].color);
+        }
+
+        [Fact]
         public void Wrap_is_clamp_or_repeat()
         {
             var m = Valid();
