@@ -55,6 +55,8 @@
     <!-- Fonts and rendered art ship next to the DLL (tools/art/*.py produce them). -->
     <None Include="$(RepoRoot)art/fonts/*.ttf;$(RepoRoot)art/fonts/*-OFL.txt" Link="fonts/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <None Include="$(RepoRoot)art/out/*.png;$(RepoRoot)art/out/sprites.json" Link="art/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <!-- The metal and burn shaders (D-033), built by tools/shaders/build.sh; optional at run time. -->
+    <None Include="$(RepoRoot)art/shaders/genesisui.shaders" Condition="Exists('$(RepoRoot)art/shaders/genesisui.shaders')" Link="art/genesisui.shaders" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <!--

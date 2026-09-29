@@ -70,6 +70,12 @@ for sprite in manifest["sprites"]:
     shutil.copy2(os.path.join(src, name), os.path.join(dst, name))
 print(f"   art: {len(manifest['sprites'])} sprites")
 PY
+if [ -f "$OUTDIR/art/genesisui.shaders" ]; then
+    cp "$OUTDIR/art/genesisui.shaders" "$STAGE/plugins/art/"
+    echo "   shaders: art/genesisui.shaders"
+else
+    echo "   shaders: none (frames use their lit sprites; run tools/shaders/build.sh)"
+fi
 cp icon.png README.md CHANGELOG.md LICENSE "$STAGE/"
 
 # The manifest dependency must name the Jotunn we compiled against (ref/Jotunn.dll).
