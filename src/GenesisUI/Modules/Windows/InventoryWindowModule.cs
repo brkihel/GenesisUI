@@ -8,7 +8,6 @@ using GenesisUI.InventoryModel;
 using GenesisUI.Theme;
 using GenesisUI.Widgets;
 using HarmonyLib;
-using Jotunn.Managers;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -17,10 +16,10 @@ namespace GenesisUI.Modules.Windows
 {
     /// <summary>
     /// The Inventory tab in ConceptArt (9)'s layout (F4.2a, D-025): our panels — inventory,
-    /// equipment, item details — drawn behind vanilla's window on Jötunn's back canvas, and vanilla's
-    /// own grids moved and dressed on top of them with <see cref="VanillaSkin"/>. Every click, drag,
-    /// split and equip stays vanilla's; vanilla's panel backgrounds, texts and tooltips are hidden
-    /// (never destroyed) and everything returns exactly on teardown, fault or another tab.
+    /// equipment, item details — drawn on vanilla's inventory canvas right behind InventoryGui, and
+    /// vanilla's own slots moved onto our grid and dressed with <see cref="VanillaSkin"/>. Every click,
+    /// drag, split and equip stays vanilla's; vanilla's panel frame, texts and tooltips are hidden
+    /// (never destroyed) and everything returns exactly on another tab, on close or on a fault.
     /// </summary>
     [GameContract("assembly_valheim", "InventoryGui", "m_player")]
     [GameContract("assembly_valheim", "InventoryGui", "m_crafting")]
@@ -28,11 +27,12 @@ namespace GenesisUI.Modules.Windows
     [GameContract("assembly_valheim", "InventoryGui", "m_container")]
     [GameContract("assembly_valheim", "InventoryGui", "m_playerGrid")]
     [GameContract("assembly_valheim", "InventoryGui", "IsContainerOpen")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_container")]
     [GameContract("assembly_valheim", "InventoryGrid", "m_elements")]
     [GameContract("assembly_valheim", "InventoryGrid", "GetHoveredElement")]
     [GameContract("assembly_valheim", "InventoryGrid", "GetInventory")]
     [GameContract("assembly_valheim", "InventoryElement", "m_icon")]
+    [GameContract("assembly_valheim", "InventoryElement", "m_equiped")]
+    [GameContract("assembly_valheim", "InventoryElement", "m_button")]
     [GameContract("assembly_valheim", "InventoryElement", "m_tooltip")]
     [GameContract("assembly_valheim", "InventoryElement", "get_Position")]
     [GameContract("assembly_valheim", "Inventory", "GetItemAt")]
@@ -42,15 +42,14 @@ namespace GenesisUI.Modules.Windows
     [GameContract("assembly_valheim", "ItemDrop+ItemData", "GetTooltip", Parameters = new[]
         { "ItemDrop+ItemData", "System.Int32", "System.Boolean", "System.Single", "System.Int32", "System.Boolean" })]
     [GameContract("assembly_valheim", "ItemDrop+ItemData+SharedData", "m_itemType")]
-    [GameContract("assembly_valheim", "ItemDrop+ItemData+SharedData", "m_description")]
     internal sealed class InventoryWindowModule : IUiModule
     {
         private static readonly string[] NoRegions = new string[0];
 
-        // Layout on the 1920x1080 design canvas, between the shell's bars.
-        private const float Top = 100f, Bottom = 76f, Side = 36f, Gap = 10f;
-        private const float InventoryWidth = 900f, EquipmentWidth = 470f;
-        private const float Cell = 74f, CellGap = 8f, HeaderHeight = 64f;
+        // Inside the shell's window area (WindowCanvas): below the tab bar, above the hint bar.
+        private const float BarsTop = 72f, BarsBottom = 54f, Gap = 8f;
+        private const float InventoryShare = 0.47f, EquipmentShare = 0.25f;
+        private const float CellGap = 6f, HeaderRule = 40f;
 
         internal enum Filter { All, Weapons, Armor, Tools, Consumables, Materials, Ammo, Misc }
 
@@ -61,11 +60,18 @@ namespace GenesisUI.Modules.Windows
         };
 
         private readonly VanillaSkin _skin = new VanillaSkin("module:win.inventory");
+        private readonly Vector3[] _corners = new Vector3[4];
         private ThemeRuntime _theme;
         private RectTransform _root;
+        private RectTransform _area;
+        private RectTransform _controlsRoot;
+        private RectTransform _controlsArea;
         private RectTransform _inventoryPanel;
-        private RectTransform _gridArea;
+        private RectTransform _equipmentPanel;
         private RectTransform _detailsPanel;
+        private RectTransform _gridArea;
+        private RectTransform _filterList;
+        private float _cell;
         private TextMeshProUGUI _slotsText;
         private TextMeshProUGUI _weightText;
         private Image _weightFill;
@@ -75,13 +81,14 @@ namespace GenesisUI.Modules.Windows
         private TextMeshProUGUI _detailName;
         private TextMeshProUGUI _detailBody;
         private Filter _filter = Filter.All;
-        private RectTransform _equipmentPanel;
-        private bool _containerShown;
         private bool _applied;
+        private bool _containerShown;
         private InventoryElement _firstElement;
         private int _elementCount;
+        private int _dressedRows = -1;
         private ItemDrop.ItemData _shownItem;
         private int _shownSlots = -1, _shownWeight = -1, _shownMax = -1, _shownArmor = -1;
+        private bool _loggedElement;
 
         private AccessTools.FieldRef<InventoryGrid, List<InventoryElement>> _elements;
         private Func<InventoryGrid, InventoryElement> _hovered;
@@ -97,14 +104,8 @@ namespace GenesisUI.Modules.Windows
             _elements = AccessTools.FieldRefAccess<InventoryGrid, List<InventoryElement>>("m_elements");
             _hovered = AccessTools.MethodDelegate<Func<InventoryGrid, InventoryElement>>(
                 AccessTools.Method(typeof(InventoryGrid), "GetHoveredElement"));
-
-            // Behind vanilla's window: Jötunn's back canvas, so vanilla's slots draw over our panels.
-            var back = GUIManager.CustomGUIBack;
-            if (back == null) throw new InvalidOperationException("Jötunn's CustomGUIBack is not ready");
-            _root = Ui.Fill(Ui.Child(back.transform, "GenesisUI.InventoryWindow"));
-            BuildPanels();
-            _root.gameObject.SetActive(false);
             _applied = false;
+            // Panels are built on vanilla's canvas when it exists (EnsureBuilt).
         }
 
         public void Refresh(float deltaSeconds)
@@ -117,12 +118,14 @@ namespace GenesisUI.Modules.Windows
                 if (_applied) Unapply();
                 return;
             }
+            if (!EnsureBuilt(gui)) return;
             if (!_applied) Apply(gui);
 
             var grid = gui.m_playerGrid;
             var elements = _elements(grid);
-            if (elements.Count != _elementCount || (elements.Count > 0 && elements[0] != _firstElement))
-                DressElements(grid, elements); // vanilla rebuilds its elements when the size changes
+            int rows = InventoryModule.Current != null ? InventoryModule.Current.Rows : SlotLayout.MinRows;
+            if (elements.Count != _elementCount || rows != _dressedRows || (elements.Count > 0 && elements[0] != _firstElement))
+                DressElements(elements, rows); // vanilla rebuilds its elements when the size changes
             ApplyFilter(grid, elements);
             PlaceContainer(gui);
             if (!_containerShown) UpdateDetails(grid);
@@ -133,7 +136,31 @@ namespace GenesisUI.Modules.Windows
         {
             if (_applied) Unapply();
             if (_root != null) UnityEngine.Object.Destroy(_root.gameObject);
+            if (_controlsRoot != null) UnityEngine.Object.Destroy(_controlsRoot.gameObject);
             _root = null;
+            _controlsRoot = null;
+        }
+
+        private bool EnsureBuilt(InventoryGui gui)
+        {
+            if (_root != null) return true;
+            _root = WindowCanvas.CreateRoot(gui, "GenesisUI.InventoryWindow", behind: true);
+            if (_root == null) return false;
+            _area = WindowCanvas.Area(_root, "Area");
+            // Only interactive controls are drawn in front of InventoryGui. The panel art remains
+            // behind vanilla's item cells, while the filter can receive pointer events reliably.
+            _controlsRoot = WindowCanvas.CreateRoot(gui, "GenesisUI.InventoryControls", behind: false);
+            if (_controlsRoot == null)
+            {
+                UnityEngine.Object.Destroy(_root.gameObject);
+                _root = null;
+                return false;
+            }
+            _controlsArea = WindowCanvas.Area(_controlsRoot, "Area");
+            BuildPanels();
+            _root.gameObject.SetActive(false);
+            _controlsRoot.gameObject.SetActive(false);
+            return true;
         }
 
         // ------------------------------------------------------------------ vanilla
@@ -142,24 +169,23 @@ namespace GenesisUI.Modules.Windows
         {
             _applied = true;
             _root.gameObject.SetActive(true);
+            _controlsRoot.gameObject.SetActive(true);
 
-            // Vanilla's player panel: its own frame, name, armour and weight texts fade out; the
-            // grid stays fully visible through its own group (ignoreParentGroups).
+            // Vanilla's player panel fades out (frame, name, armour, weight) and stops catching
+            // clicks; its grid stays fully visible and clickable through its own group.
             var panel = _skin.Group(gui.m_player.gameObject);
             panel.alpha = 0f;
-            panel.blocksRaycasts = false; // nothing invisible stays clickable
+            panel.blocksRaycasts = false;
             var gridGroup = _skin.Group(gui.m_playerGrid.gameObject);
             gridGroup.ignoreParentGroups = true;
             gridGroup.alpha = 1f;
             gridGroup.blocksRaycasts = true;
             gridGroup.interactable = true;
 
-            // Crafting and the character info belong to other tabs: hidden and not clickable here.
+            // Crafting and the character info belong to other tabs.
             Hide(gui.m_crafting.gameObject);
             Hide(gui.m_info.gameObject);
-
-            DressElements(gui.m_playerGrid, _elements(gui.m_playerGrid));
-            GenesisLog.Info("Module:win.inventory", "dressed vanilla's inventory (" + _skin.Count + " recorded change(s))");
+            _dressedRows = -1;
         }
 
         private void Hide(GameObject go)
@@ -176,25 +202,29 @@ namespace GenesisUI.Modules.Windows
             _skin.Restore();
             _firstElement = null;
             _elementCount = 0;
+            _dressedRows = -1;
             _shownItem = null;
             _containerShown = false;
+            if (_filterList != null) _filterList.gameObject.SetActive(false);
             if (_equipmentPanel != null) _equipmentPanel.gameObject.SetActive(true);
             if (_detailsPanel != null) _detailsPanel.gameObject.SetActive(true);
             if (_root != null) _root.gameObject.SetActive(false);
+            if (_controlsRoot != null) _controlsRoot.gameObject.SetActive(false);
         }
 
         /// <summary>
-        /// Each vanilla slot of the ordinary rows goes to its cell in our grid area, wears the thin
-        /// slot, and loses its tooltip (the details panel shows the item instead). Special rows stay
-        /// hidden by the inventory module until their panels exist.
+        /// Each vanilla slot of the ordinary rows goes to its cell on our grid (same canvas: world
+        /// positions line up), wears Diego's slot under its icon, and loses its tooltip (the details
+        /// panel shows the item). Vanilla's own slot background is hidden; its "equipped" mark wears
+        /// the equipped slot. Special rows stay hidden by the inventory module.
         /// </summary>
-        private void DressElements(InventoryGrid grid, List<InventoryElement> elements)
+        private void DressElements(List<InventoryElement> elements, int rows)
         {
             _elementCount = elements.Count;
             _firstElement = elements.Count > 0 ? elements[0] : null;
-            var layout = InventoryModule.Current;
-            int rows = layout != null ? layout.Rows : SlotLayout.MinRows;
+            _dressedRows = rows;
             var slot = _theme.Sprite("hotslot");
+            var equipped = _theme.Sprite("hotslot_equipped");
 
             for (int i = 0; i < elements.Count; i++)
             {
@@ -205,40 +235,75 @@ namespace GenesisUI.Modules.Windows
 
                 var rt = _skin.Rect((RectTransform)element.transform);
                 var target = CellWorld(pos.x, pos.y);
-                float scale = rt.parent != null ? rt.parent.lossyScale.x : 1f;
+                float scale = rt.parent != null ? Mathf.Max(0.0001f, rt.parent.lossyScale.x) : 1f;
                 rt.pivot = new Vector2(0.5f, 0.5f);
-                rt.sizeDelta = new Vector2(target.width, target.height) / Mathf.Max(0.0001f, scale);
+                rt.sizeDelta = new Vector2(target.width, target.height) / scale;
                 rt.position = target.center;
 
-                var bg = element.GetComponent<Image>();
-                if (bg != null && slot != null)
+                if (!_loggedElement)
                 {
-                    _skin.Image(bg);
-                    bg.sprite = slot;
-                    bg.type = Image.Type.Sliced;
-                    bg.color = Color.white;
-                    bg.pixelsPerUnitMultiplier = Frame.CanvasScale(bg.transform) * _theme.Size("hotslot").y / Cell;
+                    _loggedElement = true;
+                    LogElement(element);
+                }
+
+                // Vanilla's slot background (the button's graphic and any root image): hidden, not removed.
+                var rootBackground = element.GetComponent<Image>();
+                var buttonBackground = element.m_button != null ? element.m_button.targetGraphic as Image : null;
+                if (rootBackground != null && rootBackground != element.m_icon && rootBackground != element.m_equiped)
+                    _skin.RendererAlpha(rootBackground.canvasRenderer).SetAlpha(0f);
+                if (buttonBackground != null && buttonBackground != rootBackground &&
+                    buttonBackground != element.m_icon && buttonBackground != element.m_equiped)
+                    _skin.RendererAlpha(buttonBackground.canvasRenderer).SetAlpha(0f);
+
+                // Our slot, first child so the icon, amount and bars draw over it.
+                if (slot != null && element.transform.Find("GenesisUI.Slot") == null)
+                {
+                    var frame = Ui.Fill(Ui.Child(element.transform, "GenesisUI.Slot"));
+                    frame.SetAsFirstSibling();
+                    _skin.Added(frame.gameObject);
+                    var img = Ui.Image(frame, slot, Color.white);
+                    img.pixelsPerUnitMultiplier = Frame.CanvasScale(frame) * _theme.Size("hotslot").y / _cell;
+                }
+
+                // The equipped mark: Diego's equipped slot over the cell instead of vanilla's blue square.
+                if (element.m_equiped != null && equipped != null)
+                {
+                    _skin.Image(element.m_equiped);
+                    element.m_equiped.sprite = equipped;
+                    element.m_equiped.type = Image.Type.Simple;
+                    element.m_equiped.color = Color.white;
+                    var ert = _skin.Rect(element.m_equiped.rectTransform);
+                    var drawn = _theme.Size("hotslot_equipped");
+                    var c = _theme.Content("hotslot_equipped", Vector4.zero);
+                    float k = _cell / Mathf.Max(1f, drawn.x - c.x - c.z);
+                    ert.anchorMin = ert.anchorMax = ert.pivot = new Vector2(0.5f, 0.5f);
+                    ert.anchoredPosition = Vector2.zero;
+                    ert.sizeDelta = drawn * k;
                 }
                 if (element.m_tooltip != null) _skin.Enabled(element.m_tooltip).enabled = false;
             }
         }
 
-        /// <summary>A grid cell in world space (both canvases are screen-space overlays).</summary>
+        /// <summary>Logs one element's objects once, so a styling problem can be read in the log.</summary>
+        private static void LogElement(InventoryElement element)
+        {
+            var sb = new System.Text.StringBuilder("inventory slot parts:");
+            foreach (var image in element.GetComponentsInChildren<Image>(true))
+                sb.Append(' ').Append(image.gameObject.name).Append('(').Append(image.sprite != null ? image.sprite.name : "none").Append(')');
+            GenesisLog.Info("Module:win.inventory", sb.ToString());
+        }
+
+        /// <summary>A grid cell in world space.</summary>
         private Rect CellWorld(int x, int y)
         {
-            var corners = new Vector3[4];
-            _gridArea.GetWorldCorners(corners);
-            float unit = (corners[2].x - corners[0].x) / Mathf.Max(1f, _gridArea.rect.width);
-            float cx = corners[1].x + (x * (Cell + CellGap) + Cell / 2f) * unit;
-            float cy = corners[1].y - (y * (Cell + CellGap) + Cell / 2f) * unit;
-            float size = Cell * unit;
+            _gridArea.GetWorldCorners(_corners);
+            float unit = (_corners[2].x - _corners[0].x) / Mathf.Max(1f, _gridArea.rect.width);
+            float cx = _corners[1].x + (x * (_cell + CellGap) + _cell / 2f) * unit;
+            float cy = _corners[1].y - (y * (_cell + CellGap) + _cell / 2f) * unit;
+            float size = _cell * unit;
             return new Rect(cx - size / 2f, cy - size / 2f, size, size);
         }
 
-        /// <summary>
-        /// A chest, cart or ship: vanilla's container panel (not yet dressed, F4.2 containers) moves over
-        /// the equipment and details panels, which step aside while it is open.
-        /// </summary>
         private void PlaceContainer(InventoryGui gui)
         {
             bool open = gui.IsContainerOpen() && gui.m_container.gameObject.activeInHierarchy;
@@ -250,12 +315,11 @@ namespace GenesisUI.Modules.Windows
             }
             if (!open) return;
             var rt = _skin.Rect(gui.m_container);
-            var corners = new Vector3[4];
-            _equipmentPanel.GetWorldCorners(corners);
-            var left = corners[1];
-            _detailsPanel.GetWorldCorners(corners);
-            var right = corners[2];
-            var target = new Vector3((left.x + right.x) / 2f, left.y - 20f, 0f);
+            _equipmentPanel.GetWorldCorners(_corners);
+            var left = _corners[1];
+            _detailsPanel.GetWorldCorners(_corners);
+            var right = _corners[2];
+            var target = new Vector3((left.x + right.x) / 2f, left.y, 0f);
             if (rt.pivot != new Vector2(0.5f, 1f)) rt.pivot = new Vector2(0.5f, 1f);
             if ((rt.position - target).sqrMagnitude > 0.25f) rt.position = target;
         }
@@ -315,13 +379,12 @@ namespace GenesisUI.Modules.Windows
                 var p = element.Position;
                 item = grid.GetInventory().GetItemAt(p.x, p.y);
             }
-            if (item == null || item == _shownItem) return; // keep the last item shown, like a selection
+            if (item == null || item == _shownItem) return; // the last item stays, like a selection
             _shownItem = item;
             _detailIcon.sprite = item.GetIcon();
             _detailIcon.enabled = true;
             _detailName.text = Localize(item.m_shared.m_name).ToUpperInvariant();
-            string tooltip = ItemDrop.ItemData.GetTooltip(item, item.m_quality, false, item.m_worldLevel, -1, false);
-            _detailBody.text = Localize(tooltip);
+            _detailBody.text = Localize(ItemDrop.ItemData.GetTooltip(item, item.m_quality, false, item.m_worldLevel, -1, false));
         }
 
         private void UpdateStats(Player player)
@@ -362,89 +425,167 @@ namespace GenesisUI.Modules.Windows
         private void BuildPanels()
         {
             var t = _theme.Tokens;
-            float height = 1080f - Top - Bottom;
-            float detailsWidth = 1920f - 2f * Side - InventoryWidth - EquipmentWidth - 2f * Gap;
+            var content = Ui.Child(_area, "Panels");
+            content.anchorMin = Vector2.zero;
+            content.anchorMax = Vector2.one;
+            content.offsetMin = new Vector2(0f, BarsBottom);
+            content.offsetMax = new Vector2(0f, -BarsTop);
 
-            _inventoryPanel = Panel("Inventory", Side, InventoryWidth, height, "$genesisui_panel_inventory");
-            var equipment = _equipmentPanel = Panel("Equipment", Side + InventoryWidth + Gap, EquipmentWidth, height, "$genesisui_panel_equipment");
-            _detailsPanel = Panel("Details", Side + InventoryWidth + EquipmentWidth + 2f * Gap, detailsWidth, height, "$genesisui_panel_details");
+            _inventoryPanel = Panel(content, "Inventory", 0f, InventoryShare, "$genesisui_panel_inventory");
+            _equipmentPanel = Panel(content, "Equipment", InventoryShare, InventoryShare + EquipmentShare, "$genesisui_panel_equipment");
+            _detailsPanel = Panel(content, "Details", InventoryShare + EquipmentShare, 1f, "$genesisui_panel_details");
 
-            // Inventory: slots in use, filter, grid area, weight.
-            _slotsText = Label(_inventoryPanel, "Slots", FontRole.Label, 13f, t.TextFlavor, new Vector2(34f, -58f), new Vector2(200f, 20f), TextAlignmentOptions.Left);
-            var filter = Ui.Place(Ui.Child(_inventoryPanel, "Filter"), new Vector2(1f, 1f), new Vector2(-36f, -18f), new Vector2(170f, 30f));
-            filter.pivot = new Vector2(1f, 1f);
-            Frame.Dress(filter, _theme, "keycap_wide", "Windows", 30f);
-            _filterText = Ui.Text(filter, "Text", _theme, FontRole.Body, 16f, ThemeRuntime.ToUnity(t.TextTitle), TextAlignmentOptions.Center);
-            Ui.Fill((RectTransform)_filterText.transform, 8f, 0f, 8f, 0f);
-            var hit = Ui.Image(Ui.Fill(Ui.Child(filter, "Hit")), null, new Color(0f, 0f, 0f, 0f), raycast: true);
-            var button = filter.gameObject.AddComponent<Button>();
-            button.targetGraphic = hit;
-            button.transition = Selectable.Transition.None;
-            button.onClick.AddListener(() => Guard.Try("inventory filter", NextFilter));
-            ShowFilter();
-
-            int rows = SlotLayout.MaxRows;
-            float gridWidth = SlotLayout.Width * Cell + (SlotLayout.Width - 1) * CellGap;
-            float gridHeight = rows * Cell + (rows - 1) * CellGap;
-            _gridArea = Ui.Place(Ui.Child(_inventoryPanel, "Grid"), new Vector2(0.5f, 1f), new Vector2(0f, -(HeaderHeight + 26f)), new Vector2(gridWidth, gridHeight));
+            // The grid fits both axes, including six rows on shorter screens.
+            float panelWidth = _area.rect.width * InventoryShare - Gap;
+            float panelHeight = _area.rect.height - BarsTop - BarsBottom;
+            float byWidth = (panelWidth - 60f - (SlotLayout.Width - 1) * CellGap) / SlotLayout.Width;
+            float byHeight = (panelHeight - 80f - 70f - (SlotLayout.MaxRows - 1) * CellGap) / SlotLayout.MaxRows;
+            _cell = Mathf.Floor(Mathf.Max(16f, Mathf.Min(64f, Mathf.Min(byWidth, byHeight))));
+            float gridWidth = SlotLayout.Width * _cell + (SlotLayout.Width - 1) * CellGap;
+            float gridHeight = SlotLayout.MaxRows * _cell + (SlotLayout.MaxRows - 1) * CellGap;
+            _gridArea = Ui.Place(Ui.Child(_inventoryPanel, "Grid"), new Vector2(0.5f, 1f), new Vector2(0f, -(HeaderRule + 40f)), new Vector2(gridWidth, gridHeight));
             _gridArea.pivot = new Vector2(0.5f, 1f);
+
+            _slotsText = Label(_inventoryPanel, "Slots", FontRole.Label, 13f, t.TextFlavor, new Vector2(28f, -(HeaderRule + 10f)), new Vector2(200f, 20f), TextAlignmentOptions.Left);
+
+            // The filter: a small field that opens a list of categories.
+            var controls = Ui.Child(_controlsArea, "PanelControls");
+            controls.anchorMin = Vector2.zero;
+            controls.anchorMax = Vector2.one;
+            controls.offsetMin = new Vector2(0f, BarsBottom);
+            controls.offsetMax = new Vector2(0f, -BarsTop);
+            var filter = Ui.Place(Ui.Child(controls, "Filter"), new Vector2(InventoryShare, 1f),
+                new Vector2(-24f - Gap / 2f, -(HeaderRule + 6f)), new Vector2(150f, 26f));
+            filter.pivot = new Vector2(1f, 1f);
+            Frame.Dress(filter, _theme, "keycap_wide", "Windows", 26f);
+            _filterText = Ui.Text(filter, "Text", _theme, FontRole.Body, 15f, ThemeRuntime.ToUnity(t.TextTitle), TextAlignmentOptions.Center);
+            Ui.Fill((RectTransform)_filterText.transform, 8f, 0f, 8f, 0f);
+            Clickable(filter, "inventory filter", ToggleFilterList);
+            BuildFilterList(filter);
+            ShowFilter();
 
             var weight = Ui.Child(_inventoryPanel, "Weight");
             weight.anchorMin = new Vector2(0f, 0f);
             weight.anchorMax = new Vector2(1f, 0f);
             weight.pivot = new Vector2(0.5f, 0f);
-            weight.offsetMin = new Vector2(40f, 34f);
-            weight.offsetMax = new Vector2(-40f, 58f);
-            Label(weight, "Label", FontRole.Label, 14f, t.TextFlavor, new Vector2(0f, 0f), new Vector2(70f, 24f), TextAlignmentOptions.Left, anchor: new Vector2(0f, 0.5f)).text =
+            weight.offsetMin = new Vector2(30f, 26f);
+            weight.offsetMax = new Vector2(-30f, 50f);
+            Label(weight, "Label", FontRole.Label, 13f, t.TextFlavor, Vector2.zero, new Vector2(60f, 24f), TextAlignmentOptions.Left, anchor: new Vector2(0f, 0.5f)).text =
                 Localize("$genesisui_weight").ToUpperInvariant();
             var track = Ui.Child(weight, "Track");
             track.anchorMin = new Vector2(0f, 0.5f);
             track.anchorMax = new Vector2(1f, 0.5f);
-            track.offsetMin = new Vector2(80f, -3f);
-            track.offsetMax = new Vector2(-130f, 3f);
+            track.offsetMin = new Vector2(64f, -2f);
+            track.offsetMax = new Vector2(-104f, 2f);
             Ui.Image(track, null, new Color(0f, 0f, 0f, 0.55f));
             _weightFill = Ui.Image(Ui.Fill(Ui.Child(track, "Fill")), _theme.Sprite("bar_fill"), ThemeRuntime.ToUnity(t.AccentGold));
             _weightFill.type = Image.Type.Filled;
             _weightFill.fillMethod = Image.FillMethod.Horizontal;
-            _weightText = Label(weight, "Value", FontRole.Label, 15f, t.TextTitle, Vector2.zero, new Vector2(120f, 24f), TextAlignmentOptions.Right, anchor: new Vector2(1f, 0.5f));
+            _weightText = Label(weight, "Value", FontRole.Label, 14f, t.TextTitle, Vector2.zero, new Vector2(100f, 24f), TextAlignmentOptions.Right, anchor: new Vector2(1f, 0.5f));
 
             // Equipment: total protection (the slots arrive in F4.2b).
-            var armorLabel = Label(equipment, "ArmorLabel", FontRole.Label, 13f, t.TextFlavor, new Vector2(0f, 92f), new Vector2(300f, 20f), TextAlignmentOptions.Center, anchor: new Vector2(0.5f, 0f));
-            armorLabel.text = Localize("$genesisui_armor_total").ToUpperInvariant();
-            _armorText = Label(equipment, "Armor", FontRole.Display, 30f, t.TextTitle, new Vector2(0f, 50f), new Vector2(200f, 40f), TextAlignmentOptions.Center, anchor: new Vector2(0.5f, 0f));
+            Label(_equipmentPanel, "ArmorLabel", FontRole.Label, 12f, t.TextFlavor, new Vector2(0f, 70f), new Vector2(240f, 18f), TextAlignmentOptions.Center, anchor: new Vector2(0.5f, 0f)).text =
+                Localize("$genesisui_armor_total").ToUpperInvariant();
+            _armorText = Label(_equipmentPanel, "Armor", FontRole.Display, 26f, t.TextTitle, new Vector2(0f, 34f), new Vector2(160f, 34f), TextAlignmentOptions.Center, anchor: new Vector2(0.5f, 0f));
 
-            // Details: icon, name, vanilla's own tooltip text for the hovered item.
-            var iconRt = Ui.Place(Ui.Child(_detailsPanel, "Icon"), new Vector2(0.5f, 1f), new Vector2(0f, -86f), new Vector2(120f, 120f));
+            // Details: icon, name, and vanilla's own text for the hovered item.
+            var iconRt = Ui.Place(Ui.Child(_detailsPanel, "Icon"), new Vector2(0.5f, 1f), new Vector2(0f, -(HeaderRule + 20f)), new Vector2(96f, 96f));
             iconRt.pivot = new Vector2(0.5f, 1f);
             _detailIcon = Ui.Image(iconRt, null, Color.white);
             _detailIcon.preserveAspect = true;
             _detailIcon.enabled = false;
-            _detailName = Label(_detailsPanel, "Name", FontRole.Display, 20f, t.AccentGoldBright, new Vector2(0f, -218f), new Vector2(detailsWidth - 60f, 28f), TextAlignmentOptions.Center, anchor: new Vector2(0.5f, 1f));
-            _detailBody = Ui.Text(_detailsPanel, "Body", _theme, FontRole.Body, 17f, ThemeRuntime.ToUnity(t.TextBody), TextAlignmentOptions.TopLeft);
+            _detailName = Label(_detailsPanel, "Name", FontRole.Display, 17f, t.AccentGoldBright, new Vector2(0f, -(HeaderRule + 124f)), new Vector2(260f, 24f), TextAlignmentOptions.Center, anchor: new Vector2(0.5f, 1f));
+            _detailBody = Ui.Text(_detailsPanel, "Body", _theme, FontRole.Body, 15f, ThemeRuntime.ToUnity(t.TextBody), TextAlignmentOptions.TopLeft);
             _detailBody.textWrappingMode = TextWrappingModes.Normal;
             _detailBody.overflowMode = TextOverflowModes.Ellipsis;
             var body = (RectTransform)_detailBody.transform;
             body.anchorMin = new Vector2(0f, 0f);
             body.anchorMax = new Vector2(1f, 1f);
-            body.offsetMin = new Vector2(34f, 40f);
-            body.offsetMax = new Vector2(-34f, -256f);
+            body.offsetMin = new Vector2(26f, 30f);
+            body.offsetMax = new Vector2(-26f, -(HeaderRule + 156f));
         }
 
-        private RectTransform Panel(string name, float x, float width, float height, string titleToken)
+        /// <summary>
+        /// A panel over a share of the width: Diego's finest frame without its mid-edge diamonds
+        /// (R-048: unnecessary and misplaced), the title above the header rule and the whole tab marker
+        /// centred on that rule as its divider.
+        /// </summary>
+        private RectTransform Panel(RectTransform parent, string name, float from, float to, string titleToken)
         {
-            var rt = Ui.Place(Ui.Child(_root, name), new Vector2(0f, 1f), new Vector2(x, -Top), new Vector2(width, height));
-            rt.pivot = new Vector2(0f, 1f);
+            var rt = Ui.Child(parent, name);
+            rt.anchorMin = new Vector2(from, 0f);
+            rt.anchorMax = new Vector2(to, 1f);
+            rt.offsetMin = new Vector2(from > 0f ? Gap / 2f : 0f, 0f);
+            rt.offsetMax = new Vector2(to < 1f ? -Gap / 2f : 0f, 0f);
             Frame.Dress(rt, _theme, "window_panel", "Windows");
-            float k = 1f;
-            Frame.Ornament(rt, _theme, "window_panel_rule_knot", Edge.Top, k);
-            Frame.Ornament(rt, _theme, "window_panel_bottom_knot", Edge.Bottom, k);
-            Frame.Ornament(rt, _theme, "window_panel_knot_left", Edge.Left, k);
-            Frame.Ornament(rt, _theme, "window_panel_knot_right", Edge.Right, k);
-            var title = Label(rt, "Title", FontRole.Display, 20f, _theme.Tokens.AccentGoldBright, new Vector2(34f, -16f), new Vector2(width - 260f, 26f), TextAlignmentOptions.Left);
-            title.characterSpacing = 10f;
+
+            float rule = _theme.Inset("window_panel_rule_knot");
+            if (rule <= 0f) rule = 38f;
+            var title = Label(rt, "Title", FontRole.Display, 16f, _theme.Tokens.AccentGoldBright, new Vector2(0f, -(rule - 26f)), new Vector2(300f, 20f), TextAlignmentOptions.Center, anchor: new Vector2(0.5f, 1f));
+            title.characterSpacing = 8f;
             title.text = Localize(titleToken).ToUpperInvariant();
+
+            var marker = _theme.Sprite("tab_marker");
+            if (marker != null)
+            {
+                var mrt = Ui.Child(rt, "Divider");
+                mrt.anchorMin = new Vector2(0.2f, 1f);
+                mrt.anchorMax = new Vector2(0.8f, 1f);
+                mrt.pivot = new Vector2(0.5f, 0.5f);
+                mrt.anchoredPosition = new Vector2(0f, -rule);
+                mrt.sizeDelta = new Vector2(0f, 8f);
+                var img = Ui.Image(mrt, marker, Color.white);
+                img.pixelsPerUnitMultiplier = _theme.Size("tab_marker").y / 8f * Frame.CanvasScale(mrt);
+            }
             return rt;
         }
+
+        private void BuildFilterList(RectTransform field)
+        {
+            var t = _theme.Tokens;
+            const float row = 24f;
+            _filterList = Ui.Place(Ui.Child(field, "List"), new Vector2(0f, 0f), new Vector2(0f, -2f), new Vector2(150f, row * FilterTokens.Length + 12f));
+            _filterList.pivot = new Vector2(0f, 1f);
+            Frame.Dress(_filterList, _theme, "card", "Windows");
+            for (int i = 0; i < FilterTokens.Length; i++)
+            {
+                var choice = (Filter)i;
+                var rt = Ui.Place(Ui.Child(_filterList, "Option " + choice), new Vector2(0f, 1f), new Vector2(10f, -6f - i * row), new Vector2(130f, row));
+                rt.pivot = new Vector2(0f, 1f);
+                var text = Ui.Text(rt, "Text", _theme, FontRole.Body, 15f, ThemeRuntime.ToUnity(t.TextTitle), TextAlignmentOptions.Left);
+                Ui.Fill((RectTransform)text.transform, 6f, 0f, 0f, 0f);
+                text.text = Localize(FilterTokens[i]);
+                Clickable(rt, "filter option", () => SelectFilter(choice));
+            }
+            _filterList.gameObject.SetActive(false);
+        }
+
+        private static void Clickable(RectTransform rt, string what, Action onClick)
+        {
+            var hit = Ui.Image(Ui.Fill(Ui.Child(rt, "Hit")), null, new Color(0f, 0f, 0f, 0f), raycast: true);
+            var button = rt.gameObject.AddComponent<Button>();
+            button.targetGraphic = hit;
+            button.transition = Selectable.Transition.None;
+            button.onClick.AddListener(() => Guard.Try(what, onClick));
+        }
+
+        private void ToggleFilterList()
+        {
+            bool show = !_filterList.gameObject.activeSelf;
+            _filterList.gameObject.SetActive(show);
+            if (show) _filterList.SetAsLastSibling();
+            GenesisLog.Info("Module:win.inventory", "filter list " + (show ? "opened" : "closed"));
+        }
+
+        private void SelectFilter(Filter filter)
+        {
+            _filter = filter;
+            ShowFilter();
+            _filterList.gameObject.SetActive(false);
+            GenesisLog.Info("Module:win.inventory", "filter selected: " + filter);
+        }
+
+        private void ShowFilter() => _filterText.text = Localize(FilterTokens[(int)_filter]) + "  ◆";
 
         private TextMeshProUGUI Label(RectTransform parent, string name, FontRole role, float size, ColorRgba color, Vector2 position, Vector2 box,
                                      TextAlignmentOptions alignment, Vector2? anchor = null)
@@ -455,14 +596,6 @@ namespace GenesisUI.Modules.Windows
             rt.pivot = a;
             return text;
         }
-
-        private void NextFilter()
-        {
-            _filter = (Filter)(((int)_filter + 1) % FilterTokens.Length);
-            ShowFilter();
-        }
-
-        private void ShowFilter() => _filterText.text = Localize(FilterTokens[(int)_filter]) + "  ◆";
 
         private static string Localize(string text) => Localization.instance != null ? Localization.instance.Localize(text) : text;
     }

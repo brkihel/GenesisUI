@@ -182,24 +182,26 @@ def main(out_path):
         put(dressed("hotslot", 58, 58, fit=58), x, H - (90 + 58))
         text(x + 49, H - 90 - 8, t, font("Cinzel-SemiBold", 14), anchor="rs")
 
-    # Hotbar [Hotbar] OffsetY 20, bottom centre: eight single thin slots, no plate (R-046).
-    n, cs, gap = 8, 56, 6
-    pw = n * cs + (n - 1) * gap
-    px, ptop = W / 2 - pw / 2, H - (20 + cs)
-    for i in range(n):
-        x = px + i * (cs + gap)
-        put(dressed("hotslot", cs, cs, fit=cs), x, ptop)
-        text(x + 9, ptop + 10, str(i + 1), font("Cinzel-Medium", 13), anchor="lm")
+    # Hotbar [Hotbar] OffsetY 20, bottom centre: Diego's new eight-cell frame (R-048 test).
+    pw, ph = size("hotbar_frame")
+    px, ptop = W / 2 - pw / 2, H - (20 + ph)
+    put(dressed("hotbar_frame", pw, ph), px, ptop)
+    cl, cb, cr, ct = st.content("hotbar_frame", (32, 12, 32, 12))
+    gap = st.meta["hotbar_frame"].get("gap", 4)
+    cw, chh = (pw - cl - cr - 7 * gap) / 8, ph - cb - ct
+    for i in range(8):
+        x = px + cl + i * (cw + gap)
+        text(x + cw * 0.14, ptop + ct + chh * 0.18, str(i + 1), font("Cinzel-Medium", 13), anchor="lm")
         state = {0: "hotslot_equipped", 2: "hotslot_selected"}.get(i)
         if state:
             sw_, sh_ = size(state)
             scl, sbt, scr, sct = st.content(state, (0, 0, 0, 0))
-            kk = cs / (sw_ - scl - scr)
-            put(st.img(state).resize((int(sw_ * kk), int(sh_ * kk)), Image.LANCZOS), x - scl * kk, ptop - sct * kk)
+            kk = cw / (sw_ - scl - scr)
+            put(st.img(state).resize((int(sw_ * kk), int(sh_ * kk)), Image.LANCZOS), x - scl * kk, ptop + ct - sct * kk)
 
     # Stamina readout [Sprint] OffsetY 142: Diego's frame, 220 wide at its own proportions.
     fw, fh = size("sprint_frame")
-    k = 220 / fw
+    k = 1.0
     sw, sh = int(fw * k), int(fh * k)
     sx, stop = W / 2 - sw / 2, H - (142 + sh)
     frame_img = dressed("sprint_frame", sw, sh)
@@ -321,67 +323,67 @@ def window_mock(out_path):
         text(x + w / 2, cy, label, font("Cinzel-Medium", 13))
         return w
 
-    margin, top, bar_h = 36, 18, 72
-    bw = W - 2 * margin
-    bg.alpha_composite(dressed("window_topbar", bw, bar_h, fit=bar_h), (margin, top))
+    # Match WindowCanvas (65% of both axes), WindowShell and InventoryWindowModule.
+    area_w, area_h = int(W * 0.65), int(H * 0.65)
+    side_, area_top = (W - area_w) // 2, (H - area_h) // 2
+    top, bar_h, bw = area_top, 64, area_w
+    bg.alpha_composite(dressed("window_topbar", bw, bar_h, fit=bar_h), (side_, top))
     k = bar_h / size("window_topbar")[1]
     cl, cb, cr, ct = (v * k for v in st.content("window_topbar", (150, 12, 150, 12)))
-    key(margin + cl + 4, top + bar_h / 2, "Q")
-    x0, x1 = margin + cl + 44, margin + bw - cr - 44
-    key(margin + bw - cr + 4 - 26, top + bar_h / 2, "E")
+    key(side_ + cl + 4, top + bar_h / 2, "Q")
+    x0, x1 = side_ + cl + 44, side_ + bw - cr - 44
+    key(side_ + bw - cr + 4 - 26, top + bar_h / 2, "E")
     tabs = [("icon_inventory", "INVENTÁRIO"), ("icon_skills", "HABILIDADES"), ("icon_map", "MAPA"), ("icon_crafting", "CRIAÇÃO"),
             ("icon_achievements", "CONQUISTAS"), ("icon_settings", "CONFIGURAÇÕES")]
     tw = (x1 - x0) / len(tabs)
-    dh = bar_h - cb - ct - 6
-    dw, dhh = size("window_divider")
+    kw, kh = size("tab_knot")
     for i, (ic, label) in enumerate(tabs):
         cx = x0 + tw * (i + 0.5)
         icon(ic, cx, top + ct + 3, 24)
         text(cx, top + bar_h - cb - 12, label, font("Cinzel-Medium", 14), fill=(247, 226, 131, 255) if i == 0 else (186, 153, 92, 255))
-        div = st.img("window_divider").resize((max(1, int(dw * dh / dhh)), int(dh)), Image.LANCZOS)
-        bg.alpha_composite(div, (int(x0 + tw * i - div.width / 2), int(top + bar_h / 2 - dh / 2)))
+        if i:
+            knot = st.img("tab_knot").resize((max(1, int(kw * 8 / kh)), 8), Image.LANCZOS)
+            bg.alpha_composite(knot, (int(x0 + tw * i - knot.width / 2), int(top + bar_h / 2 - 4)))
         if i == 0:
             m = st.nine("tab_marker", int(tw * 0.76), 10, 10 / size("tab_marker")[1])
             bg.alpha_composite(m, (int(x0 + tw * 0.12), int(top + bar_h - cb - 7)))
 
     # Inventory tab (F4.2a): three panels between the bars, vanilla's slots dressed on the grid.
-    top_, bottom_, side_, gap_ = 100, 76, 36, 10
-    ph = H - top_ - bottom_
-    widths = [900, 470, W - 2 * side_ - 900 - 470 - 2 * gap_]
+    top_, gap_ = area_top + 72, 8
+    ph = area_h - 72 - 54
+    shares = [0.47, 0.25, 0.28]
+    widths = [int(area_w * shares[0] - gap_ / 2), int(area_w * shares[1] - gap_),
+              int(area_w * shares[2] - gap_ / 2)]
     titles = ["INVENTÁRIO", "EQUIPAMENTO", "DETALHES DO ITEM"]
     x = side_
-    k1 = 1.0
     for w, ttl in zip(widths, titles):
         bg.alpha_composite(dressed("window_panel", w, ph), (int(x), top_))
-        for name, edge in (("window_panel_rule_knot", "top"), ("window_panel_bottom_knot", "bottom"),
-                           ("window_panel_knot_left", "left"), ("window_panel_knot_right", "right")):
-            ow, oh = size(name)
-            ins = st.meta[name].get("inset", 0)
-            cx, cy = {"left": (ins, ph / 2), "right": (w - ins, ph / 2), "top": (w / 2, ins), "bottom": (w / 2, ph - ins)}[edge]
-            bg.alpha_composite(st.img(name).resize((ow, oh), Image.LANCZOS), (int(x + cx - ow / 2), int(top_ + cy - oh / 2)))
-        text(x + 34, top_ + 29, ttl, font("Cinzel-SemiBold", 20), fill=(247, 226, 131, 255), anchor="lm")
+        rule = st.meta["window_panel_rule_knot"].get("inset", 38)
+        text(x + w / 2, top_ + rule - 26 + 10, ttl, font("Cinzel-SemiBold", 16), fill=(247, 226, 131, 255))
+        marker = st.nine("tab_marker", int(w * 0.6), 8, 8 / size("tab_marker")[1])
+        bg.alpha_composite(marker, (int(x + w * 0.2), int(top_ + rule - 4)))
         x += w + gap_
-    cell, cg = 74, 8
+    cell, cg = min(64, int((widths[0] - 60 - 7 * 6) / 8)), 6
     gw = 8 * cell + 7 * cg
-    gx0, gy0 = side_ + 900 / 2 - gw / 2, top_ + 64 + 26
-    text(side_ + 34, top_ + 68, "17/32", font("Cinzel-Medium", 13), fill=(186, 153, 92, 255), anchor="lm")
-    bg.alpha_composite(dressed("keycap_wide", 170, 30, fit=30), (int(side_ + 900 - 36 - 170), top_ + 18))
-    text(side_ + 900 - 36 - 85, top_ + 33, "Todos  ◆", font("CormorantGaramond-SemiBold", 16))
+    gx0, gy0 = side_ + widths[0] / 2 - gw / 2, top_ + 80
+    text(side_ + 28, top_ + 50, "17/32", font("Cinzel-Medium", 13), fill=(186, 153, 92, 255), anchor="lm")
+    bg.alpha_composite(dressed("keycap_wide", 150, 26, fit=26), (int(side_ + widths[0] - 24 - 150), top_ + 46))
+    text(side_ + widths[0] - 24 - 75, top_ + 59, "Todos  ◆", font("CormorantGaramond-SemiBold", 15))
     for r in range(4):
         for c in range(8):
             bg.alpha_composite(dressed("hotslot", cell, cell, fit=cell), (int(gx0 + c * (cell + cg)), int(gy0 + r * (cell + cg))))
-    wy = top_ + ph - 34 - 12
-    text(side_ + 40, wy, "PESO", font("Cinzel-Medium", 14), fill=(186, 153, 92, 255), anchor="lm")
-    ImageDraw.Draw(bg).rectangle((side_ + 120, wy - 3, side_ + 900 - 170, wy + 3), fill=(0, 0, 0, 140))
-    ImageDraw.Draw(bg).rectangle((side_ + 120, wy - 3, side_ + 120 + (900 - 290) * 0.7, wy + 3), fill=(190, 140, 60, 255))
-    text(side_ + 900 - 40, wy, "151 / 300", font("Cinzel-Medium", 15), anchor="rm")
-    ex = side_ + 900 + gap_
-    text(ex + 235, top_ + ph - 92 - 10, "PROTEÇÃO TOTAL", font("Cinzel-Medium", 13), fill=(186, 153, 92, 255))
-    text(ex + 235, top_ + ph - 50 - 20, "24", font("Cinzel-SemiBold", 30))
+    wy = top_ + ph - 38
+    text(side_ + 30, wy, "PESO", font("Cinzel-Medium", 13), fill=(186, 153, 92, 255), anchor="lm")
+    ImageDraw.Draw(bg).rectangle((side_ + 94, wy - 2, side_ + widths[0] - 104, wy + 2), fill=(0, 0, 0, 140))
+    ImageDraw.Draw(bg).rectangle((side_ + 94, wy - 2, side_ + 94 + (widths[0] - 198) * 0.7, wy + 2), fill=(190, 140, 60, 255))
+    text(side_ + widths[0] - 30, wy, "151 / 300", font("Cinzel-Medium", 14), anchor="rm")
+    ex = side_ + widths[0] + gap_
+    text(ex + widths[1] / 2, top_ + ph - 70, "PROTEÇÃO TOTAL", font("Cinzel-Medium", 12), fill=(186, 153, 92, 255))
+    text(ex + widths[1] / 2, top_ + ph - 42, "24", font("Cinzel-SemiBold", 26))
 
-    hint_h = 52
-    hy = H - 14 - hint_h
-    bg.alpha_composite(dressed("window_hintbar", bw, hint_h, fit=hint_h), (margin, hy))
+    hint_h = 46
+    hy = area_top + area_h - hint_h
+    bg.alpha_composite(dressed("window_hintbar", bw, hint_h, fit=hint_h), (side_, hy))
     items = [("Esc", None, "Fechar"), (None, "icon_mouse_left", "Mover"), (None, "icon_mouse_right", "Usar / Equipar"),
              ("Shift", "icon_mouse_left", "Dividir pilha"), ("Ctrl", "icon_mouse_left", "Transferir"), ("Q/E", None, "Abas")]
     f = font("CormorantGaramond-SemiBold", 17)

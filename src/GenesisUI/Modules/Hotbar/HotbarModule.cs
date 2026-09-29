@@ -78,20 +78,9 @@ namespace GenesisUI.Modules.Hotbar
             // Diego's eight-cell bar is one fixed piece (D-027): drawn at its own proportions, the
             // cells sit where the art draws them (content area split by the declared gap).
             var drawn = theme.Size("hotbar_frame");
-            if (theme.Sprite("hotslot") != null)
-            {
-                // Eight single, thin slots with no plate around them (Diego, R-046: the eight-cell
-                // plate was too heavy). Each slot carries its own frame and background.
-                float width = SlotCount * SlotSize + (SlotCount - 1) * SlotGap;
-                _plate = Ui.Place(Ui.Child(context.Root, "Hotbar"), new Vector2(0.5f, 0f), Vector2.zero, new Vector2(width, SlotSize));
-                for (int i = 0; i < SlotCount; i++)
-                {
-                    var pos = new Vector2(i * (SlotSize + SlotGap), 0f);
-                    _slots[i] = new SlotView(_plate, "Slot" + (i + 1), theme, Vector2.zero, pos, new Vector2(SlotSize, SlotSize),
-                                             (i + 1).ToString(), "hotslot", "Hotbar");
-                }
-            }
-            else if (drawn.x > 0f)
+            // Diego's new eight-cell frame first (R-048 test); the single thin slots of 0.7.0-preview.4
+            // (tag hotbar-minimal-v1) stay as the fallback.
+            if (drawn.x > 0f)
             {
                 _plate = Ui.Place(Ui.Child(context.Root, "Hotbar"), new Vector2(0.5f, 0f), Vector2.zero, drawn);
                 Frame.Dress(_plate, theme, "hotbar_frame", "Hotbar");
@@ -102,6 +91,19 @@ namespace GenesisUI.Modules.Hotbar
                 {
                     var pos = new Vector2(c.x + i * (cell.x + gap), c.y);
                     _slots[i] = new SlotView(_plate, "Slot" + (i + 1), theme, Vector2.zero, pos, cell, (i + 1).ToString(), null, "Hotbar");
+                }
+            }
+            else if (theme.Sprite("hotslot") != null)
+            {
+                // Eight single, thin slots with no plate around them (Diego, R-046: the eight-cell
+                // plate was too heavy). Each slot carries its own frame and background.
+                float width = SlotCount * SlotSize + (SlotCount - 1) * SlotGap;
+                _plate = Ui.Place(Ui.Child(context.Root, "Hotbar"), new Vector2(0.5f, 0f), Vector2.zero, new Vector2(width, SlotSize));
+                for (int i = 0; i < SlotCount; i++)
+                {
+                    var pos = new Vector2(i * (SlotSize + SlotGap), 0f);
+                    _slots[i] = new SlotView(_plate, "Slot" + (i + 1), theme, Vector2.zero, pos, new Vector2(SlotSize, SlotSize),
+                                             (i + 1).ToString(), "hotslot", "Hotbar");
                 }
             }
             else

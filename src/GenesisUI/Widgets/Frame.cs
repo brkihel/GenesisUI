@@ -37,25 +37,25 @@ namespace GenesisUI.Widgets
         }
 
         /// <summary>
-        /// Sliced and tiled sprites are sized by the canvas's reference pixels per unit. The art is laid
-        /// out on the HUD's canvas; Jötunn's GUI canvases use 50 (GUIManager.CreateCustomGUI), which drew
-        /// every 9-slice border of the window bars at another size (R-046: they looked stretched). This
-        /// returns the factor that keeps borders as they are on the HUD's canvas, whatever canvas holds them.
+        /// Sliced and tiled sprites are sized by the canvas's reference pixels per unit: our sprites are
+        /// authored for 100 (200 px per unit at 2x, 2 px per design unit). A canvas with another
+        /// reference (Jötunn's GUI canvases use 50) draws every 9-slice border at another size, which
+        /// made the window bars look stretched (R-046, R-048). This is the multiplier that keeps borders
+        /// at their design size on any canvas.
         /// </summary>
         public static float CanvasScale(Transform t)
         {
             var canvas = t.GetComponentInParent<Canvas>();
             if (canvas == null) return 1f;
             float reference = canvas.rootCanvas.referencePixelsPerUnit;
-            float hud = HudReference();
-            return reference > 0f && hud > 0f ? reference / hud : 1f;
+            return reference > 0f ? reference / 100f : 1f;
         }
 
-        private static float HudReference()
+        /// <summary>The root canvas's reference pixels per unit, for the logs.</summary>
+        public static float CanvasReference(Transform t)
         {
-            var hud = Hud.instance != null ? Hud.instance.m_rootObject : null;
-            var canvas = hud != null ? hud.GetComponentInParent<Canvas>() : null;
-            return canvas != null ? canvas.rootCanvas.referencePixelsPerUnit : 100f;
+            var canvas = t.GetComponentInParent<Canvas>();
+            return canvas != null ? canvas.rootCanvas.referencePixelsPerUnit : -1f;
         }
 
         /// <summary>The panel material clipped to the frame's silhouette; null when the art has none.</summary>

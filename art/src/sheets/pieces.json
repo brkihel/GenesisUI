@@ -91,14 +91,14 @@
    0
   ],
   "content": [
-   42,
-   16,
-   42,
-   16
+   27,
+   9,
+   27,
+   10
   ],
   "from": "hotbar_frame",
-  "gap": 10,
-  "sheet": 4
+  "gap": 6,
+  "sheet": 200
  },
  "hotbar_frame_shape": {
   "border": [
@@ -108,23 +108,23 @@
    0
   ],
   "from": "hotbar_frame",
-  "sheet": 4
+  "sheet": 200
  },
  "hotslot": {
   "border": [
-   10,
-   11,
-   10,
-   11
+   15,
+   15,
+   15,
+   15
   ],
   "content": [
-   5,
-   5,
-   5,
-   5
+   6,
+   6,
+   6,
+   6
   ],
   "from": "hotslot",
-  "sheet": 103
+  "sheet": 200
  },
  "hotslot_equipped": {
   "border": [
@@ -134,13 +134,13 @@
    0
   ],
   "content": [
+   7,
    8,
-   8,
-   8,
+   7,
    8
   ],
   "from": "hotslot_equipped",
-  "sheet": 103
+  "sheet": 200
  },
  "hotslot_equipped_opening": {
   "border": [
@@ -150,7 +150,7 @@
    0
   ],
   "from": "hotslot_equipped",
-  "sheet": 103
+  "sheet": 200
  },
  "hotslot_equipped_shape": {
   "border": [
@@ -160,7 +160,7 @@
    0
   ],
   "from": "hotslot_equipped",
-  "sheet": 103
+  "sheet": 200
  },
  "hotslot_selected": {
   "border": [
@@ -170,13 +170,13 @@
    0
   ],
   "content": [
-   8,
-   8,
-   8,
-   8
+   6,
+   7,
+   6,
+   7
   ],
   "from": "hotslot_selected",
-  "sheet": 103
+  "sheet": 200
  },
  "hotslot_selected_opening": {
   "border": [
@@ -186,7 +186,7 @@
    0
   ],
   "from": "hotslot_selected",
-  "sheet": 103
+  "sheet": 200
  },
  "hotslot_selected_shape": {
   "border": [
@@ -196,17 +196,17 @@
    0
   ],
   "from": "hotslot_selected",
-  "sheet": 103
+  "sheet": 200
  },
  "hotslot_shape": {
   "border": [
-   10,
-   11,
-   10,
-   11
+   15,
+   15,
+   15,
+   15
   ],
   "from": "hotslot",
-  "sheet": 103
+  "sheet": 200
  },
  "icon_achievements": {
   "border": [
@@ -508,29 +508,29 @@
  },
  "map_banner": {
   "border": [
-   19,
-   11,
-   19,
-   11
+   12,
+   7,
+   12,
+   7
   ],
   "content": [
-   13,
-   6,
-   13,
-   6
+   10,
+   5,
+   10,
+   5
   ],
   "from": "map_banner",
-  "sheet": 4
+  "sheet": 200
  },
  "map_banner_shape": {
   "border": [
-   19,
-   11,
-   19,
-   11
+   12,
+   7,
+   12,
+   7
   ],
   "from": "map_banner",
-  "sheet": 4
+  "sheet": 200
  },
  "map_crest": {
   "border": [
@@ -577,13 +577,13 @@
    0
   ],
   "content": [
-   16,
-   16,
-   16,
-   16
+   12,
+   12,
+   12,
+   12
   ],
   "from": "map_ring",
-  "sheet": 2
+  "sheet": 200
  },
  "map_ring_opening": {
   "border": [
@@ -593,7 +593,17 @@
    0
   ],
   "from": "map_ring",
-  "sheet": 2
+  "sheet": 200
+ },
+ "map_ring_shape": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "map_ring",
+  "sheet": 200
  },
  "notice_plate": {
   "border": [
@@ -738,13 +748,13 @@
    0
   ],
   "content": [
-   28,
-   12,
-   28,
-   12
+   13,
+   5,
+   13,
+   5
   ],
   "from": "sprint_frame",
-  "sheet": 3
+  "sheet": 200
  },
  "sprint_frame_opening": {
   "border": [
@@ -754,7 +764,7 @@
    0
   ],
   "from": "sprint_frame",
-  "sheet": 3
+  "sheet": 200
  },
  "sprint_frame_shape": {
   "border": [
@@ -764,7 +774,27 @@
    0
   ],
   "from": "sprint_frame",
-  "sheet": 3
+  "sheet": 200
+ },
+ "tab_knot": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "tab_knot",
+  "sheet": 101
+ },
+ "tab_knot_shape": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "tab_knot",
+  "sheet": 101
  },
  "tab_marker": {
   "border": [
@@ -820,13 +850,13 @@
    0
   ],
   "content": [
-   10,
-   21,
-   10,
-   21
+   6,
+   16,
+   7,
+   16
   ],
   "from": "vital_health",
-  "sheet": 3
+  "sheet": 200
  },
  "vital_health_opening": {
   "border": [
@@ -836,7 +866,7 @@
    0
   ],
   "from": "vital_health",
-  "sheet": 3
+  "sheet": 200
  },
  "vital_health_shape": {
   "border": [
@@ -846,7 +876,7 @@
    0
   ],
   "from": "vital_health",
-  "sheet": 3
+  "sheet": 200
  },
  "vital_stamina": {
   "border": [
@@ -856,13 +886,13 @@
    0
   ],
   "content": [
-   10,
-   20,
-   9,
-   20
+   6,
+   14,
+   6,
+   14
   ],
   "from": "vital_stamina",
-  "sheet": 3
+  "sheet": 200
  },
  "vital_stamina_opening": {
   "border": [
@@ -872,7 +902,7 @@
    0
   ],
   "from": "vital_stamina",
-  "sheet": 3
+  "sheet": 200
  },
  "vital_stamina_shape": {
   "border": [
@@ -882,7 +912,7 @@
    0
   ],
   "from": "vital_stamina",
-  "sheet": 3
+  "sheet": 200
  },
  "window_divider": {
   "border": [

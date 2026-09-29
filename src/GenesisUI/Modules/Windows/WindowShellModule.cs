@@ -36,11 +36,8 @@ namespace GenesisUI.Modules.Windows
     [GameContract("assembly_valheim", "KeyHints", "instance")]
     internal sealed class WindowShellModule : IUiModule
     {
-        private const float Margin = 36f;
-        private const float TopY = 18f;
-        private const float BottomY = 14f;
-        private const float BarHeight = 72f;
-        private const float HintHeight = 52f;
+        private const float BarHeight = 64f;
+        private const float HintHeight = 46f;
         private const float FadeSpeed = 8f;
 
         private static readonly string[] NoRegions = new string[0];
@@ -65,6 +62,7 @@ namespace GenesisUI.Modules.Windows
         private RectTransform _root;
         private CanvasGroup _fade;
         private RectTransform _settingsPage;
+        private RectTransform _area;
         private Tab _active = Tab.Inventory;
         private bool _wasVisible;
         private bool _mapFromTab;
@@ -102,27 +100,35 @@ namespace GenesisUI.Modules.Windows
         public void Build(ModuleContext context)
         {
             _theme = context.Theme;
-            var front = GUIManager.CustomGUIFront;
-            if (front == null) throw new System.InvalidOperationException("Jötunn's CustomGUIFront is not ready");
+            _wasVisible = false;
+            // The bars are built on vanilla's inventory canvas as soon as it exists (EnsureBuilt).
+        }
 
-            // Its own root on Jötunn's front GUI canvas (it has a raycaster: the tabs are clicked),
-            // destroyed in Teardown like any module object.
-            _root = Ui.Fill(Ui.Child(front.transform, "GenesisUI.WindowShell"));
+        /// <summary>
+        /// On vanilla's own inventory canvas, in front of InventoryGui (R-048: Jötunn's canvas drew the
+        /// 9-slice ends at another size, and one shared canvas keeps clicks and scale consistent).
+        /// Rebuilt if a scene change destroyed it.
+        /// </summary>
+        private bool EnsureBuilt(InventoryGui gui)
+        {
+            if (_root != null) return true;
+            if (gui == null) return false;
+            _root = WindowCanvas.CreateRoot(gui, "GenesisUI.WindowShell", behind: false);
+            if (_root == null) return false;
             _fade = _root.gameObject.AddComponent<CanvasGroup>();
             _fade.alpha = 0f;
-            GenesisLog.Info("Module:win.shell", "window canvas scale " + Frame.CanvasScale(_root).ToString("0.###",
-                System.Globalization.CultureInfo.InvariantCulture) + " (reference pixels per unit relative to the HUD's)");
+            _area = WindowCanvas.Area(_root, "Area");
             BuildTopBar();
             BuildHintBar();
             BuildSettingsPage();
             _root.gameObject.SetActive(false);
-            _wasVisible = false;
+            return true;
         }
 
         public void Refresh(float deltaSeconds)
         {
-            if (_root == null) return;
             var gui = InventoryGui.instance;
+            if (!EnsureBuilt(gui)) return;
             bool mapOpen = global::Minimap.IsOpen();
             bool visible = gui != null && InventoryGui.IsVisible() && Player.m_localPlayer != null && !mapOpen;
 
@@ -181,6 +187,7 @@ namespace GenesisUI.Modules.Windows
             _mapFromTab = false;
             if (_root != null) Object.Destroy(_root.gameObject);
             _root = null;
+            _area = null;
             _settingsPage = null;
         }
 
@@ -269,12 +276,12 @@ namespace GenesisUI.Modules.Windows
         private void BuildTopBar()
         {
             var t = _theme.Tokens;
-            var bar = Ui.Child(_root, "TopBar");
+            var bar = Ui.Child(_area, "TopBar");
             bar.anchorMin = new Vector2(0f, 1f);
             bar.anchorMax = new Vector2(1f, 1f);
             bar.pivot = new Vector2(0.5f, 1f);
-            bar.offsetMin = new Vector2(Margin, -TopY - BarHeight);
-            bar.offsetMax = new Vector2(-Margin, -TopY);
+            bar.offsetMin = new Vector2(0f, -BarHeight);
+            bar.offsetMax = new Vector2(0f, 0f);
             Frame.Dress(bar, _theme, "window_topbar", "Windows", BarHeight);
 
             var drawn = _theme.Size("window_topbar");
@@ -301,14 +308,16 @@ namespace GenesisUI.Modules.Windows
                 cell.offsetMin = cell.offsetMax = Vector2.zero;
                 _tabs[i] = TabCell(cell, Tabs[i].Icon, Tabs[i].Token, Tabs[i].Tab);
 
-                var divider = _theme.Sprite("window_divider");
-                if (divider != null)
+                // Between tabs: the tab marker's own knot, small as a dot (Diego, R-048: the tall divider
+                // looked stretched). None before the first tab.
+                var knot = _theme.Sprite("tab_knot");
+                if (knot != null && i > 0)
                 {
-                    var d = _theme.Size("window_divider");
-                    float h = BarHeight - c.y - c.w - 6f;
-                    var drt = Ui.Place(Ui.Child(strip, "Divider" + i), new Vector2(x0, 0.5f), Vector2.zero, new Vector2(d.x * h / Mathf.Max(1f, d.y), h));
+                    var d = _theme.Size("tab_knot");
+                    float h = 8f;
+                    var drt = Ui.Place(Ui.Child(strip, "Knot" + i), new Vector2(x0, 0.5f), Vector2.zero, new Vector2(d.x * h / Mathf.Max(1f, d.y), h));
                     drt.pivot = new Vector2(0.5f, 0.5f);
-                    Ui.Image(drt, divider, Color.white);
+                    Ui.Image(drt, knot, Color.white);
                 }
             }
             Show(Tab.Inventory);
@@ -361,12 +370,12 @@ namespace GenesisUI.Modules.Windows
 
         private void BuildHintBar()
         {
-            var bar = Ui.Child(_root, "HintBar");
+            var bar = Ui.Child(_area, "HintBar");
             bar.anchorMin = new Vector2(0f, 0f);
             bar.anchorMax = new Vector2(1f, 0f);
             bar.pivot = new Vector2(0.5f, 0f);
-            bar.offsetMin = new Vector2(Margin, BottomY);
-            bar.offsetMax = new Vector2(-Margin, BottomY + HintHeight);
+            bar.offsetMin = new Vector2(0f, 0f);
+            bar.offsetMax = new Vector2(0f, HintHeight);
             Frame.Dress(bar, _theme, "window_hintbar", "Windows", HintHeight);
 
             var drawn = _theme.Size("window_hintbar");
@@ -443,7 +452,7 @@ namespace GenesisUI.Modules.Windows
         private void BuildSettingsPage()
         {
             // GenesisUI's own settings live here from F4.4; until then the tab says so.
-            _settingsPage = Ui.Place(Ui.Child(_root, "Settings"), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(620f, 180f));
+            _settingsPage = Ui.Place(Ui.Child(_area, "Settings"), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(620f, 180f));
             Frame.Dress(_settingsPage, _theme, "card", "Windows");
             var text = Ui.Text(_settingsPage, "Soon", _theme, FontRole.Body, 20f, ThemeRuntime.ToUnity(_theme.Tokens.TextTitle), TextAlignmentOptions.Center, outlined: true);
             Ui.Fill((RectTransform)text.transform, 30f, 20f, 30f, 20f);

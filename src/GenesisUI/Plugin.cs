@@ -77,6 +77,7 @@ namespace GenesisUI
             {
                 BindConfig();
                 Gameplay.InventorySettings.Bind(Config);
+                Widgets.WindowCanvas.Bind(Config);
 
                 var missing = ContractResolver.Missing(typeof(Plugin));
                 if (missing.Count > 0)

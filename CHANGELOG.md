@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.7.0-preview.5 — R-048 inventory and HUD corrections
+
+### Changed
+- The inventory shell and panels occupy 65% of the screen width and height by default, on
+  vanilla's inventory canvas. The tab and hint bars are shorter. Panel mid-edge ornaments are
+  removed; each title has the full tab marker beneath it, and small marker knots divide tabs.
+- Inventory cells now receive a separate thin frame below vanilla item icons. The filter opens
+  a category list on a control layer in front of vanilla; selecting a category dims other items
+  in place. All changed vanilla objects are restored when the module is turned off or faults.
+- Diego's neutral replacement art is used for the hotbar, slot states, vertical bars, central
+  stamina bar and minimap pieces. The new eight-cell hotbar is being tested; the approved thin
+  slot version is preserved at git tag `hotbar-minimal-v1`. Equipped cells use gold, without green.
+- The central stamina bar uses its larger drawn width, a shorter and fainter trail, and a burn
+  edge. Hostile enemy health bars use the health liquid and fill more of the plate's channel.
+
+### Verification
+- Automated Core and contract tests pass; the new canvas, clicks and art still need an in-game
+  check (R-049).
+
 ## 0.7.0-preview.4 — F4.2a (part 2): the inventory window
 
 ### Added

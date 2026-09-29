@@ -126,7 +126,7 @@ namespace GenesisUI.Modules.Minimap
 
             var ring = theme.Sprite("map_ring");
             if (ring != null)
-                Ui.Image(Ui.Place(Ui.Child(_group, "Ring"), new Vector2(0.5f, 0f), Vector2.zero, new Vector2(RingSize, RingSize)), ring, Color.white);
+                Ui.Image(Ui.Place(Ui.Child(_group, "Ring"), new Vector2(0.5f, 0f), Vector2.zero, new Vector2(RingSize, RingSize)), ring, Color.white).preserveAspect = true;
 
             var north = Ui.Text(_group, "North", theme, FontRole.Display, 13f, ThemeRuntime.ToUnity(t.AccentGoldBright), TextAlignmentOptions.Center, outlined: true);
             Ui.Place((RectTransform)north.transform, new Vector2(0.5f, 0f), new Vector2(0f, RingSize - 40f), new Vector2(30f, 18f));

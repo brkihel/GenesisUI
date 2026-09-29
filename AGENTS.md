@@ -14,9 +14,10 @@ is unclear, ask; do not guess.
   Diego approved the revision and confirmed the concept's rights (D-025/D-026). Order after that: F5 menus (main and Esc),
   F6 map, F7 Extension API and adapters, F8 optional gameplay package, F9 switch-over
   (D-024). Do not start API or adapter work before the vanilla UI is done.
-- **Version:** 0.7.0, last package `0.7.0-preview.4` (F4.2a part 2: inventory window in the
-  concept layout over vanilla's, `VanillaSkin`) with script R-048; R-047 also pending.
-  Inventory requirements in `docs/GAMEPLAY.md` §1. Next: F4.2b equipment panel, F4.2c
+- **Version:** 0.7.0, last package `0.7.0-preview.5` (R-048 visual and interaction fixes)
+  with script R-049; requires Diego's in-game check. The minimal hotbar from preview.4 is
+  preserved at git tag `hotbar-minimal-v1`. Inventory requirements in `docs/GAMEPLAY.md` §1.
+  Next: F4.2b equipment panel, F4.2c
   quick/utility + HUD row + sort, containers dressed, F4.2d modded slots, F4.3 crafting.
 - **Art direction:** gold only (D-023). The carved-wood style was tried and rejected; do not
   propose another style unless Diego asks.

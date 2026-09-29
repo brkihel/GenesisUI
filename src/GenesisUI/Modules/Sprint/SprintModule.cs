@@ -34,6 +34,8 @@ namespace GenesisUI.Modules.Sprint
         private Image _trail;
         private Image _fill;
         private RectTransform _liquidMask;
+        private RectTransform _burnRt;
+        private RawImage _burn;
         private LiquidLayer _liquid;
         private BarAnimator _bar;
         private float _linger;
@@ -72,7 +74,7 @@ namespace GenesisUI.Modules.Sprint
             var fillSprite = theme.Sprite("bar_fill");
             var stamina = ThemeRuntime.ToUnity(theme.Tokens.BarStamina);
             _trail = Ui.Image(Ui.Fill(Ui.Child(track, "Trail")), fillSprite,
-                new Color(stamina.r, stamina.g, stamina.b, theme.Tokens.BarTrailAlpha));
+                new Color(stamina.r, stamina.g, stamina.b, theme.Tokens.BarTrailAlpha * 0.35f)); // a faint trail (R-048)
             _trail.type = Image.Type.Filled;
             _trail.fillMethod = Image.FillMethod.Horizontal;
             _trail.fillAmount = 0f;
@@ -97,6 +99,21 @@ namespace GenesisUI.Modules.Sprint
                 flow.pivot = new Vector2(0f, 0.5f);
                 _liquid = new LiquidLayer(flow, liquid, area, theme.Size("liquid_stamina_h"), 1.2f, Color.white,
                     new Vector2(0.02f, 0f), new Vector2(0f, 0.35f), mirror: false);
+            }
+
+            // The burn: a short hot edge where stamina is being spent, like the vertical bars'.
+            var burnTex = theme.Texture("bar_burn");
+            if (burnTex != null)
+            {
+                _burnRt = Ui.Child(track, "Burn");
+                _burnRt.anchorMin = new Vector2(0f, 0f);
+                _burnRt.anchorMax = new Vector2(0f, 1f);
+                _burnRt.offsetMin = _burnRt.offsetMax = Vector2.zero;
+                _burn = _burnRt.gameObject.AddComponent<RawImage>();
+                _burn.texture = burnTex;
+                _burn.color = new Color(1f, 0.93f, 0.62f, 0.9f);
+                _burn.raycastTarget = false;
+                _burn.uvRect = new Rect(0f, 0f, 1f, 1f);
             }
 
             _bar = new BarAnimator();
@@ -144,6 +161,21 @@ namespace GenesisUI.Modules.Sprint
             }
 
             if (!Mathf.Approximately(_trail.fillAmount, _bar.Slow)) _trail.fillAmount = _bar.Slow;
+            if (_burn != null)
+            {
+                // Only a short edge above the level, never a long band (as the vertical bars, R-040).
+                float to = Mathf.Min(_bar.Slow, _bar.Fast + 0.035f);
+                bool burning = to > _bar.Fast + 0.002f;
+                if (_burn.enabled != burning) _burn.enabled = burning;
+                if (burning)
+                {
+                    _burnRt.anchorMin = new Vector2(_bar.Fast, 0f);
+                    _burnRt.anchorMax = new Vector2(to, 1f);
+                    var uv = _burn.uvRect;
+                    uv.x = Mathf.Repeat(uv.x + deltaSeconds * 0.35f, 1f);
+                    _burn.uvRect = uv;
+                }
+            }
         }
 
         /// <summary>
@@ -152,7 +184,7 @@ namespace GenesisUI.Modules.Sprint
         /// </summary>
         private RectTransform SheetFrame(ThemeRuntime theme, Vector2 drawn)
         {
-            float k = Width / drawn.x;
+            float k = 1f; // Diego's bar at its drawn size, 360 wide (R-048: the readout was too small)
             _group.sizeDelta = drawn * k;
             var frame = Ui.Fill(Ui.Child(_group, "Frame"));
             Frame.Background(frame, theme, "sprint_frame", "Sprint");
@@ -186,6 +218,8 @@ namespace GenesisUI.Modules.Sprint
             _trail = _fill = null;
             _liquid = null;
             _liquidMask = null;
+            _burn = null;
+            _burnRt = null;
             _bar = null;
         }
     }

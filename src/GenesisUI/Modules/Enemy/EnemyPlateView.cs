@@ -22,6 +22,8 @@ namespace GenesisUI.Modules.Enemy
         private readonly RectTransform _root;
         private readonly Image _fill;
         private readonly Image _trail;
+        private readonly RectTransform _liquidMask;
+        private readonly LiquidLayer _liquid;
         private readonly Image[] _stars = new Image[2];
         private readonly TextMeshProUGUI _name;
         private readonly TextMeshProUGUI _mark;
@@ -81,11 +83,27 @@ namespace GenesisUI.Modules.Enemy
             plate.pixelsPerUnitMultiplier = 1f / PlateScale;
 
             var c = theme.Content(plateName, new Vector4(22f, 12f, 22f, 12f)) * PlateScale;
-            var bar = Ui.Fill(Ui.Child(plateRt, "Bar"), c.x + 1f, c.y + 1f, c.z + 1f, c.w + 1f);
-            Ui.Image(Ui.Fill(Ui.Child(bar, "Back")), null, new Color(0f, 0f, 0f, 0.55f));
+            // The bar fills the plate's whole inner channel (R-048: black corners showed around it) and
+            // carries Diego's health liquid like every health bar; tamed creatures keep a green fill.
+            var bar = Ui.Fill(Ui.Child(plateRt, "Bar"), c.x - 1f, c.y, c.z - 1f, c.w);
             var fillSprite = theme.Sprite("bar_fill");
-            _trail = Filled(Ui.Image(Ui.Fill(Ui.Child(bar, "Trail")), fillSprite, new Color(1f, 0.62f, 0.26f, 0.85f)));
+            _trail = Filled(Ui.Image(Ui.Fill(Ui.Child(bar, "Trail")), fillSprite, new Color(1f, 0.62f, 0.26f, 0.35f)));
             _fill = Filled(Ui.Image(Ui.Fill(Ui.Child(bar, "Fill")), fillSprite, _hostile));
+            var liquid = theme.Texture("liquid_health_h");
+            if (liquid != null)
+            {
+                _liquidMask = Ui.Child(bar, "Liquid");
+                _liquidMask.anchorMin = Vector2.zero;
+                _liquidMask.anchorMax = Vector2.one;
+                _liquidMask.offsetMin = _liquidMask.offsetMax = Vector2.zero;
+                _liquidMask.gameObject.AddComponent<RectMask2D>();
+                var size = new Vector2(Width - c.x - c.z + 2f, PlateHeight - c.y - c.w);
+                var flow = Ui.Place(Ui.Child(_liquidMask, "Flow"), new Vector2(0f, 0.5f), Vector2.zero, size);
+                flow.pivot = new Vector2(0f, 0.5f);
+                _liquid = new LiquidLayer(flow, liquid, size, theme.Size("liquid_health_h"), 1.6f, Color.white,
+                    new Vector2(0.015f, 0f), new Vector2(0f, 0.3f), mirror: false);
+                _fill.enabled = false;
+            }
 
             var star = theme.Sprite("star");
             for (int i = 0; i < _stars.Length; i++)
@@ -131,6 +149,16 @@ namespace GenesisUI.Modules.Enemy
             bool friendly = _vanillaFriendly != null && _vanillaFriendly.gameObject.activeSelf;
             var fast = friendly ? _vanillaFriendly : _vanillaFast;
             if (fast != null) _fill.fillAmount = Mathf.Clamp01(fast.GetSmoothValue());
+            if (_liquid != null)
+            {
+                _fill.enabled = friendly;
+                if (_liquidMask.gameObject.activeSelf == friendly) _liquidMask.gameObject.SetActive(!friendly);
+                if (!friendly)
+                {
+                    if (!Mathf.Approximately(_liquidMask.anchorMax.x, _fill.fillAmount)) _liquidMask.anchorMax = new Vector2(_fill.fillAmount, 1f);
+                    _liquid.Scroll(Time.unscaledDeltaTime);
+                }
+            }
             if (_vanillaSlow != null) _trail.fillAmount = Mathf.Max(_fill.fillAmount, Mathf.Clamp01(_vanillaSlow.GetSmoothValue()));
             if (friendly != _shownFriendly)
             {

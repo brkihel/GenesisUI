@@ -122,6 +122,14 @@ namespace GenesisUI.Foundation
             return renderer;
         }
 
+        /// <summary>An object we added under a vanilla object: destroyed on restore.</summary>
+        public GameObject Added(GameObject go)
+        {
+            if (go == null) return null;
+            _restore.Add(() => { if (go != null) UnityEngine.Object.Destroy(go); });
+            return go;
+        }
+
         /// <summary>Puts every recorded object back, newest change first. Never throws.</summary>
         public int Restore()
         {

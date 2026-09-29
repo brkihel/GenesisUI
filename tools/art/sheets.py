@@ -62,7 +62,16 @@ def window_sheet(n):
     return Image.open(path).convert("RGBA")
 
 
+NEW = os.path.expanduser("~/GenesisUI-Concept/GenesisUI-textures/new")
+
+
 def source_of(p):
+    """A window sheet, a HUD sheet, or one of Diego's single-piece textures (neutral colour, R-048)."""
+    if "file" in p:
+        path = os.path.join(NEW, p["file"])
+        if not os.path.exists(path):
+            sys.exit(f"{p['file']} not found under {NEW}")
+        return Image.open(path).convert("RGBA")
     return window_sheet(p["win"]) if "win" in p else sheet(p["sheet"])
 
 
@@ -168,11 +177,13 @@ def even(v):
 
 def frame(p):
     """Cut one frame: crop, erase mid-edge ornaments, clean, scale; write frame, fill, opening."""
-    img = source_of(p).crop(p["box"])
+    src_img = source_of(p)
+    img = src_img.crop(p.get("box") or (0, 0, src_img.width, src_img.height))
     a = np.asarray(img).copy()
     trimmed = trim_box(a[..., 3])
     a = a[trimmed[1]:trimmed[3], trimmed[0]:trimmed[2]].copy()
-    ox, oy = p["box"][0] + trimmed[0], p["box"][1] + trimmed[1]
+    box0 = p.get("box") or (0, 0)
+    ox, oy = box0[0] + trimmed[0], box0[1] + trimmed[1]
     a, edited = retouched(p.get("cut", p["name"]), a)
     if not edited and p.get("tone", True):
         a = tone(a)
@@ -205,6 +216,13 @@ def frame(p):
         bl, br = p["border"][0], p["border"][2]
         span = a.shape[1] - bl - br
         a[:, bl:bl + span] = np.tile(strip, (1, -(-span // n), 1))[:, :span]
+    if "keep_cells" in p:
+        # A cell strip drawn with more cells than the game has (the new hotbar has 9, the game 8):
+        # the extra cells and their dividers are cut out and the rest joined; nothing is redrawn.
+        cells = holes(a[..., 3], p["cells_drawn"])
+        cut_from = cells[p["keep_cells"] - 1][2]
+        cut_to = cells[-1][2]
+        a = np.concatenate([a[:, :cut_from], a[:, cut_to:]], axis=1).copy()
     if p.get("mirror"):
         a = a[:, ::-1].copy()
     if "recolor" in p:
@@ -268,7 +286,7 @@ def frame(p):
     border = [int(round(border[0] * sx)), int(round(border[1] * sy)), int(round(border[2] * sx)), int(round(border[3] * sy))]
 
     for name, img in out.items():
-        meta = {"border": border, "from": p["name"], "sheet": p.get("sheet", 100 + p.get("win", 0))}
+        meta = {"border": border, "from": p["name"], "sheet": p.get("sheet", 100 + p.get("win", 0)) if "file" not in p else 200}
         if name == p["name"] and content is not None:
             meta["content"] = [int(round(v)) for v in content]
         if name == p["name"] and "gap" in p:
@@ -284,7 +302,7 @@ def frame(p):
         cx, cy = (x0 + x1) / 2 - t2[0], (y0 + y1) / 2 - t2[1]
         inset = {"left": cx * sx, "right": (w - cx) * sx, "top": cy * sy, "bottom": (h - cy) * sy}[o["edge"]]
         out_meta[name] = (resize(Image.fromarray(piece, "RGBA"), osize),
-                          {"border": [0, 0, 0, 0], "from": p["name"], "sheet": p.get("sheet", 100 + p.get("win", 0)), "inset": int(round(inset))})
+                          {"border": [0, 0, 0, 0], "from": p["name"], "sheet": p.get("sheet", 100 + p.get("win", 0)) if "file" not in p else 200, "inset": int(round(inset))})
     return out_meta
 
 
@@ -459,13 +477,9 @@ def background(p):
 
 PIECES = [
     # Vital bars (sheet 3): three sizes as Diego drew them, one scale, no slicing.
-    {"name": "vital_health", "kind": "frame", "sheet": 3, "box": (36, 104, 184, 824), "opening": (110, 460)},
-    {"name": "vital_stamina", "kind": "frame", "sheet": 3, "box": (200, 152, 332, 820), "opening": (266, 480)},
     # Eitr uses the stamina frame: only health is bigger (Diego, R-042).
     # The stamina readout (sheet 3, first bar, Diego R-042): knot ends, one channel for the liquid.
-    {"name": "sprint_frame", "kind": "frame", "sheet": 3, "box": (488, 172, 1424, 300), "opening": (956, 236)},
     # The hotbar (sheet 4, top): eight cells in one fixed piece; `content` spans the cells.
-    {"name": "hotbar_frame", "kind": "frame", "sheet": 4, "box": (12, 72, 1444, 280), "scale": 0.4, "cells": 8},
     # Cell states (sheet 4, second row): lit gold = selected (and hover, later), green = equipped.
     # Drawn over a cell, their window lined up with the cell's; the glow is kept as drawn.
     {"name": "slot_selected", "kind": "frame", "sheet": 4, "box": (404, 320, 720, 620), "scale": 0.4,
@@ -489,14 +503,10 @@ PIECES = [
     {"name": "map_crest", "kind": "frame", "sheet": 4, "box": (264, 656, 488, 784),
      "border": (40, 30, 40, 50), "content": (26, 20, 26, 34),
      "ornaments": [{"name": "map_crest_knot", "edge": "top", "box": (352, 656, 402, 716), "clean": 300}]},
-    {"name": "map_banner", "kind": "frame", "sheet": 4, "box": (490, 664, 730, 784),
-     "border": (60, 36, 60, 36), "content": (40, 20, 40, 20)},
     # Boss plate (sheet 3, second bar): knot ends. (The creature plate stays the generated one, R-042.)
     {"name": "boss_plate", "kind": "frame", "sheet": 3, "box": (476, 384, 1428, 560), "scale": 0.44,
      "border": (116, 40, 116, 40), "content": (100, 30, 100, 30)},
     # The minimap ring, rebuilt at 250 from the small ring of sheet 2.
-    {"name": "map_ring", "kind": "ring", "sheet": 2, "box": (488, 604, 708, 820), "centre": (598, 712), "scale": 0.5,
-     "radius": 92, "diameter": 226, "pad": 12, "guard": 16, "diamond": 20, "window": 9, "band": 16},
     {"name": "cell_glow", "kind": "glow", "size": (60, 56), "radius": 8, "rgb": (255, 214, 120)},
     # ---- Window shell (F4.1), from the window sheets (win = WindowsTextures (n)); finest pieces.
     # Top bar and key-hint bar (sheet 1): end caps kept, the middle rebuilt from clean rail.
@@ -514,12 +524,6 @@ PIECES = [
      "border": (22, 14, 22, 14), "content": (14, 10, 14, 10), "tone": False},
     # The hotbar and food slots (window sheet 3): single thin slots instead of the heavy 8-cell plate
     # (Diego, R-046: "grosseira"). Selected = the lit thin slot; equipped = the same, in green.
-    {"name": "hotslot", "kind": "frame", "win": 3, "box": (28, 28, 196, 198), "scale": 0.35,
-     "border": (30, 30, 30, 30), "content": (14, 14, 14, 14)},
-    {"name": "hotslot_selected", "kind": "frame", "win": 3, "box": (206, 24, 386, 200), "scale": 0.35,
-     "opening": (296, 112), "opening_grow": 0, "glow": True},
-    {"name": "hotslot_equipped", "kind": "frame", "win": 3, "box": (206, 24, 386, 200), "scale": 0.35,
-     "opening": (296, 112), "opening_grow": 0, "glow": True, "recolor": (90, 200, 70), "cut": "hotslot_selected"},
     # The window panel (sheet 1, the finest): knot corners and a header rule; its four mid-edge
     # diamonds are separate pieces so the panel takes any size without stretching them.
     {"name": "window_panel", "kind": "frame", "win": 1, "box": (474, 138, 1084, 560),
@@ -539,6 +543,25 @@ PIECES = [
     {"name": "icon_mouse_left", "kind": "frame", "win": 7, "box": (1274, 150, 1340, 248), "scale": 0.3},
     {"name": "icon_mouse_right", "kind": "frame", "win": 7, "box": (1274, 150, 1340, 248), "scale": 0.3,
      "mirror": True, "cut": "icon_mouse_left"},
+    # ---- Diego's single-piece textures, neutral colour (R-048); toned like everything else.
+    {"name": "vital_health", "kind": "frame", "file": "nova-barra-horizontal-hp-eitr-stamina.png", "scale": 226 / 2104,
+     "opening": (362, 1086), "cut": "vital_bar"},
+    {"name": "vital_stamina", "kind": "frame", "file": "nova-barra-horizontal-hp-eitr-stamina.png", "scale": 196 / 2104,
+     "opening": (362, 1086), "cut": "vital_bar"},
+    {"name": "sprint_frame", "kind": "frame", "file": "nova-stamina-bar.png", "scale": 360 / 2095, "opening": (1086, 358)},
+    {"name": "map_banner", "kind": "frame", "file": "map-crest-banner-new.png", "scale": 32 / 388,
+     "border": (150, 90, 150, 90), "content": (120, 60, 120, 60)},
+    {"name": "map_ring", "kind": "frame", "file": "novo-minimap-ring.png", "scale": 250 / 1191, "opening": (627, 617)},
+    {"name": "hotbar_frame", "kind": "frame", "file": "hotbar-frame-new.png", "scale": 56 / 200, "cells": 8,
+     "cells_drawn": 9, "keep_cells": 8},
+    {"name": "hotslot", "kind": "frame", "file": "slot-new.png", "scale": 56 / 1122,
+     "border": (300, 300, 300, 300), "content": (120, 120, 120, 120)},
+    {"name": "hotslot_selected", "kind": "frame", "file": "slot-selected-new.png", "scale": 62 / 1174,
+     "opening": (622, 618), "opening_grow": 0},
+    {"name": "hotslot_equipped", "kind": "frame", "file": "slot-equiped-new.png", "scale": 64 / 1235,
+     "opening": (627, 615), "opening_grow": 0},
+    # The tab divider and the panel header's divider: the tab marker's own knot, and the whole marker.
+    {"name": "tab_knot", "kind": "frame", "win": 1, "box": (1126, 646, 1160, 678), "scale": 0.35},
     # Materials.
     {"name": "liquid_health", "kind": "liquid", "file": "hp_texture.png", "band": (0.12, 0.86), "across": 96},
     {"name": "liquid_stamina", "kind": "liquid", "file": "stamina_texture.png", "band": (0.08, 0.8), "across": 96},
