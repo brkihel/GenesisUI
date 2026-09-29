@@ -123,6 +123,8 @@ namespace GenesisUI
                     "Aba Criação no layout do concept: lista de receitas com busca e categorias, detalhes e materiais. Desligado, a aba mostra a criação original do jogo."));
                 ModuleHost.Register(new Modules.Windows.SkillsWindowModule(), Config.Bind("Modules", "SkillsWindow", true,
                     "Aba Habilidades no layout do concept: personagem, habilidades, efeitos ativos e textos. Desligado, a aba abre o diálogo original do jogo."));
+                ModuleHost.Register(new Modules.Windows.AchievementsWindowModule(), Config.Bind("Modules", "AchievementsWindow", true,
+                    "Aba Conquistas: conquistas do jogo, troféus e detalhes. Desligado, a aba abre o painel original do jogo."));
                 ModuleHost.Register(new SprintModule(Config), Config.Bind("Modules", "Sprint", true,
                     "Barra pequena de vigor acima dos itens: surge quando o vigor é gasto e some só depois de cheio. Desligado, ela não aparece."));
 

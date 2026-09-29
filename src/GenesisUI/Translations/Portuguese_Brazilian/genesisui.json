@@ -139,5 +139,14 @@
   "genesisui_pvp_off": "Combate entre jogadores: desligado",
   "genesisui_active_effects": "Efeitos ativos",
   "genesisui_skills_hint": "Passe o cursor sobre uma habilidade para saber o que ela faz. Habilidades sobem com o uso e caem um pouco a cada morte.",
-  "genesisui_texts_none": "Nenhum texto ainda. Leia pedras rúnicas e ouça os corvos."
+  "genesisui_texts_none": "Nenhum texto ainda. Leia pedras rúnicas e ouça os corvos.",
+  "genesisui_module_achievements_window": "Janela de conquistas",
+  "genesisui_panel_achievements": "Conquistas",
+  "genesisui_panel_trophies": "Troféus",
+  "genesisui_achievements_pick": "Escolha uma conquista ou um troféu para ler sua história.",
+  "genesisui_achievement_secret": "Uma conquista secreta. Continue sua saga.",
+  "genesisui_achievement_done": "Conquistada",
+  "genesisui_achievement_locked": "Ainda não conquistada",
+  "genesisui_trophy": "Troféu",
+  "genesisui_trophies_none": "Nenhum troféu ainda. Derrote criaturas e guarde o que elas deixam."
 }

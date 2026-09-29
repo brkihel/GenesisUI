@@ -139,5 +139,14 @@
   "genesisui_pvp_off": "Player versus player: off",
   "genesisui_active_effects": "Active effects",
   "genesisui_skills_hint": "Hover a skill to learn what it does. Skills rise with use and drop a little on every death.",
-  "genesisui_texts_none": "No texts yet. Read rune stones and listen to the ravens."
+  "genesisui_texts_none": "No texts yet. Read rune stones and listen to the ravens.",
+  "genesisui_module_achievements_window": "Achievements window",
+  "genesisui_panel_achievements": "Achievements",
+  "genesisui_panel_trophies": "Trophies",
+  "genesisui_achievements_pick": "Pick an achievement or a trophy to read its tale.",
+  "genesisui_achievement_secret": "A secret achievement. Keep going.",
+  "genesisui_achievement_done": "Achieved",
+  "genesisui_achievement_locked": "Not achieved yet",
+  "genesisui_trophy": "Trophy",
+  "genesisui_trophies_none": "No trophies yet. Defeat creatures and keep what they leave behind."
 }
