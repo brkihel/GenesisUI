@@ -200,7 +200,7 @@ Open questions the spike must answer before any item code:
 
 | Step | Delivers |
 |---|---|
-| F4.1 | Window art cut from the 13 sheets (toned, `_shape`, ornaments, states); `VanillaSkin`; the window shell: top bar with the six tabs (Q/E), bottom key-hint bar, frame, open/close by every key, fault → vanilla window intact |
+| F4.1 | **Shell done in 0.7.0-preview.1** (bars, tabs, hints; `VanillaSkin` moves to F4.2). Window art cut from the 13 sheets (toned, `_shape`, ornaments, states); `VanillaSkin`; the window shell: top bar with the six tabs (Q/E), bottom key-hint bar, frame, open/close by every key, fault → vanilla window intact |
 | F4.2 | Inventory in the ConceptArt (9) layout with **vanilla's 32 slots**: grid from single slots, filter (dim), weight bar, item details panel, containers; equipment panel (click to unequip, drop to equip through vanilla) |
 | F4.G0 | Gameplay research spike (§7.2) → `docs/GAMEPLAY.md` for Diego's approval; no item code before it |
 | F4.G1 | Gameplay module (same plugin): admin slot count up to 48 with scroll, equipment slots, 4 quick-use, 4 utility, sort; item-safety matrix incl. uninstall and smaller-limit servers |

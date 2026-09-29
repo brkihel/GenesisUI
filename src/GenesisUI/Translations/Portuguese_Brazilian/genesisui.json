@@ -25,5 +25,19 @@
   "genesisui_module_boss": "Placa do chefe",
   "genesisui_module_enemy": "Placas das criaturas",
   "genesisui_module_hover": "Cartão de interação",
-  "genesisui_module_notice": "Notificações"
+  "genesisui_module_notice": "Notificações",
+  "genesisui_module_windows": "Janelas",
+  "genesisui_tab_inventory": "Inventário",
+  "genesisui_tab_skills": "Habilidades",
+  "genesisui_tab_map": "Mapa",
+  "genesisui_tab_crafting": "Criação",
+  "genesisui_tab_achievements": "Conquistas",
+  "genesisui_tab_settings": "Configurações",
+  "genesisui_hint_close": "Fechar",
+  "genesisui_hint_move": "Mover",
+  "genesisui_hint_use": "Usar / Equipar",
+  "genesisui_hint_split": "Dividir pilha",
+  "genesisui_hint_transfer": "Transferir",
+  "genesisui_hint_tabs": "Abas",
+  "genesisui_settings_soon": "As configurações do GenesisUI morarão aqui, forjadas numa próxima etapa. Por ora, use o F1 (Configuration Manager)."
 }

@@ -14,11 +14,12 @@ is unclear, ask; do not guess.
   Diego approved the revision and confirmed the concept's rights (D-025/D-026). Order after that: F5 menus (main and Esc),
   F6 map, F7 Extension API and adapters, F8 optional gameplay package, F9 switch-over
   (D-024). Do not start API or adapter work before the vanilla UI is done.
-- **Version:** 0.6.0, last package `0.6.0-preview.4` (one gold, D-029) with scripts R-043 +
-  R-044, not yet run. F4.0 approved (R-042). **F4-PLAN §7 (revision 3) approved**: window
-  sheets in `~/GenesisUI-Concept/windows-textures-genesisui/`; inventory gameplay inside this
-  same plugin (D-028, one plugin is non-negotiable); `docs/GAMEPLAY.md` study before any item
-  code; filter dims; grids from single slots.
+- **Version:** 0.7.0, last package `0.7.0-preview.1` (F4.1 window shell) with script R-045,
+  not yet run; R-043/R-044 (0.6.0 previews) not yet run either. F4-PLAN §7 approved: window
+  sheets in `~/GenesisUI-Concept/windows-textures-genesisui/` (piece map: run the labelled
+  overview in the sheets pipeline); inventory gameplay inside this plugin (D-028, one plugin is
+  non-negotiable); `docs/GAMEPLAY.md` design **waits for Diego's OK** before any item code.
+  Next: F4.2 `VanillaSkin` + inventory layout (vanilla 32 slots).
 - **Art direction:** gold only (D-023). The carved-wood style was tried and rejected; do not
   propose another style unless Diego asks.
 - **Current F4.0 art source:** Diego supplied isolated UI sheets and separate background,

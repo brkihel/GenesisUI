@@ -108,6 +108,8 @@ namespace GenesisUI
                     "Notificações do canto superior esquerdo e mensagens do centro no visual do GenesisUI. Desligado, o jogo mostra as originais."));
                 ModuleHost.Register(new StatusModule(Config), Config.Bind("Modules", "Status", true,
                     "Efeitos ativos e o poder do guardião em quadros com nome e tempo. Desligado, o jogo mostra os efeitos originais."));
+                ModuleHost.Register(new Modules.Windows.WindowShellModule(Config), Config.Bind("Modules", "Windows", true,
+                    "Moldura das janelas: barra de abas em cima (Inventário, Habilidades, Mapa, Criação, Conquistas, Configurações) e dicas de atalho embaixo, com o inventário aberto. Desligado, as janelas ficam como no jogo."));
                 ModuleHost.Register(new SprintModule(Config), Config.Bind("Modules", "Sprint", true,
                     "Barra pequena de vigor acima dos itens: surge quando o vigor é gasto e some só depois de cheio. Desligado, ela não aparece."));
 
@@ -115,8 +117,9 @@ namespace GenesisUI
                 // and the main scene brings the HUD the modules attach to.
                 GUIManager.OnCustomGUIAvailable += () => Guard.Try("gui available", OnGuiAvailable);
 
-                // No patch class yet: modules only read the game. Patches will go through GuardedPatcher.Apply.
+                // Patch classes one by one through the guarded patcher (PATCH-POLICY rule 5).
                 _harmony = new Harmony(PluginInfo.Guid);
+                GuardedPatcher.Apply(_harmony, typeof(Patches.InventoryTabKeyPatch));
 
 #if GENESIS_DIAGNOSTICS
                 Diagnostics.Watermark.Install(Build.Channel, Build.FullVersion);
@@ -182,6 +185,7 @@ namespace GenesisUI
                 new KeyValuePair<string, string>("Notice", "notificações"),
                 new KeyValuePair<string, string>("Status", "quadros de efeitos"),
                 new KeyValuePair<string, string>("Sprint", "barra de corrida"),
+                new KeyValuePair<string, string>("Windows", "barras e painéis das janelas (inventário, criação...)"),
             })
             {
                 panels[kv.Key] = Config.Bind("Backgrounds", kv.Key, -1f,

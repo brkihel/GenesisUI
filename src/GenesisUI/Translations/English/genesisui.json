@@ -25,5 +25,19 @@
   "genesisui_module_boss": "Boss plate",
   "genesisui_module_enemy": "Creature plates",
   "genesisui_module_hover": "Interaction card",
-  "genesisui_module_notice": "Notices"
+  "genesisui_module_notice": "Notices",
+  "genesisui_module_windows": "Windows",
+  "genesisui_tab_inventory": "Inventory",
+  "genesisui_tab_skills": "Skills",
+  "genesisui_tab_map": "Map",
+  "genesisui_tab_crafting": "Crafting",
+  "genesisui_tab_achievements": "Achievements",
+  "genesisui_tab_settings": "Settings",
+  "genesisui_hint_close": "Close",
+  "genesisui_hint_move": "Move",
+  "genesisui_hint_use": "Use / Equip",
+  "genesisui_hint_split": "Split stack",
+  "genesisui_hint_transfer": "Transfer",
+  "genesisui_hint_tabs": "Tabs",
+  "genesisui_settings_soon": "GenesisUI's settings will live here, forged in a coming step. For now, use F1 (Configuration Manager)."
 }

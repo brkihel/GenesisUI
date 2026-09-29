@@ -290,5 +290,90 @@ def main(out_path):
     print("mock written to " + out_path)
 
 
+
+
+def window_mock(out_path):
+    """The window shell (F4.1): top bar with title and six tabs, key-hint bar, over the backdrop."""
+    st = Style()
+    src = Image.open(BACKDROP).convert("RGBA") if os.path.exists(BACKDROP) else Image.new("RGBA", (W, H), (46, 58, 44, 255))
+    bg = src.resize((W, H), Image.LANCZOS)
+
+    def size(name):
+        return st.meta[name]["width"], st.meta[name]["height"]
+
+    def dressed(name, w, h, fit=None, alpha=0.85):
+        k = fit / size(name)[1] if fit else 1.0
+        w, h = int(round(w)), int(round(h))
+        out = Image.new("RGBA", (w, h))
+        if st.has(name + "_shape") and st.has("panel_bg"):
+            mat = tiled(st.img("panel_bg"), w, h, size("panel_bg")[0])
+            out.paste(mat, (0, 0), st.nine(name + "_shape", w, h, k).split()[3].point(lambda v: int(v * alpha)))
+        out.alpha_composite(st.nine(name, w, h, k))
+        return out
+
+    def text(x, y, s, f, fill=(251, 243, 218, 255), anchor="mm"):
+        ImageDraw.Draw(bg).text((x, y), s, font=f, fill=fill, anchor=anchor, stroke_width=1, stroke_fill=(0, 0, 0, 200))
+
+    def icon(name, cx, top, h):
+        w0, h0 = size(name)
+        im = st.img(name).resize((max(1, int(w0 * h / h0)), int(h)), Image.LANCZOS)
+        bg.alpha_composite(im, (int(cx - im.width / 2), int(top)))
+
+    def key(x, cy, label):
+        w = 26 if len(label) <= 2 else max(40, 12 * len(label) + 6)
+        bg.alpha_composite(dressed("keycap" if w == 26 else "keycap_wide", w, 26, fit=26), (int(x), int(cy - 13)))
+        text(x + w / 2, cy, label, font("Cinzel-Medium", 13))
+        return w
+
+    margin, top, bar_h = 36, 18, 72
+    bw = W - 2 * margin
+    bg.alpha_composite(dressed("window_topbar", bw, bar_h, fit=bar_h), (margin, top))
+    k = bar_h / size("window_topbar")[1]
+    cl, cb, cr, ct = (v * k for v in st.content("window_topbar", (150, 12, 150, 12)))
+    text(margin + cl - 6, top + bar_h / 2, "G E N E S I S U I", font("Cinzel-SemiBold", 30), fill=(247, 226, 131, 255), anchor="lm")
+    key(margin + cl + 330 - 58, top + bar_h / 2, "Q")
+    x0, x1 = margin + cl + 330, margin + bw - cr - 44
+    key(margin + bw - cr + 4 - 26, top + bar_h / 2, "E")
+    tabs = [("icon_inventory", "INVENTÁRIO"), ("icon_skills", "HABILIDADES"), ("icon_map", "MAPA"), ("icon_crafting", "CRIAÇÃO"),
+            ("icon_achievements", "CONQUISTAS"), ("icon_settings", "CONFIGURAÇÕES")]
+    tw = (x1 - x0) / len(tabs)
+    dh = bar_h - cb - ct - 6
+    dw, dhh = size("window_divider")
+    for i, (ic, label) in enumerate(tabs):
+        cx = x0 + tw * (i + 0.5)
+        icon(ic, cx, top + ct + 3, 24)
+        text(cx, top + bar_h - cb - 12, label, font("Cinzel-Medium", 14), fill=(247, 226, 131, 255) if i == 0 else (186, 153, 92, 255))
+        div = st.img("window_divider").resize((max(1, int(dw * dh / dhh)), int(dh)), Image.LANCZOS)
+        bg.alpha_composite(div, (int(x0 + tw * i - div.width / 2), int(top + bar_h / 2 - dh / 2)))
+        if i == 0:
+            m = st.nine("tab_marker", int(tw * 0.76), 10, 10 / size("tab_marker")[1])
+            bg.alpha_composite(m, (int(x0 + tw * 0.12), int(top + bar_h - cb - 7)))
+
+    hint_h = 52
+    hy = H - 14 - hint_h
+    bg.alpha_composite(dressed("window_hintbar", bw, hint_h, fit=hint_h), (margin, hy))
+    items = [("Esc", None, "Fechar"), (None, "icon_mouse_left", "Mover"), (None, "icon_mouse_right", "Usar / Equipar"),
+             ("Shift", "icon_mouse_left", "Dividir pilha"), ("Ctrl", "icon_mouse_left", "Transferir"), ("Q/E", None, "Abas")]
+    f = font("CormorantGaramond-SemiBold", 17)
+    widths = []
+    for kname, mouse, label in items:
+        w = (len(kname) * 12 + 18 if kname and len(kname) > 2 else 26 if kname else 0) + (22 if mouse else 0) + (16 if kname and mouse else 0) + f.getlength(label) + 12
+        widths.append(w)
+    x = W / 2 - (sum(widths) + 26 * (len(items) - 1)) / 2
+    cy = hy + hint_h / 2
+    for (kname, mouse, label), w in zip(items, widths):
+        if kname:
+            x += key(x, cy, kname) + 6
+        if kname and mouse:
+            text(x + 4, cy, "+", font("CormorantGaramond-Medium", 16)); x += 16
+        if mouse:
+            icon(mouse, x + 8, cy - 12, 24); x += 22
+        text(x, cy, label, f, anchor="lm")
+        x += f.getlength(label) + 12 + 26
+    bg.save(out_path)
+    print("window mock written to " + out_path)
+
+
 if __name__ == "__main__":
     main(sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "dist", "hud-mock.png"))
+    window_mock(os.path.join(os.path.dirname(sys.argv[1]) if len(sys.argv) > 1 else os.path.join(ROOT, "dist"), "window-mock.png"))

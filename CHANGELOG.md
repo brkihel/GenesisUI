@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.7.0-preview.1 — F4.1: the window shell
+
+### Added
+- **Window shell** (`win.shell`, `[Modules] Windows`): with the inventory open, a top bar with
+  GENESISUI and six tabs — Inventário, Habilidades, Mapa, Criação, Conquistas, Configurações —
+  and a key-hint bar at the bottom, cut from Diego's window sheets (toned to the one gold,
+  D-029; the bars' middles rebuilt from clean rail so nothing stretches). Tabs are clicked or
+  cycled with `[Windows] PreviousTabKey` / `NextTabKey` (Q/E). Habilidades and Conquistas open
+  vanilla's dialogs, Mapa opens vanilla's large map; Criação only marks the tab until F4.3;
+  Configurações shows where GenesisUI's settings will live (F4.4).
+- First Harmony patch: `InventoryTabKeyPatch`, a void prefix on `InventoryGui.Update` that
+  clears "Use" for the frame when E switches the tab (vanilla would close the inventory).
+  Other patches on that method are untouched; with the shell hidden it does nothing.
+- `[Backgrounds] Windows` for the shell's panels.
+- Art pipeline reads the window sheets (`win` pieces, `KW` scale), mirrors pieces, rebuilds a
+  bar's middle from clean rail (`clean_middle`).
+
+### Docs
+- `docs/GAMEPLAY.md`: study of vanilla 1.0.16's inventory and of the current inventory mods,
+  and the proposed design for 48 slots, quick/utility/equipment slots (waiting for Diego).
+
 ## 0.6.0-preview.4 — one darker gold
 
 ### Changed

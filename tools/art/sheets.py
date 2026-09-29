@@ -51,6 +51,21 @@ def sheet(n):
     return Image.open(path).convert("RGBA")
 
 
+WINDOWS = os.path.expanduser("~/GenesisUI-Concept/windows-textures-genesisui")
+KW = 0.8                      # design units per window-sheet pixel: window pieces, finer than the concept's 1.15
+
+
+def window_sheet(n):
+    path = os.path.join(WINDOWS, f"WindowsTextures ({n}).png")
+    if not os.path.exists(path):
+        sys.exit(f"window sheet {n} not found under {WINDOWS}")
+    return Image.open(path).convert("RGBA")
+
+
+def source_of(p):
+    return window_sheet(p["win"]) if "win" in p else sheet(p["sheet"])
+
+
 def texture(name):
     path = os.path.join(SRC, name)
     if not os.path.exists(path):
@@ -153,7 +168,7 @@ def even(v):
 
 def frame(p):
     """Cut one frame: crop, erase mid-edge ornaments, clean, scale; write frame, fill, opening."""
-    img = sheet(p["sheet"]).crop(p["box"])
+    img = source_of(p).crop(p["box"])
     a = np.asarray(img).copy()
     trimmed = trim_box(a[..., 3])
     a = a[trimmed[1]:trimmed[3], trimmed[0]:trimmed[2]].copy()
@@ -181,6 +196,18 @@ def frame(p):
             strip = original[y0:y1, sx:sx + n]
             a[y0:y1, x0:x1] = np.tile(strip, (1, -(-(x1 - x0) // n), 1))[:, :x1 - x0]
 
+    if "clean_middle" in p:
+        # A bar whose middle carries dividers, a diamond and light flares: the whole stretchable
+        # middle becomes a repeat of one clean slice of rail, so 9-slicing never stretches a flare.
+        x_clean, n = p["clean_middle"]
+        xc = x_clean - ox
+        strip = original[:, xc:xc + n]
+        bl, br = p["border"][0], p["border"][2]
+        span = a.shape[1] - bl - br
+        a[:, bl:bl + span] = np.tile(strip, (1, -(-span // n), 1))[:, :span]
+    if p.get("mirror"):
+        a = a[:, ::-1].copy()
+
     # Re-trim after erasing (a top ornament may have been the highest pixel).
     t2 = trim_box(a[..., 3])
     a = a[t2[1]:t2[3], t2[0]:t2[2]].copy()
@@ -190,7 +217,7 @@ def frame(p):
 
     alpha = a[..., 3]
     h, w = alpha.shape
-    s = p.get("scale", K)
+    s = p.get("scale", KW if "win" in p else K)
     size = (even(w * s * SCALE), even(h * s * SCALE))
     dw, dh = size[0] // SCALE, size[1] // SCALE
     sx, sy = dw / w, dh / h                       # the exact design units per crop pixel
@@ -235,7 +262,7 @@ def frame(p):
     border = [int(round(border[0] * sx)), int(round(border[1] * sy)), int(round(border[2] * sx)), int(round(border[3] * sy))]
 
     for name, img in out.items():
-        meta = {"border": border, "from": p["name"], "sheet": p["sheet"]}
+        meta = {"border": border, "from": p["name"], "sheet": p.get("sheet", 100 + p.get("win", 0))}
         if name == p["name"] and content is not None:
             meta["content"] = [int(round(v)) for v in content]
         if name == p["name"] and "gap" in p:
@@ -251,7 +278,7 @@ def frame(p):
         cx, cy = (x0 + x1) / 2 - t2[0], (y0 + y1) / 2 - t2[1]
         inset = {"left": cx * sx, "right": (w - cx) * sx, "top": cy * sy, "bottom": (h - cy) * sy}[o["edge"]]
         out_meta[name] = (resize(Image.fromarray(piece, "RGBA"), osize),
-                          {"border": [0, 0, 0, 0], "from": p["name"], "sheet": p["sheet"], "inset": int(round(inset))})
+                          {"border": [0, 0, 0, 0], "from": p["name"], "sheet": p.get("sheet", 100 + p.get("win", 0)), "inset": int(round(inset))})
     return out_meta
 
 
@@ -465,6 +492,31 @@ PIECES = [
     {"name": "map_ring", "kind": "ring", "sheet": 2, "box": (488, 604, 708, 820), "centre": (598, 712), "scale": 0.5,
      "radius": 92, "diameter": 226, "pad": 12, "guard": 16, "diamond": 20, "window": 9, "band": 16},
     {"name": "cell_glow", "kind": "glow", "size": (60, 56), "radius": 8, "rgb": (255, 214, 120)},
+    # ---- Window shell (F4.1), from the window sheets (win = WindowsTextures (n)); finest pieces.
+    # Top bar and key-hint bar (sheet 1): end caps kept, the middle rebuilt from clean rail.
+    {"name": "window_topbar", "kind": "frame", "win": 1, "box": (30, 26, 1642, 134),
+     "border": (190, 20, 190, 20), "content": (190, 16, 190, 16), "clean_middle": (740, 6)},
+    {"name": "window_hintbar", "kind": "frame", "win": 1, "box": (32, 838, 1642, 920),
+     "border": (90, 18, 90, 18), "content": (80, 12, 80, 12), "clean_middle": (400, 6)},
+    # A divider of the top bar, a thin marker line (selected tab), blank key caps (sheet 2).
+    {"name": "window_divider", "kind": "frame", "win": 1, "box": (466, 46, 494, 108)},
+    {"name": "tab_marker", "kind": "frame", "win": 1, "box": (924, 644, 1360, 678),
+     "border": (40, 0, 40, 0)},
+    {"name": "keycap", "kind": "frame", "win": 2, "box": (262, 678, 334, 750),
+     "border": (14, 14, 14, 14), "content": (10, 10, 10, 10), "tone": False},
+    {"name": "keycap_wide", "kind": "frame", "win": 2, "box": (412, 678, 556, 750),
+     "border": (22, 14, 22, 14), "content": (14, 10, 14, 10), "tone": False},
+    # Tab icons and mouse hints (sheet 7).
+    {"name": "icon_logo", "kind": "frame", "win": 7, "box": (28, 8, 194, 160), "scale": 0.3},
+    {"name": "icon_inventory", "kind": "frame", "win": 7, "box": (236, 26, 336, 140), "scale": 0.3},
+    {"name": "icon_skills", "kind": "frame", "win": 7, "box": (378, 16, 494, 140), "scale": 0.3},
+    {"name": "icon_map", "kind": "frame", "win": 7, "box": (520, 8, 656, 144), "scale": 0.3},
+    {"name": "icon_crafting", "kind": "frame", "win": 7, "box": (678, 20, 796, 138), "scale": 0.3},
+    {"name": "icon_achievements", "kind": "frame", "win": 7, "box": (816, 24, 928, 136), "scale": 0.3},
+    {"name": "icon_settings", "kind": "frame", "win": 7, "box": (956, 20, 1066, 132), "scale": 0.3},
+    {"name": "icon_mouse_left", "kind": "frame", "win": 7, "box": (1274, 150, 1340, 248), "scale": 0.3},
+    {"name": "icon_mouse_right", "kind": "frame", "win": 7, "box": (1274, 150, 1340, 248), "scale": 0.3,
+     "mirror": True, "cut": "icon_mouse_left"},
     # Materials.
     {"name": "liquid_health", "kind": "liquid", "file": "hp_texture.png", "band": (0.12, 0.86), "across": 96},
     {"name": "liquid_stamina", "kind": "liquid", "file": "stamina_texture.png", "band": (0.08, 0.8), "across": 96},

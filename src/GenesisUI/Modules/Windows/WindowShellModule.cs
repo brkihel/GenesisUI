@@ -1,0 +1,412 @@
+using System.Collections.Generic;
+using BepInEx.Configuration;
+using GenesisUI.Foundation;
+using GenesisUI.Foundation.Contracts;
+using GenesisUI.Host;
+using GenesisUI.Theme;
+using GenesisUI.Widgets;
+using Jotunn.Managers;
+using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
+
+namespace GenesisUI.Modules.Windows
+{
+    /// <summary>
+    /// The window shell around vanilla's inventory (F4.1, ConceptArt 9 and 12): the top bar with
+    /// the GenesisUI title and six tabs (Q/E), and the key-hint bar at the bottom. It appears while
+    /// vanilla's inventory is open and only calls vanilla's own entry points (open skills,
+    /// achievements, the large map); vanilla's windows stay as they are until F4.2.
+    /// </summary>
+    [GameContract("assembly_valheim", "InventoryGui", "IsVisible")]
+    [GameContract("assembly_valheim", "InventoryGui", "instance")]
+    [GameContract("assembly_valheim", "InventoryGui", "Hide")]
+    [GameContract("assembly_valheim", "InventoryGui", "OnOpenSkills")]
+    [GameContract("assembly_valheim", "InventoryGui", "OnOpenAchievements")]
+    [GameContract("assembly_valheim", "InventoryGui", "OnCloseAchievements")]
+    [GameContract("assembly_valheim", "InventoryGui", "OnCloseTrophies")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_skillsDialog")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_textsDialog")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_trophiesPanel")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_achievementsPanel")]
+    [GameContract("assembly_valheim", "SkillsDialog", "OnClose")]
+    [GameContract("assembly_valheim", "Minimap", "SetMapMode")]
+    [GameContract("assembly_valheim", "Minimap", "IsOpen")]
+    internal sealed class WindowShellModule : IUiModule
+    {
+        private const float Margin = 36f;
+        private const float TopY = 18f;
+        private const float BottomY = 14f;
+        private const float BarHeight = 72f;
+        private const float HintHeight = 52f;
+        private const float TitleWidth = 330f;
+        private const float FadeSpeed = 8f;
+
+        private static readonly string[] NoRegions = new string[0];
+
+        internal enum Tab { Inventory, Skills, Map, Crafting, Achievements, Settings }
+
+        private static readonly (Tab Tab, string Icon, string Token)[] Tabs =
+        {
+            (Tab.Inventory, "icon_inventory", "$genesisui_tab_inventory"),
+            (Tab.Skills, "icon_skills", "$genesisui_tab_skills"),
+            (Tab.Map, "icon_map", "$genesisui_tab_map"),
+            (Tab.Crafting, "icon_crafting", "$genesisui_tab_crafting"),
+            (Tab.Achievements, "icon_achievements", "$genesisui_tab_achievements"),
+            (Tab.Settings, "icon_settings", "$genesisui_tab_settings"),
+        };
+
+        private readonly ConfigEntry<KeyboardShortcut> _previousKey;
+        private readonly ConfigEntry<KeyboardShortcut> _nextKey;
+        private readonly TabView[] _tabs = new TabView[Tabs.Length];
+
+        private ThemeRuntime _theme;
+        private RectTransform _root;
+        private CanvasGroup _fade;
+        private RectTransform _settingsPage;
+        private Tab _active = Tab.Inventory;
+        private bool _wasVisible;
+
+        private sealed class TabView
+        {
+            public TextMeshProUGUI Label;
+            public Image Icon;
+            public Image Marker;
+        }
+
+        public WindowShellModule(ConfigFile config)
+        {
+            _previousKey = config.Bind("Windows", "PreviousTabKey", new KeyboardShortcut(KeyCode.Q),
+                "Tecla da aba anterior nas janelas (inventário, criação...).");
+            _nextKey = config.Bind("Windows", "NextTabKey", new KeyboardShortcut(KeyCode.E),
+                "Tecla da próxima aba nas janelas. Com a janela aberta, ela troca de aba em vez de fechar a janela.");
+        }
+
+        public string Id => "win.shell";
+        public string NameToken => "$genesisui_module_windows";
+        public IReadOnlyList<string> Regions => NoRegions;
+        public float RefreshRate => 0f; // every frame: tab keys
+
+        /// <summary>The next-tab key, while the shell is showing; read by the Use guard patch.</summary>
+        internal static KeyCode ActiveNextKey { get; private set; } = KeyCode.None;
+
+        public void Build(ModuleContext context)
+        {
+            _theme = context.Theme;
+            var front = GUIManager.CustomGUIFront;
+            if (front == null) throw new System.InvalidOperationException("Jötunn's CustomGUIFront is not ready");
+
+            // Its own root on Jötunn's front GUI canvas (it has a raycaster: the tabs are clicked),
+            // destroyed in Teardown like any module object.
+            _root = Ui.Fill(Ui.Child(front.transform, "GenesisUI.WindowShell"));
+            _fade = _root.gameObject.AddComponent<CanvasGroup>();
+            _fade.alpha = 0f;
+            BuildTopBar();
+            BuildHintBar();
+            BuildSettingsPage();
+            _root.gameObject.SetActive(false);
+            _wasVisible = false;
+        }
+
+        public void Refresh(float deltaSeconds)
+        {
+            if (_root == null) return;
+            var gui = InventoryGui.instance;
+            bool visible = gui != null && InventoryGui.IsVisible() && Player.m_localPlayer != null && !global::Minimap.IsOpen();
+            if (visible && !_wasVisible) Select(Tab.Inventory, callVanilla: false);
+            _wasVisible = visible;
+            ActiveNextKey = visible ? _nextKey.Value.MainKey : KeyCode.None;
+
+            float target = visible ? 1f : 0f;
+            float alpha = Mathf.MoveTowards(_fade.alpha, target, deltaSeconds * FadeSpeed);
+            if (!Mathf.Approximately(_fade.alpha, alpha)) _fade.alpha = alpha;
+            bool show = alpha > 0f;
+            if (_root.gameObject.activeSelf != show) _root.gameObject.SetActive(show);
+            _fade.blocksRaycasts = visible;
+            if (!visible) return;
+
+            if (_previousKey.Value.IsDown()) Select(Step(-1), callVanilla: true);
+            else if (_nextKey.Value.IsDown()) Select(Step(+1), callVanilla: true);
+            FollowVanilla(gui);
+        }
+
+        public void Teardown()
+        {
+            ActiveNextKey = KeyCode.None;
+            if (_root != null) Object.Destroy(_root.gameObject);
+            _root = null;
+            _settingsPage = null;
+        }
+
+        // ------------------------------------------------------------------ tabs
+
+        private Tab Step(int direction)
+        {
+            int n = Tabs.Length;
+            return (Tab)(((int)_active + direction + n) % n);
+        }
+
+        /// <summary>Vanilla's own dialogs may be closed with Esc: the highlighted tab follows them.</summary>
+        private void FollowVanilla(InventoryGui gui)
+        {
+            if (_active == Tab.Skills && !gui.m_skillsDialog.gameObject.activeSelf) Show(Tab.Inventory);
+            else if (_active == Tab.Achievements && !gui.m_achievementsPanel.gameObject.activeSelf) Show(Tab.Inventory);
+        }
+
+        private void Select(Tab tab, bool callVanilla)
+        {
+            var gui = InventoryGui.instance;
+            if (callVanilla && gui != null)
+            {
+                CloseVanillaDialogs(gui);
+                switch (tab)
+                {
+                    case Tab.Skills: gui.OnOpenSkills(); break;
+                    case Tab.Achievements: gui.OnOpenAchievements(); break;
+                    case Tab.Map:
+                        // The map is its own screen: leave the inventory and open vanilla's large map.
+                        gui.Hide();
+                        if (global::Minimap.instance != null) global::Minimap.instance.SetMapMode(global::Minimap.MapMode.Large);
+                        tab = Tab.Inventory;
+                        break;
+                }
+            }
+            Show(tab);
+        }
+
+        private static void CloseVanillaDialogs(InventoryGui gui)
+        {
+            if (gui.m_skillsDialog.gameObject.activeSelf) gui.m_skillsDialog.OnClose();
+            if (gui.m_textsDialog.gameObject.activeSelf) gui.m_textsDialog.gameObject.SetActive(false);
+            if (gui.m_trophiesPanel.activeSelf) gui.OnCloseTrophies();
+            if (gui.m_achievementsPanel.gameObject.activeSelf) gui.OnCloseAchievements();
+        }
+
+        private void Show(Tab tab)
+        {
+            _active = tab;
+            var gold = ThemeRuntime.ToUnity(_theme.Tokens.AccentGoldBright);
+            var muted = ThemeRuntime.ToUnity(_theme.Tokens.TextFlavor);
+            for (int i = 0; i < _tabs.Length; i++)
+            {
+                bool on = Tabs[i].Tab == tab;
+                var t = _tabs[i];
+                if (t.Label.color != (on ? gold : muted)) t.Label.color = on ? gold : muted;
+                if (t.Icon != null) t.Icon.color = on ? Color.white : new Color(0.75f, 0.72f, 0.66f, 0.85f);
+                if (t.Marker != null && t.Marker.enabled != on) t.Marker.enabled = on;
+            }
+            bool settings = tab == Tab.Settings;
+            if (_settingsPage != null && _settingsPage.gameObject.activeSelf != settings) _settingsPage.gameObject.SetActive(settings);
+        }
+
+        // ------------------------------------------------------------------ building
+
+        private void BuildTopBar()
+        {
+            var t = _theme.Tokens;
+            var bar = Ui.Child(_root, "TopBar");
+            bar.anchorMin = new Vector2(0f, 1f);
+            bar.anchorMax = new Vector2(1f, 1f);
+            bar.pivot = new Vector2(0.5f, 1f);
+            bar.offsetMin = new Vector2(Margin, -TopY - BarHeight);
+            bar.offsetMax = new Vector2(-Margin, -TopY);
+            Frame.Dress(bar, _theme, "window_topbar", "Windows", BarHeight);
+
+            var drawn = _theme.Size("window_topbar");
+            float k = drawn.y > 0f ? BarHeight / drawn.y : 1f;
+            var c = _theme.Content("window_topbar", new Vector4(150f, 12f, 150f, 12f)) * k;
+
+            // Title: GENESISUI and the previous-tab key. (The bar's end caps carry the emblem.)
+            var title = Ui.Text(bar, "Title", _theme, FontRole.Display, 30f, ThemeRuntime.ToUnity(t.AccentGoldBright), TextAlignmentOptions.MidlineLeft, outlined: true);
+            title.characterSpacing = 18f;
+            var titleRt = Ui.Place((RectTransform)title.transform, new Vector2(0f, 0.5f), new Vector2(c.x - 6f, 0f), new Vector2(TitleWidth - 60f, 40f));
+            titleRt.pivot = new Vector2(0f, 0.5f);
+            title.text = "GENESISUI";
+            KeyCap(bar, new Vector2(0f, 0.5f), new Vector2(c.x + TitleWidth - 58f, 0f), KeyName(_previousKey.Value.MainKey));
+
+            // Tabs share the space between the title and the next-tab key, divided by the sheet's dividers.
+            var strip = Ui.Child(bar, "Tabs");
+            strip.anchorMin = new Vector2(0f, 0f);
+            strip.anchorMax = new Vector2(1f, 1f);
+            strip.offsetMin = new Vector2(c.x + TitleWidth, c.y);
+            strip.offsetMax = new Vector2(-c.z - 44f, -c.w);
+            KeyCap(bar, new Vector2(1f, 0.5f), new Vector2(-c.z + 4f, 0f), KeyName(_nextKey.Value.MainKey));
+
+            for (int i = 0; i < Tabs.Length; i++)
+            {
+                float x0 = (float)i / Tabs.Length, x1 = (float)(i + 1) / Tabs.Length;
+                var cell = Ui.Child(strip, "Tab " + Tabs[i].Tab);
+                cell.anchorMin = new Vector2(x0, 0f);
+                cell.anchorMax = new Vector2(x1, 1f);
+                cell.offsetMin = cell.offsetMax = Vector2.zero;
+                _tabs[i] = TabCell(cell, Tabs[i].Icon, Tabs[i].Token, Tabs[i].Tab);
+
+                var divider = _theme.Sprite("window_divider");
+                if (divider != null)
+                {
+                    var d = _theme.Size("window_divider");
+                    float h = BarHeight - c.y - c.w - 6f;
+                    var drt = Ui.Place(Ui.Child(strip, "Divider" + i), new Vector2(x0, 0.5f), Vector2.zero, new Vector2(d.x * h / Mathf.Max(1f, d.y), h));
+                    drt.pivot = new Vector2(0.5f, 0.5f);
+                    Ui.Image(drt, divider, Color.white);
+                }
+            }
+            Show(Tab.Inventory);
+        }
+
+        private TabView TabCell(RectTransform cell, string icon, string token, Tab tab)
+        {
+            var view = new TabView();
+            var hit = Ui.Image(cell, null, new Color(0f, 0f, 0f, 0f), raycast: true);
+            var button = cell.gameObject.AddComponent<Button>();
+            button.targetGraphic = hit;
+            button.transition = Selectable.Transition.None;
+            button.onClick.AddListener(() => Guard.Try("window tab " + tab, () => Select(tab, callVanilla: true)));
+
+            var iconSprite = _theme.Sprite(icon);
+            if (iconSprite != null)
+            {
+                var s = _theme.Size(icon);
+                float h = 24f;
+                var irt = Ui.Place(Ui.Child(cell, "Icon"), new Vector2(0.5f, 1f), new Vector2(0f, -3f), new Vector2(s.x * h / Mathf.Max(1f, s.y), h));
+                irt.pivot = new Vector2(0.5f, 1f);
+                view.Icon = Ui.Image(irt, iconSprite, Color.white);
+            }
+            view.Label = Ui.Fit(Ui.Text(cell, "Label", _theme, FontRole.Label, 14f, ThemeRuntime.ToUnity(_theme.Tokens.TextFlavor),
+                TextAlignmentOptions.Bottom, outlined: true), 10f);
+            view.Label.characterSpacing = 6f;
+            var lrt = (RectTransform)view.Label.transform;
+            lrt.anchorMin = new Vector2(0f, 0f);
+            lrt.anchorMax = new Vector2(1f, 0f);
+            lrt.pivot = new Vector2(0.5f, 0f);
+            lrt.anchoredPosition = new Vector2(0f, 6f);
+            lrt.sizeDelta = new Vector2(-8f, 18f);
+            view.Label.text = Localize(token).ToUpperInvariant();
+
+            var marker = _theme.Sprite("tab_marker");
+            if (marker != null)
+            {
+                var mrt = Ui.Child(cell, "Marker");
+                mrt.anchorMin = new Vector2(0.12f, 0f);
+                mrt.anchorMax = new Vector2(0.88f, 0f);
+                mrt.pivot = new Vector2(0.5f, 0.5f);
+                mrt.anchoredPosition = new Vector2(0f, 2f);
+                mrt.sizeDelta = new Vector2(0f, 10f);
+                view.Marker = Ui.Image(mrt, marker, Color.white);
+                view.Marker.pixelsPerUnitMultiplier = _theme.Size("tab_marker").y / 10f;
+                view.Marker.enabled = false;
+            }
+            return view;
+        }
+
+        private void BuildHintBar()
+        {
+            var bar = Ui.Child(_root, "HintBar");
+            bar.anchorMin = new Vector2(0f, 0f);
+            bar.anchorMax = new Vector2(1f, 0f);
+            bar.pivot = new Vector2(0.5f, 0f);
+            bar.offsetMin = new Vector2(Margin, BottomY);
+            bar.offsetMax = new Vector2(-Margin, BottomY + HintHeight);
+            Frame.Dress(bar, _theme, "window_hintbar", "Windows", HintHeight);
+
+            var drawn = _theme.Size("window_hintbar");
+            float k = drawn.y > 0f ? HintHeight / drawn.y : 1f;
+            var c = _theme.Content("window_hintbar", new Vector4(70f, 10f, 70f, 10f)) * k;
+            var row = Ui.Child(bar, "Hints");
+            row.anchorMin = Vector2.zero;
+            row.anchorMax = Vector2.one;
+            row.offsetMin = new Vector2(c.x + 10f, c.y);
+            row.offsetMax = new Vector2(-c.z - 10f, -c.w);
+            var layout = row.gameObject.AddComponent<HorizontalLayoutGroup>();
+            layout.spacing = 26f;
+            layout.childAlignment = TextAnchor.MiddleCenter;
+            layout.childControlWidth = layout.childControlHeight = false;
+            layout.childForceExpandWidth = layout.childForceExpandHeight = false;
+
+            // What vanilla's inventory does with each input; texts in pt-BR through the translations.
+            Hint(row, "Esc", null, "$genesisui_hint_close");
+            Hint(row, null, "icon_mouse_left", "$genesisui_hint_move");
+            Hint(row, null, "icon_mouse_right", "$genesisui_hint_use");
+            Hint(row, "Shift", "icon_mouse_left", "$genesisui_hint_split");
+            Hint(row, "Ctrl", "icon_mouse_left", "$genesisui_hint_transfer");
+            Hint(row, KeyName(_previousKey.Value.MainKey) + "/" + KeyName(_nextKey.Value.MainKey), null, "$genesisui_hint_tabs");
+        }
+
+        private void Hint(RectTransform row, string key, string mouse, string token)
+        {
+            var group = Ui.Child(row, "Hint " + token);
+            var layout = group.gameObject.AddComponent<HorizontalLayoutGroup>();
+            layout.spacing = 6f;
+            layout.childAlignment = TextAnchor.MiddleLeft;
+            layout.childControlWidth = layout.childControlHeight = false;
+            layout.childForceExpandWidth = layout.childForceExpandHeight = false;
+            var fitter = group.gameObject.AddComponent<ContentSizeFitter>();
+            fitter.horizontalFit = ContentSizeFitter.FitMode.PreferredSize;
+            group.sizeDelta = new Vector2(0f, 30f);
+
+            if (key != null) KeyCap(group, new Vector2(0f, 0.5f), Vector2.zero, key);
+            if (key != null && mouse != null)
+            {
+                var plus = Ui.Text(group, "Plus", _theme, FontRole.Body, 16f, ThemeRuntime.ToUnity(_theme.Tokens.TextFlavor), TextAlignmentOptions.Center);
+                ((RectTransform)plus.transform).sizeDelta = new Vector2(10f, 24f);
+                plus.text = "+";
+            }
+            if (mouse != null && _theme.Sprite(mouse) != null)
+            {
+                var s = _theme.Size(mouse);
+                var mrt = Ui.Child(group, "Mouse");
+                mrt.sizeDelta = new Vector2(s.x * 24f / Mathf.Max(1f, s.y), 24f);
+                Ui.Image(mrt, _theme.Sprite(mouse), Color.white);
+            }
+            var label = Ui.Text(group, "Label", _theme, FontRole.Body, 17f, ThemeRuntime.ToUnity(_theme.Tokens.TextTitle), TextAlignmentOptions.MidlineLeft, outlined: true);
+            label.text = Localize(token);
+            ((RectTransform)label.transform).sizeDelta = new Vector2(label.GetPreferredValues(label.text).x + 4f, 26f);
+        }
+
+        /// <summary>A blank key cap from the sheet with the key's name written on it (rebinding keeps working).</summary>
+        private RectTransform KeyCap(RectTransform parent, Vector2 anchor, Vector2 position, string key)
+        {
+            bool wide = key.Length > 2;
+            var rt = Ui.Child(parent, "Key " + key);
+            // The cap first, the text after it: in uGUI later siblings draw on top.
+            var cap = Ui.Fill(Ui.Child(rt, "Cap"));
+            Frame.Dress(cap, _theme, wide ? "keycap_wide" : "keycap", "Windows", 26f);
+            var label = Ui.Text(rt, "Text", _theme, FontRole.Label, 13f, ThemeRuntime.ToUnity(_theme.Tokens.TextTitle), TextAlignmentOptions.Center);
+            label.text = key;
+            Ui.Fill((RectTransform)label.transform);
+            float w = wide ? Mathf.Max(40f, label.GetPreferredValues(key).x + 18f) : 26f;
+            Ui.Place(rt, anchor, position, new Vector2(w, 26f));
+            rt.pivot = new Vector2(anchor.x, 0.5f);
+            return rt;
+        }
+
+        private void BuildSettingsPage()
+        {
+            // GenesisUI's own settings live here from F4.4; until then the tab says so.
+            _settingsPage = Ui.Place(Ui.Child(_root, "Settings"), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(620f, 180f));
+            Frame.Dress(_settingsPage, _theme, "card", "Windows");
+            var text = Ui.Text(_settingsPage, "Soon", _theme, FontRole.Body, 20f, ThemeRuntime.ToUnity(_theme.Tokens.TextTitle), TextAlignmentOptions.Center, outlined: true);
+            Ui.Fill((RectTransform)text.transform, 30f, 20f, 30f, 20f);
+            text.textWrappingMode = TextWrappingModes.Normal;
+            text.text = Localize("$genesisui_settings_soon");
+            _settingsPage.gameObject.SetActive(false);
+        }
+
+        private static string KeyName(KeyCode key)
+        {
+            switch (key)
+            {
+                case KeyCode.None: return "—";
+                case KeyCode.Escape: return "Esc";
+                case KeyCode.LeftShift: case KeyCode.RightShift: return "Shift";
+                case KeyCode.LeftControl: case KeyCode.RightControl: return "Ctrl";
+                case KeyCode.Tab: return "Tab";
+                default:
+                    string s = key.ToString();
+                    return s.StartsWith("Alpha") ? s.Substring(5) : s;
+            }
+        }
+
+        private static string Localize(string token) => Localization.instance != null ? Localization.instance.Localize(token) : token;
+    }
+}

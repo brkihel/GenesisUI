@@ -3,8 +3,8 @@
 A modular, themed user interface for Valheim, built for **security and stability
 first**.
 
-> Status: **F3 (HUD) approved; F4.0 (Diego's textures on the HUD) approved; F4.1 next.** Latest test
-> package: 0.6.0-preview.4 (R-043, R-044). See [docs/ROADMAP.md](docs/ROADMAP.md).
+> Status: **F4.0 (HUD textures) approved; F4.1 (window shell) in test.** Latest test
+> package: 0.7.0-preview.1 (R-045). See [docs/ROADMAP.md](docs/ROADMAP.md).
 
 GenesisUI is a complete rework of the vanilla UI: HUD, inventory and crafting windows,
 menus and map, in one gold ornament language. What exists today (0.5.0) is the whole HUD:

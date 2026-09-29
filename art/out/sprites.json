@@ -267,6 +267,234 @@
       "borderTop": 0
     },
     {
+      "name": "icon_achievements",
+      "file": "icon_achievements.png",
+      "width": 32,
+      "height": 32,
+      "borderLeft": 0,
+      "borderBottom": 0,
+      "borderRight": 0,
+      "borderTop": 0
+    },
+    {
+      "name": "icon_achievements_shape",
+      "file": "icon_achievements_shape.png",
+      "width": 32,
+      "height": 32,
+      "borderLeft": 0,
+      "borderBottom": 0,
+      "borderRight": 0,
+      "borderTop": 0
+    },
+    {
+      "name": "icon_crafting",
+      "file": "icon_crafting.png",
+      "width": 34,
+      "height": 34,
+      "borderLeft": 0,
+      "borderBottom": 0,
+      "borderRight": 0,
+      "borderTop": 0
+    },
+    {
+      "name": "icon_crafting_shape",
+      "file": "icon_crafting_shape.png",
+      "width": 34,
+      "height": 34,
+      "borderLeft": 0,
+      "borderBottom": 0,
+      "borderRight": 0,
+      "borderTop": 0
+    },
+    {
+      "name": "icon_inventory",
+      "file": "icon_inventory.png",
+      "width": 29,
+      "height": 33,
+      "borderLeft": 0,
+      "borderBottom": 0,
+      "borderRight": 0,
+      "borderTop": 0
+    },
+    {
+      "name": "icon_inventory_shape",
+      "file": "icon_inventory_shape.png",
+      "width": 29,
+      "height": 33,
+      "borderLeft": 0,
+      "borderBottom": 0,
+      "borderRight": 0,
+      "borderTop": 0
+    },
+    {
+      "name": "icon_logo",
+      "file": "icon_logo.png",
+      "width": 48,
+      "height": 45,
+      "borderLeft": 0,
+      "borderBottom": 0,
+      "borderRight": 0,
+      "borderTop": 0
+    },
+    {
+      "name": "icon_logo_shape",
+      "file": "icon_logo_shape.png",
+      "width": 48,
+      "height": 45,
+      "borderLeft": 0,
+      "borderBottom": 0,
+      "borderRight": 0,
+      "borderTop": 0
+    },
+    {
+      "name": "icon_map",
+      "file": "icon_map.png",
+      "width": 39,
+      "height": 40,
+      "borderLeft": 0,
+      "borderBottom": 0,
+      "borderRight": 0,
+      "borderTop": 0
+    },
+    {
+      "name": "icon_map_shape",
+      "file": "icon_map_shape.png",
+      "width": 39,
+      "height": 40,
+      "borderLeft": 0,
+      "borderBottom": 0,
+      "borderRight": 0,
+      "borderTop": 0
+    },
+    {
+      "name": "icon_mouse_left",
+      "file": "icon_mouse_left.png",
+      "width": 19,
+      "height": 28,
+      "borderLeft": 0,
+      "borderBottom": 0,
+      "borderRight": 0,
+      "borderTop": 0
+    },
+    {
+      "name": "icon_mouse_left_shape",
+      "file": "icon_mouse_left_shape.png",
+      "width": 19,
+      "height": 28,
+      "borderLeft": 0,
+      "borderBottom": 0,
+      "borderRight": 0,
+      "borderTop": 0
+    },
+    {
+      "name": "icon_mouse_right",
+      "file": "icon_mouse_right.png",
+      "width": 19,
+      "height": 28,
+      "borderLeft": 0,
+      "borderBottom": 0,
+      "borderRight": 0,
+      "borderTop": 0
+    },
+    {
+      "name": "icon_mouse_right_shape",
+      "file": "icon_mouse_right_shape.png",
+      "width": 19,
+      "height": 28,
+      "borderLeft": 0,
+      "borderBottom": 0,
+      "borderRight": 0,
+      "borderTop": 0
+    },
+    {
+      "name": "icon_settings",
+      "file": "icon_settings.png",
+      "width": 32,
+      "height": 32,
+      "borderLeft": 0,
+      "borderBottom": 0,
+      "borderRight": 0,
+      "borderTop": 0
+    },
+    {
+      "name": "icon_settings_shape",
+      "file": "icon_settings_shape.png",
+      "width": 32,
+      "height": 32,
+      "borderLeft": 0,
+      "borderBottom": 0,
+      "borderRight": 0,
+      "borderTop": 0
+    },
+    {
+      "name": "icon_skills",
+      "file": "icon_skills.png",
+      "width": 34,
+      "height": 36,
+      "borderLeft": 0,
+      "borderBottom": 0,
+      "borderRight": 0,
+      "borderTop": 0
+    },
+    {
+      "name": "icon_skills_shape",
+      "file": "icon_skills_shape.png",
+      "width": 34,
+      "height": 36,
+      "borderLeft": 0,
+      "borderBottom": 0,
+      "borderRight": 0,
+      "borderTop": 0
+    },
+    {
+      "name": "keycap",
+      "file": "keycap.png",
+      "width": 54,
+      "height": 55,
+      "borderLeft": 11,
+      "borderBottom": 11,
+      "borderRight": 11,
+      "borderTop": 11,
+      "contentLeft": 8,
+      "contentBottom": 8,
+      "contentRight": 8,
+      "contentTop": 8
+    },
+    {
+      "name": "keycap_shape",
+      "file": "keycap_shape.png",
+      "width": 54,
+      "height": 55,
+      "borderLeft": 11,
+      "borderBottom": 11,
+      "borderRight": 11,
+      "borderTop": 11
+    },
+    {
+      "name": "keycap_wide",
+      "file": "keycap_wide.png",
+      "width": 111,
+      "height": 56,
+      "borderLeft": 18,
+      "borderBottom": 11,
+      "borderRight": 18,
+      "borderTop": 11,
+      "contentLeft": 11,
+      "contentBottom": 8,
+      "contentRight": 11,
+      "contentTop": 8
+    },
+    {
+      "name": "keycap_wide_shape",
+      "file": "keycap_wide_shape.png",
+      "width": 111,
+      "height": 56,
+      "borderLeft": 18,
+      "borderBottom": 11,
+      "borderRight": 18,
+      "borderTop": 11
+    },
+    {
       "name": "liquid_eitr",
       "file": "liquid_eitr.png",
       "width": 96,
@@ -577,6 +805,26 @@
       "borderTop": 0
     },
     {
+      "name": "tab_marker",
+      "file": "tab_marker.png",
+      "width": 347,
+      "height": 24,
+      "borderLeft": 32,
+      "borderBottom": 0,
+      "borderRight": 32,
+      "borderTop": 0
+    },
+    {
+      "name": "tab_marker_shape",
+      "file": "tab_marker_shape.png",
+      "width": 347,
+      "height": 24,
+      "borderLeft": 32,
+      "borderBottom": 0,
+      "borderRight": 32,
+      "borderTop": 0
+    },
+    {
       "name": "tile",
       "file": "tile.png",
       "width": 65,
@@ -667,6 +915,74 @@
       "borderBottom": 0,
       "borderRight": 0,
       "borderTop": 0
+    },
+    {
+      "name": "window_divider",
+      "file": "window_divider.png",
+      "width": 14,
+      "height": 50,
+      "borderLeft": 0,
+      "borderBottom": 0,
+      "borderRight": 0,
+      "borderTop": 0
+    },
+    {
+      "name": "window_divider_shape",
+      "file": "window_divider_shape.png",
+      "width": 14,
+      "height": 50,
+      "borderLeft": 0,
+      "borderBottom": 0,
+      "borderRight": 0,
+      "borderTop": 0
+    },
+    {
+      "name": "window_hintbar",
+      "file": "window_hintbar.png",
+      "width": 1285,
+      "height": 62,
+      "borderLeft": 72,
+      "borderBottom": 14,
+      "borderRight": 72,
+      "borderTop": 14,
+      "contentLeft": 64,
+      "contentBottom": 10,
+      "contentRight": 64,
+      "contentTop": 10
+    },
+    {
+      "name": "window_hintbar_shape",
+      "file": "window_hintbar_shape.png",
+      "width": 1285,
+      "height": 62,
+      "borderLeft": 72,
+      "borderBottom": 14,
+      "borderRight": 72,
+      "borderTop": 14
+    },
+    {
+      "name": "window_topbar",
+      "file": "window_topbar.png",
+      "width": 1287,
+      "height": 81,
+      "borderLeft": 152,
+      "borderBottom": 16,
+      "borderRight": 152,
+      "borderTop": 16,
+      "contentLeft": 152,
+      "contentBottom": 13,
+      "contentRight": 152,
+      "contentTop": 13
+    },
+    {
+      "name": "window_topbar_shape",
+      "file": "window_topbar_shape.png",
+      "width": 1287,
+      "height": 81,
+      "borderLeft": 152,
+      "borderBottom": 16,
+      "borderRight": 152,
+      "borderTop": 16
     },
     {
       "name": "enemy_plate",

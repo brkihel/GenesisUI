@@ -110,6 +110,238 @@
   "from": "hotbar_frame",
   "sheet": 4
  },
+ "icon_achievements": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "icon_achievements",
+  "sheet": 107
+ },
+ "icon_achievements_shape": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "icon_achievements",
+  "sheet": 107
+ },
+ "icon_crafting": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "icon_crafting",
+  "sheet": 107
+ },
+ "icon_crafting_shape": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "icon_crafting",
+  "sheet": 107
+ },
+ "icon_inventory": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "icon_inventory",
+  "sheet": 107
+ },
+ "icon_inventory_shape": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "icon_inventory",
+  "sheet": 107
+ },
+ "icon_logo": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "icon_logo",
+  "sheet": 107
+ },
+ "icon_logo_shape": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "icon_logo",
+  "sheet": 107
+ },
+ "icon_map": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "icon_map",
+  "sheet": 107
+ },
+ "icon_map_shape": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "icon_map",
+  "sheet": 107
+ },
+ "icon_mouse_left": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "icon_mouse_left",
+  "sheet": 107
+ },
+ "icon_mouse_left_shape": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "icon_mouse_left",
+  "sheet": 107
+ },
+ "icon_mouse_right": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "icon_mouse_right",
+  "sheet": 107
+ },
+ "icon_mouse_right_shape": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "icon_mouse_right",
+  "sheet": 107
+ },
+ "icon_settings": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "icon_settings",
+  "sheet": 107
+ },
+ "icon_settings_shape": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "icon_settings",
+  "sheet": 107
+ },
+ "icon_skills": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "icon_skills",
+  "sheet": 107
+ },
+ "icon_skills_shape": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "icon_skills",
+  "sheet": 107
+ },
+ "keycap": {
+  "border": [
+   11,
+   11,
+   11,
+   11
+  ],
+  "content": [
+   8,
+   8,
+   8,
+   8
+  ],
+  "from": "keycap",
+  "sheet": 102
+ },
+ "keycap_shape": {
+  "border": [
+   11,
+   11,
+   11,
+   11
+  ],
+  "from": "keycap",
+  "sheet": 102
+ },
+ "keycap_wide": {
+  "border": [
+   18,
+   11,
+   18,
+   11
+  ],
+  "content": [
+   11,
+   8,
+   11,
+   8
+  ],
+  "from": "keycap_wide",
+  "sheet": 102
+ },
+ "keycap_wide_shape": {
+  "border": [
+   18,
+   11,
+   18,
+   11
+  ],
+  "from": "keycap_wide",
+  "sheet": 102
+ },
  "liquid_eitr": {
   "border": [
    0,
@@ -436,6 +668,26 @@
   "from": "sprint_frame",
   "sheet": 3
  },
+ "tab_marker": {
+  "border": [
+   32,
+   0,
+   32,
+   0
+  ],
+  "from": "tab_marker",
+  "sheet": 101
+ },
+ "tab_marker_shape": {
+  "border": [
+   32,
+   0,
+   32,
+   0
+  ],
+  "from": "tab_marker",
+  "sheet": 101
+ },
  "tile": {
   "border": [
    13,
@@ -533,5 +785,77 @@
   ],
   "from": "vital_stamina",
   "sheet": 3
+ },
+ "window_divider": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "window_divider",
+  "sheet": 101
+ },
+ "window_divider_shape": {
+  "border": [
+   0,
+   0,
+   0,
+   0
+  ],
+  "from": "window_divider",
+  "sheet": 101
+ },
+ "window_hintbar": {
+  "border": [
+   72,
+   14,
+   72,
+   14
+  ],
+  "content": [
+   64,
+   10,
+   64,
+   10
+  ],
+  "from": "window_hintbar",
+  "sheet": 101
+ },
+ "window_hintbar_shape": {
+  "border": [
+   72,
+   14,
+   72,
+   14
+  ],
+  "from": "window_hintbar",
+  "sheet": 101
+ },
+ "window_topbar": {
+  "border": [
+   152,
+   16,
+   152,
+   16
+  ],
+  "content": [
+   152,
+   13,
+   152,
+   13
+  ],
+  "from": "window_topbar",
+  "sheet": 101
+ },
+ "window_topbar_shape": {
+  "border": [
+   152,
+   16,
+   152,
+   16
+  ],
+  "from": "window_topbar",
+  "sheet": 101
  }
 }
