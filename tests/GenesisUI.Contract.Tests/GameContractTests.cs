@@ -95,6 +95,8 @@ namespace GenesisUI.Contract.Tests
             var offenders = plugin.GetTypes()
                 .Where(t => t.GetCustomAttributesData().Any(a => a.AttributeType.FullName == "HarmonyLib.HarmonyPatch"))
                 .Where(t => !withContracts.Contains(t))
+                // ServerSync is merged third-party code with its own self-contained patches (D-031).
+                .Where(t => !(t.FullName ?? "").StartsWith("ServerSync.", StringComparison.Ordinal))
                 .Select(t => t.FullName)
                 .ToList();
 

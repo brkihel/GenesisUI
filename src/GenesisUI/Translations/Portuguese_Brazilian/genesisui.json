@@ -39,5 +39,7 @@
   "genesisui_hint_split": "Dividir pilha",
   "genesisui_hint_transfer": "Transferir",
   "genesisui_hint_tabs": "Abas",
-  "genesisui_settings_soon": "As configurações do GenesisUI morarão aqui, forjadas numa próxima etapa. Por ora, use o F1 (Configuration Manager)."
+  "genesisui_settings_soon": "As configurações do GenesisUI morarão aqui, forjadas numa próxima etapa. Por ora, use o F1 (Configuration Manager).",
+  "genesisui_module_inventory": "Inventário (espaços)",
+  "genesisui_inventory_refused": "O novo tamanho do inventário não coube: {0} item(ns) ficariam sem lugar. Libere espaço; o tamanho anterior continua."
 }

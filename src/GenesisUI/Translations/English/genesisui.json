@@ -39,5 +39,7 @@
   "genesisui_hint_split": "Split stack",
   "genesisui_hint_transfer": "Transfer",
   "genesisui_hint_tabs": "Tabs",
-  "genesisui_settings_soon": "GenesisUI's settings will live here, forged in a coming step. For now, use F1 (Configuration Manager)."
+  "genesisui_settings_soon": "GenesisUI's settings will live here, forged in a coming step. For now, use F1 (Configuration Manager).",
+  "genesisui_module_inventory": "Inventory (slots)",
+  "genesisui_inventory_refused": "The new inventory size does not fit: {0} item(s) would have no place. Free some space; the previous size stays."
 }

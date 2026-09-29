@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.7.0-preview.2 — F4.2a (part 1): the admin's inventory size
+
+### Added
+- **Inventory slots module** (`inv.slots`, `[Modules] Inventory`, docs/GAMEPLAY.md): the
+  inventory has the size the admin sets in `[Inventory] Rows` — 4, 5 or 6 rows (32/40/48 slots,
+  the hotbar included) — plus reserved rows for quick-use (`QuickSlots`, 0–4), utility
+  (`UtilitySlots`, 0–4) and worn equipment. Their panels come in the next packages; for now the
+  reserved rows are hidden and nothing can enter them.
+- Changing the size moves items with a plan that keeps every item in its place when it can,
+  sends the rest to free slots, never puts two items on one position, and refuses (keeping the
+  old size, with a message) when things would not fit.
+- Server-synced settings through **ServerSync** (D-031, merged into the DLL): on a server with
+  GenesisUI, `[Inventory]` values marked [Servidor] come from the server
+  (`LockConfiguration`); in single player they are the player's own.
+- Patches (D-030): `Player.SetInventorySize` holds the reserved rows (vanilla never drops their
+  items); pickups, crafting results and chest overflow only use ordinary slots.
+
 ## 0.7.0-preview.1 — F4.1: the window shell
 
 ### Added

@@ -307,3 +307,16 @@ that method — runs as before. Losing special-slot items when GenesisUI is remo
 **Why:** Diego's requirements (GAMEPLAY §1) need slots vanilla does not have; these are the
 smallest set of hooks that let vanilla keep doing every item move itself. The earlier
 "uninstall-safe rows" proposal was rejected as breaking the concept's design.
+
+## D-031 — ServerSync for the admin's inventory settings
+
+**Decision (2026-09-29):** `ServerSync` (the house standard for server-to-client config) is
+vendored in `lib/ServerSync.dll` (SHA-256 `166956302a294e224474b26f4c7d58409084ad3f48bd0af1feb7551f229c8f60`,
+the copy used by zzzGenesisItemStacks) and merged into GenesisUI.dll by ILRepack; `tools/package.sh`
+refuses a DLL without it. It syncs only the `[Inventory]` entries marked [Servidor], with
+`ModRequired = false` so clients without GenesisUI can still join. Its own Harmony `PatchAll` runs
+only over its nested classes (read in its decompiled source), never over GenesisUI's patch classes.
+The banned-API test allows the merged `ServerSync.` namespace its RPC, PatchAll and file calls.
+**Why:** Diego's admin must set the inventory size and slot counts for everyone on a server; the
+house standard for that is ServerSync (Jötunn does not ship it). The visual modules still register
+no RPC of their own.

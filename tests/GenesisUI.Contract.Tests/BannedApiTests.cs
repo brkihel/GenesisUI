@@ -40,12 +40,16 @@ namespace GenesisUI.Contract.Tests
                 "own log folder BepInEx/GenesisUI/logs, size-capped, newest 5 kept (DIAGNOSTICS.md §2)"),
             ("GenesisUI.Foundation.ReportWriter", @"^System\.IO\.File::WriteAllText$",
                 "reports folder BepInEx/GenesisUI/reports, path checked (DIAGNOSTICS.md §4)"),
+            ("ServerSync.", @"^ZRoutedRpc::|^HarmonyLib\.Harmony::PatchAll$|^System\.IO\.File::|^System\.IO\.FileStream::\.ctor$",
+                "ServerSync (D-031): server-to-client config sync; patches only its own nested classes"),
             ("GenesisUI.Foundation.GuardedPatcher", @"^HarmonyLib\.Harmony::Unpatch$",
                 "rollback of our own patch methods only, filtered by our Harmony id and patch class (D-016)"),
         };
 
         private static bool IsAllowed(Reference r) =>
-            Allowed.Any(a => (r.CallerType == a.caller || r.CallerType.StartsWith(a.caller + "/", StringComparison.Ordinal))
+            Allowed.Any(a => (r.CallerType == a.caller || r.CallerType.StartsWith(a.caller + "/", StringComparison.Ordinal)
+                              // A caller ending in '.' names a whole merged namespace (ServerSync, D-031).
+                              || (a.caller.EndsWith(".", StringComparison.Ordinal) && r.CallerType.StartsWith(a.caller, StringComparison.Ordinal)))
                              && Regex.IsMatch(r.Target, a.pattern));
 
         [SkippableFact]

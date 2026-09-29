@@ -45,6 +45,8 @@
     <Reference Include="BepInEx"><HintPath>$(RefDir)/BepInEx.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="0Harmony"><HintPath>$(RefDir)/0Harmony.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="Jotunn"><HintPath>$(RefDir)/Jotunn.dll</HintPath><Private>false</Private></Reference>
+    <!-- ServerSync (D-031): vendored in lib/, merged into GenesisUI.dll by ILRepack. -->
+    <Reference Include="ServerSync"><HintPath>$(RepoRoot)lib/ServerSync.dll</HintPath><Private>true</Private></Reference>
   </ItemGroup>
 
   <ItemGroup>

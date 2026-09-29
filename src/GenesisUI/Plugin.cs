@@ -76,6 +76,7 @@ namespace GenesisUI
             Guard.Run("host:awake", () =>
             {
                 BindConfig();
+                Gameplay.InventorySettings.Bind(Config);
 
                 var missing = ContractResolver.Missing(typeof(Plugin));
                 if (missing.Count > 0)
@@ -108,6 +109,9 @@ namespace GenesisUI
                     "Notificações do canto superior esquerdo e mensagens do centro no visual do GenesisUI. Desligado, o jogo mostra as originais."));
                 ModuleHost.Register(new StatusModule(Config), Config.Bind("Modules", "Status", true,
                     "Efeitos ativos e o poder do guardião em quadros com nome e tempo. Desligado, o jogo mostra os efeitos originais."));
+                ModuleHost.Register(new Gameplay.InventoryModule(), Config.Bind("Modules", "Inventory", true,
+                    "Espaços do GenesisUI no inventário: tamanho definido pelo admin (32/40/48), consumo rápido, utilitários e equipamento. " +
+                    "Desligado, o inventário volta ao do jogo; itens nos espaços especiais aparecem nas linhas de baixo."));
                 ModuleHost.Register(new Modules.Windows.WindowShellModule(Config), Config.Bind("Modules", "Windows", true,
                     "Moldura das janelas: barra de abas em cima (Inventário, Habilidades, Mapa, Criação, Conquistas, Configurações) e dicas de atalho embaixo, com o inventário aberto. Desligado, as janelas ficam como no jogo."));
                 ModuleHost.Register(new SprintModule(Config), Config.Bind("Modules", "Sprint", true,
@@ -120,6 +124,8 @@ namespace GenesisUI
                 // Patch classes one by one through the guarded patcher (PATCH-POLICY rule 5).
                 _harmony = new Harmony(PluginInfo.Guid);
                 GuardedPatcher.Apply(_harmony, typeof(Patches.InventoryTabKeyPatch));
+                GuardedPatcher.Apply(_harmony, typeof(Patches.InventorySizePatch));
+                GuardedPatcher.Apply(_harmony, typeof(Patches.InventoryPlacementPatches));
 
 #if GENESIS_DIAGNOSTICS
                 Diagnostics.Watermark.Install(Build.Channel, Build.FullVersion);

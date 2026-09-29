@@ -31,6 +31,7 @@ DLL="src/GenesisUI/bin/$CHANNEL/net48/GenesisUI.dll"
 
 # The Core must be merged, never shipped beside the plugin (see ILRepack.targets).
 grep -aq "FaultRegistry" "$DLL" || { echo "GenesisUI.Core was not merged into $DLL" >&2; exit 1; }
+grep -aq "org.bepinex.helpers.ServerSync" "$DLL" || { echo "ServerSync was not merged into $DLL (D-031)" >&2; exit 1; }
 
 # Icon: Hexium rejects anything but exactly 256x256.
 python3 - <<'PY'
