@@ -229,8 +229,8 @@ namespace GenesisUI.Modules.Windows
         /// <summary>Vanilla's own dialogs may be closed with Esc: the highlighted tab follows them.</summary>
         private void FollowVanilla(InventoryGui gui)
         {
-            if (_active == Tab.Skills && !gui.m_skillsDialog.gameObject.activeSelf) Show(Tab.Inventory);
-            else if (_active == Tab.Achievements && !gui.m_achievementsPanel.gameObject.activeSelf) Show(Tab.Inventory);
+            if (_active == Tab.Skills && !WindowModuleBase.Handles(Tab.Skills) && !gui.m_skillsDialog.gameObject.activeSelf) Show(Tab.Inventory);
+            else if (_active == Tab.Achievements && !WindowModuleBase.Handles(Tab.Achievements) && !gui.m_achievementsPanel.gameObject.activeSelf) Show(Tab.Inventory);
         }
 
         private void Select(Tab tab, bool callVanilla)
@@ -241,8 +241,9 @@ namespace GenesisUI.Modules.Windows
                 CloseVanillaDialogs(gui);
                 switch (tab)
                 {
-                    case Tab.Skills: gui.OnOpenSkills(); break;
-                    case Tab.Achievements: gui.OnOpenAchievements(); break;
+                    // A GenesisUI window draws these tabs when its module is on; else vanilla's dialog opens.
+                    case Tab.Skills: if (!WindowModuleBase.Handles(Tab.Skills)) gui.OnOpenSkills(); break;
+                    case Tab.Achievements: if (!WindowModuleBase.Handles(Tab.Achievements)) gui.OnOpenAchievements(); break;
                     case Tab.Map:
                         // The map is its own screen: leave the inventory and open vanilla's large map.
                         gui.Hide();
@@ -286,7 +287,7 @@ namespace GenesisUI.Modules.Windows
                 if (_craftingHints.gameObject.activeSelf != crafting) _craftingHints.gameObject.SetActive(crafting);
                 if (_inventoryHints.gameObject.activeSelf == crafting) _inventoryHints.gameObject.SetActive(!crafting);
             }
-            bool settings = tab == Tab.Settings;
+            bool settings = tab == Tab.Settings && !WindowModuleBase.Handles(Tab.Settings);
             if (_settingsPage != null && _settingsPage.gameObject.activeSelf != settings) _settingsPage.gameObject.SetActive(settings);
         }
 

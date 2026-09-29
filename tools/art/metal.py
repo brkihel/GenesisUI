@@ -619,6 +619,26 @@ def pieces():
     m.diamond(5, 7, 4.2, 6.2)
     save("tab_knot", m, None, [0, 0, 0, 0])
 
+    # The ring of ConceptArt (1) (a thin metal circle with an inner hairline) and its progress band,
+    # a plain white arc the game fills radially and tints.
+    m = Metal(128, 128, ss=4)
+    pts = [(64 + 60 * np.cos(a), 64 + 60 * np.sin(a)) for a in np.linspace(0, 2 * np.pi, 181)]
+    m.line(pts, 1.6)
+    pts = [(64 + 50 * np.cos(a), 64 + 50 * np.sin(a)) for a in np.linspace(0, 2 * np.pi, 181)]
+    m.line(pts, 0.7)
+    for a in (0, np.pi / 2, np.pi, 3 * np.pi / 2):
+        m.diamond(64 + 60 * np.cos(a), 64 + 60 * np.sin(a), 3.2, 3.2)
+    save("ring", m, None, [0, 0, 0, 0])
+    band = Image.new("L", (128 * SCALE * 4, 128 * SCALE * 4))
+    c, r0, r1 = 64 * SCALE * 4, 52.5 * SCALE * 4, 57.5 * SCALE * 4
+    ImageDraw.Draw(band).ellipse((c - r1, c - r1, c + r1, c + r1), fill=255)
+    ImageDraw.Draw(band).ellipse((c - r0, c - r0, c + r0, c + r0), fill=0)
+    band = band.resize((128 * SCALE, 128 * SCALE), Image.LANCZOS)
+    fill = Image.new("RGBA", band.size, (255, 255, 255, 0))
+    fill.putalpha(band)
+    fill.save(os.path.join(PIECES_DIR, "ring_fill.png"))
+    meta["ring_fill"] = {"border": [0, 0, 0, 0]}
+
     with open(os.path.join(PIECES_DIR, "pieces.json"), "w") as f:
         json.dump({"pieces": meta, "retire": RETIRE}, f, indent=1, sort_keys=True)
     return len(meta)

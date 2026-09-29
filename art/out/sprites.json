@@ -1064,6 +1064,37 @@
       "borderTop": 9
     },
     {
+      "name": "ring",
+      "file": "ring.png",
+      "width": 128,
+      "height": 128,
+      "borderLeft": 0,
+      "borderBottom": 0,
+      "borderRight": 0,
+      "borderTop": 0
+    },
+    {
+      "name": "ring_fill",
+      "file": "ring_fill.png",
+      "width": 128,
+      "height": 128,
+      "borderLeft": 0,
+      "borderBottom": 0,
+      "borderRight": 0,
+      "borderTop": 0
+    },
+    {
+      "name": "ring_relief",
+      "file": "ring_relief.png",
+      "width": 128,
+      "height": 128,
+      "borderLeft": 0,
+      "borderBottom": 0,
+      "borderRight": 0,
+      "borderTop": 0,
+      "color": "linear"
+    },
+    {
       "name": "tab_knot",
       "file": "tab_knot.png",
       "width": 10,

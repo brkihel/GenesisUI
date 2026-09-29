@@ -170,6 +170,31 @@
     9
    ]
   },
+  "ring": {
+   "border": [
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  "ring_fill": {
+   "border": [
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  "ring_relief": {
+   "border": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "color": "linear"
+  },
   "tab_knot": {
    "border": [
     0,
