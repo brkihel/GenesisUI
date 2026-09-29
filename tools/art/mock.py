@@ -256,11 +256,11 @@ def main(out_path):
     put(liquid_h("liquid_health_h", barw, barh).crop((0, 0, int(barw * 0.76), barh)), barx, bary)
     text(W / 2, bary + barh / 2, "1370 / 1800", font("Cinzel-Medium", 12))
 
-    # Creature plate [Enemy]: Diego's slim plate scaled to 18 high.
+    # Creature plate [Enemy]: the generated boss plate drawn at 0.3 (as approved in F3).
     ew, eh = 112, 18
     ex, etop = 700, 560
-    k = eh / size("enemy_plate")[1]
-    put(dressed("enemy_plate", ew, eh, fit=eh), ex, etop)
+    k = 0.3
+    put(st.nine("enemy_plate", ew, eh, k), ex, etop)
     cl, cb, cr, ct = (v * k for v in st.content("enemy_plate", (22, 12, 22, 12)))
     bx2, by2, bw2, bh2 = ex + cl + 1, etop + ct + 1, int(ew - cl - cr - 2), max(1, int(eh - cb - ct - 2))
     put(Image.new("RGBA", (bw2, bh2), (0, 0, 0, 140)), bx2, by2)

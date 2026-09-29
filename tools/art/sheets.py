@@ -400,8 +400,7 @@ PIECES = [
     {"name": "vital_stamina", "kind": "frame", "sheet": 3, "box": (200, 152, 332, 820), "opening": (266, 480)},
     # Eitr uses the stamina frame: only health is bigger (Diego, R-042).
     # The stamina readout (sheet 3, first bar, Diego R-042): knot ends, one channel for the liquid.
-    {"name": "sprint_frame", "kind": "frame", "sheet": 3, "box": (488, 172, 1424, 300), "opening": (956, 236),
-     "cut": "enemy_plate"},
+    {"name": "sprint_frame", "kind": "frame", "sheet": 3, "box": (488, 172, 1424, 300), "opening": (956, 236)},
     # The hotbar (sheet 4, top): eight cells in one fixed piece; `content` spans the cells.
     {"name": "hotbar_frame", "kind": "frame", "sheet": 4, "box": (12, 72, 1444, 280), "scale": 0.4, "cells": 8},
     # Cell states (sheet 4, second row): lit gold = selected (and hover, later), green = equipped.
@@ -429,11 +428,9 @@ PIECES = [
      "ornaments": [{"name": "map_crest_knot", "edge": "top", "box": (352, 656, 402, 716), "clean": 300}]},
     {"name": "map_banner", "kind": "frame", "sheet": 4, "box": (490, 664, 730, 784),
      "border": (60, 36, 60, 36), "content": (40, 20, 40, 20)},
-    # Boss plate (sheet 3, second bar) and creature plate (sheet 3, first bar): knot ends.
+    # Boss plate (sheet 3, second bar): knot ends. (The creature plate stays the generated one, R-042.)
     {"name": "boss_plate", "kind": "frame", "sheet": 3, "box": (476, 384, 1428, 560), "scale": 0.44,
      "border": (116, 40, 116, 40), "content": (100, 30, 100, 30)},
-    {"name": "enemy_plate", "kind": "frame", "sheet": 3, "box": (488, 172, 1424, 300),
-     "border": (108, 32, 108, 32), "content": (96, 26, 96, 26)},
     # The minimap ring, rebuilt at 250 from the small ring of sheet 2.
     {"name": "map_ring", "kind": "ring", "sheet": 2, "box": (488, 604, 708, 820), "centre": (598, 712), "scale": 0.5,
      "radius": 92, "diameter": 226, "pad": 12, "guard": 16, "diamond": 20, "window": 9, "band": 16},

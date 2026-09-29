@@ -15,7 +15,8 @@ is unclear, ask; do not guess.
   F6 map, F7 Extension API and adapters, F8 optional gameplay package, F9 switch-over
   (D-024). Do not start API or adapter work before the vanilla UI is done.
 - **Version:** 0.6.0. R-042 (0.6.0-preview.1) **approved F4.0** with five adjustments, done in
-  `0.6.0-preview.2` (script R-043, not yet run). Diego is retouching colours (too strong) in
+  `0.6.0-preview.3` (script R-043, not yet run; preview.3 also restores the F3 creature plate,
+  which must not use sheet art). Diego is retouching colours (too strong) in
   `~/GenesisUI-Concept/GenesisUI-cuts/edited/` and will send textures for the windows.
 - **Art direction:** gold only (D-023). The carved-wood style was tried and rejected; do not
   propose another style unless Diego asks.

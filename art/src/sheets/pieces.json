@@ -83,32 +83,6 @@
   "from": "cell_glow",
   "sheet": 0
  },
- "enemy_plate": {
-  "border": [
-   34,
-   10,
-   34,
-   10
-  ],
-  "content": [
-   30,
-   8,
-   30,
-   8
-  ],
-  "from": "enemy_plate",
-  "sheet": 3
- },
- "enemy_plate_shape": {
-  "border": [
-   34,
-   10,
-   34,
-   10
-  ],
-  "from": "enemy_plate",
-  "sheet": 3
- },
  "hotbar_frame": {
   "border": [
    0,

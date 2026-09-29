@@ -242,30 +242,6 @@
       "borderTop": 0
     },
     {
-      "name": "enemy_plate",
-      "file": "enemy_plate.png",
-      "width": 295,
-      "height": 38,
-      "borderLeft": 34,
-      "borderBottom": 10,
-      "borderRight": 34,
-      "borderTop": 10,
-      "contentLeft": 30,
-      "contentBottom": 8,
-      "contentRight": 30,
-      "contentTop": 8
-    },
-    {
-      "name": "enemy_plate_shape",
-      "file": "enemy_plate_shape.png",
-      "width": 295,
-      "height": 38,
-      "borderLeft": 34,
-      "borderBottom": 10,
-      "borderRight": 34,
-      "borderTop": 10
-    },
-    {
       "name": "hotbar_frame",
       "file": "hotbar_frame.png",
       "width": 570,
@@ -691,6 +667,20 @@
       "borderBottom": 0,
       "borderRight": 0,
       "borderTop": 0
+    },
+    {
+      "name": "enemy_plate",
+      "file": "enemy_plate.png",
+      "width": 96,
+      "height": 60,
+      "borderLeft": 28,
+      "borderBottom": 18,
+      "borderRight": 28,
+      "borderTop": 18,
+      "contentLeft": 22,
+      "contentBottom": 12,
+      "contentRight": 22,
+      "contentTop": 12
     },
     {
       "name": "bar_bubbles",

@@ -262,5 +262,6 @@ independent background opacity, animated liquid in all three bars).
 3's slim bar; hotbar cells are measured from the art (`cells`), with Diego's selected and
 equipped cell frames. Every element is exported unscaled to `~/GenesisUI-Concept/GenesisUI-cuts/
 original/`, and a same-size retouched copy in `edited/` replaces the cut: Diego adjusts colour
-there without anything being cut again.
+there without anything being cut again. The creature plate is **not** from the sheets: it keeps
+the generated boss plate drawn small, as approved in F3 (Diego, after R-042).
 

@@ -26,6 +26,9 @@ import shapes
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 SCALE = 2  # sprites are rendered at 2x and loaded with pixelsPerUnit = 100 * SCALE
 HAND_WRITTEN = {"bar_fill": (16, 128)}  # art/src textures that are not shapes (a white gradient tinted in game)
+# Generated shapes that also ship under another name. The creature plate keeps the generated boss
+# plate drawn small, as approved in F3 (Diego, after R-042); the boss itself uses Diego's sheet plate.
+ALIASES = {"enemy_plate": "boss_plate"}
 
 
 def entry(name, w, h, border, content=None, wrap="clamp"):
@@ -84,6 +87,13 @@ def main() -> int:
                 if key in meta:
                     e[key] = meta[key]
             manifest["sprites"].append(e)
+
+    for alias, source in ALIASES.items():
+        w, h, border, content = sources[source]
+        cairosvg.svg2png(url=os.path.join(ROOT, "art", "src", source + ".svg"), write_to=os.path.join(out, alias + ".png"),
+                         output_width=w * SCALE, output_height=h * SCALE)
+        manifest["sprites"] = [e for e in manifest["sprites"] if e["name"] != alias]
+        manifest["sprites"].append(entry(alias, w, h, border, content))
 
     patterns.main(out)
     for name, (pw, ph, wrap, border, _) in patterns.PATTERNS.items():

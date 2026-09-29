@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.0-preview.3 — creature plate restored
+
+### Fixed
+- The creature plate above heads is back to the F3 plate (the generated boss plate drawn
+  small); F4.0 had given it the sheet's slim bar, which belongs to the stamina readout only.
+  The `enemy_plate` sprite is that generated plate, pixel-identical to 0.5.0.
+
 ## 0.6.0-preview.2 — R-042 adjustments; F4.0 approved
 
 ### Changed
