@@ -290,3 +290,20 @@ he coloured it.
 **Why:** the sheets were drawn in different tones and too bright (R-042); Diego asked for one
 darker, discreet gold without the art being redrawn, deformed or de-symmetrised.
 
+
+## D-030 — Inventory gameplay patches
+
+**Decision (2026-09-29):** the inventory module (docs/GAMEPLAY.md) keeps quick-use, utility and
+equipment slots in extra rows of the player's inventory that GenesisUI draws in its own panels,
+and applies these patches, each its own guarded class with contract tests:
+`Player.SetInventorySize` (void prefix raising the rows to include the special rows),
+`Inventory.FindEmptySlot` / `CanAddItem` / `GetEmptySlots` / `HaveEmptySlot` (postfixes on the
+result: automatic placement ignores special rows), `Humanoid.EquipItem` / `UnequipItem`
+(postfixes moving worn items into and out of their cells), and **one skipping prefix** on
+`InventoryGui.OnSelectedItem` that refuses a drop into a special cell when the item is not
+allowed there; in every other case it returns true and vanilla — and every other mod's patch on
+that method — runs as before. Losing special-slot items when GenesisUI is removed is accepted
+(Diego: part of the server modpack, not uninstalled).
+**Why:** Diego's requirements (GAMEPLAY §1) need slots vanilla does not have; these are the
+smallest set of hooks that let vanilla keep doing every item move itself. The earlier
+"uninstall-safe rows" proposal was rejected as breaking the concept's design.

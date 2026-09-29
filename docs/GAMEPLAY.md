@@ -1,157 +1,112 @@
-# Inventory gameplay — study and design (F4.G0)
+# Inventory gameplay — requirements and design (F4)
 
-Status: **study done 2026-09-29; design proposed, waiting for Diego's OK before any item code.**
-Decision: D-028 (same plugin, built during F4). Plan: F4-PLAN §7.
+Status: **requirements approved by Diego 2026-09-29; technical design below; building.**
+Decision: D-028 (same plugin, during F4), D-030 (patches). Plan: F4-PLAN §7.
+The first proposal (every special slot kept in rows vanilla shows, driven by "never lose an item
+on uninstall") was **rejected**: the concept's layout is the design, and losing items when the
+mod is removed is an accepted risk (GenesisUI is part of the server's modpack; not uninstalled).
 
-What Diego asked for: an inventory whose size the **server admin** sets, up to **48 slots**
-(the 8 hotbar slots included), with a scroll bar on the inventory slots only; **4 quick-use**
-slots (food, a potion); **4 utility** slots (anything that is not equipment, as SeneaL UI
-does); an **equipment panel where every equipped item lives** (weapons and tools stay on the
-hotbar); **sort**; a category **filter that dims** in place.
+## 1. Requirements (Diego, 2026-09-29)
 
-## 1. Sources
+1. **Inventory size set by the admin**: 32, 40 or 48 slots (4–6 rows of 8), the 8 hotbar slots
+   included, with a scroll bar on the inventory slots only. "Admin" = the server's config, or
+   the player's own config in single player / local worlds.
+2. **Equipment panel** as in ConceptArt (9): every worn item lives there; weapons and tools stay
+   on the hotbar. Clicking a cape in the inventory equips it **and moves it into the cape slot**.
+   No weight reduction, no hotkeys. Slots:
+   - vanilla: Head, Chest, Legs, Cape, Belt (utility item), Trinket;
+   - modpack, each shown only when its mod is present **and** the admin keeps it on:
+     Backpack/Quiver (one shared slot: Backpacks + BowsBeforeHoes), Lantern (HipLantern),
+     Amulet and Ring (Jewelcrafting), MagicRevamp's slots.
+3. **Quick-use slots** (consumo rápido): food, meads, potions. **Utility slots**: ammunition,
+   magic items, shields, tools, weapons — never items that have their own equipment slot
+   (armour, capes, backpacks). Rings and amulets are accepted for quick swapping: equipping one
+   from a utility slot sends it to its equipment slot and puts the one that was worn in its place.
+   The admin sets **0–4 of each** (0 = off).
+4. **HUD**: quick-use and utility slots appear smaller and **without frames above the hotbar**, as
+   a second, lighter row joined to its top, each with its hotkey. Defaults: quick-use
+   **Alt+1…Alt+4**, utility **Alt+Z, Alt+X, Alt+C, Alt+V** (Z/X/C/V alone are vanilla's sit, walk
+   and auto-pickup); all configurable.
+5. **Sort** and a **category filter that dims** items in place.
 
-- **Vanilla, game 1.0.16** (`ref/assembly_valheim.dll`, one type at a time with a heap cap,
-  read only): `Inventory`, `Player`, `Humanoid`, `InventoryGui`.
-- **Current inventory mods on the Hexium store** (catalog of 2026-09-24, packages downloaded
-  and their README/CHANGELOG read; no code read or reused):
-  - `shudnal-ExtraSlots` 1.2.12 (2026-09-19) — **runs on GenesisHeim today**, with
-    `shudnal-ExtraSlotsCustomSlots`.
-  - `Azumatt-AzuExtendedPlayerInventory` 2.5.1 (2026-09-17), 15 370 downloads; ~1 900 mods
-    declare it as a dependency (its slot API).
-  - `sighsorry-InventorySlots` 1.5.13 (2026-09-24).
-- **GenesisHeim modpack** (`dados/mods.lock.current.json`): items that ask for their own slot
-  come from `Smoothbrain-Backpacks`, `Smoothbrain-Jewelcrafting` (neck, ring),
-  `Azumatt-BowsBeforeHoes` (quiver), `blacks7ar-MagicRevamp`; ExtraSlotsCustomSlots gives them
-  slots today.
+## 2. What vanilla 1.0.16 does (study, proven in code)
 
-## 2. What vanilla 1.0.16 does (proven in code)
+1. `Player.SetInventorySize(rows)` clamps to 0–9 rows, stores them in the character (`invrows`),
+   resizes `InventoryGui`'s player panel, then `Humanoid.DropInvalidItems()` **drops on the
+   ground** every item outside width × height. `Player.OnSpawned` re-applies `invrows` each spawn.
+2. `Inventory.Load` keeps items saved outside the height (`skipValidPositionCheck`), but two items
+   on one position lose the second silently.
+3. `AddItem(item)`, `CanAddItem`, `GetEmptySlots`, `HaveEmptySlot` look at all `width × height`
+   positions (`FindEmptySlot` walks every row).
+4. Death: `MoveInventoryToGrave` copies width/height and positions of every non-equipped item;
+   `MoveAll` (take all) tries each item's original position first.
+5. Vanilla equips one item per kind (one utility item); rings/amulets from Jewelcrafting and other
+   modded slot items rely on a slot mod to be worn together.
 
-1. **Native inventory rows.** `Player.SetInventorySize(rows)` clamps to 0–9 rows, sets the
-   inventory height, stores it in the character as the unique key **`invrows`**, and asks
-   `InventoryGui.SetInventorySize(rows)` to grow the player panel by one grid row per row.
-   On every spawn (`Player.OnSpawned`) the game reads `invrows` back and applies it (default 4).
-   → A size set this way **survives uninstalling GenesisUI**: vanilla keeps showing all rows.
-2. **Shrinking drops items on the ground.** `SetInventorySize` ends with
-   `Humanoid.DropInvalidItems()`: every item whose grid position is outside the new width/height
-   is **dropped at the player's feet** (not deleted; quest items cannot be dropped).
-3. **Loading keeps out-of-grid items.** `Inventory.Load` adds saved items with
-   `skipValidPositionCheck = true`: an item saved in a row beyond the current height is kept in
-   the list (invisible) — until the next `SetInventorySize` drops it (point 2).
-4. **Two items saved on the same slot: the second is silently lost at load.** The internal
-   `AddItem(item, amount, x, y)` returns false when the slot holds a different item, and `Load`
-   ignores the result. Any design must never let two items share a position.
-5. **Automatic placement scans every row.** `AddItem(item)` (pickups, crafting results, take
-   all overflow) uses `FindEmptySlot`, which walks all `m_height` rows; `CanAddItem` and
-   `GetEmptySlots` count `width × height`. Rows we reserve for special slots would be filled by
-   ordinary pickups unless those three are taught to skip them.
-6. **Death.** `MoveInventoryToGrave` copies width and **height** into the tombstone and moves
-   every non-equipped, non-quest item with its grid position (the player unequips first).
-   Taking all back (`MoveAll`) tries each item's **original position first**, then any free slot.
-7. **Stack all / take all** use `AddItem(item)` (point 5).
+Current slot mods (ExtraSlots 1.2.12 — on GenesisHeim today —, AzuEPI 2.5.1, InventorySlots
+1.5.13; README/CHANGELOG only) all keep special slots as extra rows of the player's inventory
+that vanilla does not show, and all spent years on tombstones, sorting and other inventory mods.
 
-## 3. What the current mods learned the hard way (their changelogs)
+## 3. Technical design
 
-- **Item loss when the mod is removed** was the central problem for years. ExtraSlots keeps
-  its extra items in rows the game does not show, so "if you run the game without the mod the
-  items will be lost"; 1.2.0 (2026) added deferred items, backups and recovery, and 1.2.1 had
-  to follow "the native inventory size" once 1.0 introduced it. AzuEPI and InventorySlots tell
-  users to **empty the extra slots before uninstalling**.
-- **Tombstones**: repeated fixes for items in extra slots lost or duplicated on death,
-  dungeons and container ownership changes (ExtraSlots 1.0.30, 1.0.36, 1.1.17, 1.2.0, 1.2.1).
-- **Other inventory mods fight over the same rows**: all three declare each other
-  incompatible. Sorting, quick stack, auto store, EpicLoot sacrifice, crafting that destroys
-  items (Jewelcrafting) and ServerCharacters each needed a compatibility fix.
-- **Custom equipment slots are an ecosystem**: AzuEPI's API is used by ~1 900 mods;
-  ExtraSlots has its own. Without one of them, modded items that expect a slot (backpacks,
-  rings, necklaces, quivers) have no dedicated place.
+### 3.1 Where the items live
 
-## 4. Proposed design
+The player's own inventory, width 8:
 
-### 4.1 Everything lives in vanilla rows that vanilla can see
-
-All slots — ordinary inventory, quick-use, utility and equipment — are **positions of the
-player's own inventory**, and the inventory height set through vanilla's own
-`SetInventorySize` **includes the reserved rows**:
-
-| Rows | Content | Shown by GenesisUI as |
+| Rows | Content | Drawn by GenesisUI |
 |---|---|---|
-| 0 … N−1 | ordinary inventory, N = admin setting (4, 5 or 6 → 32/40/48 slots); row 0 is the hotbar | the scrolling grid |
-| N | 4 quick-use + 4 utility | the two rows under the grid |
-| N+1 | equipment (head, chest, legs, cape, utility item, trinket, and modded slots) | the equipment panel |
+| 0 … N−1 | ordinary slots, N = 4–6 (admin), row 0 = hotbar | inventory grid with scroll |
+| N | quick-use 0–3 (x 0–3), utility 0–3 (x 4–7) | inventory panel sections + HUD row |
+| N+1, N+2 | equipment cells (fixed x per slot kind) | equipment panel |
 
-With N = 6 that is 8 rows (vanilla allows 9). Consequences:
+The special rows are real inventory positions, so saving, loading, graves and `MoveAll` keep them
+with no extra storage. A position whose slot is switched off by the admin is never offered; an
+item left there is moved to a free ordinary slot at spawn (or stays until one frees up).
 
-- **Uninstalling GenesisUI never loses an item**: vanilla keeps `invrows` and simply shows every
-  row, special ones included, as ordinary slots. Equipped items stay equipped (the flag is on
-  the item, not on the slot).
-- **Death and tombstones need no special code**: the grave copies the height and positions;
-  taking all puts each item back on its own position first (§2.6).
-- **Nothing new is saved and nothing on the server stores items.** ServerCharacters keeps
-  working as it saves the normal profile.
+### 3.2 Patches (each one a named decision in D-030, guarded, contract-tested)
 
-### 4.2 Vanilla keeps every item operation
+1. `Player.SetInventorySize` — void prefix raising the requested rows to N + special rows, so
+   vanilla's own resize and `DropInvalidItems` never drop a special item.
+2. `Inventory.FindEmptySlot` (postfix), `CanAddItem` / `GetEmptySlots` / `HaveEmptySlot`
+   (postfix on `__result`): automatic placement and free-space counts only see ordinary rows.
+3. `InventoryGui.OnSelectedItem` — the one skipping prefix: it refuses a drop into a special cell
+   when the item is not allowed there (message in pt-BR), and passes every other case to vanilla
+   untouched. Vanilla then does the move, swap, split and stack itself.
+4. `Humanoid.EquipItem` / `UnequipItem` (postfix, local player only): after vanilla equips a
+   worn item, swap it into its equipment cell (the item previously there goes to the equipping
+   item's old position — the ring/amulet swap); after an unequip from a cell, move the item to a
+   free ordinary slot, or leave it if none.
+5. Modded slots (Backpacks/Quiver, Lantern, Amulet, Ring, MagicRevamp): wearing them together with
+   vanilla's utility item needs the same kind of equip hooks slot mods use. Each is studied against
+   the mod's own DLL (members only) before its cell is switched on; until then the cell stays off.
 
-The reserved cells are vanilla `InventoryGrid` elements, moved on screen into the quick,
-utility and equipment panels by `VanillaSkin` (reversibly). Drag, drop, split, swap and
-right-click stay vanilla's own handlers. GenesisUI adds only:
+### 3.3 The windows
 
-1. **Placement rules** (Harmony, guarded, postfix/prefix per PATCH-POLICY): a reserved cell
-   accepts only its kind (quick: food and potions; utility: anything that is not equipment;
-   equipment cell: its item type), and `FindEmptySlot`, `CanAddItem` and `GetEmptySlots` skip
-   reserved rows so pickups and crafting never land there (§2.5).
-2. **Equip moves to the panel**: after vanilla equips an armour piece (any source: click,
-   hotkey, auto-equip), the item is swapped into its equipment cell; unequipping moves it back to
-   a free ordinary slot, and if there is none it stays where it is (never dropped).
-3. **Quick-use keys** call vanilla's `Player.UseItem` for the item in that cell, as the hotbar
-   does.
-4. **Sort** reorders the ordinary rows only (never the hotbar row unless asked, never reserved
-   rows), merging stacks through vanilla, in one pass that is checked to keep every item.
+`InventoryGui`'s grid, weight, and panels are moved and dressed by `VanillaSkin` into the concept
+layout; special-row cells of vanilla's grid are placed into the equipment, quick-use and utility
+panels, so drag and drop stay vanilla's own. The HUD row above the hotbar mirrors quick-use and
+utility cells (icon, amount, hotkey), like the hotbar module.
 
-### 4.3 Admin authority and changing the size
+### 3.4 Settings
 
-- The admin sets **ordinary rows (4–6)** in the server's config, synchronised to clients with
-  **ServerSync** (house standard). A client cannot raise it; without the server's value the
-  module uses 4 (vanilla) and shows no extra rows.
-- **Growing** moves the special rows down first (so no two items ever share a position, §2.4),
-  then calls `SetInventorySize`.
-- **Shrinking never drops anything**: items in rows that would disappear are first repacked into
-  free ordinary slots; if they do not fit, the size is kept until they do and the player is told
-  (pt-BR message). Vanilla's `DropInvalidItems` is only ever reached with nothing left outside.
-- Every size change, move and repack is logged with a before/after item count; a mismatch trips
-  the module and returns everything to vanilla.
+`[Inventory]` (server-synced with ServerSync when a server has the mod; local otherwise): Rows
+(4–6), QuickSlots (0–4), UtilitySlots (0–4), one toggle per modded equipment slot, hotkeys
+(client-side), `[Modules] Inventory` master toggle. The module refuses to start (log + F8) next to
+ExtraSlots, AzuEPI, InventorySlots, EquipmentAndQuickSlots or ComfyQuickSlots.
 
-### 4.4 Isolation inside the plugin
+## 4. Steps
 
-- `src/GenesisUI/Gameplay/`, own `[Modules] Inventory` toggle (off → vanilla 32 slots, special
-  rows shown as ordinary rows), own guard owner, diagnostics lines (rows, reserved cells,
-  last repack, counts).
-- The banned-API test keeps its rule for the UI modules; the gameplay module gets a short,
-  named allow-list (grid position swaps, `SetInventorySize`) justified by this document.
-- **Refuses to start** (log + F8 line, stays vanilla) when ExtraSlots, AzuEPI, InventorySlots,
-  EquipmentAndQuickSlots or ComfyQuickSlots is loaded — except for the one-time migration below.
-- Network: the plugin keeps `NotEnforced` for the visual part; the server-synced settings are
-  reviewed with the house standard when the module lands. AzuAntiCheat whitelist as usual.
+1. **F4.2a** Storage rows, admin rows 4–6, placement patches, inventory grid with scroll in the
+   concept layout, weight bar, filter (dim), item details panel.
+2. **F4.2b** Equipment panel (vanilla slots), equip/unequip moves, drop rules.
+3. **F4.2c** Quick-use and utility slots (panel + HUD row + hotkeys), ring/amulet swap, sort.
+4. **F4.2d** Modded equipment slots, one mod at a time.
+5. Migration from ExtraSlots for GenesisHeim: later, at the switch-over (Diego).
 
-## 5. Open questions (need answers before F4.G1 code)
+## 5. Item-safety matrix (test script for each step)
 
-1. **Migration from ExtraSlots on GenesisHeim.** Players have items in ExtraSlots today. Its
-   storage layout must be read from a real character file (Diego's own `kihel.fch`, a copy;
-   never the production server) before the switch-over; the migration then moves every item
-   into GenesisUI's rows once, with counts checked, and never runs while ExtraSlots is loaded.
-   Timing: with F9 (switch-over), but designed now.
-2. **Modded slot items** (Backpacks, Jewelcrafting neck/ring, BowsBeforeHoes quiver,
-   MagicRevamp). Options: (a) GenesisUI offers AzuEPI's slot API shape so those mods register
-   their slots with us, (b) a fixed list of extra equipment cells per known mod, (c) they go to
-   utility cells. Needs a look at how each behaves with no slot mod present.
-3. **SeneaL UI's utility slots**: Diego's reference for their exact rules (weight? hotkeys?).
-4. **Hotbar row** in sort: excluded by default?
-
-## 6. Item-safety matrix (the F4.G1 script)
-
-Every row checked with item counts before and after: pick up with full inventory; craft with
-full inventory; drag into each reserved kind (valid and invalid); split into reserved cells;
-equip/unequip every armour type from grid, panel, hotkey; quick-use keys; sort with full
-stacks; die with items in every row and take the grave back (all, one by one); stack all / take
-all at a chest; admin grows 4→6 and shrinks 6→4 with rows full; uninstall GenesisUI and load
-the character in vanilla; reinstall; fault injection in the module mid-drag.
+Counts before and after: pickup with full inventory; crafting with full inventory; drag into
+every special kind (valid and invalid); split into special cells; equip/unequip every worn kind
+from grid, panel and hotkey; ring/amulet swap; quick-use and utility hotkeys; sort; die with
+items in every row and take the grave back (all and one by one); stack all / take all at a chest;
+admin 4→6→4 with rows full; fault injection mid-drag.
