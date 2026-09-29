@@ -221,5 +221,12 @@
   "genesisui_menu_yes": "Yes",
   "genesisui_menu_no": "No",
   "genesisui_menu_confirm_quit": "Quit the game now?",
-  "genesisui_menu_confirm_logout": "Back to the main menu?"
+  "genesisui_menu_confirm_logout": "Back to the main menu?",
+  "genesisui_fault_title": "Something went wrong",
+  "genesisui_fault_text": "We are sorry! The «{0}» part of GenesisUI ran into an error.",
+  "genesisui_fault_restarted": "It has already restarted itself. If a window closed, just open it again — nothing was lost.",
+  "genesisui_fault_left_off": "It failed several times in a row, so it stays off and that part goes back to the game's look until you restart Valheim. Nothing was lost.",
+  "genesisui_fault_count": "{0} errors this session.",
+  "genesisui_fault_copy": "Copy error",
+  "genesisui_fault_report": "Report (soon)"
 }

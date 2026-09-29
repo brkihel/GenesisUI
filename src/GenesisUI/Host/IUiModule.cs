@@ -31,6 +31,16 @@ namespace GenesisUI.Host
         void Teardown();
     }
 
+    /// <summary>
+    /// A module that draws over a vanilla window: when it faults, the host first closes that vanilla
+    /// window (the inventory, the store, the map...) so the player never lands in vanilla's look or a
+    /// half-restored window; the module is rebuilt and the next opening is GenesisUI's again.
+    /// </summary>
+    internal interface IRecoverable
+    {
+        void CloseVanillaWindow();
+    }
+
     internal sealed class ModuleContext
     {
         public RectTransform Root;

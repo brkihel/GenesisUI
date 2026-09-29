@@ -17,6 +17,7 @@ namespace GenesisUI.Modules.Windows
     /// the log-out and quit confirmations. Every press is vanilla's own button or method. The game's
     /// settings screen keeps vanilla's look for now.
     /// </summary>
+    [GameContract("assembly_valheim", "Menu", "Hide")]
     [GameContract("assembly_valheim", "Menu", "get_instance")]
     [GameContract("assembly_valheim", "Menu", "IsVisible")]
     [GameContract("assembly_valheim", "Menu", "m_menuDialog")]
@@ -35,8 +36,15 @@ namespace GenesisUI.Modules.Windows
     [GameContract("assembly_valheim", "Menu", "OnLogoutNo")]
     [GameContract("assembly_valheim", "Menu", "OnQuitYes")]
     [GameContract("assembly_valheim", "Menu", "OnQuitNo")]
-    internal sealed class PauseMenuModule : IUiModule
+    internal sealed class PauseMenuModule : IUiModule, IRecoverable
     {
+        /// <summary>IRecoverable: on a fault the pause menu closes.</summary>
+        public void CloseVanillaWindow()
+        {
+            var menu = Menu.instance;
+            if (menu != null && Menu.IsVisible()) menu.Hide();
+        }
+
         private const string Owner = "module:win.menu";
         private static readonly string[] NoRegions = new string[0];
         private const float W = 420f, RowH = 50f, Gap = 10f;

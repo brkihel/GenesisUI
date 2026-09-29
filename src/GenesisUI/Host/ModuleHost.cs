@@ -48,7 +48,7 @@ namespace GenesisUI.Host
             Guard.Faults.Tripped += record =>
             {
                 foreach (var e in Entries)
-                    if (e.Owner == record.Owner && e.State == ModuleState.Active) TearDown(e, ModuleState.Faulted, record.FirstMessage);
+                    if (e.Owner == record.Owner && e.State == ModuleState.Active) Recover(e, record);
             };
         }
 
@@ -105,6 +105,7 @@ namespace GenesisUI.Host
         {
             VanillaVeil.Enforce();
             VanillaNudge.Enforce();
+            Guard.Try("fault popup tick", Diagnostics.FaultPopup.Tick);
         }
 
 #if GENESIS_DIAGNOSTICS
@@ -140,9 +141,33 @@ namespace GenesisUI.Host
         }
 #endif
 
+        private static readonly Foundation.Faults.RecoveryPolicy Policy = new Foundation.Faults.RecoveryPolicy();
+
+        /// <summary>
+        /// A module threw (Diego, after R-058: a broken window must never stay broken, vanilla must
+        /// not show up, the player must not have to press "re-enable"). The vanilla window it drew over
+        /// is closed first; the module is torn down and rebuilt in the same frame, so HUD veils are
+        /// back before anything draws; the player is told with an apology and the exact error. A module
+        /// that keeps failing (RecoveryPolicy) stays off and the popup says so.
+        /// </summary>
+        private static void Recover(ModuleEntry e, Foundation.Faults.FaultRecord record)
+        {
+            if (e.Module is IRecoverable window) Guard.Try("close vanilla window for " + e.Module.Id, window.CloseVanillaWindow);
+            TearDown(e, ModuleState.Faulted, record.FirstMessage);
+            bool restart = _masterEnabled && e.Enabled.Value && Policy.TryRestart(e.Owner, Guard.Now);
+            GenesisLog.Warn("Host", e.Module.Id + (restart ? " faulted; rebuilding it now" : " faulted again; left off (too many restarts)"));
+            Guard.Try("fault popup", () => Diagnostics.FaultPopup.Show(e.Module.NameToken, record, restart));
+            if (!restart) return;
+            Guard.Faults.Reset(e.Owner);
+            e.State = ModuleState.Disabled;
+            e.Reason = null;
+            Reconcile(e);
+        }
+
         /// <summary>Diagnostics "retry": forget the fault and try to build again.</summary>
         public static void Retry(ModuleEntry e)
         {
+            Policy.Forget(e.Owner);
             Guard.Faults.Reset(e.Owner);
             e.State = ModuleState.Disabled;
             e.Reason = null;

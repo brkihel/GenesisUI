@@ -17,6 +17,7 @@ namespace GenesisUI.Modules.Windows
     /// Vender. Vanilla's store stays open and invisible and does every trade: our rows press its rows,
     /// our buttons press its buy and sell buttons, and the sell line names what vanilla will sell.
     /// </summary>
+    [GameContract("assembly_valheim", "StoreGui", "IsVisible")]
     [GameContract("assembly_valheim", "StoreGui", "get_instance")]
     [GameContract("assembly_valheim", "StoreGui", "m_rootPanel")]
     [GameContract("assembly_valheim", "StoreGui", "m_buyButton")]
@@ -33,8 +34,15 @@ namespace GenesisUI.Modules.Windows
     [GameContract("assembly_valheim", "Trader+TradeItem", "m_name")]
     [GameContract("assembly_valheim", "Trader+TradeItem", "m_price")]
     [GameContract("assembly_valheim", "Trader+TradeItem", "m_stack")]
-    internal sealed class StoreWindowModule : IUiModule
+    internal sealed class StoreWindowModule : IUiModule, IRecoverable
     {
+        /// <summary>IRecoverable: on a fault the store closes.</summary>
+        public void CloseVanillaWindow()
+        {
+            var store = StoreGui.instance;
+            if (store != null && StoreGui.IsVisible()) store.Hide();
+        }
+
         private const string Owner = "module:win.store";
         private static readonly string[] NoRegions = new string[0];
         private const float Top = 102f, Height = 673f;

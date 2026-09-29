@@ -19,6 +19,8 @@ namespace GenesisUI.Modules.Windows
     /// its own buttons and methods (the split slider moves vanilla's slider, typing goes to vanilla's
     /// input field). The game's opening intro keeps vanilla's look.
     /// </summary>
+    [GameContract("assembly_valheim", "TextInput", "Hide")]
+    [GameContract("assembly_valheim", "InventoryGui", "Hide")]
     [GameContract("assembly_valheim", "InventoryGui", "m_splitDialog")]
     [GameContract("assembly_valheim", "InventoryGui", "m_variantDialog")]
     [GameContract("assembly_valheim", "SplitDialog", "get_IsActive")]
@@ -47,8 +49,19 @@ namespace GenesisUI.Modules.Windows
     [GameContract("assembly_valheim", "TextInput", "m_inputField")]
     [GameContract("assembly_valheim", "TextInput", "OnEnter")]
     [GameContract("assembly_valheim", "TextInput", "OnCancel")]
-    internal sealed class DialogsModule : IUiModule
+    internal sealed class DialogsModule : IUiModule, IRecoverable
     {
+        /// <summary>IRecoverable: on a fault the open dialogs close (split and style close with the inventory).</summary>
+        public void CloseVanillaWindow()
+        {
+            var gui = InventoryGui.instance;
+            if (gui != null && (_split.Shown || _variant.Shown)) gui.Hide();
+            var tv = TextViewer.instance;
+            if (tv != null && tv.IsVisible()) tv.Hide();
+            var input = TextInput.instance;
+            if (input != null && TextInput.IsVisible()) input.Hide();
+        }
+
         private const string Owner = "module:win.dialogs";
         private static readonly string[] NoRegions = new string[0];
 

@@ -29,6 +29,8 @@ namespace GenesisUI.Modules.Windows
     /// are vanilla's. Criar, Reparar and Estilo press vanilla's buttons (Shift + Criar makes several,
     /// as in vanilla).
     /// </summary>
+    [GameContract("assembly_valheim", "InventoryGui", "Hide")]
+    [GameContract("assembly_valheim", "InventoryGui", "IsVisible")]
     [GameContract("assembly_valheim", "InventoryGui", "m_availableRecipes")]
     [GameContract("assembly_valheim", "InventoryGui", "m_craftButton")]
     [GameContract("assembly_valheim", "InventoryGui", "m_craftProgressPanel")]
@@ -70,8 +72,15 @@ namespace GenesisUI.Modules.Windows
     [GameContract("assembly_valheim", "Inventory", "GetAllItems", Parameters = new[] { "System.String", "System.Collections.Generic.List`1[[ItemDrop+ItemData, assembly_valheim, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]" })]
     [GameContract("assembly_valheim", "ZoneSystem", "GetGlobalKey", Parameters = new[] { "GlobalKeys" })]
     [GameContract("assembly_guiutils", "GuiBar", "m_maxValue")]
-    internal sealed class CraftingWindowModule : IUiModule
+    internal sealed class CraftingWindowModule : IUiModule, IRecoverable
     {
+        /// <summary>IRecoverable: on a fault the windows close (vanilla's never shows in their place).</summary>
+        public void CloseVanillaWindow()
+        {
+            var gui = InventoryGui.instance;
+            if (gui != null && InventoryGui.IsVisible()) gui.Hide();
+        }
+
         private const string Owner = "module:win.crafting";
         private static readonly string[] NoRegions = new string[0];
         private const float CloseHoldSeconds = 0.6f;

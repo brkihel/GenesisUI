@@ -23,6 +23,8 @@ namespace GenesisUI.Modules.Windows
     /// equip and transfer is handed to the vanilla grid's own callbacks, exactly as a click on a vanilla
     /// slot would, so item operations (and other mods' patches on them) stay vanilla's.
     /// </summary>
+    [GameContract("assembly_valheim", "InventoryGui", "Hide")]
+    [GameContract("assembly_valheim", "InventoryGui", "IsVisible")]
     [GameContract("assembly_valheim", "InventoryGui", "m_player")]
     [GameContract("assembly_valheim", "InventoryGui", "m_crafting")]
     [GameContract("assembly_valheim", "InventoryGui", "m_info")]
@@ -75,8 +77,15 @@ namespace GenesisUI.Modules.Windows
     [GameContract("assembly_valheim", "ItemDrop+ItemData+SharedData", "m_value")]
     [GameContract("assembly_valheim", "HitData+DamageTypes", "GetTotalDamage")]
     [GameContract("assembly_utils", "ZInput", "get_pointerPosition")]
-    internal sealed class InventoryWindowModule : IUiModule
+    internal sealed class InventoryWindowModule : IUiModule, IRecoverable
     {
+        /// <summary>IRecoverable: on a fault the windows close (vanilla's never shows in their place).</summary>
+        public void CloseVanillaWindow()
+        {
+            var gui = InventoryGui.instance;
+            if (gui != null && InventoryGui.IsVisible()) gui.Hide();
+        }
+
         private const string Owner = "module:win.inventory";
         private static readonly string[] NoRegions = new string[0];
         private const float CloseHoldSeconds = 0.6f;

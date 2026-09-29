@@ -35,8 +35,17 @@ namespace GenesisUI.Modules.Windows
     [GameContract("assembly_valheim", "InventoryGui", "Show")]
     [GameContract("assembly_valheim", "KeyHints", "instance")]
     [GameContract("assembly_valheim", "Player", "GetCurrentCraftingStation")]
-    internal sealed class WindowShellModule : IUiModule
+    internal sealed class WindowShellModule : IUiModule, IRecoverable
     {
+        /// <summary>IRecoverable: on a fault the windows close; the map too (vanilla's never shows in their place).</summary>
+        public void CloseVanillaWindow()
+        {
+            var gui = InventoryGui.instance;
+            if (gui != null && InventoryGui.IsVisible()) gui.Hide();
+            var map = global::Minimap.instance;
+            if (map != null && global::Minimap.IsOpen()) map.SetMapMode(global::Minimap.MapMode.Small);
+        }
+
         // ConceptArt (9) in design-board units (WindowCanvas.Design): tab bar 90, hint bar 62.
         private const float BarHeight = 90f;
         private const float HintHeight = 62f;

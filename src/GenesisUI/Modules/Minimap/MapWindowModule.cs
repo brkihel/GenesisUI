@@ -19,6 +19,7 @@ namespace GenesisUI.Modules.Minimap
     /// filters, the marker palette, the "visible to others" switch, zoom and "to the player" — and
     /// hides vanilla's own chrome. Every button calls vanilla's public map methods.
     /// </summary>
+    [GameContract("assembly_valheim", "Minimap", "SetMapMode")]
     [GameContract("assembly_valheim", "Minimap", "get_instance")]
     [GameContract("assembly_valheim", "Minimap", "IsOpen")]
     [GameContract("assembly_valheim", "Minimap", "m_mode")]
@@ -55,8 +56,15 @@ namespace GenesisUI.Modules.Minimap
     [GameContract("assembly_valheim", "Minimap", "OnAltPressedIconDeath")]
     [GameContract("assembly_valheim", "Minimap", "OnToggleSharedMapData")]
     [GameContract("assembly_valheim", "EnvMan", "GetDayFraction")]
-    internal sealed class MapWindowModule : IUiModule
+    internal sealed class MapWindowModule : IUiModule, IRecoverable
     {
+        /// <summary>IRecoverable: on a fault the large map closes back to the minimap.</summary>
+        public void CloseVanillaWindow()
+        {
+            var map = global::Minimap.instance;
+            if (map != null && global::Minimap.IsOpen()) map.SetMapMode(global::Minimap.MapMode.Small);
+        }
+
         private const string Owner = "module:win.map";
         private static readonly string[] NoRegions = new string[0];
 

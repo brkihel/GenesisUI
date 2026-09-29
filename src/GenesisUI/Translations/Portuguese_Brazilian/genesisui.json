@@ -308,5 +308,12 @@
   "genesisui_menu_no": "Não",
   "genesisui_menu_confirm_quit": "Sair do jogo agora?",
   "genesisui_menu_confirm_logout": "Voltar ao menu principal?",
-  "genesisui_cfg_Modules_PauseMenu": "Menu de pausa (Esc)"
+  "genesisui_cfg_Modules_PauseMenu": "Menu de pausa (Esc)",
+  "genesisui_fault_title": "Algo deu errado",
+  "genesisui_fault_text": "Pedimos desculpas! A parte «{0}» do GenesisUI encontrou um erro.",
+  "genesisui_fault_restarted": "Ela já foi reiniciada sozinha. Se uma janela fechou, é só abrir de novo — nada foi perdido.",
+  "genesisui_fault_left_off": "Ela falhou várias vezes seguidas, então ficou desligada e essa parte volta ao visual do jogo até você reiniciar o Valheim. Nada foi perdido.",
+  "genesisui_fault_count": "{0} erros nesta sessão.",
+  "genesisui_fault_copy": "Copiar erro",
+  "genesisui_fault_report": "Reportar (em breve)"
 }

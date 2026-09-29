@@ -15,12 +15,21 @@ namespace GenesisUI.Modules.Windows
     /// animation. A rebuild after a fault starts from a clean state (R-054). Subclasses draw the window
     /// and refresh it; vanilla stays the engine behind them.
     /// </summary>
+    [GameContract("assembly_valheim", "InventoryGui", "Hide")]
+    [GameContract("assembly_valheim", "InventoryGui", "IsVisible")]
     [GameContract("assembly_valheim", "InventoryGui", "m_player")]
     [GameContract("assembly_valheim", "InventoryGui", "m_crafting")]
     [GameContract("assembly_valheim", "InventoryGui", "m_info")]
     [GameContract("assembly_valheim", "InventoryGui", "m_container")]
-    internal abstract class WindowModuleBase : IUiModule
+    internal abstract class WindowModuleBase : IUiModule, IRecoverable
     {
+        /// <summary>IRecoverable: on a fault the windows close (vanilla's never shows in their place).</summary>
+        public void CloseVanillaWindow()
+        {
+            var gui = InventoryGui.instance;
+            if (gui != null && InventoryGui.IsVisible()) gui.Hide();
+        }
+
         protected const float PanelsTop = 102f, PanelsHeight = 673f;
         private const float CloseHoldSeconds = 0.6f;
         private static readonly string[] NoRegions = new string[0];

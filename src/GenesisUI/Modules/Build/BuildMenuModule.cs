@@ -20,6 +20,7 @@ namespace GenesisUI.Modules.Build
     /// custom tags, other mods' pieces), the search runs in its own input field, and every click is
     /// handed to its own buttons, so selecting, favouriting and placing stay vanilla's.
     /// </summary>
+    [GameContract("assembly_valheim", "Hud", "IsPieceSelectionVisible")]
     [GameContract("assembly_valheim", "Hud", "instance")]
     [GameContract("assembly_valheim", "Hud", "m_buildUi")]
     [GameContract("assembly_valheim", "Hud", "CloseBuildUi")]
@@ -55,8 +56,14 @@ namespace GenesisUI.Modules.Build
     [GameContract("assembly_valheim", "Piece", "m_craftingStation")]
     [GameContract("assembly_valheim", "Piece+Requirement", "m_amount")]
     [GameContract("assembly_valheim", "CraftingStation", "HaveBuildStationInRange")]
-    internal sealed class BuildMenuModule : IUiModule
+    internal sealed class BuildMenuModule : IUiModule, IRecoverable
     {
+        /// <summary>IRecoverable: on a fault vanilla's build menu closes (its look never shows instead).</summary>
+        public void CloseVanillaWindow()
+        {
+            if (Hud.IsPieceSelectionVisible()) Hud.CloseBuildUi();
+        }
+
         private const string Owner = "module:hud.build";
         private static readonly string[] NoRegions = new string[0];
         private const float Top = 40f, Height = 770f;
