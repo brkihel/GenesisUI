@@ -171,16 +171,19 @@ look): `heimdall-nexus/docs/PADROES-GENESISMODS.md`.
   intact (D-025). Patch only a proven blocking behaviour under `docs/PATCH-POLICY.md`;
   never substitute new item-transfer logic. Precise alignment and input behavior require
   a client test at the target GUI scales, including fault/teardown restoration.
-- **Animated liquid:** keep the metallic bar frame stationary. Put the appropriate HP,
-  stamina or eitr texture in a separate layer behind it, clipped first to the bar's shaped
-  opening and then to the current value (including the existing loss trail/surface where
-  applicable). Animate texture UVs or a supported UI material, not the frame or the bar's
-  geometry; the fill level and texture motion are independent. The three supplied liquids
-  are static images, **not animation frames or seamless loops**. Prepare/test a looping
-  version (or another seam-free motion) before continuous UV scrolling; keep motion subtle
-  and allocation-free per frame. Apply the same principle to the horizontal stamina bar,
-  whose earlier review candidate Diego rejected. Do not claim a finished liquid effect
-  until it is checked in the running game.
+- **Animated liquid in all three resource bars:** apply this to **HP, stamina and eitr**,
+  using `hp_texture.png`, `stamina_texture.png` and `eitr_texture.png` respectively. Keep
+  each metallic frame stationary; put its liquid behind it, clipped both to that bar's
+  shaped opening and to its current resource level. HP is taller/wider than stamina and
+  eitr, so use a matching opening mask and content insets for each size without stretching
+  the ornaments. Preserve the existing loss trail, surface and low-HP effects in their
+  appropriate layers. Animate texture UVs or a supported UI material, not the frame or
+  the bar's geometry; resource level and texture motion are independent. The three supplied
+  liquids are static images, **not animation frames or seamless loops**. Prepare/test a
+  looping version (or another seam-free motion) before continuous UV scrolling; keep
+  motion subtle and allocation-free per frame. Apply the same stamina liquid principle
+  to the horizontal stamina bar, whose earlier review candidate Diego rejected. Do not
+  claim a finished effect for any of the three until it is checked in the running game.
 - **Asset quality gate:** inspect each cutout against dark and light backdrops at its
   intended on-screen size for fringe colours, alpha halos, seams, stretched highlights,
   corner leaks and legibility. The isolated sheets still show some coloured edge halos.
