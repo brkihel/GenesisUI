@@ -183,5 +183,13 @@
   "genesisui_build_unfavorite": "Remove from favourites",
   "genesisui_build_help": "Click a piece to pick it; middle click favourites it.\nIn the world: left click places, the mouse wheel rotates and right click opens this menu again.",
   "genesisui_build_placing": "Placing",
-  "genesisui_build_placing_hints": "Click: place · Wheel: rotate · Right click: menu"
+  "genesisui_build_placing_hints": "Click: place · Wheel: rotate · Right click: menu",
+  "genesisui_module_store_window": "Store window",
+  "genesisui_store_title": "Store",
+  "genesisui_store_price": "Price:",
+  "genesisui_store_coins": "Your coins",
+  "genesisui_store_sell": "Sell",
+  "genesisui_store_buy": "Buy",
+  "genesisui_store_sell_next": "Sell {0} for {1} coins",
+  "genesisui_store_nothing_to_sell": "Nothing of value to sell."
 }

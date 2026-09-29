@@ -266,5 +266,14 @@
   "genesisui_build_help": "Clique numa peça para escolhê-la; botão do meio a favorita.\nNo mundo: clique esquerdo posiciona, a roda do mouse gira e o botão direito abre este menu de novo.",
   "genesisui_cfg_Modules_BuildMenu": "Menu de construção",
   "genesisui_build_placing": "Posicionar",
-  "genesisui_build_placing_hints": "Clique: posicionar · Roda: girar · Botão direito: menu"
+  "genesisui_build_placing_hints": "Clique: posicionar · Roda: girar · Botão direito: menu",
+  "genesisui_module_store_window": "Janela da loja",
+  "genesisui_store_title": "Loja",
+  "genesisui_store_price": "Preço:",
+  "genesisui_store_coins": "Suas moedas",
+  "genesisui_store_sell": "Vender",
+  "genesisui_store_buy": "Comprar",
+  "genesisui_store_sell_next": "Vender {0} por {1} moedas",
+  "genesisui_store_nothing_to_sell": "Nada de valor para vender.",
+  "genesisui_cfg_Modules_StoreWindow": "Janela da loja"
 }
