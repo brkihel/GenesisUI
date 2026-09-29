@@ -33,14 +33,17 @@ namespace GenesisUI.Widgets
             }
         }
 
-        /// <summary>A full-canvas root beside InventoryGui: behind it (panels) or in front of it (bars).</summary>
-        internal static RectTransform CreateRoot(InventoryGui gui, string name, bool behind)
+        /// <summary>
+        /// A full-canvas root beside a vanilla UI object (InventoryGui, the build menu...): behind it or in
+        /// front of it, on that object's own root canvas.
+        /// </summary>
+        internal static RectTransform CreateRoot(Component anchor, string name, bool behind)
         {
-            var canvas = gui.GetComponentInParent<Canvas>();
+            var canvas = anchor.GetComponentInParent<Canvas>();
             if (canvas == null) return null;
             var root = canvas.rootCanvas.transform;
-            // The child of the canvas root that holds InventoryGui: our root goes right before or after it.
-            var ancestor = gui.transform;
+            // The child of the canvas root that holds the anchor: our root goes right before or after it.
+            var ancestor = anchor.transform;
             while (ancestor.parent != null && ancestor.parent != root) ancestor = ancestor.parent;
             var rt = Ui.Fill(Ui.Child(root, name));
             int index = ancestor.parent == root ? ancestor.GetSiblingIndex() : root.childCount - 1;
@@ -58,7 +61,7 @@ namespace GenesisUI.Widgets
             GenesisLog.Info("Windows", name + " on canvas '" + canvas.rootCanvas.name + "' (reference pixels per unit " +
                 Frame.CanvasReference(rt).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture) + ", 9-slice scale " +
                 Frame.CanvasScale(rt).ToString("0.##", System.Globalization.CultureInfo.InvariantCulture) + "), " + (behind ? "behind" : "in front of") +
-                " InventoryGui");
+                " " + anchor.GetType().Name);
             return rt;
         }
 

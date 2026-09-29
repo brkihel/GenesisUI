@@ -253,5 +253,18 @@
   "genesisui_cfg_Modules_CraftingWindow": "Janela de criação",
   "genesisui_cfg_Modules_SkillsWindow": "Janela de habilidades",
   "genesisui_cfg_Modules_AchievementsWindow": "Janela de conquistas",
-  "genesisui_cfg_Modules_SettingsWindow": "Janela de configurações"
+  "genesisui_cfg_Modules_SettingsWindow": "Janela de configurações",
+  "genesisui_module_build_menu": "Menu de construção",
+  "genesisui_build_title": "Construção",
+  "genesisui_build_tags": "Categorias",
+  "genesisui_build_search": "Pesquisar peça...",
+  "genesisui_build_empty": "Nenhuma peça nesta lista.",
+  "genesisui_build_needs": "Precisa de:",
+  "genesisui_build_not_near": "nenhuma por perto",
+  "genesisui_build_favorite": "Adicionar aos favoritos",
+  "genesisui_build_unfavorite": "Tirar dos favoritos",
+  "genesisui_build_help": "Clique numa peça para escolhê-la; botão do meio a favorita.\nNo mundo: clique esquerdo posiciona, a roda do mouse gira e o botão direito abre este menu de novo.",
+  "genesisui_cfg_Modules_BuildMenu": "Menu de construção",
+  "genesisui_build_placing": "Posicionar",
+  "genesisui_build_placing_hints": "Clique: posicionar · Roda: girar · Botão direito: menu"
 }
