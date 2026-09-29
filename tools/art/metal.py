@@ -436,58 +436,70 @@ def crafting(out_path):
         if i == 3:
             rule(cx - 80, 78, 160)
     frame(0, 788, BW, 62, 14)
-    px, top = 284, 102
-    frame(px, top, 750, 673)
+    top = 102
+    colours = [(170, 110, 60, 255), (140, 140, 150, 255), (120, 100, 80, 255), (150, 120, 70, 255)]
+    # Details (left, 480): icon, name, type, description, stats, materials, reason, style + craft.
+    frame(0, top, 480, 673)
+    text(240, top + 30, "DETALHES DO ITEM", font("Cinzel-SemiBold", 19), title, anchor="mm")
+    rule(96, top + 48, 288)
+    blob(240, top + 125, 52, colours[1])
+    text(24, top + 207, "MACHADO DE BRONZE", font("Cinzel-SemiBold", 23), title)
+    text(24, top + 233, "Arma  ·  Nível 2 → 3", font("CormorantGaramond-SemiBold", 17), flavor)
+    text(24, top + 260, "Um machado resistente, forjado em bronze.", font("CormorantGaramond-Medium", 16), body)
+    rule(24, top + 300, 432)
+    for i, (a_, b_, c_) in enumerate([("Peso", "2,0", None), ("Durabilidade", "200", "250"), ("Qualidade", "2 / 4", "3 / 4"), ("Dano", "40", "46"), ("Bloqueio", "12", None), ("Valor", "0", None)]):
+        yy = top + 310 + i * 26 + 12
+        text(24, yy, a_, font("CormorantGaramond-SemiBold", 16), body)
+        text(456, yy, b_ + (f"  → {c_}" if c_ else ""), font("CormorantGaramond-SemiBold", 16), (143, 199, 122, 255) if c_ else body, anchor="rm")
+    text(24, top + 480, "MATERIAIS NECESSÁRIOS", font("Cinzel-Medium", 14), title)
+    for i, (n, have, need) in enumerate([("Bronze", 1, 4), ("Madeira", 12, 2), ("Couro", 3, 1)]):
+        bx = 24 + i * 87
+        m.chamfer_rect(bx, top + 494, 80, 80, 5, 1.0)
+        blob(bx + 40, top + 494 + 25, 16, colours[2 + i % 2])
+        text(bx + 40, top + 494 + 52, n, font("CormorantGaramond-SemiBold", 12), body, anchor="mm")
+        text(bx + 40, top + 494 + 68, f"{have} / {need}", font("Cinzel-SemiBold", 13), (130, 200, 110, 255) if have >= need else (224, 100, 60, 255), anchor="mm")
+    text(24, top + 591, "Falta: 3 Bronze", font("CormorantGaramond-SemiBold", 15), (224, 100, 60, 255))
+    m.chamfer_rect(24, top + 612, 130, 44, 6, 1.0)
+    text(89, top + 634, "Estilo", font("CormorantGaramond-SemiBold", 17), body, anchor="mm")
+    m.chamfer_rect(164, top + 612, 292, 44, 6, 1.2)
+    text(310, top + 634, "APRIMORAR", font("Cinzel-SemiBold", 20), (120, 104, 80, 255), anchor="mm")
+    # Crafting panel (right, 1096): station, repair, search, chips, two columns.
+    px = 484
     X = lambda v: px + v
     Y = lambda v: top + v
+    frame(px, top, 1096, 673)
     text(X(68), Y(30), "CRIAÇÃO", font("Cinzel-SemiBold", 26), title)
     rule(X(62), Y(48), 300)
-    text(X(720), Y(32), "Bancada  ·  Nível 2", font("CormorantGaramond-SemiBold", 17), flavor, anchor="rm")
-    text(X(125), Y(77), "CRIAR", font("Cinzel-Medium", 17), title, anchor="mm")
-    rule(X(50), Y(96), 150)
-    text(X(325), Y(77), "APRIMORAR", font("Cinzel-Medium", 17), flavor, anchor="mm")
-    m.chamfer_rect(X(600), Y(62), 128, 32, 5, 1.0)
-    text(X(664), Y(78), "Reparar", font("CormorantGaramond-SemiBold", 16), body, anchor="mm")
-    m.chamfer_rect(X(22), Y(108), 706, 36, 6, 1.0)
-    text(X(38), Y(126), "Pesquisar receita...", font("CormorantGaramond-MediumItalic", 17), flavor)
+    text(X(920), Y(32), "Forja  ·  Nível 2", font("CormorantGaramond-SemiBold", 17), flavor, anchor="rm")
+    m.chamfer_rect(X(932), Y(16), 140, 32, 5, 1.0)
+    text(X(1002), Y(32), "Reparar", font("CormorantGaramond-SemiBold", 16), body, anchor="mm")
+    m.chamfer_rect(X(22), Y(66), 1052, 36, 6, 1.0)
+    text(X(38), Y(84), "Pesquisar receita...", font("CormorantGaramond-MediumItalic", 17), flavor)
     cx = 22
     f = font("CormorantGaramond-SemiBold", 16)
     for i, chip in enumerate(["Todos", "Armas", "Ferramentas", "Munição", "Armaduras", "Consumíveis", "Materiais"]):
-        w = f.getlength(chip) + 26
-        m.chamfer_rect(X(cx), Y(156), w, 32, 5, 1.0)
-        text(X(cx + w / 2), Y(172), chip, f, title if i == 0 else flavor, anchor="mm")
+        w = f.getlength(chip) + 30
+        m.chamfer_rect(X(cx), Y(116), w, 32, 5, 1.0)
+        text(X(cx + w / 2), Y(132), chip, f, title if i == 0 else flavor, anchor="mm")
         cx += w + 8
-    recipes = [("Tocha", "Ferramenta"), ("Machado de Pedra", "Arma"), ("Picareta de Pedra", "Ferramenta"), ("Arco de Madeira", "Arma"),
-               ("Flecha de Madeira", "Munição"), ("Martelo", "Ferramenta"), ("Porrete", "Arma"), ("Escudo de Madeira", "Escudo")]
-    colours = [(170, 110, 60, 255), (140, 140, 150, 255), (120, 100, 80, 255), (150, 120, 70, 255)]
-    for i, (n, ty) in enumerate(recipes):
-        ry = Y(202 + i * 57)
-        m.chamfer_rect(X(20), ry, 290, 54, 5, 1.0)
-        if i == 0:
-            ImageDraw.Draw(under).rectangle((X(23), ry + 3, X(307), ry + 51), fill=(170, 124, 58, 36))
-        blob(X(29 + 21), ry + 27, 15, colours[i % 4])
-        text(X(80), ry + 17, n, font("CormorantGaramond-SemiBold", 17), title if i == 0 else body)
-        text(X(80), ry + 38, ty, font("CormorantGaramond-SemiBold", 14), flavor)
-    frame(X(325), Y(202), 407, 268, 8, inner=False)
-    blob(X(325 + 73), Y(202 + 97), 48, colours[0])
-    text(X(471), Y(233), "TOCHA", font("Cinzel-SemiBold", 22), title)
-    text(X(471), Y(257), "Ferramenta", font("CormorantGaramond-SemiBold", 16), flavor)
-    text(X(471), Y(282), "Ilumina os arredores e mantém", font("CormorantGaramond-Medium", 15), body)
-    text(X(471), Y(300), "os perigos da escuridão afastados.", font("CormorantGaramond-Medium", 15), body)
-    for i, (a, b) in enumerate([("Peso", "1,0"), ("Durabilidade", "100"), ("Dano", "4"), ("Valor", "0")]):
-        yy = Y(202 + 134 + i * 26 + 11)
-        text(X(471), yy, a, font("CormorantGaramond-SemiBold", 16), body)
-        text(X(716), yy, b, font("CormorantGaramond-SemiBold", 16), body, anchor="rm")
-    text(X(339), Y(202 + 250), "Nível da estação: 1", font("CormorantGaramond-SemiBold", 15), gold)
-    text(X(339), Y(490), "MATERIAIS NECESSÁRIOS", font("Cinzel-Medium", 14), title)
-    for i, (n, have, need) in enumerate([("Madeira", 12, 1), ("Resina", 4, 1)]):
-        bx = X(339 + i * 96)
-        m.chamfer_rect(bx, Y(506), 88, 88, 5, 1.0)
-        blob(bx + 44, Y(506 + 28), 18, colours[2 + i])
-        text(bx + 44, Y(506 + 57), n, font("CormorantGaramond-SemiBold", 13), body, anchor="mm")
-        text(bx + 44, Y(506 + 75), f"{have} / {need}", font("Cinzel-SemiBold", 14), (130, 200, 110, 255), anchor="mm")
-    m.chamfer_rect(X(502), Y(612), 230, 44, 6, 1.2)
-    text(X(617), Y(634), "CRIAR", font("Cinzel-SemiBold", 20), title, anchor="mm")
+    for colx, head, rows in ((22, "CRIAR", [("Machado de bronze", "Arma", True), ("Espada de bronze", "Arma", True), ("Maça de bronze", "Arma", True), ("Picareta de bronze", "Ferramenta", False), ("Escudo de bronze", "Escudo", False), ("Pregos de bronze x20", "Material", False), ("Capacete de bronze", "Armadura", False)]),
+                             (562, "APRIMORAR", [("Machado de bronze", "Nível 2 → 3", True), ("Escudo de madeira", "Nível 1 → 2", True), ("Picareta de pedra", "Nível 1 → 2", False)])):
+        text(X(colx + 256), Y(171), head, font("Cinzel-SemiBold", 17), title, anchor="mm")
+        rule(X(colx + 166), Y(186), 180)
+        for i, (n, sub, ok) in enumerate(rows):
+            ry = Y(196 + i * 58)
+            m.chamfer_rect(X(colx), ry, 500, 54, 5, 1.0)
+            if head == "APRIMORAR" and i == 0:
+                ImageDraw.Draw(under).rectangle((X(colx + 3), ry + 3, X(colx + 497), ry + 51), fill=(170, 124, 58, 40))
+            blob(X(colx + 29), ry + 27, 15, colours[i % 4])
+            text(X(colx + 60), ry + 17, n, font("CormorantGaramond-SemiBold", 17), (title if head == "APRIMORAR" and i == 0 else body) if ok else (120, 112, 100, 255))
+            if head == "APRIMORAR":
+                text(X(colx + 60), ry + 38, "Arma" if i == 0 else "Escudo" if i == 1 else "Ferramenta", font("CormorantGaramond-SemiBold", 14), flavor)
+                text(X(colx + 490), ry + 27, sub, font("Cinzel-SemiBold", 15), title, anchor="rm")
+            else:
+                text(X(colx + 60), ry + 38, sub if ok else "Faltam materiais", font("CormorantGaramond-SemiBold", 14), flavor if ok else (181, 97, 63, 255))
+    m.line([(X(548), Y(170)), (X(548), Y(660))], 0.8)
+    m.diamond(X(548), Y(415), 4, 6)
     m.glint(700, 100, 1.0)
     metal = m.render()
     src = Image.open(os.path.expanduser("~/GenesisUI-Concept/ConceptArt (12).png")).convert("RGBA").resize((1920, 1080))

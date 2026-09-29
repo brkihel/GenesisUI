@@ -106,5 +106,14 @@
   "genesisui_crafting_nomatch": "Nenhuma receita com esse filtro.",
   "genesisui_level": "Nível",
   "genesisui_station_level": "Nível da estação:",
-  "genesisui_materials_needed": "Materiais necessários"
+  "genesisui_materials_needed": "Materiais necessários",
+  "genesisui_upgrade_unavailable": "Aprimorar precisa de uma estação de trabalho.",
+  "genesisui_craft_unavailable": "Esta estação só aprimora.",
+  "genesisui_upgrade_none": "Nenhum item seu pode ser aprimorado aqui.",
+  "genesisui_missing_materials": "Faltam materiais",
+  "genesisui_missing": "Falta:",
+  "genesisui_needs_station": "Precisa de {0} nível {1}.",
+  "genesisui_crafting_pick": "Escolha uma receita para ver o que ela pede.",
+  "genesisui_hint_select": "Selecionar",
+  "genesisui_hint_craft_many": "Criar vários"
 }

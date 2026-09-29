@@ -106,5 +106,14 @@
   "genesisui_crafting_nomatch": "No recipe matches this filter.",
   "genesisui_level": "Level",
   "genesisui_station_level": "Station level:",
-  "genesisui_materials_needed": "Materials needed"
+  "genesisui_materials_needed": "Materials needed",
+  "genesisui_upgrade_unavailable": "Upgrading needs a crafting station.",
+  "genesisui_craft_unavailable": "This station only upgrades.",
+  "genesisui_upgrade_none": "None of your items can be upgraded here.",
+  "genesisui_missing_materials": "Missing materials",
+  "genesisui_missing": "Missing:",
+  "genesisui_needs_station": "Needs {0} level {1}.",
+  "genesisui_crafting_pick": "Pick a recipe to see what it needs.",
+  "genesisui_hint_select": "Select",
+  "genesisui_hint_craft_many": "Craft several"
 }

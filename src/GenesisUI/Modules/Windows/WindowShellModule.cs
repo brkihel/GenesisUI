@@ -275,6 +275,12 @@ namespace GenesisUI.Modules.Windows
                 if (t.Icon != null) t.Icon.color = on ? Color.white : new Color(0.75f, 0.72f, 0.66f, 0.85f);
                 if (t.Marker != null && t.Marker.gameObject.activeSelf != on) t.Marker.gameObject.SetActive(on);
             }
+            if (_craftingHints != null)
+            {
+                bool crafting = tab == Tab.Crafting;
+                if (_craftingHints.gameObject.activeSelf != crafting) _craftingHints.gameObject.SetActive(crafting);
+                if (_inventoryHints.gameObject.activeSelf == crafting) _inventoryHints.gameObject.SetActive(!crafting);
+            }
             bool settings = tab == Tab.Settings;
             if (_settingsPage != null && _settingsPage.gameObject.activeSelf != settings) _settingsPage.gameObject.SetActive(settings);
         }
@@ -397,33 +403,54 @@ namespace GenesisUI.Modules.Windows
             var drawn = _theme.Size("window_hintbar");
             float k = drawn.y > 0f ? HintHeight / drawn.y : 1f;
             var c = _theme.Content("window_hintbar", new Vector4(70f, 10f, 70f, 10f)) * k;
-            var row = Ui.Child(bar, "Hints");
+            string tabs = KeyName(_previousKey.Value.MainKey) + "/" + KeyName(_nextKey.Value.MainKey);
+            // One row per kind of window; the shell shows the active tab's (Show).
+            _inventoryHints = HintRow(bar, c, "Inventory", new[]
+            {
+                ("Esc", (string)null, "$genesisui_hint_close"),
+                (null, "icon_mouse_right", "$genesisui_hint_use"),
+                (null, "icon_mouse_left", "$genesisui_hint_move"),
+                ("Shift", "icon_mouse_left", "$genesisui_hint_split"),
+                ("Ctrl", "icon_mouse_left", "$genesisui_hint_transfer"),
+                ("R", null, "$genesisui_hint_sort"),
+                (tabs, null, "$genesisui_hint_tabs"),
+            });
+            _craftingHints = HintRow(bar, c, "Crafting", new[]
+            {
+                ("Esc", (string)null, "$genesisui_hint_close"),
+                (null, "icon_mouse_left", "$genesisui_hint_select"),
+                ("Shift", "icon_mouse_left", "$genesisui_hint_craft_many"),
+                (tabs, null, "$genesisui_hint_tabs"),
+            });
+            _craftingHints.gameObject.SetActive(false);
+        }
+
+        private RectTransform _inventoryHints, _craftingHints;
+
+        /// <summary>
+        /// A row of hints laid out by hand, left to right, from measured widths: layout groups resolved a
+        /// frame late and piled every hint in the middle on the first open (R-052 print).
+        /// </summary>
+        private RectTransform HintRow(RectTransform bar, Vector4 c, string name, (string Key, string Mouse, string Token)[] items)
+        {
+            var row = Ui.Child(bar, "Hints " + name);
             row.anchorMin = Vector2.zero;
             row.anchorMax = Vector2.one;
             row.offsetMin = new Vector2(c.x + 10f, c.y);
             row.offsetMax = new Vector2(-c.z - 10f, -c.w);
-            // Laid out by hand, left to right, from measured widths: layout groups resolved a frame
-            // late and piled every hint in the middle on the first open (R-052 print).
-            var hints = new List<RectTransform>
-            {
-                Hint(row, "Esc", null, "$genesisui_hint_close"),
-                Hint(row, null, "icon_mouse_right", "$genesisui_hint_use"),
-                Hint(row, null, "icon_mouse_left", "$genesisui_hint_move"),
-                Hint(row, "Shift", "icon_mouse_left", "$genesisui_hint_split"),
-                Hint(row, "Ctrl", "icon_mouse_left", "$genesisui_hint_transfer"),
-                Hint(row, "R", null, "$genesisui_hint_sort"),
-                Hint(row, KeyName(_previousKey.Value.MainKey) + "/" + KeyName(_nextKey.Value.MainKey), null, "$genesisui_hint_tabs"),
-            };
+            var hints = new List<RectTransform>();
+            foreach (var item in items) hints.Add(Hint(row, item.Key, item.Mouse, item.Token));
             float total = 0f;
             foreach (var h in hints) total += h.sizeDelta.x;
             float width = WindowCanvas.Design.x - c.x - c.z - 20f;
-            float gap = Mathf.Max(16f, (width - total) / hints.Count);
+            float gap = Mathf.Max(16f, Mathf.Min(90f, (width - total) / hints.Count));
             float x = (width - total - gap * (hints.Count - 1)) / 2f;
             foreach (var h in hints)
             {
                 h.anchoredPosition = new Vector2(x, 0f);
                 x += h.sizeDelta.x + gap;
             }
+            return row;
         }
 
         /// <summary>One hint: key cap and/or mouse icon, then its label; returns its row, sized to its content.</summary>

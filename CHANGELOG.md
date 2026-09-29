@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.7.0-preview.14 — Crafting tab in Diego's layout: details left, Criar | Aprimorar
+
+### Changed
+- The Crafting tab now has the item details on the left (like the inventory's): icon, name,
+  type, description, the stat table — current → next for an upgrade, the gain in green —, the
+  required materials with have/need, the reason when it cannot be made ("Falta: 3 Bronze",
+  "Precisa de Forja nível 2"), Estilo and the craft button.
+- The crafting panel on the right has the search, the category chips and two columns side by
+  side, Criar and Aprimorar, with a separator. Recipes that can be made now come first; the
+  others are dimmed with "Faltam materiais". Aprimorar lists your items that can go up a level
+  ("Nível 2 → 3"); an empty column says why.
+- Both columns follow vanilla's own rules; picking a row switches vanilla to that mode and
+  presses vanilla's own row, so selection, requirement checks and crafting stay vanilla's.
+- The hint bar shows the active tab's hints; Crafting teaches Shift + Criar (craft several,
+  vanilla's own multi-craft) instead of a − 1 + stepper.
+
 ## 0.7.0-preview.13 — R-056 fixes: vanilla under Crafting, discovery notices, stat rows
 
 ### Fixed
