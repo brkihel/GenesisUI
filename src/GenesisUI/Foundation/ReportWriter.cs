@@ -55,7 +55,7 @@ namespace GenesisUI.Foundation
 
                 string directory = Path.GetFullPath(Path.Combine(Paths.BepInExRootPath, product, "reports"));
                 Directory.CreateDirectory(directory);
-                string path = Path.GetFullPath(Path.Combine(directory, "report-" + DateTime.Now.ToString("yyyyMMdd-HHmmss", System.Globalization.CultureInfo.InvariantCulture) + ".txt"));
+                string path = Path.GetFullPath(Path.Combine(directory, "report-" + DateTime.Now.ToString("yyyyMMdd-HHmmss", System.Globalization.CultureInfo.InvariantCulture) + ".log"));
                 // The name is ours, but check anyway: reports never land outside their folder.
                 if (!path.StartsWith(directory + Path.DirectorySeparatorChar, StringComparison.Ordinal)) return null;
 

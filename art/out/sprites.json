@@ -1233,6 +1233,17 @@
       "wrap": "repeat"
     },
     {
+      "name": "bar_burn_h",
+      "file": "bar_burn_h.png",
+      "width": 32,
+      "height": 16,
+      "borderLeft": 0,
+      "borderBottom": 0,
+      "borderRight": 0,
+      "borderTop": 0,
+      "wrap": "repeat"
+    },
+    {
       "name": "ember",
       "file": "ember.png",
       "width": 8,

@@ -110,8 +110,8 @@ namespace GenesisUI.Host
 #if GENESIS_DIAGNOSTICS
         private static readonly System.Action<string> ThrowInjected = id =>
             throw new System.InvalidOperationException("Fault injected from the diagnostics panel into " + id);
+#endif
 
-        /// <summary>Diagnostics: make the module fail through the same guard a real bug would.</summary>
         /// <summary>
         /// Opacity of every HUD module at once (0-1), without touching the modules: the window shell
         /// fades the HUD out while a window is open (Diego, R-046) and back in when it closes.
@@ -130,6 +130,8 @@ namespace GenesisUI.Host
             if (!Mathf.Approximately(group.alpha, alpha)) group.alpha = alpha;
         }
 
+#if GENESIS_DIAGNOSTICS
+        /// <summary>Diagnostics: make the module fail through the same guard a real bug would.</summary>
         public static void InjectFault(ModuleEntry e)
         {
             if (e.State != ModuleState.Active) return;

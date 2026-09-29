@@ -70,6 +70,21 @@ namespace GenesisUI.Foundation
             return image;
         }
 
+        /// <summary>Records a vanilla button's visual transition while its slot is dressed.</summary>
+        public Button Button(Button button)
+        {
+            if (button == null || !_recorded.Add(Key(button, 6))) return button;
+            var colors = button.colors;
+            var transition = button.transition;
+            _restore.Add(() =>
+            {
+                if (button == null) return;
+                button.colors = colors;
+                button.transition = transition;
+            });
+            return button;
+        }
+
         /// <summary>Records a component's enabled flag.</summary>
         public T Enabled<T>(T behaviour) where T : Behaviour
         {

@@ -199,7 +199,7 @@ def main(out_path):
             kk = cw / (sw_ - scl - scr)
             put(st.img(state).resize((int(sw_ * kk), int(sh_ * kk)), Image.LANCZOS), x - scl * kk, ptop + ct - sct * kk)
 
-    # Stamina readout [Sprint] OffsetY 142: Diego's frame, 220 wide at its own proportions.
+    # Stamina readout [Sprint] OffsetY 142: Diego's frame at its own proportions.
     fw, fh = size("sprint_frame")
     k = 1.0
     sw, sh = int(fw * k), int(fh * k)
@@ -209,6 +209,8 @@ def main(out_path):
     tw, thh = int(sw - cl - cr), int(sh - cb - ct)
     lq = Image.new("RGBA", (sw, sh))
     lq.paste(liquid_h("liquid_stamina_h", tw, thh, 1.2).crop((0, 0, int(tw * 0.62), thh)), (int(cl), int(ct)))
+    lq.alpha_composite(st.img("bar_burn_h").resize((max(1, int(tw * 0.04)), thh), Image.LANCZOS),
+                       (int(cl + tw * 0.62), int(ct)))
     opening = st.img("sprint_frame_opening").resize((sw, sh), Image.LANCZOS).split()[3]
     frame_img.paste(lq, (0, 0), ImageChops.multiply(opening, lq.split()[3]))
     frame_img.alpha_composite(st.img("sprint_frame").resize((sw, sh), Image.LANCZOS))
@@ -237,7 +239,7 @@ def main(out_path):
     # Status [Status] OffsetX 24, OffsetY 340, right to left.
     for i, (name, t) in enumerate((("Eikthyr", "19:54"), ("Molhado(a)", "1:50"), ("Frio", ""))):
         x = W - 24 - 70 - i * 70
-        put(dressed("tile", 60, 60, fit=60), x + 5, 315)
+        put(dressed("hotslot", 60, 60, fit=60), x + 5, 315)
         text(x + 35, 315 + 71, name, font("CormorantGaramond-SemiBold", 14))
         text(x + 35, 315 + 89, t, font("Cinzel-Medium", 13))
     put(st.img("badge_cooldown").resize((20, 20), Image.LANCZOS), W - 24 - 70 + 5 + 44, 313)
@@ -323,8 +325,8 @@ def window_mock(out_path):
         text(x + w / 2, cy, label, font("Cinzel-Medium", 13))
         return w
 
-    # Match WindowCanvas (65% of both axes), WindowShell and InventoryWindowModule.
-    area_w, area_h = int(W * 0.65), int(H * 0.65)
+    # Match WindowCanvas (75% of both axes), WindowShell and InventoryWindowModule.
+    area_w, area_h = int(W * 0.75), int(H * 0.75)
     side_, area_top = (W - area_w) // 2, (H - area_h) // 2
     top, bar_h, bw = area_top, 64, area_w
     bg.alpha_composite(dressed("window_topbar", bw, bar_h, fit=bar_h), (side_, top))
@@ -363,7 +365,7 @@ def window_mock(out_path):
         marker = st.nine("tab_marker", int(w * 0.6), 8, 8 / size("tab_marker")[1])
         bg.alpha_composite(marker, (int(x + w * 0.2), int(top_ + rule - 4)))
         x += w + gap_
-    cell, cg = min(64, int((widths[0] - 60 - 7 * 6) / 8)), 6
+    cell, cg = min(64, int((widths[0] - 60 - 7 * 6) / 8), int((ph - 80 - 70 - 5 * 6) / 6)), 6
     gw = 8 * cell + 7 * cg
     gx0, gy0 = side_ + widths[0] / 2 - gw / 2, top_ + 80
     text(side_ + 28, top_ + 50, "17/32", font("Cinzel-Medium", 13), fill=(186, 153, 92, 255), anchor="lm")

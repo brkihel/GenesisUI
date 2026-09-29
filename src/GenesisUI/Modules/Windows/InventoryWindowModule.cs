@@ -10,6 +10,7 @@ using GenesisUI.Widgets;
 using HarmonyLib;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace GenesisUI.Modules.Windows
@@ -44,7 +45,9 @@ namespace GenesisUI.Modules.Windows
     [GameContract("assembly_valheim", "ItemDrop+ItemData+SharedData", "m_itemType")]
     internal sealed class InventoryWindowModule : IUiModule
     {
+        private const string Owner = "module:win.inventory";
         private static readonly string[] NoRegions = new string[0];
+        private static readonly Action<InventoryWindowModule> AlignForRender = module => module.AlignVisibleSlots();
 
         // Inside the shell's window area (WindowCanvas): below the tab bar, above the hint bar.
         private const float BarsTop = 72f, BarsBottom = 54f, Gap = 8f;
@@ -89,6 +92,7 @@ namespace GenesisUI.Modules.Windows
         private ItemDrop.ItemData _shownItem;
         private int _shownSlots = -1, _shownWeight = -1, _shownMax = -1, _shownArmor = -1;
         private bool _loggedElement;
+        private bool _reportedDrift;
 
         private AccessTools.FieldRef<InventoryGrid, List<InventoryElement>> _elements;
         private Func<InventoryGrid, InventoryElement> _hovered;
@@ -105,6 +109,7 @@ namespace GenesisUI.Modules.Windows
             _hovered = AccessTools.MethodDelegate<Func<InventoryGrid, InventoryElement>>(
                 AccessTools.Method(typeof(InventoryGrid), "GetHoveredElement"));
             _applied = false;
+            Canvas.willRenderCanvases += OnWillRenderCanvases;
             // Panels are built on vanilla's canvas when it exists (EnsureBuilt).
         }
 
@@ -126,6 +131,7 @@ namespace GenesisUI.Modules.Windows
             int rows = InventoryModule.Current != null ? InventoryModule.Current.Rows : SlotLayout.MinRows;
             if (elements.Count != _elementCount || rows != _dressedRows || (elements.Count > 0 && elements[0] != _firstElement))
                 DressElements(elements, rows); // vanilla rebuilds its elements when the size changes
+            AlignVisibleSlots(); // also correct before input; the canvas callback corrects after layout
             ApplyFilter(grid, elements);
             PlaceContainer(gui);
             if (!_containerShown) UpdateDetails(grid);
@@ -134,6 +140,7 @@ namespace GenesisUI.Modules.Windows
 
         public void Teardown()
         {
+            Canvas.willRenderCanvases -= OnWillRenderCanvases;
             if (_applied) Unapply();
             if (_root != null) UnityEngine.Object.Destroy(_root.gameObject);
             if (_controlsRoot != null) UnityEngine.Object.Destroy(_controlsRoot.gameObject);
@@ -171,21 +178,18 @@ namespace GenesisUI.Modules.Windows
             _root.gameObject.SetActive(true);
             _controlsRoot.gameObject.SetActive(true);
 
-            // Vanilla's player panel fades out (frame, name, armour, weight) and stops catching
-            // clicks; its grid stays fully visible and clickable through its own group.
-            var panel = _skin.Group(gui.m_player.gameObject);
-            panel.alpha = 0f;
-            panel.blocksRaycasts = false;
-            var gridGroup = _skin.Group(gui.m_playerGrid.gameObject);
-            gridGroup.ignoreParentGroups = true;
-            gridGroup.alpha = 1f;
-            gridGroup.blocksRaycasts = true;
-            gridGroup.interactable = true;
+            // Hide only vanilla panel graphics outside the grid. A CanvasGroup with alpha=0
+            // on m_player also suppresses its child grid on Unity 6 despite
+            // ignoreParentGroups, and breaks the slots' raycasts (R-049).
+            foreach (var graphic in gui.m_player.GetComponentsInChildren<Graphic>(true))
+                if (!graphic.transform.IsChildOf(gui.m_playerGrid.transform))
+                    _skin.Enabled(graphic).enabled = false;
 
             // Crafting and the character info belong to other tabs.
             Hide(gui.m_crafting.gameObject);
             Hide(gui.m_info.gameObject);
             _dressedRows = -1;
+            _reportedDrift = false;
         }
 
         private void Hide(GameObject go)
@@ -199,6 +203,20 @@ namespace GenesisUI.Modules.Windows
         private void Unapply()
         {
             _applied = false;
+            // A moved button may never receive the pointer-exit event that clears Unity's hover
+            // transition. Clear its state before restoring its original sprite and colours.
+            var gui = InventoryGui.instance;
+            if (gui != null && gui.m_playerGrid != null && EventSystem.current != null)
+            {
+                var eventSystem = EventSystem.current;
+                var selected = eventSystem.currentSelectedGameObject;
+                if (selected != null && selected.transform.IsChildOf(gui.m_playerGrid.transform))
+                    eventSystem.SetSelectedGameObject(null);
+                var pointer = new PointerEventData(eventSystem);
+                foreach (var element in _elements(gui.m_playerGrid))
+                    if (element != null && element.m_button != null)
+                        element.m_button.OnPointerExit(pointer);
+            }
             _skin.Restore();
             _firstElement = null;
             _elementCount = 0;
@@ -246,23 +264,30 @@ namespace GenesisUI.Modules.Windows
                     LogElement(element);
                 }
 
-                // Vanilla's slot background (the button's graphic and any root image): hidden, not removed.
+                // Dress the actual button graphic. It remains the raycast target and keeps
+                // vanilla's click, drag, split and gamepad handling on the same object.
                 var rootBackground = element.GetComponent<Image>();
                 var buttonBackground = element.m_button != null ? element.m_button.targetGraphic as Image : null;
-                if (rootBackground != null && rootBackground != element.m_icon && rootBackground != element.m_equiped)
-                    _skin.RendererAlpha(rootBackground.canvasRenderer).SetAlpha(0f);
-                if (buttonBackground != null && buttonBackground != rootBackground &&
-                    buttonBackground != element.m_icon && buttonBackground != element.m_equiped)
-                    _skin.RendererAlpha(buttonBackground.canvasRenderer).SetAlpha(0f);
-
-                // Our slot, first child so the icon, amount and bars draw over it.
-                if (slot != null && element.transform.Find("GenesisUI.Slot") == null)
+                var background = buttonBackground != null ? buttonBackground : rootBackground;
+                if (slot != null && background != null)
                 {
-                    var frame = Ui.Fill(Ui.Child(element.transform, "GenesisUI.Slot"));
-                    frame.SetAsFirstSibling();
-                    _skin.Added(frame.gameObject);
-                    var img = Ui.Image(frame, slot, Color.white);
-                    img.pixelsPerUnitMultiplier = Frame.CanvasScale(frame) * _theme.Size("hotslot").y / _cell;
+                    _skin.Image(background);
+                    background.sprite = slot;
+                    background.type = Image.Type.Sliced;
+                    background.color = Color.white;
+                    background.pixelsPerUnitMultiplier = Frame.CanvasScale(background.transform) * _theme.Size("hotslot").y / _cell;
+                    if (rootBackground != null && rootBackground != background)
+                        _skin.Enabled(rootBackground).enabled = false;
+                    if (element.m_button != null)
+                    {
+                        _skin.Button(element.m_button);
+                        var colors = element.m_button.colors;
+                        colors.normalColor = Color.white;
+                        colors.highlightedColor = new Color(1f, 0.91f, 0.70f, 1f);
+                        colors.pressedColor = new Color(1f, 0.78f, 0.46f, 1f);
+                        colors.selectedColor = colors.highlightedColor;
+                        element.m_button.colors = colors;
+                    }
                 }
 
                 // The equipped mark: Diego's equipped slot over the cell instead of vanilla's blue square.
@@ -302,6 +327,42 @@ namespace GenesisUI.Modules.Windows
             float cy = _corners[1].y - (y * (_cell + CellGap) + _cell / 2f) * unit;
             float size = _cell * unit;
             return new Rect(cx - size / 2f, cy - size / 2f, size, size);
+        }
+
+        private void OnWillRenderCanvases()
+        {
+            if (!_applied) return;
+            if (!Guard.Run(Owner, AlignForRender, this) && Guard.IsTripped(Owner)) Unapply();
+        }
+
+        /// <summary>Vanilla moves its grid after opening and when changing tabs. Keep the original
+        /// slot objects aligned with our panel after that movement and after UI layout.</summary>
+        private void AlignVisibleSlots()
+        {
+            if (!_applied || _gridArea == null) return;
+            var gui = InventoryGui.instance;
+            if (gui == null || gui.m_playerGrid == null) return;
+            var elements = _elements(gui.m_playerGrid);
+            if (elements == null || elements.Count != _elementCount ||
+                (elements.Count > 0 && elements[0] != _firstElement)) return;
+            int rows = InventoryModule.Current != null ? InventoryModule.Current.Rows : SlotLayout.MinRows;
+            for (int i = 0; i < elements.Count; i++)
+            {
+                var element = elements[i];
+                if (element == null) continue;
+                var pos = element.Position;
+                if (pos.y >= rows) continue;
+                var rt = (RectTransform)element.transform;
+                var target = CellWorld(pos.x, pos.y);
+                var world = target.center;
+                if (((Vector2)rt.position - world).sqrMagnitude < 0.0625f) continue;
+                if (!_reportedDrift && ((Vector2)rt.position - world).sqrMagnitude > 25f)
+                {
+                    _reportedDrift = true;
+                    GenesisLog.Info("Module:win.inventory", "vanilla grid moved after dressing; aligning cells on each canvas render");
+                }
+                rt.position = world;
+            }
         }
 
         private void PlaceContainer(InventoryGui gui)

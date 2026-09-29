@@ -7,7 +7,7 @@ using UnityEngine.UI;
 namespace GenesisUI.Widgets
 {
     /// <summary>
-    /// Status tile (docs/ART-DIRECTION.md C8): framed icon with a diamond on top, the
+    /// Status tile: the same quiet slot frame as the active food buffs (Diego, R-049), the
     /// effect name below, the time under the name. Setters only touch Unity on change.
     /// </summary>
     internal sealed class TileView
@@ -36,16 +36,17 @@ namespace GenesisUI.Widgets
             var t = theme.Tokens;
             Root = Ui.Place(Ui.Child(parent, name), new Vector2(1f, 1f), Vector2.zero, new Vector2(CellWidth, CellHeight));
 
-            var sprite = theme.Sprite("tile");
+            string frameName = theme.Sprite("hotslot") != null ? "hotslot" : "slot";
+            var sprite = theme.Sprite(frameName);
             _frameColor = sprite != null ? Color.white : ThemeRuntime.ToUnity(t.PanelBackground);
             _readyColor = ThemeRuntime.ToUnity(t.AccentGoldBright);
             _dangerColor = ThemeRuntime.ToUnity(t.StateDanger);
             var frameRt = Ui.Place(Ui.Child(Root, "Tile"), new Vector2(0.5f, 1f), Vector2.zero, new Vector2(TileSize, TileSize));
-            _frame = Frame.Dress(frameRt, theme, "tile", "Status", TileSize);
+            _frame = Frame.Dress(frameRt, theme, frameName, "Status", TileSize);
 
             // The icon sits inside the frame's declared content (scaled like the frame).
-            var drawn = theme.Size("tile");
-            var c = theme.Content("tile", new Vector4(13f, 10f, 13f, 16f)) * (drawn.y > 0f ? TileSize / drawn.y : 1f);
+            var drawn = theme.Size(frameName);
+            var c = theme.Content(frameName, new Vector4(8f, 8f, 8f, 8f)) * (drawn.y > 0f ? TileSize / drawn.y : 1f);
             _icon = Ui.Image(Ui.Fill(Ui.Child(frameRt, "Icon"), c.x + 2f, c.y + 2f, c.z + 2f, c.w + 2f), null, Color.white);
             _icon.preserveAspect = true;
 

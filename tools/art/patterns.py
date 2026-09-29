@@ -166,6 +166,31 @@ def burn(path):
     _save(np.clip(alpha, 0, 1), path)
 
 
+def burn_horizontal(path):
+    """A horizontal stamina burn: a bright vertical leading edge with sparks trailing right.
+
+    The left edge touches the liquid. Keeping its axis explicit avoids rotating the
+    vertical resource-bar pattern into a horizontal channel.
+    """
+    w, h = 64, 32
+    y, x = np.mgrid[0:h, 0:w].astype(np.float32)
+    alpha = np.exp(-((x - 3.0) / 1.7) ** 2) * (0.72 + 0.28 * np.sin(y * 0.55) ** 2)
+    alpha += 0.34 * np.exp(-((x - 8.0) / 5.0) ** 2)
+    rng = np.random.default_rng(140)
+    for _ in range(24):
+        sx = rng.uniform(9, 61)
+        sy = rng.uniform(2, h - 2)
+        radius = rng.uniform(0.45, 1.4)
+        strength = rng.uniform(0.45, 1.0) * (1 - sx / 80)
+        alpha += strength * np.exp(-((x - sx) ** 2 + (y - sy) ** 2) / (2 * radius ** 2))
+    rgba = np.zeros((h, w, 4), np.uint8)
+    rgba[..., 0] = 255
+    rgba[..., 1] = np.clip(195 + 60 * np.exp(-((x - 3) / 5) ** 2), 0, 255).astype(np.uint8)
+    rgba[..., 2] = np.clip(95 + 130 * np.exp(-((x - 3) / 3) ** 2), 0, 255).astype(np.uint8)
+    rgba[..., 3] = (np.clip(alpha, 0, 1) * 255).astype(np.uint8)
+    Image.fromarray(rgba, "RGBA").save(path)
+
+
 def ember(path):
     """A soft glowing dot for sparks and embers."""
     y, x = np.mgrid[0:16, 0:16].astype(np.float32)
@@ -179,6 +204,7 @@ PATTERNS = {
     "bar_veins": (64, 128, "repeat", None, veins),
     "bar_mottle": (64, 128, "repeat", None, mottle),
     "bar_burn": (64, 64, "repeat", None, burn),   # repeats across; stretched along the consumed part
+    "bar_burn_h": (64, 32, "repeat", None, burn_horizontal),
     "ember": (16, 16, "clamp", None, ember),
 }
 

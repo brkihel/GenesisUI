@@ -61,7 +61,7 @@ and layout from disk.
 
 ## 4. Diagnostic report
 
-A plain-text file written to `BepInEx/GenesisUI/reports/report-<timestamp>.txt`
+A plain-text file written to `BepInEx/GenesisUI/reports/report-<timestamp>.log`
 and its path copied to the clipboard. It contains the session header, all overlay
 panels as text, the last 200 log lines of GenesisUI, and the
 config values of GenesisUI.

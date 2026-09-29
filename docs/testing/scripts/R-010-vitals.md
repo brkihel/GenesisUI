@@ -56,7 +56,7 @@ quando é desligado ou falha.
 
 ## O que me enviar
 
-1. O relatório do passo 13 (`BepInEx/GenesisUI/reports/report-….txt`).
+1. O relatório do passo 13 (`BepInEx/GenesisUI/reports/report-….log`).
 2. `BepInEx/LogOutput.log` e o log de `BepInEx/GenesisUI/logs/`. Neles, procure e me conte
    se aparecem as linhas `[GenesisUI:Host] HUD root under …` e `[GenesisUI:Veil] …`: elas
    dizem como o HUD do jogo é montado e se o jogo "brigou" com o véu de alguma barra.

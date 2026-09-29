@@ -39,6 +39,9 @@ namespace GenesisUI.Modules.Sprint
         private LiquidLayer _liquid;
         private BarAnimator _bar;
         private float _linger;
+        private float _displayed;
+        private float _burnTime;
+        private bool _initialized;
         private int _appliedY = int.MinValue;
         private float _appliedScale = float.NaN;
 
@@ -101,8 +104,8 @@ namespace GenesisUI.Modules.Sprint
                     new Vector2(0.02f, 0f), new Vector2(0f, 0.35f), mirror: false);
             }
 
-            // The burn: a short hot edge where stamina is being spent, like the vertical bars'.
-            var burnTex = theme.Texture("bar_burn");
+            // The horizontal burn has its own vertical leading line and sparks trailing right.
+            var burnTex = theme.Texture("bar_burn_h");
             if (burnTex != null)
             {
                 _burnRt = Ui.Child(track, "Burn");
@@ -111,13 +114,15 @@ namespace GenesisUI.Modules.Sprint
                 _burnRt.offsetMin = _burnRt.offsetMax = Vector2.zero;
                 _burn = _burnRt.gameObject.AddComponent<RawImage>();
                 _burn.texture = burnTex;
-                _burn.color = new Color(1f, 0.93f, 0.62f, 0.9f);
+                _burn.color = Color.white;
                 _burn.raycastTarget = false;
                 _burn.uvRect = new Rect(0f, 0f, 1f, 1f);
             }
 
             _bar = new BarAnimator();
             _linger = 0f;
+            _initialized = false;
+            _burnTime = 0f;
             _appliedY = int.MinValue;
             _appliedScale = float.NaN;
             _group.gameObject.SetActive(false);
@@ -148,31 +153,50 @@ namespace GenesisUI.Modules.Sprint
             else _linger = Mathf.Max(0f, _linger - deltaSeconds);
             bool visible = player != null && _linger > 0f;
             if (_group.gameObject.activeSelf != visible) _group.gameObject.SetActive(visible);
-            if (!visible) return;
+            if (!visible)
+            {
+                _initialized = false;
+                return;
+            }
 
             float alpha = Mathf.Clamp01(_linger / FadeSeconds);
             if (!Mathf.Approximately(_opacity.alpha, alpha)) _opacity.alpha = alpha;
             _bar.Update(stamina, max, deltaSeconds);
-            if (!Mathf.Approximately(_fill.fillAmount, _bar.Fast)) _fill.fillAmount = _bar.Fast;
+            float target = _bar.Fast;
+            if (!_initialized)
+            {
+                _displayed = target;
+                _initialized = true;
+            }
+            else
+            {
+                if (target < _displayed - 0.004f) _burnTime = 0.25f;
+                float speed = target < _displayed ? 14f : 8f;
+                _displayed = Mathf.Lerp(_displayed, target, 1f - Mathf.Exp(-speed * Mathf.Max(0f, deltaSeconds)));
+                if (Mathf.Abs(_displayed - target) < 0.001f) _displayed = target;
+            }
+            _burnTime = Mathf.Max(0f, _burnTime - deltaSeconds);
+            if (!Mathf.Approximately(_fill.fillAmount, _displayed)) _fill.fillAmount = _displayed;
             if (_liquid != null)
             {
-                if (!Mathf.Approximately(_liquidMask.anchorMax.x, _bar.Fast)) _liquidMask.anchorMax = new Vector2(_bar.Fast, 1f);
+                if (!Mathf.Approximately(_liquidMask.anchorMax.x, _displayed)) _liquidMask.anchorMax = new Vector2(_displayed, 1f);
                 _liquid.Scroll(deltaSeconds);
             }
 
-            if (!Mathf.Approximately(_trail.fillAmount, _bar.Slow)) _trail.fillAmount = _bar.Slow;
+            float trail = Mathf.Min(_bar.Slow, _displayed + 0.04f);
+            if (!Mathf.Approximately(_trail.fillAmount, trail)) _trail.fillAmount = trail;
             if (_burn != null)
             {
-                // Only a short edge above the level, never a long band (as the vertical bars, R-040).
-                float to = Mathf.Min(_bar.Slow, _bar.Fast + 0.035f);
-                bool burning = to > _bar.Fast + 0.002f;
+                float to = Mathf.Min(1f, _displayed + 0.04f);
+                bool burning = _burnTime > 0f && to > _displayed + 0.002f;
                 if (_burn.enabled != burning) _burn.enabled = burning;
                 if (burning)
                 {
-                    _burnRt.anchorMin = new Vector2(_bar.Fast, 0f);
+                    _burnRt.anchorMin = new Vector2(_displayed, 0f);
                     _burnRt.anchorMax = new Vector2(to, 1f);
+                    _burn.color = new Color(1f, 1f, 1f, Mathf.Clamp01(_burnTime / 0.25f));
                     var uv = _burn.uvRect;
-                    uv.x = Mathf.Repeat(uv.x + deltaSeconds * 0.35f, 1f);
+                    uv.y = Mathf.Repeat(uv.y + deltaSeconds * 0.7f, 1f);
                     _burn.uvRect = uv;
                 }
             }

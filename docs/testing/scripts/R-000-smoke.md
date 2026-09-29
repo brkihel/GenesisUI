@@ -42,9 +42,9 @@ esconde seus dados pessoais** e **não muda nada no jogo**.
 | 1 | Inicie o jogo pelo perfil `GenesisUI-Teste` e espere o **menu principal**. | No **canto inferior direito**, um texto dourado discreto: `GenesisUI PREVIEW 0.1.0-preview.2+xxxxxxx` (os x são o código da versão). | Print `R-000-01.png` do menu inteiro. |
 | 2 | Sem fechar o jogo, abra `BepInEx/LogOutput.log` e procure por `[GenesisUI:Host]`. | Um bloco de linhas que começa com `GenesisUI 0.1.0-preview.2+… (Preview)` e traz `Game: 1.0.16`, `Unity:`, `BepInEx:`, `Jotunn: 2.30.2`, `Language:`, `Plugins (N):` com a lista dos plugins, `own log file: …` e `ready`. Logo depois, já com o menu aberto, uma linha **`[GenesisUI:Host] Display: 1920x1080 @60Hz, fullscreen=True, GUI scale 1`** (com a sua resolução real). **Nenhuma** linha `[Error]` que mencione `GenesisUI`, e **nenhum** aviso `LiberationSans SDF Font Asset was not found … GenesisUI_Watermark`. | Copie as linhas `[GenesisUI:…]` que estranhou. |
 | 3 | Abra a pasta `BepInEx/GenesisUI/logs/`. | Existe um arquivo `genesisui-AAAAMMDD-HHMMSS.log` com as mesmas linhas do passo 2. | Anote se a pasta ou o arquivo não existirem. |
-| 4 | Volte ao jogo, ainda no menu principal, e aperte **F8**. Depois abra `BepInEx/GenesisUI/reports/`. | Um arquivo `report-AAAAMMDD-HHMMSS.txt` novo. Se colar (Ctrl+V) no Explorer ou no Bloco de Notas, aparece o caminho desse arquivo. No menu **não** aparece mensagem na tela; isso é normal, porque o menu não tem HUD. | Anote se o arquivo não foi criado. |
+| 4 | Volte ao jogo, ainda no menu principal, e aperte **F8**. Depois abra `BepInEx/GenesisUI/reports/`. | Um arquivo `report-AAAAMMDD-HHMMSS.log` novo. Se colar (Ctrl+V) no Explorer ou no Bloco de Notas, aparece o caminho desse arquivo. No menu **não** aparece mensagem na tela; isso é normal, porque o menu não tem HUD. | Anote se o arquivo não foi criado. |
 | 5 | Crie um mundo local novo chamado `GenesisUI-Teste` (ou use um de teste) e entre com um personagem. | A marca d'água continua no canto inferior direito. **Todo o resto da interface está igual ao jogo sem mods**: vida, vigor, barra de itens, minimapa, bússola. | Print `R-000-05.png` com o HUD inteiro. |
-| 6 | No mundo, aperte **F8**. | No **canto superior esquerdo** aparece: *"GenesisUI: relatório de diagnóstico salvo; o caminho foi copiado para a área de transferência."* (em inglês se o jogo estiver em inglês). Um segundo arquivo `report-….txt` surge na pasta. | Print `R-000-06.png`. |
+| 6 | No mundo, aperte **F8**. | No **canto superior esquerdo** aparece: *"GenesisUI: relatório de diagnóstico salvo; o caminho foi copiado para a área de transferência."* (em inglês se o jogo estiver em inglês). Um segundo arquivo `report-….log` surge na pasta. | Print `R-000-06.png`. |
 | 7 | Abra o relatório do passo 6. | Primeira linha `=== GenesisUI diagnostic report … ===` e depois `(personal data redacted)`. Seções `Session`, `Faults` com `(none)`, `Patches` com `(none)`, `Input leases` com `active: 0`, `Config` e `Recent log`. **O nome do seu personagem aparece como `<character>`, o do mundo como `<world>`, e o seu usuário do Windows como `<os-user>` dentro dos caminhos.** | Anote qualquer dado pessoal que tenha aparecido. |
 | 8 | Ande, pule, abra o inventário (**Tab**) e feche, abra o menu (**Esc**) e feche, abra o chat (**Enter**) e feche. | Tudo funciona como sempre; o mouse e o teclado nunca ficam presos. | Anote o que travou e em qual ação. |
 | 9 | **Esc → Sair** para voltar ao menu principal. | A marca d'água aparece **uma única vez** no menu (não duplicada). | Print `R-000-09.png`. |
@@ -59,7 +59,7 @@ esconde seus dados pessoais** e **não muda nada no jogo**.
 
 ## O que me enviar
 
-1. O relatório do passo 6 (`BepInEx/GenesisUI/reports/report-….txt`). Ele já vem sem os
+1. O relatório do passo 6 (`BepInEx/GenesisUI/reports/report-….log`). Ele já vem sem os
    seus dados pessoais.
 2. O arquivo `BepInEx/GenesisUI/logs/genesisui-….log` e o `BepInEx/LogOutput.log`.
    **Atenção:** esses dois **não** são filtrados e podem conter o nome do personagem e

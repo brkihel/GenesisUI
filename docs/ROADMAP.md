@@ -22,6 +22,10 @@ The whole vanilla UI comes before any mod integration (D-024): F4 windows, F5 me
 then the Extension API and adapters in F7. The modpack performance check from the F3 exit
 criteria moves to the first F4 test run. The F4 plan is in [F4-PLAN.md](F4-PLAN.md).
 
+F4.2a is still in client testing: R-049 found slot drift and hover faults in preview.5.
+Preview.6 addresses them and the requested HUD details; R-050 must pass before moving to
+equipment slots in F4.2b.
+
 ## Research items (not scheduled)
 
 - 3D character figure in the inventory/character panels (render-texture camera;

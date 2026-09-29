@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.7.0-preview.6 — R-049 inventory and HUD corrections
+
+### Fixed
+- The inventory's vanilla slots are realigned after Unity's canvas layout. The vanilla
+  panel graphics are hidden individually, leaving the slot hierarchy active and clickable;
+  slot hover and selection are cleared when the skin is restored.
+- The actual vanilla slot button now wears the GenesisUI sprite, with its icon, stack count
+  and durability on top. The status-effect icons use the same quiet slot as food buffs.
+- The horizontal stamina bar has its own burn texture with a bright leading line and sparks,
+  a shorter trail, and smoothed spending and recovery.
+
+### Changed
+- Windows use 75% of the screen by default. Existing 65% defaults migrate once; later
+  changes to the size remain under the player's control.
+- F8 reports now use `.log` instead of `.txt`; the text format and redaction stay the same.
+- The HUD fade helper now compiles in Release as well as Preview.
+
+### Verification
+- Automated Core and contract tests pass. Slot interaction, hover restoration and the new
+  burn still require Diego's in-game check (R-050).
+
 ## 0.7.0-preview.5 — R-048 inventory and HUD corrections
 
 ### Changed

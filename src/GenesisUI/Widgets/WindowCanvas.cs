@@ -8,7 +8,7 @@ namespace GenesisUI.Widgets
     /// Where GenesisUI's windows are drawn (R-048): on vanilla's own inventory canvas, beside
     /// InventoryGui — panels behind it, bars in front — so vanilla's slots, our frames and our buttons
     /// share one coordinate system, one scale and one raycaster. The window area is centred and takes
-    /// <see cref="Size"/> of the screen's width (Diego: about 65%).
+    /// <see cref="Size"/> of the screen's width (Diego: about 75%, R-049).
     /// </summary>
     internal static class WindowCanvas
     {
@@ -17,10 +17,20 @@ namespace GenesisUI.Widgets
 
         internal static void Bind(ConfigFile config)
         {
-            Size = config.Bind("Windows", "Width", 0.65f, new ConfigDescription(
-                "Largura das janelas (inventário, criação...) em fração da tela: 0,65 = 65%.", new AcceptableValueRange<float>(0.45f, 1f)));
-            Height = config.Bind("Windows", "Height", 0.65f, new ConfigDescription(
+            Size = config.Bind("Windows", "Width", 0.75f, new ConfigDescription(
+                "Largura das janelas (inventário, criação...) em fração da tela: 0,75 = 75%.", new AcceptableValueRange<float>(0.45f, 1f)));
+            Height = config.Bind("Windows", "Height", 0.75f, new ConfigDescription(
                 "Altura das janelas em fração da tela, das abas até as dicas de atalho.", new AcceptableValueRange<float>(0.5f, 1f)));
+            // Preview.5 wrote 0.65 to existing configs. Move that exact old default once;
+            // after the marker is set, a player can deliberately choose 0.65 again.
+            var defaultsVersion = config.Bind("Windows", "ViewportDefaultsVersion", 0,
+                "Versão interna da migração do tamanho padrão das janelas.");
+            if (defaultsVersion.Value < 1)
+            {
+                if (Mathf.Approximately(Size.Value, 0.65f)) Size.Value = 0.75f;
+                if (Mathf.Approximately(Height.Value, 0.65f)) Height.Value = 0.75f;
+                defaultsVersion.Value = 1;
+            }
         }
 
         /// <summary>A full-canvas root beside InventoryGui: behind it (panels) or in front of it (bars).</summary>
@@ -46,8 +56,8 @@ namespace GenesisUI.Widgets
         internal static RectTransform Area(RectTransform root, string name)
         {
             var area = Ui.Child(root, name);
-            float w = Size != null ? Size.Value : 0.65f;
-            float h = Height != null ? Height.Value : 0.65f;
+            float w = Size != null ? Size.Value : 0.75f;
+            float h = Height != null ? Height.Value : 0.75f;
             area.anchorMin = new Vector2((1f - w) / 2f, (1f - h) / 2f);
             area.anchorMax = new Vector2((1f + w) / 2f, (1f + h) / 2f);
             area.offsetMin = area.offsetMax = Vector2.zero;
