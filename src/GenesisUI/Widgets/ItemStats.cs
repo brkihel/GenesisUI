@@ -43,12 +43,24 @@ namespace GenesisUI.Widgets
                     max > 0f ? Mathf.Clamp01(item.m_durability / max) : 0f);
             }
             if (s.m_maxQuality > 1) Add(rows, "$genesisui_stat_quality", quality + " / " + s.m_maxQuality);
-            float armor = item.GetArmor(quality, world);
-            if (armor > 0f) Add(rows, "$genesisui_stat_armor", armor.ToString("0"));
-            float damage = item.GetDamage(quality, world).GetTotalDamage();
-            if (damage > 0f) Add(rows, "$genesisui_stat_damage", damage.ToString("0"));
-            float block = item.GetBaseBlockPower(quality);
-            if (block > 0f) Add(rows, "$genesisui_stat_block", block.ToString("0"));
+            // Like vanilla's tooltip: armour on armour, damage on weapons/tools/ammo, block on weapons and
+            // shields (GetArmor adds a world-level bonus to every item; a club showed "Armadura 20", R-056).
+            var category = ItemCategories.Of(item);
+            if (category == ItemCategory.Armor)
+            {
+                float armor = item.GetArmor(quality, world);
+                if (armor > 0f) Add(rows, "$genesisui_stat_armor", armor.ToString("0"));
+            }
+            if (category == ItemCategory.Weapon || category == ItemCategory.Tool || category == ItemCategory.Ammo)
+            {
+                float damage = item.GetDamage(quality, world).GetTotalDamage();
+                if (damage > 0f) Add(rows, "$genesisui_stat_damage", damage.ToString("0"));
+            }
+            if (category == ItemCategory.Weapon || category == ItemCategory.Shield)
+            {
+                float block = item.GetBaseBlockPower(quality);
+                if (block > 0f) Add(rows, "$genesisui_stat_block", block.ToString("0"));
+            }
             if (s.m_food > 0f) Add(rows, "$genesisui_stat_food_health", s.m_food.ToString("0"));
             if (s.m_foodStamina > 0f) Add(rows, "$genesisui_stat_food_stamina", s.m_foodStamina.ToString("0"));
             if (s.m_foodEitr > 0f) Add(rows, "$genesisui_stat_food_eitr", s.m_foodEitr.ToString("0"));

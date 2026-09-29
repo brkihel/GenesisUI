@@ -22,6 +22,7 @@ namespace GenesisUI.Modules.Notice
     [GameContract("assembly_valheim", "MessageHud", "m_messageText")]
     [GameContract("assembly_valheim", "MessageHud", "m_messageIcon")]
     [GameContract("assembly_valheim", "MessageHud", "m_messageCenterText")]
+    [GameContract("assembly_valheim", "MessageHud", "m_unlockMessages")]
     internal sealed class NoticeModule : IUiModule
     {
         private const float CardHeight = 46f;
@@ -43,6 +44,8 @@ namespace GenesisUI.Modules.Notice
         private string _lastVanillaText;
         private float _lastVanillaAlpha;
         private Vector2 _appliedOffset = new Vector2(float.NaN, float.NaN);
+        private readonly HashSet<GameObject> _seenUnlocks = new HashSet<GameObject>();
+        private HarmonyLib.AccessTools.FieldRef<MessageHud, List<GameObject>> _unlocks;
 
         public NoticeModule(ConfigFile config)
         {
@@ -61,6 +64,8 @@ namespace GenesisUI.Modules.Notice
         {
             var theme = context.Theme;
             var t = theme.Tokens;
+            _unlocks = HarmonyLib.AccessTools.FieldRefAccess<MessageHud, List<GameObject>>("m_unlockMessages");
+            _seenUnlocks.Clear();
             _column = Ui.Place(Ui.Child(context.Root, "Notices"), new Vector2(0f, 1f), Vector2.zero, new Vector2(560f, 400f));
             _column.pivot = new Vector2(0f, 1f);
             for (int i = 0; i < Cards; i++) _cards[i] = new NoticeCard(_column, i, theme, CardHeight);
@@ -113,6 +118,7 @@ namespace GenesisUI.Modules.Notice
                 _lastVanillaAlpha = alpha;
             }
 
+            MirrorUnlocks(hud);
             _stack.Tick(deltaSeconds);
             LayoutStack(deltaSeconds);
 
@@ -173,6 +179,37 @@ namespace GenesisUI.Modules.Notice
                 card.Unbind();
             }
         }
+
+        /// <summary>
+        /// Vanilla's discovery messages ("Nova peça para construção", new recipes): each message vanilla
+        /// shows becomes one of our cards (title in gold, then the name, with its icon) and vanilla's own
+        /// panel is hidden; vanilla still decides what is announced, when and how many (R-056).
+        /// </summary>
+        private void MirrorUnlocks(MessageHud hud)
+        {
+            var list = _unlocks(hud);
+            if (list == null) return;
+            _seenUnlocks.RemoveWhere(go => go == null);
+            for (int i = 0; i < list.Count; i++)
+            {
+                var go = list[i];
+                if (go == null || !_seenUnlocks.Add(go)) continue;
+                var group = go.GetComponent<CanvasGroup>();
+                if (group == null) group = go.AddComponent<CanvasGroup>(); // vanilla's own object; it dies with it
+                group.alpha = 0f;
+                group.blocksRaycasts = false;
+                var t = go.transform;
+                var title = t.Find("UnlockMessage/UnlockTitle");
+                var desc = t.Find("UnlockMessage/UnlockDescription");
+                var icon = t.Find("UnlockMessage/icon_bkg/UnlockIcon");
+                string topic = title != null ? Localize(title.GetComponent<TMP_Text>().text) : "";
+                string name = desc != null ? Localize(desc.GetComponent<TMP_Text>().text) : "";
+                var sprite = icon != null ? icon.GetComponent<UnityEngine.UI.Image>().sprite : null;
+                _stack.Push("<color=#D8B76C>" + topic + "</color>  " + name, sprite);
+            }
+        }
+
+        private static string Localize(string text) => Localization.instance != null && text != null ? Localization.instance.Localize(text) : text ?? "";
 
         private NoticeCard FreeCard()
         {

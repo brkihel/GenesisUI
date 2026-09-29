@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.7.0-preview.13 — R-056 fixes: vanilla under Crafting, discovery notices, stat rows
+
+### Fixed
+- Switching Inventory → Crafting showed vanilla's inventory and crafting panels under our
+  window: in the same frame the inventory window restored vanilla (a deferred Destroy of its
+  CanvasGroup) and the crafting window re-hid it by reusing that dying group. VanillaSkin now
+  removes groups it added immediately.
+- Discovery messages ("Nova peça para construção", new recipes) now appear as GenesisUI notice
+  cards (gold title, name, icon); vanilla still decides what is announced and when.
+- The stat table no longer shows armour on weapons (the game's world-level bonus, which its own
+  tooltip hides): armour only on armour, damage on weapons/tools/ammo, block on weapons/shields.
+
 ## 0.7.0-preview.12 — Crafting tab on ConceptArt (12) (F4.3, D-032)
 
 ### Added

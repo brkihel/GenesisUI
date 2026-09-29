@@ -107,7 +107,10 @@ namespace GenesisUI.Foundation
             {
                 group = go.AddComponent<CanvasGroup>();
                 var added = group;
-                _restore.Add(() => { if (added != null) UnityEngine.Object.Destroy(added); });
+                // Immediately: another owner may hide the same object in the same frame (a window
+                // tab switch). A deferred Destroy let it find this dying group and reuse it, and
+                // vanilla reappeared at the end of the frame (R-056).
+                _restore.Add(() => { if (added != null) UnityEngine.Object.DestroyImmediate(added); });
             }
             else
             {
