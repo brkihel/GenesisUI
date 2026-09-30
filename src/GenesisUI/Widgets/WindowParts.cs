@@ -97,7 +97,9 @@ namespace GenesisUI.Widgets
             button.targetGraphic = hit;
             button.transition = Selectable.Transition.None;
             button.onClick.AddListener(() => Guard.Try(what, onClick));
-            var group = rt.gameObject.AddComponent<CanvasGroup>();
+            // Reuse the piece's own group (a crafting row fades with it): a second one cannot be added.
+            var group = rt.gameObject.GetComponent<CanvasGroup>();
+            if (group == null) group = rt.gameObject.AddComponent<CanvasGroup>();
             // Unity's Button has no dimmed look without a transition: follow interactable ourselves.
             rt.gameObject.AddComponent<DimWhenDisabled>().Init(button, group);
             return button;

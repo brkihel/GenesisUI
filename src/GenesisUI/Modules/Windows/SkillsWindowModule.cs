@@ -103,6 +103,7 @@ namespace GenesisUI.Modules.Windows
         private Button _pvp;
         private ScrollArea _skillsScroll, _textList, _textRead;
         private float _updateIn;
+        private float _textsReadAt = -1000f;
         private int _skillCount = -1, _selectedText = -1;
         private string _hoverText;
 
@@ -131,6 +132,7 @@ namespace GenesisUI.Modules.Windows
             _texts.Clear();
             _skillCount = -1;
             _selectedText = -1;
+            _textsReadAt = -1000f;
             _updateIn = 0f;
             _hoverText = null;
         }
@@ -143,7 +145,13 @@ namespace GenesisUI.Modules.Windows
             var profile = Game.instance != null ? Game.instance.GetPlayerProfile() : null;
             _name.text = (profile != null ? profile.GetName() : "").ToUpperInvariant();
             if (player.GetSkills().GetSkillList().Count != _skillCount) LayoutSkills(player);
-            ReadTexts(gui);
+            // Vanilla's texts list also writes a long stats block to the game log each time it is built:
+            // read it at most once a minute (R-058 log).
+            if (Time.unscaledTime - _textsReadAt > 60f || _texts.Count == 0)
+            {
+                _textsReadAt = Time.unscaledTime;
+                ReadTexts(gui);
+            }
             _skillsScroll.ToTop();
         }
 

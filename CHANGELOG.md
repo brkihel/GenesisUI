@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.8.0-preview.3 — The Crafting fault, found in Diego's log
+
+### Fixed
+- The Crafting window faulted on every opening with craftable and non-craftable recipes mixed:
+  it reordered a list inside a `foreach` over that list ("Collection was modified"). The order
+  is now `Core/Collections/ListOrder.StablePartition`, index-based and tested.
+- Crafting rows tried to add a second CanvasGroup (Unity warning per row); buttons now reuse it.
+- The Skills tab rebuilt vanilla's texts list on every opening, and vanilla logs a long stats block
+  each time; it now reads it at most once a minute.
+
 ## 0.8.0-preview.2 — Self-healing, fault popup, Esc menu, key hints, framed map, custom markers
 
 ### Added

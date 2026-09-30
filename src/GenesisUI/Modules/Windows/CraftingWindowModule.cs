@@ -405,18 +405,13 @@ namespace GenesisUI.Modules.Windows
                 }
             }
             // What can be made now first; vanilla's order otherwise (a stable sort).
-            StableCraftableFirst(_craftColumn.All);
-            StableCraftableFirst(_upgradeColumn.All);
+            GenesisUI.Collections.ListOrder.StablePartition(_craftColumn.All, CanCraftFirst, _partitionBuffer);
+            GenesisUI.Collections.ListOrder.StablePartition(_upgradeColumn.All, CanCraftFirst, _partitionBuffer);
             _filterDirty = true;
         }
 
-        private static void StableCraftableFirst(List<Entry> list)
-        {
-            int write = 0;
-            var tail = new List<Entry>();
-            foreach (var e in list) { if (e.CanCraft) list[write++] = e; else tail.Add(e); }
-            for (int i = 0; i < tail.Count; i++) list[write + i] = tail[i];
-        }
+        private readonly List<Entry> _partitionBuffer = new List<Entry>(128);
+        private static readonly Func<Entry, bool> CanCraftFirst = e => e.CanCraft;
 
         private static Entry NewEntry(Recipe recipe, ItemDrop.ItemData upgrade, bool canCraft)
         {
