@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.8.0-preview.2 — Self-healing, fault popup, Esc menu, key hints, framed map, custom markers
+
+### Added
+- **Self-healing:** when a part faults, the vanilla window it drew over closes first (never
+  vanilla's look in its place), the part is rebuilt in the same frame (HUD veils back before
+  anything draws), up to three times per five minutes; a popup apologises, explains, shows the
+  exact error with Copy, and a Report button kept disabled until the Discord system exists.
+- **Esc menu** as Diego pictured it: the game blurred (new `GenesisUI/Blur` shader, dark veil as
+  fallback, `[Theme] MenuBlur`), clean options on the left in the display font, eased hover.
+- **Key hints** in GenesisUI's fonts and key caps, at half size (`[KeyHints] Scale`).
+- **Map** inside a panel like every window (vanilla's map fitted into it), switches for visible
+  to others and group markers, and **custom markers** (masmorra, minério, covil, base, portal,
+  tesouro, comerciante, perigo) saved as vanilla point pins tagged in their name.
+
+### Changed
+- Build menu: pieces that cannot be built now fade as a whole with a greyed icon.
+
+### Open
+- The Crafting fault after using E through the map: waiting for Diego's log (the report did not
+  reach the conversation); self-healing now rebuilds it and never leaves vanilla's window.
+
 ## 0.8.0-preview.1 — Every in-game window in GenesisUI (D-032)
 
 All with the same rule: vanilla stays the engine (invisible, still deciding and acting), GenesisUI

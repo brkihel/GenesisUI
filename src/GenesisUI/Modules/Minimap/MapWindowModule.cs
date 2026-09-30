@@ -56,6 +56,7 @@ namespace GenesisUI.Modules.Minimap
     [GameContract("assembly_valheim", "Minimap", "OnAltPressedIconDeath")]
     [GameContract("assembly_valheim", "Minimap", "OnToggleSharedMapData")]
     [GameContract("assembly_valheim", "EnvMan", "GetDayFraction")]
+    [GameContract("assembly_valheim", "Minimap", "m_namePin")]
     internal sealed class MapWindowModule : IUiModule, IRecoverable
     {
         /// <summary>IRecoverable: on a fault the large map closes back to the minimap.</summary>
@@ -91,11 +92,17 @@ namespace GenesisUI.Modules.Minimap
         private WindowParts _parts;
         private RectTransform _root, _board;
         private TextMeshProUGUI _day, _biome, _publicLabel;
-        private Image _sharedDot;
         private RectTransform _publicKnob;
         private bool _applied;
         private float _slowIn;
 
+        private readonly List<(MapMarkersModule.Kind Kind, Image Mark)> _custom = new List<(MapMarkersModule.Kind, Image)>();
+        private MapMarkersModule.Kind _armed;
+        private global::Minimap.PinData _tagged;
+        private RectTransform _mapArea;
+        private readonly Vector3[] _corners = new Vector3[4];
+        private RectTransform _sharedKnob;
+        private AccessTools.FieldRef<global::Minimap, global::Minimap.PinData> _namePin;
         private AccessTools.FieldRef<global::Minimap, bool[]> _visible;
         private AccessTools.FieldRef<global::Minimap, bool> _shared;
         private AccessTools.FieldRef<global::Minimap, Vector3> _offset;
@@ -115,7 +122,10 @@ namespace GenesisUI.Modules.Minimap
             _visible = AccessTools.FieldRefAccess<global::Minimap, bool[]>("m_visibleIconTypes");
             _shared = AccessTools.FieldRefAccess<global::Minimap, bool>("m_showSharedMapData");
             _offset = AccessTools.FieldRefAccess<global::Minimap, Vector3>("m_mapOffset");
+            _namePin = AccessTools.FieldRefAccess<global::Minimap, global::Minimap.PinData>("m_namePin");
             _applied = false;
+            _armed = null;
+            _tagged = null;
             Active = true;
         }
 
@@ -132,11 +142,19 @@ namespace GenesisUI.Modules.Minimap
             if (!_applied) Apply(map);
             WindowCanvas.Fit(_board);
 
+            FitMap(map);
+            TagNewPin(map);
             string biome = map.m_biomeNameLarge != null ? map.m_biomeNameLarge.text : "";
+            if (!string.IsNullOrEmpty(_hint)) biome = _hint;
             if (_biome.text != biome) _biome.text = biome;
             foreach (var (type, mark) in _palette)
             {
-                bool on = _vanillaSelected.TryGetValue(type, out var img) && img != null && img.enabled;
+                bool on = _armed == null && _vanillaSelected.TryGetValue(type, out var img) && img != null && img.enabled;
+                if (mark.enabled != on) mark.enabled = on;
+            }
+            foreach (var (kind, mark) in _custom)
+            {
+                bool on = kind == _armed;
                 if (mark.enabled != on) mark.enabled = on;
             }
             _slowIn -= deltaSeconds;
@@ -148,7 +166,7 @@ namespace GenesisUI.Modules.Minimap
                 bool on = visible != null && (int)type < visible.Length && visible[(int)type];
                 dot.color = ThemeRuntime.ToUnity(on ? _theme.Tokens.AccentGoldBright : _theme.Tokens.TextFlavor).WithA(on ? 1f : 0.35f);
             }
-            _sharedDot.color = ThemeRuntime.ToUnity(_shared(map) ? _theme.Tokens.AccentGoldBright : _theme.Tokens.TextFlavor).WithA(_shared(map) ? 1f : 0.35f);
+            _sharedKnob.anchoredPosition = new Vector2(_shared(map) ? 35f : 3f, -3f);
             bool pub = map.m_publicPosition != null && map.m_publicPosition.isOn;
             _publicKnob.anchoredPosition = new Vector2(pub ? 35f : 3f, -3f);
             _publicLabel.color = ThemeRuntime.ToUnity(pub ? _theme.Tokens.TextTitle : _theme.Tokens.TextFlavor);
@@ -167,6 +185,7 @@ namespace GenesisUI.Modules.Minimap
             if (_root != null) Object.Destroy(_root.gameObject);
             _root = null;
             _palette.Clear();
+            _custom.Clear();
             _filters.Clear();
             _vanillaSelected.Clear();
         }
@@ -192,6 +211,10 @@ namespace GenesisUI.Modules.Minimap
             if (map.m_publicPosition != null) Hide(map.m_publicPosition.gameObject);
             if (map.m_biomeNameLarge != null) Hide(map.m_biomeNameLarge.gameObject);
             if (map.m_hints != null) foreach (var h in map.m_hints) if (h != null) Hide(h);
+            // The map itself goes inside our frame (vanilla lays the map, pins and markers out from this rect).
+            _skin.Rect((RectTransform)map.m_largeRoot.transform);
+            _armed = null;
+            _tagged = null;
             _root.gameObject.SetActive(true);
             _slowIn = 0f;
             GenesisLog.Info(Owner, "map chrome shown; vanilla chrome hidden (" + _skin.Count + " change(s))");
@@ -224,10 +247,9 @@ namespace GenesisUI.Modules.Minimap
             Map(map.m_selectedIcon4, global::Minimap.PinType.Icon4);
             Map(map.m_selectedIconPing, global::Minimap.PinType.Ping);
 
-            // The map's frame: the thin metal frame over the whole map area, no background (the map shows).
-            var frame = WindowCanvas.At(_board, "Frame", 0f, 102f, WindowCanvas.Design.x, 673f);
-            var img = Ui.Image(frame, _theme.Sprite("window_panel"), Color.white);
-            img.pixelsPerUnitMultiplier = Frame.CanvasScale(frame);
+            // The window: a panel like every other, the map inside it (FitMap), the chrome on its header.
+            var panel = _parts.Panel(_board, "Map", 0f, 102f, WindowCanvas.Design.x, 673f, null, 0f, 0f, TextAlignmentOptions.Left);
+            _mapArea = WindowCanvas.At(panel, "MapArea", 14f, 62f, WindowCanvas.Design.x - 28f, 673f - 76f);
 
             // Title plate: map name, day and time, the biome under the cursor.
             float x = 16f, y = 114f;
@@ -263,50 +285,125 @@ namespace GenesisUI.Modules.Minimap
                 fx += 110f;
                 if (fx > WindowCanvas.Design.x - 110f) break;
             }
-            var shared = WindowCanvas.At(_board, "Shared", WindowCanvas.Design.x - 16f - 190f, y + 52f, 190f, 36f);
-            Ui.Image(shared, null, new Color(0f, 0f, 0f, 0f), raycast: true);
-            Frame.Dress(shared, _theme, "keycap_wide", "Windows", 36f);
-            _parts.Label(shared, "Label", FontRole.Body, 14f, t.TextTitle, 12f, 0f, 150f, 36f, TextAlignmentOptions.MidlineLeft).text = WindowParts.Localize("$genesisui_map_shared");
-            _sharedDot = Ui.Image(WindowCanvas.At(shared, "On", 170f, 12f, 10f, 12f), _theme.Sprite("tab_knot"), Color.white);
-            _parts.Clickable(shared, "map shared", () => map.OnToggleSharedMapData());
-
-            // Marker palette on the right, like the concept.
-            float px = WindowCanvas.Design.x - 16f - 64f, py = 214f;
-            var palette = WindowCanvas.At(_board, "Palette", px, py, 64f, 40f + Palette.Length * 66f);
+            // Marker palette on the right, two columns: vanilla's markers, then GenesisUI's own.
+            MapMarkersModule.ResolveIcons();
+            float pw = 132f, px = WindowCanvas.Design.x - 26f - pw, py = 182f;
+            int count = Palette.Length + MapMarkersModule.Kinds.Length;
+            var palette = WindowCanvas.At(_board, "Palette", px, py, pw, 40f + ((count + 1) / 2) * 60f);
             Ui.Image(palette, null, new Color(0f, 0f, 0f, 0f), raycast: true);
             Frame.Dress(palette, _theme, "card", "Windows");
-            var ptitle = _parts.Label(palette, "Title", FontRole.Label, 10f, t.AccentGoldBright, 2f, 10f, 60f, 16f, TextAlignmentOptions.Center);
+            var ptitle = _parts.Label(palette, "Title", FontRole.Label, 11f, t.AccentGoldBright, 4f, 10f, pw - 8f, 16f, TextAlignmentOptions.Center);
             ptitle.text = WindowParts.Localize("$genesisui_map_marker").ToUpperInvariant();
-            for (int i = 0; i < Palette.Length; i++)
+            ptitle.characterSpacing = 3f;
+            int slot = 0;
+            foreach (var type in Palette)
             {
-                var type = Palette[i];
-                var cell = WindowCanvas.At(palette, "Pin " + type, 6f, 32f + i * 66f, 52f, 52f);
-                Frame.Dress(cell, _theme, "hotslot", "Windows", 52f);
-                var icon = Ui.Image(WindowCanvas.At(cell, "Icon", 10f, 10f, 32f, 32f), SpriteFor(map, type), Color.white);
-                icon.preserveAspect = true;
-                var mark = Ui.Image(Ui.Place(Ui.Child(cell, "Selected"), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(52f, 52f) * (64f / 56f)), _theme.Sprite("hotslot_selected"), Color.white);
-                mark.type = Image.Type.Simple;
-                mark.enabled = false;
-                _parts.Clickable(cell, "map pin type", () => SelectPin(type));
+                var pinType = type;
+                var mark = PaletteCell(palette, slot++, SpriteFor(map, type), null, () => SelectPin(pinType));
                 _palette.Add((type, mark));
             }
+            foreach (var kind in MapMarkersModule.Kinds)
+            {
+                var k = kind;
+                var mark = PaletteCell(palette, slot++, kind.Icon, kind.Token, () => Arm(k));
+                _custom.Add((kind, mark));
+            }
 
-            // Bottom right: visible to others, zoom and back to the player.
-            var card = WindowCanvas.At(_board, "Controls", WindowCanvas.Design.x - 16f - 300f, 775f - 16f - 112f, 300f, 112f);
+            // Bottom right: visible to others, group markers, zoom and back to the player.
+            var card = WindowCanvas.At(_board, "Controls", px - 330f - 10f, 775f - 22f - 150f, 330f, 150f);
             Ui.Image(card, null, new Color(0f, 0f, 0f, 0f), raycast: true);
             Frame.Dress(card, _theme, "card", "Windows");
-            var sw = WindowCanvas.At(card, "Switch", 16f, 14f, 56f, 24f);
-            Frame.Dress(sw, _theme, "keycap_wide", "Windows", 24f);
-            _publicKnob = WindowCanvas.At(sw, "Knob", 3f, 3f, 18f, 18f);
-            Frame.Dress(_publicKnob, _theme, "keycap", "Windows", 18f);
-            _publicLabel = _parts.Label(card, "Public", FontRole.Body, 15f, t.TextTitle, 82f, 10f, 206f, 32f, TextAlignmentOptions.MidlineLeft);
-            _publicLabel.text = WindowParts.Localize("$genesisui_map_public");
-            _parts.Clickable(sw, "map public", () => { if (map.m_publicPosition != null) map.m_publicPosition.isOn = !map.m_publicPosition.isOn; });
-            _parts.Button(card, "ZoomOut", 16f, 56f, 44f, 40f, null, 20f, "map zoom out", () => Zoom(map, 1.5f), out var minus);
+            _publicKnob = Switch(card, 14f, "$genesisui_map_public", () => { if (map.m_publicPosition != null) map.m_publicPosition.isOn = !map.m_publicPosition.isOn; }, out _publicLabel);
+            _sharedKnob = Switch(card, 50f, "$genesisui_map_shared", () => map.OnToggleSharedMapData(), out _);
+            _parts.Button(card, "ZoomOut", 16f, 94f, 44f, 40f, null, 20f, "map zoom out", () => Zoom(map, 1.5f), out var minus);
             minus.text = "−";
-            _parts.Button(card, "ZoomIn", 68f, 56f, 44f, 40f, null, 20f, "map zoom in", () => Zoom(map, 1f / 1.5f), out var plus);
+            _parts.Button(card, "ZoomIn", 68f, 94f, 44f, 40f, null, 20f, "map zoom in", () => Zoom(map, 1f / 1.5f), out var plus);
             plus.text = "+";
-            _parts.Button(card, "Center", 122f, 56f, 162f, 40f, "$genesisui_map_center", 15f, "map center", () => _offset(map) = Vector3.zero, out _);
+            _parts.Button(card, "Center", 122f, 94f, 192f, 40f, "$genesisui_map_center", 15f, "map center", () => _offset(map) = Vector3.zero, out _);
+        }
+
+        private RectTransform Switch(RectTransform card, float y, string token, System.Action onClick, out TextMeshProUGUI label)
+        {
+            var sw = WindowCanvas.At(card, "Switch " + token, 16f, y, 56f, 26f);
+            Frame.Dress(sw, _theme, "keycap_wide", "Windows", 26f);
+            var knob = WindowCanvas.At(sw, "Knob", 3f, 3f, 20f, 20f);
+            Frame.Dress(knob, _theme, "keycap", "Windows", 20f);
+            label = _parts.Label(card, "Label " + token, FontRole.Body, 15f, _theme.Tokens.TextTitle, 82f, y - 3f, 236f, 32f, TextAlignmentOptions.MidlineLeft);
+            label.text = WindowParts.Localize(token);
+            _parts.Clickable(sw, "map switch", onClick);
+            return knob;
+        }
+
+        private Image PaletteCell(RectTransform palette, int slot, Sprite sprite, string token, System.Action onClick)
+        {
+            var cell = WindowCanvas.At(palette, "Pin " + slot, 8f + (slot % 2) * 60f, 32f + (slot / 2) * 60f, 52f, 52f);
+            Frame.Dress(cell, _theme, "hotslot", "Windows", 52f);
+            var icon = Ui.Image(WindowCanvas.At(cell, "Icon", 10f, 10f, 32f, 32f), sprite, Color.white);
+            icon.preserveAspect = true;
+            var mark = Ui.Image(Ui.Place(Ui.Child(cell, "Selected"), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(52f, 52f) * (64f / 56f)), _theme.Sprite("hotslot_selected"), Color.white);
+            mark.type = Image.Type.Simple;
+            mark.enabled = false;
+            _parts.Clickable(cell, "map pin type", onClick);
+            if (token != null) cell.gameObject.AddComponent<PaletteHint>().Init(this, token);
+            return mark;
+        }
+
+        /// <summary>Hovering a custom marker names it in the biome plate's place (a short, clear hint).</summary>
+        private sealed class PaletteHint : MonoBehaviour, UnityEngine.EventSystems.IPointerEnterHandler, UnityEngine.EventSystems.IPointerExitHandler
+        {
+            private MapWindowModule _owner;
+            private string _token;
+            internal void Init(MapWindowModule owner, string token) { _owner = owner; _token = token; }
+            public void OnPointerEnter(UnityEngine.EventSystems.PointerEventData e) => _owner._hint = WindowParts.Localize(_token);
+            public void OnPointerExit(UnityEngine.EventSystems.PointerEventData e) => _owner._hint = null;
+        }
+
+        private string _hint;
+
+        /// <summary>A custom marker picked: vanilla places a "point" pin; the next new pin gets the tag.</summary>
+        private void Arm(MapMarkersModule.Kind kind)
+        {
+            var map = global::Minimap.instance;
+            if (map == null) return;
+            map.OnPressedIcon3();
+            _armed = kind;
+            _tagged = null;
+        }
+
+        /// <summary>Vanilla created the pin being named (double click): give it the armed kind's tag, and keep
+        /// the tag when the player types its name.</summary>
+        private void TagNewPin(global::Minimap map)
+        {
+            if (_armed == null) { _tagged = null; return; }
+            var pin = _namePin(map);
+            if (pin != null && pin != _tagged && pin.m_type == global::Minimap.PinType.Icon3 && string.IsNullOrEmpty(pin.m_name))
+            {
+                _tagged = pin;
+                pin.m_name = _armed.Tag;
+            }
+            if (_tagged != null && (_tagged.m_name == null || !_tagged.m_name.StartsWith(_armed.Tag, System.StringComparison.Ordinal)))
+                _tagged.m_name = _armed.Tag + " " + (_tagged.m_name ?? "");
+            if (pin == null && _tagged != null) _tagged = null; // naming finished
+        }
+
+        /// <summary>Vanilla's large map (root of the map, pins and markers) inside our frame, every frame.</summary>
+        private void FitMap(global::Minimap map)
+        {
+            var rt = (RectTransform)map.m_largeRoot.transform;
+            var parent = rt.parent as RectTransform;
+            if (parent == null) return;
+            _mapArea.GetWorldCorners(_corners);
+            Vector2 min = parent.InverseTransformPoint(_corners[0]);
+            Vector2 max = parent.InverseTransformPoint(_corners[2]);
+            var size = max - min;
+            var center = (min + max) / 2f - parent.rect.center;
+            if (rt.anchorMin != new Vector2(0.5f, 0.5f) || rt.anchorMax != new Vector2(0.5f, 0.5f))
+            {
+                rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
+                rt.pivot = new Vector2(0.5f, 0.5f);
+            }
+            if ((rt.sizeDelta - size).sqrMagnitude > 0.25f) rt.sizeDelta = size;
+            if ((rt.anchoredPosition - center).sqrMagnitude > 0.25f) rt.anchoredPosition = center;
         }
 
         private void Map(Image selected, global::Minimap.PinType type)
@@ -326,8 +423,9 @@ namespace GenesisUI.Modules.Minimap
             map.LargeZoom = Mathf.Clamp(map.LargeZoom * factor, map.m_minZoom, map.m_maxZoom);
         }
 
-        private static void SelectPin(global::Minimap.PinType type)
+        private void SelectPin(global::Minimap.PinType type)
         {
+            _armed = null;
             var map = global::Minimap.instance;
             if (map == null) return;
             switch (type)

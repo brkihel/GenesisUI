@@ -74,6 +74,8 @@ namespace GenesisUI.Modules.Build
         private sealed class PieceCell
         {
             public RectTransform Root;
+            public CanvasGroup Group;
+            public int Can = -1;
             public Image Icon, Selected, Favorite;
             public BuildUiPieceButton Source;
         }
@@ -269,6 +271,7 @@ namespace GenesisUI.Modules.Build
                 bool show = i < _shown.Count;
                 cell.Root.gameObject.SetActive(show);
                 if (!show) { cell.Source = null; continue; }
+                if (cell.Source != _shown[i]) cell.Can = -1;
                 cell.Source = _shown[i];
                 cell.Root.anchoredPosition = new Vector2((i % perRow) * Pitch, -(i / perRow) * Pitch);
                 cell.Icon.sprite = _shown[i].Piece.m_icon;
@@ -342,9 +345,12 @@ namespace GenesisUI.Modules.Build
                 if (!status) continue;
                 bool fav = _ui.IsFavoritePiece(piece);
                 if (cell.Favorite.enabled != fav) cell.Favorite.enabled = fav;
-                bool can = player.HaveRequirements(piece, Player.RequirementMode.CanBuild);
-                var color = can ? Color.white : new Color(1f, 1f, 1f, 0.4f);
-                if (cell.Icon.color != color) cell.Icon.color = color;
+                // What cannot be built now fades as a whole, its icon greyed (Diego, R-058: clearer).
+                int can = player.HaveRequirements(piece, Player.RequirementMode.CanBuild) ? 1 : 0;
+                if (can == cell.Can) continue;
+                cell.Can = can;
+                cell.Group.alpha = can == 1 ? 1f : 0.32f;
+                cell.Icon.color = can == 1 ? Color.white : new Color(0.55f, 0.55f, 0.55f, 1f);
             }
         }
 
@@ -624,6 +630,7 @@ namespace GenesisUI.Modules.Build
         {
             var t = _theme.Tokens;
             var cell = new PieceCell { Root = WindowCanvas.At(_grid.Content, "Piece " + index, 0f, 0f, Cell, Cell) };
+            cell.Group = cell.Root.gameObject.AddComponent<CanvasGroup>();
             Frame.Dress(cell.Root, _theme, "hotslot", "Windows", Cell);
             cell.Icon = Ui.Image(WindowCanvas.At(cell.Root, "Icon", 10f, 10f, Cell - 20f, Cell - 20f), null, Color.white);
             cell.Icon.preserveAspect = true;

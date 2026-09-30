@@ -137,6 +137,8 @@ namespace GenesisUI
                     "Diálogos no estilo do GenesisUI: dividir pilha, estilo do item, pedras rúnicas e corvos, nomear placas e portais."));
                 ModuleHost.Register(new Modules.Minimap.MapWindowModule(), Config.Bind("Modules", "MapWindow", true,
                     "Mapa grande com a moldura, filtros e marcadores do GenesisUI (o mapa em si continua o do jogo)."));
+                ModuleHost.Register(new Modules.Minimap.MapMarkersModule(), Config.Bind("Modules", "MapMarkers", true,
+                    "Marcadores do GenesisUI no mapa (masmorra, minério, covil, base...). Salvos como marcadores normais do jogo com uma etiqueta no nome."));
                 ModuleHost.Register(new Modules.Windows.PauseMenuModule(), Config.Bind("Modules", "PauseMenu", true,
                     "Menu do Esc (pausa) no estilo do GenesisUI, com as mesmas opções do jogo."));
                 ModuleHost.Register(new Modules.Hints.KeyHintsModule(Config), Config.Bind("Modules", "KeyHints", true,

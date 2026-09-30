@@ -229,5 +229,14 @@
   "genesisui_fault_count": "{0} errors this session.",
   "genesisui_fault_copy": "Copy error",
   "genesisui_fault_report": "Report (soon)",
-  "genesisui_module_keyhints": "Key hints"
+  "genesisui_module_keyhints": "Key hints",
+  "genesisui_module_map_markers": "Map markers",
+  "genesisui_marker_dungeon": "Dungeon",
+  "genesisui_marker_ore": "Ore",
+  "genesisui_marker_spawn": "Monster spawn",
+  "genesisui_marker_base": "Base",
+  "genesisui_marker_portal": "Portal",
+  "genesisui_marker_treasure": "Treasure",
+  "genesisui_marker_trader": "Trader",
+  "genesisui_marker_danger": "Danger"
 }

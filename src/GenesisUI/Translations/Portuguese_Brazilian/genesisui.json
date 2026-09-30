@@ -320,5 +320,15 @@
   "genesisui_cfg_Modules_KeyHints": "Dicas de atalho",
   "genesisui_cfgsec_KeyHints": "Dicas de atalho",
   "genesisui_cfg_KeyHints_Scale": "Tamanho das dicas",
-  "genesisui_cfg_Theme_MenuBlur": "Fundo desfocado no menu Esc"
+  "genesisui_cfg_Theme_MenuBlur": "Fundo desfocado no menu Esc",
+  "genesisui_module_map_markers": "Marcadores do mapa",
+  "genesisui_cfg_Modules_MapMarkers": "Marcadores personalizados do mapa",
+  "genesisui_marker_dungeon": "Masmorra",
+  "genesisui_marker_ore": "Minério",
+  "genesisui_marker_spawn": "Covil de monstros",
+  "genesisui_marker_base": "Base",
+  "genesisui_marker_portal": "Portal",
+  "genesisui_marker_treasure": "Tesouro",
+  "genesisui_marker_trader": "Comerciante",
+  "genesisui_marker_danger": "Perigo"
 }
