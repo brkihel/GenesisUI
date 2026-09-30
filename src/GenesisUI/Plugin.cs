@@ -91,6 +91,8 @@ namespace GenesisUI
                 BindBackgrounds(_theme);
                 _theme.MetalEnabled = Config.Bind("Theme", "MetalShader", true,
                     "Molduras com o shader de metal (luz, relevo e brilho que passa). Desligado, as molduras usam a versão pintada, sem movimento. Vale ao reiniciar o jogo.").Value;
+                _theme.BlurEnabled = Config.Bind("Theme", "MenuBlur", true,
+                    "Fundo desfocado atrás do menu Esc. Se a tela ficar preta nesse menu, desligue: o fundo fica só escurecido.").Value;
                 ModuleHost.Init(_theme, Enabled.Value);
                 Enabled.SettingChanged += (_, __) => Guard.Try("master toggle", () => ModuleHost.SetMasterEnabled(Enabled.Value));
 

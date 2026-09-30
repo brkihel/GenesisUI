@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using GenesisUI.Foundation;
 using GenesisUI.Foundation.Contracts;
@@ -6,16 +7,18 @@ using GenesisUI.Theme;
 using GenesisUI.Widgets;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 namespace GenesisUI.Modules.Windows
 {
     /// <summary>
-    /// The Esc menu in the windows' language (D-032): vanilla's pause menu keeps opening, closing and
-    /// acting, invisible; GenesisUI's card shows the entries vanilla shows on this platform (continue,
-    /// save with its cooldown, players, invite, settings, log out, quit) with the last save time, and
-    /// the log-out and quit confirmations. Every press is vanilla's own button or method. The game's
-    /// settings screen keeps vanilla's look for now.
+    /// The Esc menu as Diego pictured it (after R-058): the game blurred behind, the options on the
+    /// left in GenesisUI's display font, no frames or lines, and a hover that slides the option, lights
+    /// it in gold and shows a small knot. Vanilla's pause menu keeps opening, closing and acting,
+    /// invisible: the options are the entries vanilla shows on this platform, with its labels and
+    /// enabled states (the save cooldown), and every press is its own button or method. The log-out
+    /// and quit confirmations take the same place and style.
     /// </summary>
     [GameContract("assembly_valheim", "Menu", "Hide")]
     [GameContract("assembly_valheim", "Menu", "get_instance")]
@@ -38,36 +41,37 @@ namespace GenesisUI.Modules.Windows
     [GameContract("assembly_valheim", "Menu", "OnQuitNo")]
     internal sealed class PauseMenuModule : IUiModule, IRecoverable
     {
-        /// <summary>IRecoverable: on a fault the pause menu closes.</summary>
-        public void CloseVanillaWindow()
-        {
-            var menu = Menu.instance;
-            if (menu != null && Menu.IsVisible()) menu.Hide();
-        }
-
         private const string Owner = "module:win.menu";
         private static readonly string[] NoRegions = new string[0];
-        private const float W = 420f, RowH = 50f, Gap = 10f;
+        private const float ItemH = 62f, ItemW = 560f;
 
         private sealed class Entry
         {
-            public Button Ours;
-            public TextMeshProUGUI Label;
-            public System.Func<Menu, Button> Vanilla;
+            public Option Option;
+            public Func<Menu, Button> Vanilla;
+            public string Shown;
         }
 
         private readonly VanillaSkin _skin = new VanillaSkin(Owner);
         private readonly List<Entry> _entries = new List<Entry>();
         private ThemeRuntime _theme;
         private WindowParts _parts;
-        private RectTransform _root, _board, _menuCard, _confirmCard;
-        private TextMeshProUGUI _lastSave, _confirmText;
+        private RectTransform _root, _board, _column, _list, _confirm;
+        private TextMeshProUGUI _lastSave, _question;
+        private Material _blur;
         private bool _applied, _confirmQuit;
 
         public string Id => "win.menu";
         public string NameToken => "$genesisui_module_pause_menu";
         public IReadOnlyList<string> Regions => NoRegions;
         public float RefreshRate => 0f;
+
+        /// <summary>IRecoverable: on a fault the pause menu closes.</summary>
+        public void CloseVanillaWindow()
+        {
+            var menu = Menu.instance;
+            if (menu != null && Menu.IsVisible()) menu.Hide();
+        }
 
         public void Build(ModuleContext context)
         {
@@ -88,53 +92,49 @@ namespace GenesisUI.Modules.Windows
             if (!EnsureBuilt(menu)) return;
             if (!_applied) Apply(menu);
             WindowCanvas.Fit(_board);
+            if (_column.localScale != _board.localScale) _column.localScale = _board.localScale;
 
             bool logout = menu.m_logoutDialog != null && menu.m_logoutDialog.gameObject.activeInHierarchy;
             bool quit = menu.m_quitDialog != null && menu.m_quitDialog.gameObject.activeInHierarchy;
             bool main = menu.m_menuDialog.gameObject.activeInHierarchy && !logout && !quit;
-            if (_menuCard.gameObject.activeSelf != main) _menuCard.gameObject.SetActive(main);
             bool confirm = logout || quit;
-            if (_confirmCard.gameObject.activeSelf != confirm) _confirmCard.gameObject.SetActive(confirm);
+            if (_list.gameObject.activeSelf != main) _list.gameObject.SetActive(main);
+            if (_confirm.gameObject.activeSelf != confirm) _confirm.gameObject.SetActive(confirm);
             if (confirm)
             {
                 _confirmQuit = quit;
-                string text = WindowParts.Localize(quit ? "$genesisui_menu_confirm_quit" : "$genesisui_menu_confirm_logout");
-                if (_confirmText.text != text) _confirmText.text = text;
+                string q = WindowParts.Localize(quit ? "$genesisui_menu_confirm_quit" : "$genesisui_menu_confirm_logout");
+                if (_question.text != q) _question.text = q;
             }
             if (!main) return;
 
-            // Mirror vanilla's entries: shown when vanilla shows them, dimmed when vanilla disables them
-            // (the save cooldown), with vanilla's own label.
-            float y = 70f;
+            float y = 0f;
             foreach (var e in _entries)
             {
                 var v = e.Vanilla(menu);
                 bool show = v != null && v.gameObject.activeInHierarchy;
-                if (e.Ours.gameObject.activeSelf != show) e.Ours.gameObject.SetActive(show);
+                if (e.Option.Root.gameObject.activeSelf != show) e.Option.Root.gameObject.SetActive(show);
                 if (!show) continue;
-                ((RectTransform)e.Ours.transform).anchoredPosition = new Vector2(40f, -y);
-                y += RowH + Gap;
-                if (e.Ours.interactable != v.interactable) e.Ours.interactable = v.interactable;
+                if (e.Option.Root.anchoredPosition.y != -y) e.Option.Root.anchoredPosition = new Vector2(0f, -y);
+                y += ItemH;
+                e.Option.Enabled = v.interactable;
                 var label = v.GetComponentInChildren<TMP_Text>();
-                if (label != null && e.Label.text != label.text) e.Label.text = label.text;
+                string text = label != null ? label.text : e.Shown;
+                if (text != e.Shown) { e.Shown = text; e.Option.Label.text = text.ToUpperInvariant(); }
             }
             string save = menu.lastSaveText != null && menu.lastSaveText.gameObject.activeInHierarchy ? menu.lastSaveText.text : "";
             if (_lastSave.text != save) _lastSave.text = save;
             var lr = (RectTransform)_lastSave.transform;
-            lr.anchoredPosition = new Vector2(24f, -(y + 4f));
-            float height = y + 50f;
-            if (!Mathf.Approximately(_menuCard.sizeDelta.y, height))
-            {
-                _menuCard.sizeDelta = new Vector2(W, height);
-                _menuCard.anchoredPosition = new Vector2((WindowCanvas.Design.x - W) / 2f, -(WindowCanvas.Design.y - height) / 2f);
-            }
+            if (lr.anchoredPosition.y != -(y + 18f)) lr.anchoredPosition = new Vector2(8f, -(y + 18f));
         }
 
         public void Teardown()
         {
             if (_applied) Unapply();
-            if (_root != null) Object.Destroy(_root.gameObject);
+            if (_root != null) UnityEngine.Object.Destroy(_root.gameObject);
+            if (_blur != null) UnityEngine.Object.Destroy(_blur);
             _root = null;
+            _blur = null;
             _entries.Clear();
         }
 
@@ -143,7 +143,6 @@ namespace GenesisUI.Modules.Windows
             if (_root != null) return true;
             _root = WindowCanvas.CreateRoot(menu.m_menuDialog, "GenesisUI.PauseMenu", behind: false);
             if (_root == null) return false;
-            _board = WindowCanvas.Area(_root, "Board");
             Draw();
             _root.gameObject.SetActive(false);
             return true;
@@ -152,16 +151,17 @@ namespace GenesisUI.Modules.Windows
         private void Apply(Menu menu)
         {
             _applied = true;
-            foreach (var go in new[] { menu.m_menuDialog, menu.m_logoutDialog, menu.m_quitDialog })
+            foreach (var t in new[] { menu.m_menuDialog, menu.m_logoutDialog, menu.m_quitDialog })
             {
-                if (go == null) continue;
-                var g = _skin.Group(go.gameObject);
+                if (t == null) continue;
+                var g = _skin.Group(t.gameObject);
                 g.alpha = 0f;
                 g.blocksRaycasts = false;
             }
             _root.gameObject.SetActive(true);
             _root.SetAsLastSibling();
-            GenesisLog.Info(Owner, "pause menu shown over vanilla's (hidden)");
+            foreach (var e in _entries) e.Option.Reset();
+            GenesisLog.Info(Owner, "pause menu shown over vanilla's (hidden), blur " + (_blur != null ? "on" : "off"));
         }
 
         private void Unapply()
@@ -174,13 +174,35 @@ namespace GenesisUI.Modules.Windows
         private void Draw()
         {
             var t = _theme.Tokens;
-            _menuCard = WindowCanvas.At(_board, "Menu", (WindowCanvas.Design.x - W) / 2f, 200f, W, 460f);
-            Ui.Image(_menuCard, null, new Color(0f, 0f, 0f, 0f), raycast: true);
-            Frame.Dress(_menuCard, _theme, "window_panel", "Windows");
-            var title = _parts.Label(_menuCard, "Title", FontRole.Display, 22f, t.AccentGoldBright, 40f, 14f, W - 80f, 34f, TextAlignmentOptions.Center);
+            // The game behind, blurred (or only darkened where the blur shader is not available).
+            var back = Ui.Fill(Ui.Child(_root, "Backdrop"));
+            _blur = _theme.NewBlurMaterial();
+            if (_blur != null)
+            {
+                var raw = back.gameObject.AddComponent<RawImage>();
+                raw.material = _blur;
+                raw.raycastTarget = true;
+                Ui.Image(Ui.Fill(Ui.Child(_root, "Tint")), null, new Color(0f, 0f, 0f, 0.2f));
+            }
+            else Ui.Image(back, null, new Color(0f, 0f, 0f, 0.62f), raycast: true);
+            // A soft shade on the left, where the options are, so they read on any background.
+            var shade = Ui.Child(_root, "Shade");
+            shade.anchorMin = Vector2.zero;
+            shade.anchorMax = new Vector2(0.42f, 1f);
+            shade.offsetMin = shade.offsetMax = Vector2.zero;
+            Ui.Image(shade, null, new Color(0f, 0f, 0f, 0.3f));
+
+            _board = WindowCanvas.Area(_root, "Board");
+            _column = Ui.Child(_root, "Column");
+            _column.anchorMin = _column.anchorMax = new Vector2(0f, 0.5f);
+            _column.pivot = new Vector2(0f, 0.5f);
+            _column.anchoredPosition = new Vector2(150f, 0f);
+            _column.sizeDelta = new Vector2(ItemW, 640f);
+
+            var title = _parts.Label(_column, "Title", FontRole.Label, 15f, t.TextFlavor, 8f, 0f, ItemW, 22f, TextAlignmentOptions.Left);
             title.text = WindowParts.Localize("$genesisui_menu_title").ToUpperInvariant();
-            title.characterSpacing = 6f;
-            _parts.Rule(_menuCard, W * 0.2f, 54f, W * 0.6f);
+            title.characterSpacing = 12f;
+            _list = WindowCanvas.At(_column, "List", 0f, 44f, ItemW, 600f);
             Add("$genesisui_menu_continue", m => m.m_continueButton);
             Add(null, m => m.m_saveButton);
             Add(null, m => m.m_playerListButton);
@@ -189,26 +211,26 @@ namespace GenesisUI.Modules.Windows
             Add(null, m => m.m_skipButton);
             Add(null, m => m.m_logoutButton);
             Add(null, m => m.m_quitButton);
-            _lastSave = _parts.Label(_menuCard, "LastSave", FontRole.Body, 15f, t.TextFlavor, 24f, 400f, W - 48f, 22f, TextAlignmentOptions.Center);
+            _lastSave = _parts.Label(_list, "LastSave", FontRole.Body, 16f, t.TextFlavor, 8f, 0f, ItemW, 24f, TextAlignmentOptions.Left);
 
-            const float cw = 520f, ch = 200f;
-            _confirmCard = WindowCanvas.At(_board, "Confirm", (WindowCanvas.Design.x - cw) / 2f, (WindowCanvas.Design.y - ch) / 2f, cw, ch);
-            Ui.Image(_confirmCard, null, new Color(0f, 0f, 0f, 0f), raycast: true);
-            Frame.Dress(_confirmCard, _theme, "window_panel", "Windows");
-            _confirmText = _parts.Label(_confirmCard, "Text", FontRole.Display, 20f, t.TextTitle, 40f, 30f, cw - 80f, 70f, TextAlignmentOptions.Center);
-            _confirmText.textWrappingMode = TextWrappingModes.Normal;
-            _parts.Button(_confirmCard, "No", 40f, ch - 74f, 200f, 44f, "$genesisui_menu_no", 18f, "menu confirm no", ConfirmNo, out _);
-            _parts.Button(_confirmCard, "Yes", cw - 40f - 200f, ch - 74f, 200f, 44f, "$genesisui_menu_yes", 18f, "menu confirm yes", ConfirmYes, out var yes);
-            yes.font = _theme.Font(FontRole.Display);
-            _confirmCard.gameObject.SetActive(false);
+            _confirm = WindowCanvas.At(_column, "Confirm", 0f, 44f, ItemW, 300f);
+            _question = _parts.Label(_confirm, "Question", FontRole.Display, 30f, t.TextTitle, 8f, 0f, ItemW, 48f, TextAlignmentOptions.Left);
+            var yes = new Option(_confirm, _theme, _parts, 0, ConfirmYes);
+            yes.Root.anchoredPosition = new Vector2(0f, -70f);
+            yes.Label.text = WindowParts.Localize("$genesisui_menu_yes").ToUpperInvariant();
+            var no = new Option(_confirm, _theme, _parts, 1, ConfirmNo);
+            no.Root.anchoredPosition = new Vector2(0f, -70f - ItemH);
+            no.Label.text = WindowParts.Localize("$genesisui_menu_no").ToUpperInvariant();
+            _confirm.gameObject.SetActive(false);
         }
 
-        private void Add(string token, System.Func<Menu, Button> vanilla)
+        private void Add(string token, Func<Menu, Button> vanilla)
         {
             var e = new Entry { Vanilla = vanilla };
-            e.Ours = _parts.Button(_menuCard, "Entry " + _entries.Count, 40f, 70f + _entries.Count * (RowH + Gap), W - 80f, RowH, token, 19f, "menu entry",
-                () => { var m = Menu.instance; var b = m != null ? vanilla(m) : null; if (b != null && b.interactable) b.onClick.Invoke(); }, out e.Label);
-            e.Ours.gameObject.SetActive(false);
+            e.Option = new Option(_list, _theme, _parts, _entries.Count,
+                () => { var m = Menu.instance; var b = m != null ? vanilla(m) : null; if (b != null && b.interactable) b.onClick.Invoke(); });
+            if (token != null) { e.Shown = WindowParts.Localize(token); e.Option.Label.text = e.Shown.ToUpperInvariant(); }
+            e.Option.Root.gameObject.SetActive(false);
             _entries.Add(e);
         }
 
@@ -224,6 +246,90 @@ namespace GenesisUI.Modules.Windows
             var m = Menu.instance;
             if (m == null) return;
             if (_confirmQuit) m.OnQuitNo(); else m.OnLogoutNo();
+        }
+
+        /// <summary>One clean option: big display text, and a hover that slides it, lights it and shows a knot.</summary>
+        private sealed class Option
+        {
+            public readonly RectTransform Root;
+            public readonly TextMeshProUGUI Label;
+            private readonly Hover _hover;
+            public bool Enabled { set => _hover.Enabled = value; }
+
+            public Option(RectTransform parent, ThemeRuntime theme, WindowParts parts, int index, Action onClick)
+            {
+                var t = theme.Tokens;
+                Root = WindowCanvas.At(parent, "Option " + index, 0f, index * ItemH, ItemW, ItemH);
+                Ui.Image(Root, null, new Color(0f, 0f, 0f, 0f), raycast: true);
+                var knot = Ui.Image(WindowCanvas.At(Root, "Knot", 0f, (ItemH - 18f) / 2f, 12f, 18f), theme.Sprite("tab_knot"), Color.white);
+                Label = parts.Label(Root, "Label", FontRole.Display, 32f, t.TextTitle, 8f, 0f, ItemW - 8f, ItemH, TextAlignmentOptions.MidlineLeft);
+                Label.enableAutoSizing = false;
+                _hover = Root.gameObject.AddComponent<Hover>();
+                _hover.Init(Label, knot, ThemeRuntime.ToUnity(t.TextTitle), ThemeRuntime.ToUnity(t.AccentGoldBright), onClick);
+            }
+
+            public void Reset() => _hover.Reset();
+        }
+
+        /// <summary>The hover: eased with unscaled time (the game may be paused behind the menu).</summary>
+        private sealed class Hover : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
+        {
+            private TextMeshProUGUI _label;
+            private Image _knot;
+            private Color _rest, _lit;
+            private Action _onClick;
+            private bool _over, _enabled = true;
+            private float _t;
+
+            internal bool Enabled
+            {
+                set { if (_enabled == value) return; _enabled = value; Apply(); }
+            }
+
+            internal void Init(TextMeshProUGUI label, Image knot, Color rest, Color lit, Action onClick)
+            {
+                _label = label;
+                _knot = knot;
+                _rest = rest;
+                _lit = lit;
+                _onClick = onClick;
+                Reset();
+            }
+
+            internal void Reset()
+            {
+                _over = false;
+                _t = 0f;
+                Apply();
+            }
+
+            public void OnPointerEnter(PointerEventData e) => _over = true;
+            public void OnPointerExit(PointerEventData e) => _over = false;
+
+            public void OnPointerClick(PointerEventData e)
+            {
+                if (e.button == PointerEventData.InputButton.Left && _enabled) Guard.Try("pause menu option", _onClick);
+            }
+
+            private void Update()
+            {
+                float target = _over && _enabled ? 1f : 0f;
+                if (Mathf.Approximately(_t, target)) return;
+                _t = Mathf.MoveTowards(_t, target, Time.unscaledDeltaTime * 6f);
+                Apply();
+            }
+
+            private void Apply()
+            {
+                if (_label == null) return;
+                float e = _t * _t * (3f - 2f * _t); // smoothstep
+                var rest = new Color(_rest.r, _rest.g, _rest.b, _enabled ? 0.78f : 0.3f);
+                _label.color = Color.Lerp(rest, _lit, e);
+                _label.rectTransform.anchoredPosition = new Vector2(8f + 26f * e, _label.rectTransform.anchoredPosition.y);
+                _label.characterSpacing = 2f + 4f * e;
+                _knot.color = new Color(1f, 1f, 1f, e);
+                _knot.rectTransform.anchoredPosition = new Vector2(-6f + 8f * e, _knot.rectTransform.anchoredPosition.y);
+            }
         }
     }
 }

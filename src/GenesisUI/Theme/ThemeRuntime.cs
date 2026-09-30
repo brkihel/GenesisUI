@@ -70,6 +70,14 @@ namespace GenesisUI.Theme
         private readonly Dictionary<Sprite, Sprite> _relief = new Dictionary<Sprite, Sprite>();
         private Material _metal;
         private Shader _burnShader;
+        private Shader _blurShader;
+
+        /// <summary>[Theme] MenuBlur: the pause menu blurs the game behind it when the shader works here.</summary>
+        public bool BlurEnabled = true;
+
+        /// <summary>A new material for a blurred backdrop; null when unavailable or turned off.</summary>
+        public Material NewBlurMaterial() =>
+            BlurEnabled && _blurShader != null ? new Material(_blurShader) { name = "GenesisUI blur", hideFlags = HideFlags.DontSave } : null;
 
         /// <summary>[Theme] MetalShader: frames lit by the metal shader when it is available.</summary>
         public bool MetalEnabled = true;
@@ -113,6 +121,7 @@ namespace GenesisUI.Theme
                     if (!shader.isSupported) { GenesisLog.Warn("Theme", "shader not supported on this GPU/API: " + shader.name); continue; }
                     if (shader.name == "GenesisUI/Metal") _metal = new Material(shader) { name = "GenesisUI metal", hideFlags = HideFlags.DontSave };
                     else if (shader.name == "GenesisUI/Burn") _burnShader = shader;
+                    else if (shader.name == "GenesisUI/Blur") _blurShader = shader;
                 }
             }
             finally
@@ -120,6 +129,7 @@ namespace GenesisUI.Theme
                 bundle.Unload(false); // keeps the loaded shaders
             }
             GenesisLog.Info("Theme", "shaders: metal " + (_metal != null ? "on" : "off") + ", burn " + (_burnShader != null ? "on" : "off") +
+                ", blur " + (_blurShader != null ? "on" : "off") +
                 " (" + SystemInfo.graphicsDeviceType + ")");
         }
 

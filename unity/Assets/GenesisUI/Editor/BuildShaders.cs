@@ -17,7 +17,7 @@ namespace GenesisUI
                 { UnityEngine.Rendering.GraphicsDeviceType.Direct3D11, UnityEngine.Rendering.GraphicsDeviceType.Vulkan,
                   UnityEngine.Rendering.GraphicsDeviceType.Direct3D12 });
             // A shader with a compile error still lands in the bundle (and draws pink in game): refuse it.
-            foreach (var path in new[] { "Assets/GenesisUI/Shaders/Metal.shader", "Assets/GenesisUI/Shaders/Burn.shader" })
+            foreach (var path in new[] { "Assets/GenesisUI/Shaders/Metal.shader", "Assets/GenesisUI/Shaders/Burn.shader", "Assets/GenesisUI/Shaders/Blur.shader" })
             {
                 var shader = AssetDatabase.LoadAssetAtPath<Shader>(path);
                 if (shader == null) throw new System.Exception("missing shader " + path);
@@ -30,7 +30,7 @@ namespace GenesisUI
             var build = new AssetBundleBuild
             {
                 assetBundleName = "genesisui.shaders",
-                assetNames = new[] { "Assets/GenesisUI/Shaders/Metal.shader", "Assets/GenesisUI/Shaders/Burn.shader" },
+                assetNames = new[] { "Assets/GenesisUI/Shaders/Metal.shader", "Assets/GenesisUI/Shaders/Burn.shader", "Assets/GenesisUI/Shaders/Blur.shader" },
             };
             var manifest = BuildPipeline.BuildAssetBundles(output, new[] { build },
                 BuildAssetBundleOptions.ChunkBasedCompression | BuildAssetBundleOptions.StrictMode | BuildAssetBundleOptions.DeterministicAssetBundle,
