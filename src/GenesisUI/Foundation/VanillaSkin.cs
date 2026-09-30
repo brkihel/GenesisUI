@@ -70,6 +70,27 @@ namespace GenesisUI.Foundation
             return image;
         }
 
+        /// <summary>Records a text's font, material, colour and size before it is restyled.</summary>
+        public TMPro.TMP_Text Text(TMPro.TMP_Text text)
+        {
+            if (text == null || !_recorded.Add(Key(text, 7))) return text;
+            var font = text.font;
+            var material = text.fontSharedMaterial;
+            var color = text.color;
+            var size = text.fontSize;
+            var style = text.fontStyle;
+            _restore.Add(() =>
+            {
+                if (text == null) return;
+                text.font = font;
+                text.fontSharedMaterial = material;
+                text.color = color;
+                text.fontSize = size;
+                text.fontStyle = style;
+            });
+            return text;
+        }
+
         /// <summary>Records a vanilla button's visual transition while its slot is dressed.</summary>
         public Button Button(Button button)
         {

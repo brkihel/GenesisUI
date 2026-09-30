@@ -139,6 +139,8 @@ namespace GenesisUI
                     "Mapa grande com a moldura, filtros e marcadores do GenesisUI (o mapa em si continua o do jogo)."));
                 ModuleHost.Register(new Modules.Windows.PauseMenuModule(), Config.Bind("Modules", "PauseMenu", true,
                     "Menu do Esc (pausa) no estilo do GenesisUI, com as mesmas opções do jogo."));
+                ModuleHost.Register(new Modules.Hints.KeyHintsModule(Config), Config.Bind("Modules", "KeyHints", true,
+                    "Dicas de atalho (Atacar, Bloquear, Construir...) com a fonte e as teclas do GenesisUI, menores."));
                 ModuleHost.Register(new SprintModule(Config), Config.Bind("Modules", "Sprint", true,
                     "Barra pequena de vigor acima dos itens: surge quando o vigor é gasto e some só depois de cheio. Desligado, ela não aparece."));
 

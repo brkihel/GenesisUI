@@ -315,5 +315,10 @@
   "genesisui_fault_left_off": "Ela falhou várias vezes seguidas, então ficou desligada e essa parte volta ao visual do jogo até você reiniciar o Valheim. Nada foi perdido.",
   "genesisui_fault_count": "{0} erros nesta sessão.",
   "genesisui_fault_copy": "Copiar erro",
-  "genesisui_fault_report": "Reportar (em breve)"
+  "genesisui_fault_report": "Reportar (em breve)",
+  "genesisui_module_keyhints": "Dicas de atalho",
+  "genesisui_cfg_Modules_KeyHints": "Dicas de atalho",
+  "genesisui_cfgsec_KeyHints": "Dicas de atalho",
+  "genesisui_cfg_KeyHints_Scale": "Tamanho das dicas",
+  "genesisui_cfg_Theme_MenuBlur": "Fundo desfocado no menu Esc"
 }

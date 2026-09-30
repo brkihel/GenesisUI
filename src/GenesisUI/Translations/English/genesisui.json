@@ -228,5 +228,6 @@
   "genesisui_fault_left_off": "It failed several times in a row, so it stays off and that part goes back to the game's look until you restart Valheim. Nothing was lost.",
   "genesisui_fault_count": "{0} errors this session.",
   "genesisui_fault_copy": "Copy error",
-  "genesisui_fault_report": "Report (soon)"
+  "genesisui_fault_report": "Report (soon)",
+  "genesisui_module_keyhints": "Key hints"
 }

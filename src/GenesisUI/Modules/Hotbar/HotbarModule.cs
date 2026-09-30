@@ -123,7 +123,8 @@ namespace GenesisUI.Modules.Hotbar
 
             // Vanilla's key hints sit along the bottom right, behind our wider hotbar (R-020). They
             // stay vanilla; they are only lifted, reversibly, above the plate.
-            if (_keyHintsLift.Value > 0 && KeyHints.instance != null)
+            // The key hints module owns their position (lift + its scale) when it is on.
+            if (_keyHintsLift.Value > 0 && KeyHints.instance != null && !Modules.Hints.KeyHintsModule.Active)
                 Foundation.VanillaNudge.Apply("module:" + Id, "hud.keyHints", KeyHints.instance.transform as RectTransform,
                     new Vector2(0f, _keyHintsLift.Value));
             _vanillaBar = Hud.instance != null ? Hud.instance.GetComponentInChildren<HotkeyBar>(true) : null;

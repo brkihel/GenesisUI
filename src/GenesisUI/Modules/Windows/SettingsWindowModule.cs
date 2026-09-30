@@ -43,7 +43,7 @@ namespace GenesisUI.Modules.Windows
         {
             ("General", Category.General), ("Theme", Category.General), ("Backgrounds", Category.General), ("Diagnostics", Category.General),
             ("Vitals", Category.Hud), ("Food", Category.Hud), ("Hotbar", Category.Hud), ("Sprint", Category.Hud), ("Minimap", Category.Hud),
-            ("Status", Category.Hud), ("Notice", Category.Hud), ("Hover", Category.Hud), ("Boss", Category.Hud), ("Enemy", Category.Hud),
+            ("Status", Category.Hud), ("KeyHints", Category.Hud), ("Notice", Category.Hud), ("Hover", Category.Hud), ("Boss", Category.Hud), ("Enemy", Category.Hud),
             ("Windows", Category.Windows), ("Inventory", Category.Inventory), ("Modules", Category.Modules),
         };
 
