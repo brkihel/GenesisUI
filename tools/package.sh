@@ -76,7 +76,9 @@ if [ -f "$OUTDIR/art/genesisui.shaders" ]; then
 else
     echo "   shaders: none (frames use their lit sprites; run tools/shaders/build.sh)"
 fi
-cp icon.png README.md CHANGELOG.md LICENSE "$STAGE/"
+# The store page is written for players (store/README.md); the repository README is for GitHub.
+cp icon.png CHANGELOG.md LICENSE "$STAGE/"
+cp store/README.md "$STAGE/README.md"
 
 # The manifest dependency must name the Jotunn we compiled against (ref/Jotunn.dll).
 python3 - "$JOTUNN_VERSION" <<'PY'
@@ -92,7 +94,7 @@ cat > "$STAGE/manifest.json" <<JSON
   "name": "GenesisUI",
   "version_number": "$VERSION",
   "website_url": "https://github.com/brkihel/GenesisUI",
-  "description": "Modular Valheim UI with themed HUD, windows, and configurable inventory and equipment slots.",
+  "description": "Valheim's whole interface redrawn in fine gold metal: living health bars, a clear inventory and crafting, a framed map with new markers. Turn any part off; it repairs itself if something breaks.",
   "dependencies": ["ValheimModding-Jotunn-$JOTUNN_VERSION"]
 }
 JSON
