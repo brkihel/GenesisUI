@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.0.1 — A page for players
+
+No change in the game. The mod page now tells players what GenesisUI gives them, with screenshots,
+in English and Portuguese, and points to the GenesisMods Discord for help (F8 report → #valheim-bugs).
+
 ## 1.0.0 — GenesisUI 1.0
 
 The first release. GenesisUI replaces Valheim's interface with its own, in one fine gold-metal

@@ -38,7 +38,7 @@ The map in a proper frame, with pin filters and **eight new markers**: dungeon, 
 
 The hammer, hoe and cultivator menus with search and favourites; the trader; the Esc menu over a blurred game; skills, achievements and settings in tabs you switch with **Q** and **E**.
 
-<img src="https://raw.githubusercontent.com/brkihel/GenesisUI/main/.github/assets/build.webp" alt="GenesisUI build menu" width="100%">
+<img src="https://raw.githubusercontent.com/brkihel/GenesisUI/main/.github/assets/menu.webp" alt="GenesisUI Esc menu" width="100%">
 
 ## Worry-free
 
