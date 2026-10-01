@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.8.0-preview.5 — Workbench tab, map leftovers, button feedback
+
+### Added
+- Every window button and tab answers the pointer: a soft gold light on hover, brighter while
+  pressed, and a slight sink under the press (`Widgets/PressFeedback`); disabled buttons stay still.
+
+### Fixed
+- A workbench (E) opened the Achievements tab: since preview.4 the shell saw the window open in the
+  frame E was pressed, and E is also the next-tab key. Tab keys are ignored in the opening frame.
+- Vanilla's boss/death filters and a dark hint panel showed under the map's chrome: everything in
+  vanilla's large map except the map, pins, names, markers and name input is now hidden.
+
 ## 0.8.0-preview.4 — Map clicks, no vanilla flash, E through the map, clean Esc shade
 
 ### Fixed

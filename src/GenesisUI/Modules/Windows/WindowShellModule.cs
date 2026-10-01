@@ -180,7 +180,10 @@ namespace GenesisUI.Modules.Windows
             // Opened at a workbench, forge or any crafting station: straight to Criação (R-057). The game
             // keeps the station only while the window it opened is open, so Tab near one still opens
             // the inventory, and a chest opens with the inventory as before.
-            if (visible && !_wasVisible)
+            // The key that opened the window (E at a workbench is also the next-tab key) must not
+            // also switch its tab in the same frame (R-060: the workbench opened Achievements).
+            bool opened = visible && !_wasVisible;
+            if (opened)
                 Select(mapWindow ? Tab.Map : Player.m_localPlayer.GetCurrentCraftingStation() != null ? Tab.Crafting : Tab.Inventory, callVanilla: false);
             _wasVisible = visible;
             ActiveNextKey = visible ? _nextKey.Value.MainKey : KeyCode.None;
@@ -195,8 +198,11 @@ namespace GenesisUI.Modules.Windows
             _fade.blocksRaycasts = visible;
             if (!visible) return;
 
-            if (_previousKey.Value.IsDown()) Select(Step(-1), callVanilla: true);
-            else if (_nextKey.Value.IsDown()) Select(Step(+1), callVanilla: true);
+            if (!opened)
+            {
+                if (_previousKey.Value.IsDown()) Select(Step(-1), callVanilla: true);
+                else if (_nextKey.Value.IsDown()) Select(Step(+1), callVanilla: true);
+            }
             WindowCanvas.Fit(_area);
             FollowVanilla(gui);
         }
@@ -390,6 +396,7 @@ namespace GenesisUI.Modules.Windows
             button.targetGraphic = hit;
             button.transition = Selectable.Transition.None;
             button.onClick.AddListener(() => Guard.Try("window tab " + tab, () => Select(tab, callVanilla: true)));
+            PressFeedback.Attach(cell, button, _theme, 6f);
 
             var iconSprite = _theme.Sprite(icon);
             if (iconSprite != null)

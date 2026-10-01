@@ -57,6 +57,13 @@ namespace GenesisUI.Modules.Minimap
     [GameContract("assembly_valheim", "Minimap", "OnToggleSharedMapData")]
     [GameContract("assembly_valheim", "EnvMan", "GetDayFraction")]
     [GameContract("assembly_valheim", "Minimap", "m_namePin")]
+    [GameContract("assembly_valheim", "Minimap", "m_mapImageLarge")]
+    [GameContract("assembly_valheim", "Minimap", "m_pinRootLarge")]
+    [GameContract("assembly_valheim", "Minimap", "m_pinNameRootLarge")]
+    [GameContract("assembly_valheim", "Minimap", "m_largeMarker")]
+    [GameContract("assembly_valheim", "Minimap", "m_largeShipMarker")]
+    [GameContract("assembly_valheim", "Minimap", "m_gamepadCrosshair")]
+    [GameContract("assembly_valheim", "Minimap", "m_nameInput")]
     internal sealed class MapWindowModule : IUiModule, IRecoverable
     {
         /// <summary>IRecoverable: on a fault the large map closes back to the minimap.</summary>
@@ -211,6 +218,18 @@ namespace GenesisUI.Modules.Minimap
             if (map.m_publicPosition != null) Hide(map.m_publicPosition.gameObject);
             if (map.m_biomeNameLarge != null) Hide(map.m_biomeNameLarge.gameObject);
             if (map.m_hints != null) foreach (var h in map.m_hints) if (h != null) Hide(h);
+            // And everything else vanilla draws in the large map that is not the map itself: the boss
+            // and death filters and a dark hint panel still showed under our chrome (R-060 print).
+            // Kept: the map image, pins, pin names, the player and ship markers, the name input.
+            _keep.Clear();
+            Keep(map.m_mapImageLarge);
+            Keep(map.m_pinRootLarge);
+            Keep(map.m_pinNameRootLarge);
+            Keep(map.m_largeMarker);
+            Keep(map.m_largeShipMarker);
+            Keep(map.m_gamepadCrosshair);
+            Keep(map.m_nameInput);
+            HideAllBut(map.m_largeRoot.transform);
             // The map itself goes inside our frame (vanilla lays the map, pins and markers out from this rect).
             _skin.Rect((RectTransform)map.m_largeRoot.transform);
             _armed = null;
@@ -225,6 +244,32 @@ namespace GenesisUI.Modules.Minimap
             var g = _skin.Group(go);
             g.alpha = 0f;
             g.blocksRaycasts = false;
+        }
+
+        private readonly HashSet<Transform> _keep = new HashSet<Transform>();
+
+        private void Keep(Component c)
+        {
+            if (c != null) _keep.Add(c.transform);
+        }
+
+        /// <summary>Hides each child that neither is a kept object nor holds one; walks into those that hold one.</summary>
+        private void HideAllBut(Transform node)
+        {
+            for (int i = 0; i < node.childCount; i++)
+            {
+                var child = node.GetChild(i);
+                if (child == _root || _keep.Contains(child)) continue;
+                if (HoldsKept(child)) HideAllBut(child);
+                else Hide(child.gameObject); // inactive ones too: vanilla shows some later (shared-map hint)
+            }
+        }
+
+        private bool HoldsKept(Transform t)
+        {
+            foreach (var k in _keep)
+                if (k != null && k.IsChildOf(t)) return true;
+            return false;
         }
 
         private void Unapply()

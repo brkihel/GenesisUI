@@ -102,6 +102,7 @@ namespace GenesisUI.Widgets
             if (group == null) group = rt.gameObject.AddComponent<CanvasGroup>();
             // Unity's Button has no dimmed look without a transition: follow interactable ourselves.
             rt.gameObject.AddComponent<DimWhenDisabled>().Init(button, group);
+            PressFeedback.Attach(rt, button, _theme);
             return button;
         }
 
