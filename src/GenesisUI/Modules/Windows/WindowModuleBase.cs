@@ -35,7 +35,6 @@ namespace GenesisUI.Modules.Windows
         private static readonly string[] NoRegions = new string[0];
         private static readonly HashSet<WindowShellModule.Tab> Handled = new HashSet<WindowShellModule.Tab>();
 
-        private VanillaSkin _skin;
         private RectTransform _root;
         private CanvasGroup _fade;
         private bool _applied;
@@ -65,7 +64,6 @@ namespace GenesisUI.Modules.Windows
         {
             Theme = context.Theme;
             Parts = new WindowParts(Theme);
-            _skin = new VanillaSkin(Owner);
             _applied = false;
             _closedFor = 0f;
             Resolve();
@@ -146,28 +144,17 @@ namespace GenesisUI.Modules.Windows
         {
             _applied = true;
             _root.gameObject.SetActive(true);
-            HideVanilla(gui.m_player.gameObject);
-            HideVanilla(gui.m_container.gameObject);
-            HideVanilla(gui.m_crafting.gameObject);
-            HideVanilla(gui.m_info.gameObject);
+            VanillaPanels.Hold(Id, gui);
             Opened(gui, player);
-            GenesisLog.Info(Owner, "window shown; vanilla panels hidden (" + _skin.Count + " change(s))");
-        }
-
-        private void HideVanilla(GameObject go)
-        {
-            var g = _skin.Group(go);
-            g.alpha = 0f;
-            g.blocksRaycasts = false;
-            g.interactable = false;
+            GenesisLog.Info(Owner, "window shown; vanilla panels hidden (" + VanillaPanels.HolderCount + " window(s) holding them)");
         }
 
         private void Unapply()
         {
             _applied = false;
+            VanillaPanels.Release(Id);
             _closedFor = 0f;
             Guard.Try(Owner + " closed", Closed);
-            _skin.Restore();
             if (_root != null) _root.gameObject.SetActive(false);
         }
 

@@ -249,6 +249,11 @@ namespace GenesisUI.Modules.Minimap
 
             // The window: a panel like every other, the map inside it (FitMap), the chrome on its header.
             var panel = _parts.Panel(_board, "Map", 0f, 102f, WindowCanvas.Design.x, 673f, null, 0f, 0f, TextAlignmentOptions.Left);
+            // The panel draws in front of the map: its click blocker would take every click from
+            // vanilla's map image (drag, pins, ping), which is the map's only input (R-059). Only the
+            // chrome on it takes clicks.
+            var blocker = panel.GetComponent<Image>();
+            if (blocker != null) blocker.raycastTarget = false;
             _mapArea = WindowCanvas.At(panel, "MapArea", 14f, 62f, WindowCanvas.Design.x - 28f, 673f - 76f);
 
             // Title plate: map name, day and time, the biome under the cursor.

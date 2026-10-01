@@ -160,7 +160,9 @@ reparenting vs. by leaving it in place and punching a hole in the veil.)
 
 ## 4. Scheduling and data flow
 
-- No `Update()` per view. `ModuleHost.Tick` (from the plugin's `Update`) refreshes each
+- No `Update()` per view. `ModuleHost.Tick` (from the plugin's `LateUpdate`, so after vanilla
+  opened or closed its windows in its own `Update`: nothing vanilla is drawn for a frame before
+  GenesisUI hides it, R-059) refreshes each
   module at the rate it declares: every frame for what follows vanilla positions
   (minimap, creature plates, notice stack), 30 Hz for bars and plates, 10–20 Hz for food,
   status, hotbar and hover. The elapsed time handed to a module is capped at 0.25 s.

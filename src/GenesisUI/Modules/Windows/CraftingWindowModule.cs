@@ -152,7 +152,6 @@ namespace GenesisUI.Modules.Windows
             public string ItemName, Label;
         }
 
-        private readonly VanillaSkin _skin = new VanillaSkin(Owner);
         private readonly Column _craftColumn = new Column { Upgrade = false };
         private readonly Column _upgradeColumn = new Column { Upgrade = true };
         private readonly List<Material> _materials = new List<Material>(MaxMaterials);
@@ -309,10 +308,7 @@ namespace GenesisUI.Modules.Windows
         {
             _applied = true;
             _root.gameObject.SetActive(true);
-            Hide(gui.m_player.gameObject);
-            Hide(gui.m_container.gameObject);
-            Hide(gui.m_crafting.gameObject);
-            Hide(gui.m_info.gameObject);
+            VanillaPanels.Hold("win.crafting", gui);
             _guiAncestor = gui.transform;
             while (_guiAncestor.parent != null && _guiAncestor.parent != _root.parent) _guiAncestor = _guiAncestor.parent;
             _behind = true;
@@ -320,23 +316,15 @@ namespace GenesisUI.Modules.Windows
             _listVersion = -1;
             _vanillaVersion = -1;
             _detailsDirty = true;
-            GenesisLog.Info("Module:win.crafting", "window shown; vanilla panels hidden (" + _skin.Count + " change(s))");
-        }
-
-        private void Hide(GameObject go)
-        {
-            var g = _skin.Group(go);
-            g.alpha = 0f;
-            g.blocksRaycasts = false;
-            g.interactable = false;
+            GenesisLog.Info("Module:win.crafting", "window shown; vanilla panels hidden (" + VanillaPanels.HolderCount + " window(s) holding them)");
         }
 
         private void Unapply()
         {
             _applied = false;
+            VanillaPanels.Release("win.crafting");
             _closedFor = 0f;
             EndTyping();
-            _skin.Restore();
             if (_root != null) _root.gameObject.SetActive(false);
         }
 

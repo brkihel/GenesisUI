@@ -32,6 +32,9 @@ namespace GenesisUI.Modules.Windows
     [GameContract("assembly_valheim", "SkillsDialog", "OnClose")]
     [GameContract("assembly_valheim", "Minimap", "SetMapMode")]
     [GameContract("assembly_valheim", "Minimap", "IsOpen")]
+    [GameContract("assembly_valheim", "Minimap", "get_instance")]
+    [GameContract("assembly_valheim", "Minimap", "m_mode")]
+    [GameContract("assembly_valheim", "Minimap", "m_largeRoot")]
     [GameContract("assembly_valheim", "InventoryGui", "Show")]
     [GameContract("assembly_valheim", "KeyHints", "instance")]
     [GameContract("assembly_valheim", "Player", "GetCurrentCraftingStation")]
@@ -144,7 +147,7 @@ namespace GenesisUI.Modules.Windows
         {
             var gui = InventoryGui.instance;
             if (!EnsureBuilt(gui)) return;
-            bool mapOpen = global::Minimap.IsOpen();
+            bool mapOpen = LargeMapOpen();
             // The large map is one of the windows when GenesisUI frames it (win.map): the bars show over it.
             bool mapWindow = mapOpen && Modules.Minimap.MapWindowModule.Active && Player.m_localPlayer != null;
             bool visible = (gui != null && InventoryGui.IsVisible() && Player.m_localPlayer != null && !mapOpen) || mapWindow;
@@ -252,7 +255,7 @@ namespace GenesisUI.Modules.Windows
         {
             var gui = InventoryGui.instance;
             // Another tab picked while the framed map is open: leave the map for the windows.
-            if (callVanilla && gui != null && tab != Tab.Map && global::Minimap.IsOpen() && global::Minimap.instance != null)
+            if (callVanilla && gui != null && tab != Tab.Map && LargeMapOpen())
             {
                 global::Minimap.instance.SetMapMode(global::Minimap.MapMode.Small);
                 gui.Show(null);
@@ -273,11 +276,23 @@ namespace GenesisUI.Modules.Windows
                             global::Minimap.instance.SetMapMode(global::Minimap.MapMode.Large);
                             _mapFromTab = true;
                         }
-                        tab = Tab.Inventory;
+                        // The Map tab stays lit: an Inventory tab here drew the inventory window for one
+                        // frame over the closing inventory.
                         break;
                 }
             }
             Show(tab);
+        }
+
+        /// <summary>
+        /// The large map is on screen. Not Minimap.IsOpen(): that one stays true for two frames after the
+        /// map closes, and the shell then took the inventory opened by E/Q for the map (R-059: vanilla's
+        /// inventory and crafting showed with the Map tab lit, until the next E).
+        /// </summary>
+        private static bool LargeMapOpen()
+        {
+            var map = global::Minimap.instance;
+            return map != null && map.m_mode == global::Minimap.MapMode.Large && map.m_largeRoot != null && map.m_largeRoot.activeSelf;
         }
 
         private static void CloseVanillaDialogs(InventoryGui gui)

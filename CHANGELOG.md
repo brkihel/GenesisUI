@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.8.0-preview.4 — Map clicks, no vanilla flash, E through the map, clean Esc shade
+
+### Fixed
+- The framed map took no clicks (drag, pin, remove, ping); only the wheel zoomed. The panel around
+  it drew in front with a click blocker, and vanilla's map takes its clicks only through UI
+  raycasts on its image. The map's panel no longer blocks.
+- Vanilla's windows flashed behind GenesisUI's: modules now refresh in `LateUpdate`, after vanilla
+  opened its window in its own `Update`, and the four vanilla inventory panels are hidden by one
+  shared owner (`VanillaPanels`) instead of one per window, which let a tab switch (Q) undo the
+  new window's hiding.
+- Map → E showed vanilla's inventory and crafting with the Map tab lit: `Minimap.IsOpen()` stays
+  true two frames after the map closes, and the shell took the new window for the map. The shell
+  now checks the map is really on screen; going to the Map tab no longer lights Inventory for a frame.
+- The Esc menu's left shade ended in a hard vertical line; it now fades out to nothing.
+
 ## 0.8.0-preview.3 — The Crafting fault, found in Diego's log
 
 ### Fixed

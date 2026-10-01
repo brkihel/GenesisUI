@@ -76,7 +76,7 @@ namespace GenesisUI.Host
             foreach (var e in Entries) Reconcile(e);
         }
 
-        /// <summary>Plugin.Update.</summary>
+        /// <summary>Plugin.LateUpdate, before <see cref="LateTick"/>.</summary>
         public static void Tick(float dt)
         {
             if (_hudRoot == null && HasBuiltModules()) OnSceneLost();

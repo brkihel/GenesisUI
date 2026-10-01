@@ -15,7 +15,7 @@ is unclear, ask; do not guess.
   callbacks. D-025 ("move and dress vanilla's slots") is replaced; Diego wants fidelity to the
   concept's assembly, not new designs. Order after F4: F5 menus, F6 map, F7 API and adapters,
   F8 gameplay package, F9 switch-over (D-024).
-- **Version:** 0.8.0, last package `0.8.0-preview.1` (every in-game window: Skills, Achievements,
+- **Version:** 0.8.0, last package `0.8.0-preview.4` (map clicks, no vanilla flash, R-060; preview.1 brought every in-game window: Skills, Achievements,
   Settings, build menu + placement card, trader store, small dialogs, framed map, Esc menu) with
   script R-058. Crafting (preview.14/15) and the inventory are approved by Diego. Shaders:
   source in `unity/`, built on `win-teste` (Unity 6000.0.75f1 in `C:\Unity`, Personal licence in

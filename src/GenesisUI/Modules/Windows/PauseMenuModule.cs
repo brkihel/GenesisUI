@@ -59,6 +59,7 @@ namespace GenesisUI.Modules.Windows
         private RectTransform _root, _board, _column, _list, _confirm;
         private TextMeshProUGUI _lastSave, _question;
         private Material _blur;
+        private Texture2D _shade;
         private bool _applied, _confirmQuit;
 
         public string Id => "win.menu";
@@ -133,8 +134,10 @@ namespace GenesisUI.Modules.Windows
             if (_applied) Unapply();
             if (_root != null) UnityEngine.Object.Destroy(_root.gameObject);
             if (_blur != null) UnityEngine.Object.Destroy(_blur);
+            if (_shade != null) UnityEngine.Object.Destroy(_shade);
             _root = null;
             _blur = null;
+            _shade = null;
             _entries.Clear();
         }
 
@@ -185,12 +188,16 @@ namespace GenesisUI.Modules.Windows
                 Ui.Image(Ui.Fill(Ui.Child(_root, "Tint")), null, new Color(0f, 0f, 0f, 0.2f));
             }
             else Ui.Image(back, null, new Color(0f, 0f, 0f, 0.62f), raycast: true);
-            // A soft shade on the left, where the options are, so they read on any background.
+            // A soft shade on the left, where the options are, so they read on any background. It fades
+            // out to nothing: a flat shade ended in a hard edge down the screen (R-059).
             var shade = Ui.Child(_root, "Shade");
             shade.anchorMin = Vector2.zero;
-            shade.anchorMax = new Vector2(0.42f, 1f);
+            shade.anchorMax = new Vector2(0.6f, 1f);
             shade.offsetMin = shade.offsetMax = Vector2.zero;
-            Ui.Image(shade, null, new Color(0f, 0f, 0f, 0.3f));
+            _shade = ShadeTexture();
+            var fade = shade.gameObject.AddComponent<RawImage>();
+            fade.texture = _shade;
+            fade.raycastTarget = false;
 
             _board = WindowCanvas.Area(_root, "Board");
             _column = Ui.Child(_root, "Column");
@@ -222,6 +229,28 @@ namespace GenesisUI.Modules.Windows
             no.Root.anchoredPosition = new Vector2(0f, -70f - ItemH);
             no.Label.text = WindowParts.Localize("$genesisui_menu_no").ToUpperInvariant();
             _confirm.gameObject.SetActive(false);
+        }
+
+        /// <summary>Black, strongest on the left, easing to zero alpha with a flat end (no visible edge).</summary>
+        private static Texture2D ShadeTexture()
+        {
+            const int width = 256;
+            var tex = new Texture2D(width, 1, TextureFormat.RGBA32, false)
+            {
+                name = "GenesisUI.MenuShade",
+                wrapMode = TextureWrapMode.Clamp,
+                filterMode = FilterMode.Bilinear,
+            };
+            var pixels = new Color32[width];
+            for (int i = 0; i < width; i++)
+            {
+                float t = Mathf.Clamp01((i / (float)(width - 1) - 0.25f) / 0.75f);
+                float alpha = 0.42f * (1f - Mathf.SmoothStep(0f, 1f, t));
+                pixels[i] = new Color32(0, 0, 0, (byte)Mathf.RoundToInt(alpha * 255f));
+            }
+            tex.SetPixels32(pixels);
+            tex.Apply(false, true);
+            return tex;
         }
 
         private void Add(string token, Func<Menu, Button> vanilla)

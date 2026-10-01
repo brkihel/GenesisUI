@@ -251,7 +251,6 @@ namespace GenesisUI
         private void Update()
         {
             if (!_ready) return;
-            ModuleHost.Tick(Time.unscaledDeltaTime);
 #if GENESIS_DIAGNOSTICS
             Diagnostics.Overlay.Tick(Time.unscaledDeltaTime);
 #endif
@@ -264,9 +263,17 @@ namespace GenesisUI
 #endif
         }
 
+        /// <summary>
+        /// Modules refresh after every Update: vanilla opens its windows in its own Update (Tab, a
+        /// workbench, a chest, Esc, the hammer, M), and a module refreshed before that hid them one
+        /// frame late, so vanilla flashed behind GenesisUI's window (R-059). Here they are hidden in
+        /// the frame they open, before anything is drawn.
+        /// </summary>
         private void LateUpdate()
         {
-            if (_ready) ModuleHost.LateTick();
+            if (!_ready) return;
+            ModuleHost.Tick(Time.unscaledDeltaTime);
+            ModuleHost.LateTick();
         }
 
         private string WriteReport()

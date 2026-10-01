@@ -295,10 +295,7 @@ namespace GenesisUI.Modules.Windows
             _applied = true;
             _root.gameObject.SetActive(true);
             // Vanilla's panels keep running (their grids are the engine) but draw nothing and take no clicks.
-            Hide(gui.m_player.gameObject);
-            Hide(gui.m_container.gameObject);
-            Hide(gui.m_crafting.gameObject);
-            Hide(gui.m_info.gameObject);
+            VanillaPanels.Hold("win.inventory", gui);
             // Vanilla's split dialog stays vanilla's and visible even if it lives under a hidden panel;
             // while it is open our window steps behind InventoryGui (FollowSplitDialog).
             if (gui.m_splitDialog != null)
@@ -317,17 +314,10 @@ namespace GenesisUI.Modules.Windows
             GenesisLog.Info("Module:win.inventory", "window shown; vanilla panels hidden (" + _skin.Count + " change(s))");
         }
 
-        private void Hide(GameObject go)
-        {
-            var g = _skin.Group(go);
-            g.alpha = 0f;
-            g.blocksRaycasts = false;
-            g.interactable = false;
-        }
-
         private void Unapply()
         {
             _applied = false;
+            VanillaPanels.Release("win.inventory");
             _closedFor = 0f;
             InventoryModule.SetEquipmentPanelVisible(false);
             ShowVanillaDrag();
