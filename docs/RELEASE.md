@@ -2,7 +2,8 @@
 
 ## Versioning
 
-- Semantic versioning. `0.x` until the F4 windows and F5 menus are stable; the Extension API
+- Semantic versioning. 1.0.0 shipped on 2026-09-30 with the HUD and every in-game window
+  (the main menu and the game's settings screen follow in 1.x); the Extension API
   follows [EXTENSION-API.md §5](EXTENSION-API.md#5-versioning).
 - The version lives in one place (`PluginInfo.cs`) and is stamped into the assembly,
   the manifest and the diagnostics header.

@@ -1,5 +1,22 @@
 # Changelog
 
+## 1.0.0 — GenesisUI 1.0
+
+The first release. GenesisUI replaces Valheim's interface with its own, in one fine gold-metal
+language, while vanilla keeps running hidden underneath (other mods' items, pins and messages still
+work):
+
+- **HUD:** vital bars with living liquid and burn, food, hotbar, status effects and guardian power,
+  round minimap, stamina readout, boss and creature plates, interaction card, notifications, key hints.
+- **Windows** with tabs (Q/E): inventory with quick-use and utility slots, equipment and details;
+  crafting and upgrading at every station; skills and character; achievements; GenesisUI settings.
+- **Build menu** for hammer, hoe and cultivator, with a placement card.
+- **Trader, small dialogs, framed map** with filters and GenesisUI's own markers, and a clean,
+  blurred **Esc menu**.
+- **Self-healing:** a part that fails closes its window, rebuilds itself and tells you what happened.
+
+Release build: no diagnostics overlay and no watermark; F8 writes a support report.
+
 ## 0.8.0-preview.5 — Workbench tab, map leftovers, button feedback
 
 ### Added

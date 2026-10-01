@@ -3,11 +3,13 @@
 A modular, themed user interface for Valheim, built for **security and stability
 first**.
 
-> Status: **F4.0 (HUD textures) approved; F4.2b (equipment panel) in client test.** Latest test
-> package: 0.7.0-preview.9 (R-053, own inventory window, D-032). See [docs/ROADMAP.md](docs/ROADMAP.md).
+> Status: **1.0.0 released** (2026-09-30): the HUD and every in-game window — inventory, crafting at
+> every station, skills, achievements, settings, build menu, trader, dialogs, map, Esc menu — drawn by
+> GenesisUI, with vanilla as the hidden engine. Next: main menu and the game's settings screen.
+> See [docs/ROADMAP.md](docs/ROADMAP.md).
 
 GenesisUI is a complete rework of the vanilla UI: HUD, inventory and crafting windows,
-menus and map, in one gold ornament language. The current Preview includes the HUD:
+menus and map, in one gold ornament language. It includes the HUD:
 vital bars with a living liquid, food, hotbar, status effects and guardian power, round
 minimap with wind, day and biome, stamina readout, boss and creature plates, interaction
 card, stacked notifications, and the vanilla key hints lifted above the hotbar. It also

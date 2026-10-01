@@ -34,6 +34,10 @@ panels — and that he had chosen replacement, not skins. Preview.9 implements D
 inventory window on the concept's design board, vanilla as the hidden engine, plus quick/action
 slot rules and Organizar. R-053 is its client gate. Crafting (F4.3) follows the same approach.
 
+**1.0.0 (2026-09-30):** Diego approved the windows after R-061 (0.8.0-preview.5) and asked for the
+1.0 release: F4 complete, F6 (map) delivered with the framed map and custom markers, and from F5 the
+Esc menu. The main menu (FejdStartup) and the game's settings screen remain in F5.
+
 ## Research items (not scheduled)
 
 - 3D character figure in the inventory/character panels (render-texture camera;
