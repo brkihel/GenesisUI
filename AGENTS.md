@@ -42,8 +42,9 @@ is unclear, ask; do not guess.
   gameplay or cloth components. Exact-helper Unity GPU fixture passed nine scale combinations
   and reproduced the old BakeMesh conversion defect. Native equip progress is mirrored as an
   orbiting border, with a conditional HUD-bar veil and text fallback. Focused client R-067 is
-  pending. Fresh source-bound key/edge/orbit GPU build precedes packaging; provenance lives in
-  `art/shaders/provenance.json`. Debug/Preview/Release baseline: 191 Core + 11 L2, zero skips.
+  pending. Fresh source-bound key/edge/orbit GPU checks passed in Unity 6000.0.75f1/Direct3D11
+  (key 256/512/256, 3 borders, 4 orbit phases); provenance: `art/shaders/provenance.json`.
+  Debug/Preview/Release passed 191 Core + 11 L2 each, zero skips; see R-067 results.
   Commit first and verify ZIP contents by hash.
   Structured providers/mod resource adapters remain F7 work; no full-modpack certification
   or production rollout is implied. Earlier uncommitted packaging was a one-session exception.
