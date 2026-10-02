@@ -55,14 +55,15 @@ is unclear, ask; do not guess.
   health, stamina and eitr textures at
   `/home/diego/GenesisUI-Concept/GenesisUI-textures/`. `tools/art/sheets.py` cuts every HUD
   piece from them into `art/src/sheets/` (D-027); `tools/art/sheets_preview.py` draws the
-  contact sheet for the §2b quality gate. All 11 HUD modules use them (frames, `_shape`
+  contact sheet for the §2b quality gate. The HUD uses them (frames, `_shape`
   backgrounds with `[Backgrounds]` opacity, `_opening` masks, liquids). Integrated and
   approved in game (R-042). Retouched cuts: `GenesisUI-cuts/edited/<name>.png` (same size as
   `original/`) replace the sheet cut; rerun `sheets.py` then `render.py`. HUD/windows are shipped;
   future art still follows this pipeline and the review gate.
-- **HUD modules (11):** `hud.vitals`, `hud.food`, `hud.hotbar`, `hud.minimap`, `hud.boss`,
-  `hud.enemy`, `hud.hover`, `hud.notice`, `hud.status`, `hud.sprint`, plus the key-hint nudge
-  owned by `hud.hotbar`. Each has a `[Modules]` toggle and its own config section.
+- **HUD modules (13, Plugin.cs registration):** `hud.vitals`, `hud.food`, `hud.hotbar`,
+  `hud.minimap`, `hud.boss`, `hud.enemy`, `hud.hover`, `hud.notice`, `hud.status`, `hud.keyhints`,
+  `hud.slots`, `hud.climate`, `hud.sprint`. Each has a `[Modules]` toggle. The vanilla
+  key-hint nudge remains owned by `hud.hotbar`; the quick-use/action HUD rows are already shipped.
 - **Open items from Diego:** boss plate spacing; user positioning of HUD pieces; remaining
   main-menu/native-settings work; exact-version modpack resource adapters and client benchmarks.
 

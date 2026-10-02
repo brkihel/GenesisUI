@@ -55,6 +55,7 @@ O mapa numa moldura de verdade, com filtros e oito marcadores novos — masmorra
 - Barras vitais de líquido, com rastro de queima e pulso de vida baixa
 - Minimapa redondo com vento, dia, hora e bioma
 - Barra de atalhos, comidas, efeitos e poder do guardião
+- Fileiras de uso rápido/ação no HUD; efeitos visuais de frio, molhado e queimando
 - Placas de chefes e criaturas, cartão de interação, notificações
 - Dicas de teclas no mesmo estilo, na metade do tamanho
 

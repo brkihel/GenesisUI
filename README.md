@@ -55,6 +55,7 @@ The map in a proper frame, with pin filters and eight new markers — dungeon, o
 - Liquid vital bars with a burn trail and low-health pulse
 - Round minimap with wind, day, time and biome
 - Hotbar, food, status effects and guardian power
+- Quick-use/action HUD rows; frost, wet and burning visual effects
 - Boss and creature plates, interaction card, notifications
 - Key hints in the same style, at half size
 

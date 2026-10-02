@@ -8,6 +8,7 @@ The immutable review remains evidence of its earlier source; see [release record
 | Surface | Implementation | Verification / remaining work |
 |---|---|---|
 | HUD and in-game windows | Shipped, guarded modules, native input/action delegation | Release approved after R-067; detailed scenario results not all supplied |
+| Quick-use/action HUD and climate effects | Quick/action rows follow configured inventory slots and native actions; frost/wet/burning visuals read player state | Shipped modules/toggles in Plugin.cs; special modpack conditions remain uncertified |
 | Inventory layout | Position-only snapshot/journal, full patch prerequisite, grow-before-move, rollback | Core/L2 gates pass; included in approved Release; save/reentry/foreign combinations not individually certified |
 | Headless inventory config sync | Minimal D-031 initialization before visual exit | Metadata/build verified; headless runtime not exercised, no server rollout |
 | 3D previews | Character: new transforms/private meshes/remapped bones, preserved bind poses, static cape pose; items: sanitized visual copies; keyed/2D fallback | R-067 approved; exact-helper GPU fixture passes nine scale pairs; fresh source-bound keyed/edge/orbit GPU checks pass |
