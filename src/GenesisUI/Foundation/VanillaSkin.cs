@@ -11,11 +11,31 @@ namespace GenesisUI.Foundation
     /// every one back exactly, in reverse order, and removes the groups we added. Nothing is ever
     /// re-parented, destroyed or deactivated. Self-contained (it will move to GenesisModLIB).
     /// </summary>
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Foundation.CanvasGroupLease), typeof(GenesisUI.Foundation.SharedCanvasGroups), typeof(GenesisUI.Foundation.Guard), typeof(GenesisUI.Foundation.GenesisLog))]
     internal sealed class VanillaSkin
     {
         private readonly string _owner;
         private readonly List<Action> _restore = new List<Action>(128);
         private readonly HashSet<int> _recorded = new HashSet<int>();
+        private readonly Dictionary<GameObject, CanvasGroupLease> _groups = new Dictionary<GameObject, CanvasGroupLease>();
+        private static readonly List<VanillaSkin> Active = new List<VanillaSkin>();
+
+        private void Record(Action undo)
+        {
+            if (_restore.Count == 0) Active.Add(this);
+            _restore.Add(undo);
+        }
+
+        public static void RestoreAll(string owner)
+        {
+            foreach (var skin in Active.ToArray())
+                if (skin._owner == owner || skin._owner.StartsWith(owner + ":", StringComparison.Ordinal)) skin.Restore();
+        }
+
+        public static void RestoreEveryOwner()
+        {
+            foreach (var skin in Active.ToArray()) skin.Restore();
+        }
 
         public VanillaSkin(string owner)
         {
@@ -34,7 +54,7 @@ namespace GenesisUI.Foundation
             var position = rt.anchoredPosition;
             var size = rt.sizeDelta;
             var scale = rt.localScale;
-            _restore.Add(() =>
+            Record(() =>
             {
                 if (rt == null) return;
                 rt.anchorMin = anchorMin;
@@ -57,7 +77,7 @@ namespace GenesisUI.Foundation
             var multiplier = image.pixelsPerUnitMultiplier;
             var enabled = image.enabled;
             var preserve = image.preserveAspect;
-            _restore.Add(() =>
+            Record(() =>
             {
                 if (image == null) return;
                 image.sprite = sprite;
@@ -79,7 +99,7 @@ namespace GenesisUI.Foundation
             var color = text.color;
             var size = text.fontSize;
             var style = text.fontStyle;
-            _restore.Add(() =>
+            Record(() =>
             {
                 if (text == null) return;
                 text.font = font;
@@ -97,7 +117,7 @@ namespace GenesisUI.Foundation
             if (button == null || !_recorded.Add(Key(button, 6))) return button;
             var colors = button.colors;
             var transition = button.transition;
-            _restore.Add(() =>
+            Record(() =>
             {
                 if (button == null) return;
                 button.colors = colors;
@@ -111,7 +131,7 @@ namespace GenesisUI.Foundation
         {
             if (behaviour == null || !_recorded.Add(Key(behaviour, 3))) return behaviour;
             bool enabled = behaviour.enabled;
-            _restore.Add(() => { if (behaviour != null) behaviour.enabled = enabled; });
+            Record(() => { if (behaviour != null) behaviour.enabled = enabled; });
             return behaviour;
         }
 
@@ -122,34 +142,12 @@ namespace GenesisUI.Foundation
         public CanvasGroup Group(GameObject go)
         {
             if (go == null) return null;
-            var group = go.GetComponent<CanvasGroup>();
-            if (!_recorded.Add(Key(go, 4))) return group;
-            if (group == null)
-            {
-                group = go.AddComponent<CanvasGroup>();
-                var added = group;
-                // Immediately: another owner may hide the same object in the same frame (a window
-                // tab switch). A deferred Destroy let it find this dying group and reuse it, and
-                // vanilla reappeared at the end of the frame (R-056).
-                _restore.Add(() => { if (added != null) UnityEngine.Object.DestroyImmediate(added); });
-            }
-            else
-            {
-                var existing = group;
-                float alpha = existing.alpha;
-                bool raycasts = existing.blocksRaycasts;
-                bool interactable = existing.interactable;
-                bool ignore = existing.ignoreParentGroups;
-                _restore.Add(() =>
-                {
-                    if (existing == null) return;
-                    existing.alpha = alpha;
-                    existing.blocksRaycasts = raycasts;
-                    existing.interactable = interactable;
-                    existing.ignoreParentGroups = ignore;
-                });
-            }
-            return group;
+            if (_groups.TryGetValue(go, out var lease) && lease.Group != null) return lease.Group;
+            if (lease != null) lease.Release();
+            lease = SharedCanvasGroups.Acquire(_owner, go);
+            _groups[go] = lease;
+            Record(lease.Release);
+            return lease.Group;
         }
 
         /// <summary>
@@ -163,29 +161,8 @@ namespace GenesisUI.Foundation
         {
             var group = Group(go);
             if (group == null) return null;
-            group.alpha = 0f;
-            group.blocksRaycasts = false;
-            if (interactable.HasValue) group.interactable = interactable.Value;
-            if (go.GetComponent<HiddenPin>() == null) // one pin per object; removed on restore
-            {
-                var pin = go.AddComponent<HiddenPin>();
-                pin.Group = group;
-                _restore.Add(() => { if (pin != null) UnityEngine.Object.DestroyImmediate(pin); });
-            }
+            _groups[go].Hide(true, interactable);
             return group;
-        }
-
-        /// <summary>Keeps a hidden group hidden after anything else this frame (see <see cref="Hidden"/>).</summary>
-        private sealed class HiddenPin : MonoBehaviour
-        {
-            internal CanvasGroup Group;
-
-            private void LateUpdate()
-            {
-                if (Group == null) return;
-                if (Group.alpha != 0f) Group.alpha = 0f;
-                if (Group.blocksRaycasts) Group.blocksRaycasts = false;
-            }
         }
 
         /// <summary>
@@ -201,13 +178,13 @@ namespace GenesisUI.Foundation
             {
                 bool enabled = canvas.enabled;
                 var existing = canvas;
-                _restore.Add(() => { if (existing != null) existing.enabled = enabled; });
+                Record(() => { if (existing != null) existing.enabled = enabled; });
             }
             else
             {
                 canvas = go.AddComponent<Canvas>();
                 var added = canvas;
-                _restore.Add(() => { if (added != null) UnityEngine.Object.DestroyImmediate(added); });
+                Record(() => { if (added != null) UnityEngine.Object.DestroyImmediate(added); });
             }
             canvas.enabled = false;
         }
@@ -217,7 +194,7 @@ namespace GenesisUI.Foundation
         {
             if (renderer == null || !_recorded.Add(Key(renderer, 5))) return renderer;
             float alpha = renderer.GetAlpha();
-            _restore.Add(() => { if (renderer != null) renderer.SetAlpha(alpha); });
+            Record(() => { if (renderer != null) renderer.SetAlpha(alpha); });
             return renderer;
         }
 
@@ -225,7 +202,7 @@ namespace GenesisUI.Foundation
         public GameObject Added(GameObject go)
         {
             if (go == null) return null;
-            _restore.Add(() => { if (go != null) UnityEngine.Object.Destroy(go); });
+            Record(() => { if (go != null) UnityEngine.Object.Destroy(go); });
             return go;
         }
 
@@ -239,7 +216,9 @@ namespace GenesisUI.Foundation
                 Guard.Try(_owner + " restore", undo);
             }
             _restore.Clear();
+            Active.Remove(this);
             _recorded.Clear();
+            _groups.Clear();
             if (n > 0) GenesisLog.Info("Skin", _owner + " restored " + n + " vanilla change(s)");
             return n;
         }

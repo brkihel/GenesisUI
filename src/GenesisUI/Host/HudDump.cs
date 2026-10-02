@@ -13,7 +13,9 @@ namespace GenesisUI.Host
     /// active, what it draws, and whether GenesisUI veils it. Lets a test report answer
     /// "what is that leftover under our bars?" without guessing.
     /// </summary>
-    [GameContract("assembly_valheim", "Hud", "m_healthPanel")]
+    [GameContract("assembly_valheim", "Hud", "m_healthPanel", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.RectTransform")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Hud", "get_instance", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "Hud")]
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Foundation.VanillaVeil), typeof(GenesisUI.Foundation.VeilHandle))]
     internal static class HudDump
     {
         private const int MaxLines = 120;

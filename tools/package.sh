@@ -20,6 +20,8 @@ case "$CHANNEL" in Preview|Release) ;; *) echo "channel must be Preview or Relea
 cd "$ROOT"
 
 [ -f ref/assembly_valheim.dll ] || { echo "ref/ is empty: run tools/fill-ref.sh" >&2; exit 2; }
+[ -z "$(git status --porcelain --untracked-files=no)" ] || { echo 'Commit tracked changes before packaging' >&2; exit 2; }
+[ -z "$(git ls-files --others --exclude-standard -- src tests docs tools art unity)" ] || { echo 'Commit new project files before packaging' >&2; exit 2; }
 
 echo "==> tests ($CHANNEL)"
 DOTNET_GCHeapHardLimit=${DOTNET_GCHeapHardLimit:-0x40000000} dotnet test GenesisUI.sln -c "$CHANNEL" --nologo -v q
@@ -28,6 +30,13 @@ VERSION=$(sed -n 's/.*const string Version = "\([^"]*\)".*/\1/p' src/GenesisUI/P
 PREVIEW=$(sed -n 's/.*const int PreviewNumber = \([0-9]*\).*/\1/p' src/GenesisUI/PluginInfo.cs)
 DLL="src/GenesisUI/bin/$CHANNEL/net48/GenesisUI.dll"
 [ -f "$DLL" ] || { echo "missing $DLL" >&2; exit 1; }
+STAMP=$(dotnet run --project tools/review -- stamp "$ROOT" "$DLL")
+python3 - "$STAMP" "$VERSION" "$PREVIEW" "$CHANNEL" "$(git rev-parse --short=7 HEAD)" <<'PY'
+import json, sys
+stamp = json.loads(sys.argv[1])
+if (stamp['version'], str(stamp['preview']), stamp['channel'], stamp['sha']) != tuple(sys.argv[2:]):
+    sys.exit('Compiled package source/version/channel mismatch')
+PY
 
 # The Core must be merged, never shipped beside the plugin (see ILRepack.targets).
 grep -aq "FaultRegistry" "$DLL" || { echo "GenesisUI.Core was not merged into $DLL" >&2; exit 1; }
@@ -70,12 +79,9 @@ for sprite in manifest["sprites"]:
     shutil.copy2(os.path.join(src, name), os.path.join(dst, name))
 print(f"   art: {len(manifest['sprites'])} sprites")
 PY
-if [ -f "$OUTDIR/art/genesisui.shaders" ]; then
-    cp "$OUTDIR/art/genesisui.shaders" "$STAGE/plugins/art/"
-    echo "   shaders: art/genesisui.shaders"
-else
-    echo "   shaders: none (frames use their lit sprites; run tools/shaders/build.sh)"
-fi
+python3 tools/shaders/provenance.py "$OUTDIR/art/genesisui.shaders"
+cp "$OUTDIR/art/genesisui.shaders" "$STAGE/plugins/art/"
+cp art/shaders/provenance.json "$STAGE/plugins/art/shader-provenance.json"
 # The store page is written for players (store/README.md); the repository README is for GitHub.
 cp icon.png CHANGELOG.md LICENSE "$STAGE/"
 cp store/README.md "$STAGE/README.md"
@@ -99,16 +105,36 @@ cat > "$STAGE/manifest.json" <<JSON
 }
 JSON
 
+python3 - "$STAGE" "$CHANNEL" "$VERSION" "$PREVIEW" <<'PY'
+import hashlib, json, pathlib, subprocess, sys
+stage = pathlib.Path(sys.argv[1])
+digest = lambda p: hashlib.sha256(p.read_bytes()).hexdigest().upper()
+refs = {name + '.dll': digest(pathlib.Path('ref') / (name + '.dll'))
+        for name in ('assembly_valheim', 'assembly_utils', 'assembly_guiutils', 'gui_framework', 'Jotunn')}
+files = {p.relative_to(stage).as_posix(): digest(p) for p in stage.rglob('*') if p.is_file() and p.name != 'manifest.json'}
+evidence = dict(schema=1, commit=subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(),
+                channel=sys.argv[2], version=sys.argv[3], preview=sys.argv[4], references=refs, filesSha256=files)
+(stage / 'build-evidence.json').write_text(json.dumps(evidence, indent=2), encoding='utf-8')
+PY
+
 python3 - "$STAGE" "dist/$NAME.zip" <<'PY'
-import os, sys, zipfile
+import hashlib, os, sys, zipfile
 src, dst = sys.argv[1], sys.argv[2]
+expected = {}
 with zipfile.ZipFile(dst, "w", zipfile.ZIP_DEFLATED) as z:
     for root, _, files in os.walk(src):
         for f in sorted(files):
             p = os.path.join(root, f)
-            z.write(p, os.path.relpath(p, src))
-    for n in sorted(z.namelist()):
-        print("   " + n)
+            name = os.path.relpath(p, src).replace(os.sep, '/')
+            expected[name] = hashlib.sha256(open(p, 'rb').read()).digest()
+            z.write(p, name)
+with zipfile.ZipFile(dst) as z:
+    if len(z.namelist()) != len(expected) or set(z.namelist()) != set(expected) or z.testzip():
+        sys.exit('Archive entries/CRC mismatch')
+    for name, digest in expected.items():
+        if hashlib.sha256(z.read(name)).digest() != digest:
+            sys.exit('Archive content hash mismatch: ' + name)
+print(f'   verified {len(expected)} archive entries by SHA256')
 PY
 rm -rf "$STAGE"
 echo "==> dist/$NAME.zip ($(stat -c%s "dist/$NAME.zip") bytes)"

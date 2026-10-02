@@ -17,16 +17,19 @@ namespace GenesisUI.Modules.Climate
     /// surrounds the vital bars. Reads only; every change eases in and out.
     /// </summary>
     [GameContract("assembly_valheim", "SEMan", "HaveStatusEffect", Parameters = new[] { "System.Int32" })]
-    [GameContract("assembly_valheim", "SEMan", "s_statusEffectFreezing")]
-    [GameContract("assembly_valheim", "SEMan", "s_statusEffectCold")]
-    [GameContract("assembly_valheim", "SEMan", "s_statusEffectWet")]
-    [GameContract("assembly_valheim", "SEMan", "s_statusEffectBurning")]
-    [GameContract("assembly_valheim", "SEMan", "s_statusEffectRested")]
+    [GameContract("assembly_valheim", "SEMan", "s_statusEffectFreezing", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "System.Int32")]
+    [GameContract("assembly_valheim", "SEMan", "s_statusEffectCold", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "System.Int32")]
+    [GameContract("assembly_valheim", "SEMan", "s_statusEffectWet", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "System.Int32")]
+    [GameContract("assembly_valheim", "SEMan", "s_statusEffectBurning", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "System.Int32")]
+    [GameContract("assembly_valheim", "SEMan", "s_statusEffectRested", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "System.Int32")]
     [GameContract("assembly_valheim", "Player", "GetCurrentBiome")]
     [GameContract("assembly_valheim", "Character", "GetHealthPercentage")]
     [GameContract("assembly_valheim", "Character", "GetSEMan")]
     [GameContract("assembly_valheim", "Character", "IsDead")]
     [GameContract("assembly_valheim", "EnvMan", "GetDayFraction")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Player", "m_localPlayer", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "Player")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "EnvMan", "get_instance", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "EnvMan")]
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Host.ModuleContext), typeof(GenesisUI.Theme.ThemeRuntime), typeof(GenesisUI.Widgets.Ui), typeof(GenesisUI.Widgets.EdgeLight))]
     internal sealed class ClimateModule : IUiModule
     {
         private const float LowHealth = 0.25f;
@@ -114,9 +117,9 @@ namespace GenesisUI.Modules.Climate
 
             if (_rested != null)
             {
-                if (_vitals == null) _vitals = _context.Root.Find("Vitals") as RectTransform;
+                _vitals = Modules.Vitals.VitalsModule.VisualAnchor;
                 _rested.Target = _vitals;
-                _rested.Intensity = rested ? 0.3f : 0f;
+                _rested.Intensity = rested && _vitals != null && ModuleHost.IsActive("hud.vitals") ? 0.3f : 0f;
             }
         }
 

@@ -1,5 +1,11 @@
 # GenesisUI — Adapters
 
+Status: design only; no exact-version adapters are shipped in 1.1.2. The stability base now has
+owner cleanup, dependency contracts, region reservations and vanilla tooltip/input fallbacks.
+Backpacks, Jewelcrafting and HipLantern resource modules follow as separate integration slices,
+with their own DLL contracts and client results. See [CAPABILITIES](CAPABILITIES.md) and
+[the modpack study](review/2026-10-02/MODPACK.md).
+
 An adapter implements Extension API interfaces **on behalf of** a mod that does not
 know GenesisUI. It lives in-tree (`src/GenesisUI/Adapters/<ModName>/`), isolated from
 everything else. A separate package for an adapter is an exception that needs a

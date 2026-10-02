@@ -33,10 +33,13 @@ is unclear, ask; do not guess.
 - **Development test (2026-10-02):** R-062 on `1.1.1-preview.1` confirms the character
   and items appear (`report-20261002-134941.log`), with an unwanted pink outline.
   `1.1.1-preview.2` decodes the key before edge filtering (D-039, R-063); all three
-  channels pass automated tests. Shader compilation and the Direct3D11 edge check passed
-  after Diego enabled full access; Diego approved its visual result in R-063.
-  Work is on `fix/preview3d-edge-1.1.1`. Diego authorized packaging without a prior commit
-  during the restricted session; the test package still identifies HEAD `003ad78`.
+  channels pass automated tests. Diego approved its visual result in R-063 (`2a1854a`).
+  He authorized the complete stability review fixes. Current branch: `fix/stability-1.1.2`,
+  target `1.1.2-preview.1`, D-040 and `docs/STABILITY-FIXES.md`; client R-065 is pending.
+  The unchanged approved shader has source/hash/Direct3D11 evidence in
+  `art/shaders/provenance.json`. Commit before packaging and verify ZIP contents by hash.
+  Structured providers/mod resource adapters remain F7 work; no full-modpack certification
+  or production rollout is implied. Earlier uncommitted packaging was a one-session exception.
 - **Current F4.0 art source:** Diego supplied isolated UI sheets and separate background,
   health, stamina and eitr textures at
   `/home/diego/GenesisUI-Concept/GenesisUI-textures/`. `tools/art/sheets.py` cuts every HUD

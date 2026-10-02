@@ -11,6 +11,7 @@ namespace GenesisUI.Widgets
     /// masks so the halo is not clipped. Null from <see cref="Create"/> when the shader is not loaded:
     /// callers keep their previous effect.
     /// </summary>
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Theme.ThemeRuntime), typeof(GenesisUI.Widgets.Ui))]
     internal sealed class BurnLight
     {
         private const float Pad = 18f;

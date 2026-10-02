@@ -17,10 +17,14 @@ namespace GenesisUI.Modules.Windows
     /// </summary>
     [GameContract("assembly_valheim", "InventoryGui", "Hide")]
     [GameContract("assembly_valheim", "InventoryGui", "IsVisible")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_player")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_crafting")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_info")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_container")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_player", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.RectTransform")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_crafting", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.RectTransform")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_info", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.RectTransform")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_container", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.RectTransform")]
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(VanillaPanels))]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "InventoryGui", "get_instance", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "InventoryGui")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Player", "m_localPlayer", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "Player")]
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Host.ModuleContext), typeof(GenesisUI.Widgets.WindowParts), typeof(GenesisUI.Widgets.WindowCanvas), typeof(GenesisUI.Widgets.Backdrop), typeof(GenesisUI.Modules.Windows.VanillaPanels), typeof(GenesisUI.Foundation.GenesisLog), typeof(GenesisUI.Foundation.Guard))]
     internal abstract class WindowModuleBase : IUiModule, IRecoverable
     {
         /// <summary>IRecoverable: on a fault the windows close (vanilla's never shows in their place).</summary>
@@ -49,7 +53,7 @@ namespace GenesisUI.Modules.Windows
 
         public abstract string Id { get; }
         public abstract string NameToken { get; }
-        public IReadOnlyList<string> Regions => NoRegions;
+        public IReadOnlyList<string> Regions => new[] { Id };
         public float RefreshRate => 0f;
 
         /// <summary>The shell tab this window draws.</summary>

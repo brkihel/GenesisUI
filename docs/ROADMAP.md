@@ -40,6 +40,12 @@ Esc menu. The main menu (FejdStartup) and the game's settings screen remain in F
 
 ## Research items (not scheduled)
 
+- **Authorized stabilization:** `fix/stability-1.1.2` / `1.1.2-preview.1` implements the base
+  corrections from all 25 findings; tracker [STABILITY-FIXES](STABILITY-FIXES.md), decision D-040,
+  client regression [R-065](testing/scripts/R-065-stability-base.md). Core/contracts/data/package
+  gates precede delivery. Structured providers and Backpacks/Jewelcrafting/HipLantern adapters
+  remain separate integration work; R-064 remains their future combined certification script.
+
 - 3D character and item previews are implemented in the 1.1 development build (D-034/D-039).
   R-062 confirms models appear in 1.1.1-preview.1, with a pink outline. The
   1.1.1-preview.2 edge correction passed shader compilation and the Direct3D11 edge

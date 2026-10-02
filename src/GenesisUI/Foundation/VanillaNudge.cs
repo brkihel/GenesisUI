@@ -19,6 +19,7 @@ namespace GenesisUI.Foundation
     /// resets it, and restored exactly on release or when the owner faults. Used when a vanilla
     /// element should stay vanilla but get out of the way of ours (key hints vs. our hotbar).
     /// </summary>
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Foundation.Guard), typeof(GenesisUI.Foundation.Faults.FaultRegistry), typeof(GenesisUI.Foundation.GenesisLog), typeof(GenesisUI.Foundation.NudgeHandle), typeof(GenesisUI.Foundation.Faults.FaultRecord))]
     internal static class VanillaNudge
     {
         private static readonly List<NudgeHandle> Active = new List<NudgeHandle>();
@@ -70,17 +71,16 @@ namespace GenesisUI.Foundation
         /// <summary>Called every LateUpdate. Allocation-free.</summary>
         public static void Enforce()
         {
-            for (int i = Active.Count - 1; i >= 0; i--)
-            {
-                var h = Active[i];
-                if (h.Target == null) { Active.RemoveAt(i); continue; }
-                var wanted = h.Original + h.Offset;
-                if (h.Target.anchoredPosition == wanted) continue;
-                // Vanilla moved it: treat the new position as vanilla's intent and keep our offset on top.
-                h.Original = h.Target.anchoredPosition;
-                h.Target.anchoredPosition = h.Original + h.Offset;
-                if (++h.Fought == 1) GenesisLog.Info("Nudge", h.Label + ": vanilla repositioned it; keeping our offset on top");
-            }
+            for (int i = Active.Count - 1; i >= 0; i = System.Math.Min(i - 1, Active.Count - 1))
+                Guard.Run(Active[i].Owner, EnforceHandle, Active[i]);
         }
+        private static readonly System.Action<NudgeHandle> EnforceHandle = h =>
+        {
+            if (h.Target == null) { Active.Remove(h); return; }
+            if (h.Target.anchoredPosition == h.Original + h.Offset) return;
+            h.Original = h.Target.anchoredPosition;
+            h.Target.anchoredPosition = h.Original + h.Offset;
+            if (++h.Fought == 1) GenesisLog.Info("Nudge", h.Label + ": vanilla repositioned it; keeping our offset on top");
+        };
     }
 }

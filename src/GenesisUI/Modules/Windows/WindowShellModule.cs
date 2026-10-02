@@ -25,19 +25,24 @@ namespace GenesisUI.Modules.Windows
     [GameContract("assembly_valheim", "InventoryGui", "OnOpenAchievements")]
     [GameContract("assembly_valheim", "InventoryGui", "OnCloseAchievements")]
     [GameContract("assembly_valheim", "InventoryGui", "OnCloseTrophies")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_skillsDialog")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_textsDialog")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_trophiesPanel")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_achievementsPanel")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_skillsDialog", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "SkillsDialog")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_textsDialog", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "TextsDialog")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_trophiesPanel", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.GameObject")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_achievementsPanel", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "AchievementsGui")]
     [GameContract("assembly_valheim", "SkillsDialog", "OnClose")]
     [GameContract("assembly_valheim", "Minimap", "SetMapMode")]
     [GameContract("assembly_valheim", "Minimap", "IsOpen")]
     [GameContract("assembly_valheim", "Minimap", "get_instance")]
-    [GameContract("assembly_valheim", "Minimap", "m_mode")]
-    [GameContract("assembly_valheim", "Minimap", "m_largeRoot")]
+    [GameContract("assembly_valheim", "Minimap", "m_mode", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "Minimap\u002BMapMode")]
+    [GameContract("assembly_valheim", "Minimap", "m_largeRoot", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.GameObject")]
     [GameContract("assembly_valheim", "InventoryGui", "Show")]
     [GameContract("assembly_valheim", "KeyHints", "instance")]
     [GameContract("assembly_valheim", "Player", "GetCurrentCraftingStation")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Player", "m_localPlayer", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "Player")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_utils", "ZInput", "get_pointerPosition", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "UnityEngine.Vector3")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_guiutils", "Localization", "get_instance", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "Localization")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_guiutils", "Localization", "Localize", Parameters = new string[] { "System.String" }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.String")]
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Host.ModuleContext), typeof(GenesisUI.Widgets.WindowCanvas), typeof(GenesisUI.Widgets.UiSound), typeof(GenesisUI.Foundation.CanvasGroupLease), typeof(GenesisUI.Modules.Windows.VanillaPanels), typeof(GenesisUI.Foundation.SharedCanvasGroups), typeof(GenesisUI.Foundation.GenesisLog), typeof(GenesisUI.Theme.ThemeRuntime), typeof(GenesisUI.Theme.ThemeTokens), typeof(GenesisUI.Widgets.TabBeam), typeof(GenesisUI.Widgets.Ui), typeof(GenesisUI.Widgets.Frame), typeof(GenesisUI.Widgets.PressFeedback), typeof(GenesisUI.Foundation.Guard))]
     internal sealed class WindowShellModule : IUiModule, IRecoverable
     {
         /// <summary>IRecoverable: on a fault the windows close; the map too (vanilla's never shows in their place).</summary>
@@ -102,7 +107,7 @@ namespace GenesisUI.Modules.Windows
         private float _heldFor;
         private float _hudAlpha = 1f;
         private CanvasGroup _keyHints;
-        private bool _keyHintsOwn;
+        private CanvasGroupLease _keyHintsLease;
 
         private sealed class TabView
         {
@@ -122,7 +127,7 @@ namespace GenesisUI.Modules.Windows
 
         public string Id => "win.shell";
         public string NameToken => "$genesisui_module_windows";
-        public IReadOnlyList<string> Regions => NoRegions;
+        public IReadOnlyList<string> Regions => new[] { Id };
         public float RefreshRate => 0f; // every frame: tab keys
 
         /// <summary>Whether the shell is showing a window, and which tab: read by the window modules.</summary>
@@ -238,11 +243,8 @@ namespace GenesisUI.Modules.Windows
             Opacity = 0f;
             ModuleHost.SetHudAlpha(1f);
             _hudAlpha = 1f;
-            if (_keyHints != null)
-            {
-                if (_keyHintsOwn) Object.Destroy(_keyHints);
-                else _keyHints.alpha = 1f;
-            }
+            if (_keyHintsLease != null) _keyHintsLease.Release();
+            _keyHintsLease = null;
             _keyHints = null;
             _mapFromTab = false;
             ReleasePanels();
@@ -265,11 +267,11 @@ namespace GenesisUI.Modules.Windows
             {
                 if (alpha >= 1f || KeyHints.instance == null) return;
                 // Add a group only if vanilla has none, and remember whether it is ours to remove.
-                _keyHints = KeyHints.instance.gameObject.GetComponent<CanvasGroup>();
-                _keyHintsOwn = _keyHints == null;
-                if (_keyHintsOwn) _keyHints = KeyHints.instance.gameObject.AddComponent<CanvasGroup>();
+                if (_keyHintsLease != null) _keyHintsLease.Release();
+                _keyHintsLease = SharedCanvasGroups.Acquire("module:win.shell", KeyHints.instance.gameObject);
+                _keyHints = _keyHintsLease.Group;
             }
-            if (!Mathf.Approximately(_keyHints.alpha, alpha)) _keyHints.alpha = alpha;
+            _keyHintsLease.Fade(alpha);
         }
 
         // ------------------------------------------------------------------ tabs
@@ -495,7 +497,7 @@ namespace GenesisUI.Modules.Windows
             var button = cell.gameObject.AddComponent<Button>();
             button.targetGraphic = hit;
             button.transition = Selectable.Transition.None;
-            button.onClick.AddListener(() => Guard.Try("window tab " + tab, () => Select(tab, callVanilla: true)));
+            button.onClick.AddListener(() => Guard.Run("module:win.shell", () => Select(tab, callVanilla: true)));
             // The tab's light (beam when selected, rail glint on hover); the soft light over the tab without the shader.
             view.Beam = TabBeam.Attach(cell, button, _theme);
             if (view.Beam == null) PressFeedback.Attach(cell, button, _theme, 6f);

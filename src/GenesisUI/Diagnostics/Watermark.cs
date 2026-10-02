@@ -12,15 +12,19 @@ namespace GenesisUI.Diagnostics
     /// the exact package it came from (docs/DIAGNOSTICS.md §1). Recreated on every
     /// scene change, because Jötunn recreates its GUI root with the scene.
     /// </summary>
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Foundation.GenesisLog), typeof(GenesisUI.Foundation.Guard))]
     internal static class Watermark
     {
         private const string Owner = "diag:watermark";
         private static string _text;
+        private static GameObject _root;
+        private static readonly System.Action Available = () => Guard.Run(Owner, Create);
 
         public static void Install(BuildChannel channel, string fullVersion)
         {
             _text = "GenesisUI " + (channel == BuildChannel.Preview ? "PREVIEW" : "DEV") + " " + fullVersion;
-            GUIManager.OnCustomGUIAvailable += () => Guard.Run(Owner, Create);
+            GUIManager.OnCustomGUIAvailable -= Available;
+            GUIManager.OnCustomGUIAvailable += Available;
         }
 
         private static void Create()
@@ -32,6 +36,8 @@ namespace GenesisUI.Diagnostics
             // Valheim does not ship) in Awake, and warns before we can assign the game font.
             // Awake only runs on activation, after the font is set.
             var go = new GameObject("GenesisUI_Watermark", typeof(RectTransform));
+            if (_root != null) Object.Destroy(_root);
+            _root = go;
             go.SetActive(false);
             go.transform.SetParent(root.transform, false);
 
@@ -51,6 +57,12 @@ namespace GenesisUI.Diagnostics
             go.SetActive(true);
 
             GenesisLog.Debug("Diag", "watermark placed");
+        }
+        internal static void Shutdown()
+        {
+            GUIManager.OnCustomGUIAvailable -= Available;
+            if (_root != null) Object.Destroy(_root);
+            _root = null; _text = null;
         }
     }
 }

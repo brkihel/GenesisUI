@@ -1,7 +1,8 @@
 # GenesisUI — Extension API (draft v1)
 
-Status: design. Ships in F7 (D-024: after the whole vanilla UI). Until 1.0 the API may change; every change is listed in
-CHANGELOG.md under "API".
+Status: design only. Ships in F7 (D-024: after the whole vanilla UI); the interfaces and examples
+below are proposals, not available registrations in 1.1.2. Public API versioning begins when it
+ships. Changes will be listed in CHANGELOG.md under "API". See [CAPABILITIES](CAPABILITIES.md).
 
 The API is how compatibility becomes a property of the design: a mod describes
 **what** it wants to show, GenesisUI decides **where and how**. Supporting a mod never
@@ -44,8 +45,8 @@ when GenesisUI is absent.
 | `IMapPinCategoryProvider` | filter pills and legend entries for custom pins | resource or event pins |
 | `IKeyHintSource` | footer and HUD key hints for non-Jötunn mods | — |
 
-Jötunn `KeyHintManager` hints and `ModQuery` item origin are read automatically; mods
-that already use them need nothing extra.
+Planned: read Jötunn `KeyHintManager` hints and `ModQuery` item origin automatically.
+This draft does not certify arbitrary foreign content as visible or actionable in the shipped UI.
 
 Sketch of one contract:
 

@@ -17,6 +17,9 @@ namespace GenesisUI.Host
         public readonly List<VeilHandle> Veils = new List<VeilHandle>();
         public double RefreshSecondsTotal;
         public int RefreshCount;
+        public RectTransform Root;
+        public int Generation;
+        public System.EventHandler ConfigChanged;
 
         public string Owner => "module:" + Module.Id;
     }
@@ -28,7 +31,9 @@ namespace GenesisUI.Host
     /// handled here, never by modules.
     /// </summary>
     [GameContract("assembly_valheim", "Minimap", "instance")]
-    [GameContract("assembly_valheim", "Minimap", "m_largeRoot")]
+    [GameContract("assembly_valheim", "Minimap", "m_largeRoot", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.GameObject")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Hud", "get_instance", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "Hud")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Hud", "m_rootObject", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.GameObject")]
     internal static class ModuleHost
     {
         /// <summary>The longest time step a module is ever given (seconds).</summary>
@@ -38,25 +43,39 @@ namespace GenesisUI.Host
         private static RectTransform _hudRoot;
         private static Theme.ThemeRuntime _theme;
         private static bool _masterEnabled = true;
+        private static readonly Foundation.Faults.RecoveryQueue Recovery = new Foundation.Faults.RecoveryQueue();
+        private static readonly System.Action<Foundation.Faults.FaultRecord> RecoverPending = RecoverOwner;
 
         public static IReadOnlyList<ModuleEntry> Modules => Entries;
 
         public static void Init(Theme.ThemeRuntime theme, bool masterEnabled)
         {
+            Guard.Faults.Tripped -= OnFault;
             _theme = theme;
             _masterEnabled = masterEnabled;
-            Guard.Faults.Tripped += record =>
-            {
-                foreach (var e in Entries)
-                    if (e.Owner == record.Owner && e.State == ModuleState.Active) Recover(e, record);
-            };
+            Guard.Faults.Tripped += OnFault;
+        }
+
+        private static void OnFault(Foundation.Faults.FaultRecord record)
+        {
+            foreach (var entry in Entries)
+                if (entry.Owner == record.Owner && (entry.State == ModuleState.Active || entry.State == ModuleState.Building))
+                    Recovery.Request(record);
+        }
+
+        private static void RecoverOwner(Foundation.Faults.FaultRecord record)
+        {
+            foreach (var entry in Entries)
+                if (entry.Owner == record.Owner)
+                    Guard.Try("recover " + entry.Module.Id, () => Recover(entry, record));
         }
 
         public static void Register(IUiModule module, ConfigEntry<bool> enabled)
         {
             var entry = new ModuleEntry { Module = module, Enabled = enabled, RefreshAction = module.Refresh };
             Entries.Add(entry);
-            enabled.SettingChanged += (_, __) => Guard.Try("toggle " + module.Id, () => Reconcile(entry));
+            entry.ConfigChanged = (_, __) => Guard.Try("toggle " + module.Id, ReconcileAll);
+            enabled.SettingChanged += entry.ConfigChanged;
             GenesisLog.Info("Host", "module registered: " + module.Id);
         }
 
@@ -98,6 +117,9 @@ namespace GenesisUI.Host
                 e.RefreshSecondsTotal += (System.Diagnostics.Stopwatch.GetTimestamp() - start) / (double)System.Diagnostics.Stopwatch.Frequency;
                 e.RefreshCount++;
             }
+            ReconcileDependencies();
+            Recovery.Drain(RecoverPending); // fault notifications have returned; restore before drawing
+            ReconcileDependencies();
         }
 
         /// <summary>Plugin.LateUpdate.</summary>
@@ -146,12 +168,13 @@ namespace GenesisUI.Host
         /// <summary>
         /// A module threw (Diego, after R-058: a broken window must never stay broken, vanilla must
         /// not show up, the player must not have to press "re-enable"). The vanilla window it drew over
-        /// is closed first; the module is torn down and rebuilt in the same frame, so HUD veils are
+        /// is closed first; after cleanup subscribers return, the module is torn down and rebuilt, so HUD veils are
         /// back before anything draws; the player is told with an apology and the exact error. A module
         /// that keeps failing (RecoveryPolicy) stays off and the popup says so.
         /// </summary>
         private static void Recover(ModuleEntry e, Foundation.Faults.FaultRecord record)
         {
+            Set(e, ModuleState.Recovering, record.FirstMessage);
             if (e.Module is IRecoverable window) Guard.Try("close vanilla window for " + e.Module.Id, window.CloseVanillaWindow);
             TearDown(e, ModuleState.Faulted, record.FirstMessage);
             bool restart = _masterEnabled && e.Enabled.Value && Policy.TryRestart(e.Owner, Guard.Now);
@@ -167,6 +190,8 @@ namespace GenesisUI.Host
         /// <summary>Diagnostics "retry": forget the fault and try to build again.</summary>
         public static void Retry(ModuleEntry e)
         {
+            Recovery.Forget(e.Owner);
+            TearDown(e, ModuleState.Disabled, null);
             Policy.Forget(e.Owner);
             Guard.Faults.Reset(e.Owner);
             e.State = ModuleState.Disabled;
@@ -184,8 +209,29 @@ namespace GenesisUI.Host
         {
             // The HUD and everything under it went away with the scene.
             foreach (var e in Entries)
+            {
+                Recovery.Forget(e.Owner);
                 if (e.State == ModuleState.Active) TearDown(e, ModuleState.Waiting, null);
+            }
             GenesisLog.Info("Host", "HUD gone (scene change); modules wait for the next one");
+        }
+
+        private static bool NeedsShell(ModuleEntry entry) => entry.Module.Id == "win.inventory" || entry.Module.Id == "win.crafting" || entry.Module.Id == "win.skills" || entry.Module.Id == "win.achievements" || entry.Module.Id == "win.settings";
+        internal static bool IsActive(string id)
+        {
+            foreach (var entry in Entries) if (entry.Module.Id == id) return entry.State == ModuleState.Active && !Guard.IsTripped(entry.Owner);
+            return false;
+        }
+        private static void ReconcileAll() { foreach (var entry in Entries) Reconcile(entry); }
+        private static void ReconcileDependencies()
+        {
+            bool shell = IsActive("win.shell");
+            foreach (var entry in Entries)
+            {
+                if (!NeedsShell(entry)) continue;
+                if (!shell && entry.State == ModuleState.Active) TearDown(entry, ModuleState.Blocked, "window shell unavailable");
+                else if (shell && entry.State == ModuleState.Blocked && entry.Reason == "window shell unavailable") Reconcile(entry);
+            }
         }
 
         private static void Reconcile(ModuleEntry e)
@@ -194,37 +240,56 @@ namespace GenesisUI.Host
 
             if (!wanted)
             {
+                Recovery.Forget(e.Owner);
                 if (e.State == ModuleState.Active) TearDown(e, ModuleState.Disabled, null);
                 else if (e.State != ModuleState.Faulted) Set(e, ModuleState.Disabled, null);
                 return;
             }
 
-            if (e.State == ModuleState.Active || e.State == ModuleState.Faulted) return;
+            if (e.State == ModuleState.Active || e.State == ModuleState.Faulted || e.State == ModuleState.Building || e.State == ModuleState.Recovering) return;
             if (_hudRoot == null) { Set(e, ModuleState.Waiting, null); return; }
+            if (NeedsShell(e) && !IsActive("win.shell")) { Set(e, ModuleState.Blocked, "window shell unavailable"); return; }
             Build(e);
         }
 
         private static void Build(ModuleEntry e)
         {
+            if (!Guard.Run(e.Owner, () => BuildChecked(e))) TearDown(e, ModuleState.Faulted, "Build preflight threw; see the log");
+        }
+
+        private static void BuildChecked(ModuleEntry e)
+        {
+            if (e.Module is IModulePrerequisites prerequisites && prerequisites.UnsupportedReason != null)
+            {
+                Set(e, ModuleState.Unsupported, prerequisites.UnsupportedReason);
+                return;
+            }
             var missing = ContractResolver.Missing(e.Module.GetType());
             if (missing.Count > 0) { Set(e, ModuleState.Unsupported, "missing " + string.Join("; ", missing)); return; }
 
             if (!RegionRegistry.TryClaimAll(e.Owner, e.Module.Regions, out string reason)) { Set(e, ModuleState.Blocked, reason); return; }
 
-            var root = new GameObject("GenesisUI_" + e.Module.Id, typeof(RectTransform));
-            var rt = (RectTransform)root.transform;
-            rt.SetParent(_hudRoot, false);
-            Stretch(rt);
-
-            bool built = Guard.Run(e.Owner, () => e.Module.Build(new ModuleContext { Root = rt, Theme = _theme }));
+            Set(e, ModuleState.Building, null);
+            e.Generation++;
+            bool built = Guard.Run(e.Owner, () =>
+            {
+                e.Root = (RectTransform)OwnerResources.Own(new GameObject("GenesisUI_" + e.Module.Id, typeof(RectTransform))).transform;
+                e.Root.SetParent(_hudRoot, false);
+                Stretch(e.Root);
+                e.Module.Build(new ModuleContext { Root = e.Root, Theme = _theme, Owner = e.Owner, Generation = e.Generation });
+                VeilRegions(e);
+            });
             if (!built)
             {
-                Object.Destroy(root);
-                RegionRegistry.ReleaseAll(e.Owner);
-                if (e.State != ModuleState.Faulted) Set(e, ModuleState.Faulted, "Build threw; see the log");
+                TearDown(e, ModuleState.Faulted, "Build threw; see the log");
                 return;
             }
+            e.SinceRefresh = float.MaxValue;
+            Set(e, ModuleState.Active, null);
+        }
 
+        private static void VeilRegions(ModuleEntry e)
+        {
             foreach (var region in e.Module.Regions)
             {
                 int veiled = 0;
@@ -236,19 +301,37 @@ namespace GenesisUI.Host
                 if (veiled == 0 && !RegionRegistry.IsDynamic(region))
                     GenesisLog.Warn("Veil", e.Module.Id + ": no vanilla object found for " + region);
             }
-            e.SinceRefresh = float.MaxValue; // refresh on the next tick
-            Set(e, ModuleState.Active, null);
         }
 
         private static void TearDown(ModuleEntry e, ModuleState next, string reason)
         {
             Guard.Try("teardown " + e.Module.Id, e.Module.Teardown);
-            VanillaVeil.RestoreAll(e.Owner);
-            VanillaNudge.RestoreAll(e.Owner);
+            Guard.Try(e.Owner + " restore skins", () => VanillaSkin.RestoreAll(e.Owner));
+            Guard.Try(e.Owner + " release shared panels", () => GenesisUI.Modules.Windows.VanillaPanels.Release(e.Owner));
+            Guard.Try(e.Owner + " restore veils", () => VanillaVeil.RestoreAll(e.Owner));
+            Guard.Try(e.Owner + " restore nudges", () => VanillaNudge.RestoreAll(e.Owner));
             e.Veils.Clear();
-            InputLeases.ReleaseAll(e.Owner);
-            RegionRegistry.ReleaseAll(e.Owner);
+            Guard.Try(e.Owner + " release input", () => InputLeases.ReleaseAll(e.Owner));
+            Guard.Try(e.Owner + " release regions", () => RegionRegistry.ReleaseAll(e.Owner));
+            OwnerResources.Release(e.Owner);
+            e.Root = null;
             Set(e, next, reason);
+        }
+
+        public static void Shutdown()
+        {
+            Guard.Faults.Tripped -= OnFault;
+            Recovery.Clear();
+            foreach (var entry in Entries)
+            {
+                entry.Enabled.SettingChanged -= entry.ConfigChanged;
+                TearDown(entry, ModuleState.Disabled, null);
+                Policy.Forget(entry.Owner);
+            }
+            Entries.Clear();
+            if (_hudRoot != null) Object.Destroy(_hudRoot.gameObject);
+            _hudRoot = null;
+            _theme = null;
         }
 
         private static void Set(ModuleEntry e, ModuleState state, string reason)

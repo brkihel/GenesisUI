@@ -1,5 +1,18 @@
 # GenesisUI — Testing
 
+## Stability gate (1.1.2-preview.1)
+
+Run the solution serially in Debug, Preview and Release with a capped managed heap. Mandatory
+Core/L2 tests must have zero failures/skips when `ref/` is available. Regressions include fault
+subscriber order/reentrancy, shared claim order, snapshot identity/count/position changes,
+whole-plan bounds/overlap checks, strict JSON grammar, decoded image budgets and shader provenance.
+L2 compares compiled native calls per owner/overload to declared contracts, validates every
+field's kind/type/staticness, enforces layer boundaries and bans item count/identity/network writes.
+
+[R-065](testing/scripts/R-065-stability-base.md) covers client behavior that pure/metadata tests
+cannot execute: native hooks, input, sanitized 3D copies, fallback, scene cycles and modded text.
+R-064 remains the future adapter/modpack certification script; no adapter certification is inferred.
+
 ## Where tests run
 
 - **Nothing is tested on a server** at this stage, and never in production.

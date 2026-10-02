@@ -38,8 +38,8 @@ namespace GenesisUI.Contract.Tests
         {
             ("GenesisUI.Foundation.LogFileSink", @"^System\.IO\.(FileStream|StreamWriter)::\.ctor$|^System\.IO\.FileInfo::Delete$",
                 "own log folder BepInEx/GenesisUI/logs, size-capped, newest 5 kept (DIAGNOSTICS.md §2)"),
-            ("GenesisUI.Foundation.ReportWriter", @"^System\.IO\.File::WriteAllText$",
-                "reports folder BepInEx/GenesisUI/reports, path checked (DIAGNOSTICS.md §4)"),
+            ("GenesisUI.Foundation.ReportWriter", @"^System\.IO\.File::WriteAllText$|^System\.IO\.FileInfo::Delete$",
+                "own reports folder, checked paths and owned names, size bounded, newest 10 kept (S-19, D-040)"),
             ("ServerSync.", @"^ZRoutedRpc::|^HarmonyLib\.Harmony::PatchAll$|^System\.IO\.File::|^System\.IO\.FileStream::\.ctor$",
                 "ServerSync (D-031): server-to-client config sync; patches only its own nested classes"),
             ("GenesisUI.Foundation.GuardedPatcher", @"^HarmonyLib\.Harmony::Unpatch$",
@@ -60,6 +60,16 @@ namespace GenesisUI.Contract.Tests
             var violations = new List<string>();
             foreach (var r in IlScanner.Scan(TestPaths.PluginDll).Where(r => !r.Target.StartsWith("type:", StringComparison.Ordinal)))
             {
+                string field = r.Target.Replace('/', '+');
+                if (r.Operation == "stfld" || r.Operation == "stsfld")
+                {
+                    if (field.StartsWith("ItemDrop+ItemData::", StringComparison.Ordinal))
+                    {
+                        bool positionOnly = field == "ItemDrop+ItemData::m_gridPos" && new[] { "GenesisUI.Gameplay.InventorySafety", "GenesisUI.Gameplay.EquipmentRules", "GenesisUI.Patches.EquipmentPatches", "GenesisUI.Modules.Windows.InventoryWindowModule" }.Any(owner => r.CallerType == owner || r.CallerType.StartsWith(owner + "/", StringComparison.Ordinal));
+                        if (!positionOnly) violations.Add(r + " [item fields are read-only; D-028/D-030/D-040 permit only position plans]");
+                    }
+                    if (field.StartsWith("ZDO::", StringComparison.Ordinal) || field.StartsWith("ZNetView::", StringComparison.Ordinal)) violations.Add(r + " [network fields are read-only]");
+                }
                 var hit = Banned.FirstOrDefault(b => Regex.IsMatch(r.Target, b.pattern));
                 if (hit.pattern != null && !IsAllowed(r)) violations.Add(r + "   [" + hit.why + "]");
             }

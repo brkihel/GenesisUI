@@ -12,6 +12,7 @@ namespace GenesisUI.Widgets
     /// (<c>&lt;name&gt;_shape</c>) and has its own opacity, per panel, from <c>[Backgrounds]</c>;
     /// the frame, texts and icons are never faded with it.
     /// </summary>
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Theme.ThemeRuntime), typeof(GenesisUI.Widgets.Ui), typeof(GenesisUI.Theme.ThemeTokens))]
     internal static class Frame
     {
         /// <summary>

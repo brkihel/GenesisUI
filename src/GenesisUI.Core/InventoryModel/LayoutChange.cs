@@ -43,11 +43,16 @@ namespace GenesisUI.InventoryModel
             public int Displaced;
             /// <summary>When not Ok: how many items did not fit.</summary>
             public int Overflow;
+            public string Reason;
         }
 
         public static Plan Compute(SlotLayout from, SlotLayout to, IReadOnlyList<ItemAt> items)
         {
             var plan = new Plan();
+            if (from == null || to == null || items == null) { plan.Reason = "missing snapshot or layout"; return plan; }
+            var ids = new HashSet<int>();
+            foreach (var item in items)
+                if (item.Id < 0 || !ids.Add(item.Id)) { plan.Reason = "invalid or duplicate item id"; return plan; }
             var taken = new HashSet<(int, int)>();
             var final = new Dictionary<int, (int X, int Y)>();
             var homeless = new List<ItemAt>();

@@ -17,6 +17,9 @@ namespace GenesisUI.Contract.Tests
         public string CallerType;   // "GenesisUI.Foundation.ReportWriter" (nested: "Outer/Inner")
         public string CallerMethod;
         public string Target;       // "System.IO.File::WriteAllText" or "type:Some.Type"
+        public string Operation;
+        public string[] Parameters;
+        public string ReturnType;
 
         public override string ToString() => CallerType + "::" + CallerMethod + " -> " + Target;
     }
@@ -87,7 +90,7 @@ namespace GenesisUI.Contract.Tests
                             case OperandType.InlineType:
                                 var handle = MetadataTokens.EntityHandle(il.ReadInt32());
                                 string target = names.Describe(handle);
-                                if (target != null) result.Add(new Reference { CallerType = typeName, CallerMethod = methodName, Target = target });
+                                if (target != null) result.Add(new Reference { CallerType = typeName, CallerMethod = methodName, Target = target, Operation = op.Name, Parameters = names.Parameters(handle), ReturnType = names.ReturnType(handle) });
                                 break;
                             case OperandType.InlineSwitch:
                                 int n = il.ReadInt32();
@@ -168,13 +171,35 @@ namespace GenesisUI.Contract.Tests
                         return null;
                 }
             }
+            public string[] Parameters(EntityHandle handle)
+            {
+                if (handle.Kind == HandleKind.MemberReference)
+                {
+                    var member = _md.GetMemberReference((MemberReferenceHandle)handle);
+                    return member.GetKind() == MemberReferenceKind.Method ? member.DecodeMethodSignature(this, null).ParameterTypes.ToArray() : null;
+                }
+                if (handle.Kind == HandleKind.MethodDefinition) return _md.GetMethodDefinition((MethodDefinitionHandle)handle).DecodeSignature(this, null).ParameterTypes.ToArray();
+                if (handle.Kind == HandleKind.MethodSpecification) return Parameters(_md.GetMethodSpecification((MethodSpecificationHandle)handle).Method);
+                return null;
+            }
+            public string ReturnType(EntityHandle handle)
+            {
+                if (handle.Kind == HandleKind.MemberReference)
+                {
+                    var member = _md.GetMemberReference((MemberReferenceHandle)handle);
+                    return member.GetKind() == MemberReferenceKind.Method ? member.DecodeMethodSignature(this, null).ReturnType : null;
+                }
+                if (handle.Kind == HandleKind.MethodDefinition) return _md.GetMethodDefinition((MethodDefinitionHandle)handle).DecodeSignature(this, null).ReturnType;
+                if (handle.Kind == HandleKind.MethodSpecification) return ReturnType(_md.GetMethodSpecification((MethodSpecificationHandle)handle).Method);
+                return null;
+            }
 
             // Generic instantiations keep their arguments ("List`1<Foo>") so a type used only
             // as a generic argument is still visible to the isolation check.
             public string GetGenericInstantiation(string genericType, ImmutableArray<string> typeArguments) =>
                 genericType + "<" + string.Join(",", typeArguments) + ">";
             public string GetArrayType(string elementType, ArrayShape shape) => elementType + "[]";
-            public string GetByReferenceType(string elementType) => elementType;
+            public string GetByReferenceType(string elementType) => elementType + "&";
             public string GetFunctionPointerType(MethodSignature<string> signature) => "fnptr";
             public string GetGenericMethodParameter(object genericContext, int index) => "!!" + index;
             public string GetGenericTypeParameter(object genericContext, int index) => "!" + index;

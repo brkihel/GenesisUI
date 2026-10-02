@@ -17,7 +17,8 @@ namespace GenesisUI.Widgets
     /// One quad per tab, disabled while dark. Null from <see cref="Attach"/> when the shader is not
     /// loaded: the caller keeps <see cref="PressFeedback"/>.
     /// </summary>
-    internal sealed class TabBeam : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Theme.ThemeRuntime), typeof(GenesisUI.Widgets.Ui), typeof(GenesisUI.Widgets.UiSound), typeof(GenesisUI.Foundation.GuardedBehaviour))]
+    internal sealed class TabBeam : GenesisUI.Foundation.GuardedBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler
     {
         private const float SelectedIntensity = 0.45f, HoverGlint = 0.7f, PressGlint = 1.2f;
         private const float BeamSpeed = 2.5f, HoverSpeed = 6f, GlintSeconds = 0.45f, Lift = 2f;
@@ -104,7 +105,7 @@ namespace GenesisUI.Widgets
             if (e.button == PointerEventData.InputButton.Left) _down = false;
         }
 
-        private void OnDisable()
+        protected override void OnOwnerDisabled()
         {
             _over = _down = false;
             _hover = 0f;
@@ -115,12 +116,12 @@ namespace GenesisUI.Widgets
             if (_image != null) _image.enabled = false;
         }
 
-        private void OnDestroy()
+        protected override void OnOwnerDestroyed()
         {
             if (_material != null) Destroy(_material);
         }
 
-        private void Update()
+        protected override void OnOwnerUpdate()
         {
             bool live = _button == null || _button.interactable;
             float dt = Time.unscaledDeltaTime;

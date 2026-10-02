@@ -15,19 +15,29 @@ namespace GenesisUI.Gameplay
     /// their panels arrive (F4.2c). Equipment cells appear in F4.2b. The placement patches read <see cref="Current"/>; while this
     /// module is not active it is null and they do nothing.
     /// </summary>
-    [GameContract("assembly_valheim", "Player", "m_localPlayer")]
+    [GameContract("assembly_valheim", "Player", "m_localPlayer", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "Player")]
     [GameContract("assembly_valheim", "Player", "SetInventorySize")]
     [GameContract("assembly_valheim", "Player", "TryGetUniqueKeyValue")]
     [GameContract("assembly_valheim", "Player", "AddUniqueKeyValue")]
     [GameContract("assembly_valheim", "Humanoid", "GetInventory")]
     [GameContract("assembly_valheim", "Inventory", "GetAllItems")]
     [GameContract("assembly_valheim", "Inventory", "GetHeight")]
-    [GameContract("assembly_valheim", "ItemDrop+ItemData", "m_gridPos")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_playerGrid")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData", "m_gridPos", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "Vector2i")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_playerGrid", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "InventoryGrid")]
     [GameContract("assembly_valheim", "InventoryGui", "SetInventorySize")]
-    [GameContract("assembly_valheim", "InventoryGrid", "m_elements")]
+    [GameContract("assembly_valheim", "InventoryGrid", "m_elements", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Collections.Generic.List\u00601[[InventoryElement, assembly_valheim, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]")]
     [GameContract("assembly_valheim", "InventoryElement", "get_Position")]
-    internal sealed class InventoryModule : IUiModule
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(InventorySafety), typeof(SavedLayout), typeof(Patches.EquipmentPatches))]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Character", "Message", Parameters = new string[] { "MessageHud\u002BMessageType", "System.String", "System.Int32", "UnityEngine.Sprite", "System.Boolean" }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Void")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "InventoryGui", "get_instance", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "InventoryGui")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "InventoryGui", "IsVisible", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "System.Boolean")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_utils", "Vector2i", "y", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Int32")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_utils", "Vector2i", "x", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Int32")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_guiutils", "Localization", "get_instance", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "Localization")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_guiutils", "Localization", "Localize", Parameters = new string[] { "System.String" }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.String")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop\u002BItemData", "m_stack", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Int32")]
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Gameplay.InventorySafety), typeof(GenesisUI.Gameplay.InventorySettings), typeof(GenesisUI.Host.ModuleContext), typeof(GenesisUI.Foundation.VanillaSkin), typeof(GenesisUI.Gameplay.SavedLayout), typeof(GenesisUI.InventoryModel.SlotLayout), typeof(GenesisUI.InventoryModel.LayoutChange), typeof(GenesisUI.Foundation.GenesisLog), typeof(GenesisUI.Gameplay.EquipmentRules))]
+    internal sealed class InventoryModule : IUiModule, IModulePrerequisites
     {
         private static readonly string[] NoRegions = new string[0];
 
@@ -49,12 +59,15 @@ namespace GenesisUI.Gameplay
         public string NameToken => "$genesisui_module_inventory";
         public IReadOnlyList<string> Regions => NoRegions;
         public float RefreshRate => 10f;
+        public string UnsupportedReason => InventorySafety.MissingPatches;
 
         public void Build(ModuleContext context)
         {
+            InventorySafety.Resolve();
             // Resolved here, after the host checked the contracts (AGENTS.md §2a).
             _elements = AccessTools.FieldRefAccess<InventoryGrid, List<InventoryElement>>("m_elements");
             InventorySettings.Changed += OnSettingsChanged;
+            context.OnRelease(() => InventorySettings.Changed -= OnSettingsChanged);
             _appliedTo = null;
             _dirty = true;
             _active = this;
@@ -104,24 +117,23 @@ namespace GenesisUI.Gameplay
                 : SavedLayout.Read(player) ?? new SlotLayout(SlotLayout.MinRows, 0, 0, null);
 
             var all = inventory.GetAllItems();
-            _items.Clear();
-            for (int i = 0; i < all.Count; i++) _items.Add(new ItemAt(i, all[i].m_gridPos.x, all[i].m_gridPos.y));
-            var plan = LayoutChange.Compute(from, _wanted, _items);
+            var snapshot = new PositionSnapshot<ItemDrop.ItemData>(all, item => item.m_stack, item => (item.m_gridPos.x, item.m_gridPos.y));
+            var plan = LayoutChange.Compute(from, _wanted, snapshot.Positions);
 
             SlotLayout layout;
             if (plan.Ok)
             {
-                foreach (var move in plan.Moves) all[move.Id].m_gridPos = new Vector2i(move.X, move.Y);
                 layout = _wanted;
                 if (plan.Moves.Count > 0)
-                    GenesisLog.Info("Module:inv.slots", "layout " + Describe(from) + " -> " + Describe(layout) + ": moved " + plan.Moves.Count +
-                        " item(s), " + plan.Displaced + " to the inventory; items " + all.Count + " before and after");
+                    GenesisLog.Info("Module:inv.slots", "layout " + Describe(from) + " -> " + Describe(layout) + ": planned " + plan.Moves.Count +
+                        " move(s), " + plan.Displaced + " to the inventory; snapshot items " + all.Count);
                 _lastRefusal = null;
             }
             else
             {
                 // Keep what the character has; say why, once per refusal.
                 layout = from;
+                if (plan.Reason != null) throw new System.InvalidOperationException(plan.Reason);
                 string why = "layout " + Describe(_wanted) + " refused: " + plan.Overflow + " item(s) would not fit; keeping " + Describe(from);
                 if (why != _lastRefusal)
                 {
@@ -132,13 +144,14 @@ namespace GenesisUI.Gameplay
                 }
             }
 
+            var previous = Current;
             Current = layout;
-            _appliedTo = player;
-            // Vanilla's own resize: the prefix raises the rows to hold the special rows too, so
-            // vanilla stores that height in the character and never drops a special item.
-            player.SetInventorySize(layout.Rows);
-            SavedLayout.Write(player, layout);
-            EquipmentRules.ReconcileExisting(player);
+            try
+            {
+                InventorySafety.Resize(player, layout, snapshot, plan.Ok ? plan.Moves : new List<Move>(), () => EquipmentRules.ReconcileExisting(player));
+                _appliedTo = player;
+            }
+            catch { Current = previous; throw; }
             _specialSkin.Restore();
             _firstSpecialElement = null;
         }

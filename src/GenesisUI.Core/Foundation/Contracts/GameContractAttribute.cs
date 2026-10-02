@@ -30,8 +30,13 @@ namespace GenesisUI.Foundation.Contracts
         /// Null means any member with that name satisfies the contract.
         /// </summary>
         public string[] Parameters { get; set; }
+        public ContractMemberKind Kind { get; set; }
+        public ContractStatic Static { get; set; }
+        public string ValueType { get; set; }
 
         public override string ToString() =>
             Assembly + ":" + Type + "::" + Member + (Parameters == null ? "" : "(" + string.Join(", ", Parameters) + ")");
     }
+    public enum ContractMemberKind { Any, Field, Method, Property, Event }
+    public enum ContractStatic { Any, Instance, Static }
 }

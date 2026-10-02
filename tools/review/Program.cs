@@ -5,6 +5,8 @@ using GenesisUI.Contract.Tests;
 using GenesisUI.Foundation.Faults;
 using GenesisUI.InventoryModel;
 
+if (args.Length == 2 && args[0] == "contracts") { ContractAudit.Run(args[1]); return; }
+if (args.Length == 3 && args[0] == "stamp") { BuildReceipt.Run(args[1], args[2]); return; }
 if (args.Length < 3 || args.Length > 4) throw new ArgumentException("review <repo> <Gale-profile> <output-directory> [Valheim-Managed-directory]");
 string repo = Path.GetFullPath(args[0]), profile = Path.GetFullPath(args[1]), output = Path.GetFullPath(args[2]);
 Directory.CreateDirectory(output);

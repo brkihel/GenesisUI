@@ -22,14 +22,17 @@ namespace GenesisUI.Foundation.Logging
         private static readonly Regex Ipv4 = new Regex(
             @"\b(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){3}(?:25[0-5]|2[0-4]\d|1?\d?\d):\d{1,5}\b|\b(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d)\.(?:(?:25[0-5]|2[0-4]\d|1?\d?\d)\.){2}(?:25[0-5]|2[0-4]\d|1?\d?\d)\b",
             RegexOptions.CultureInvariant);
+        private static readonly Regex Ipv6 = new Regex(@"(?<![\w:])(?:[0-9a-f]{1,4}(?::[0-9a-f]{1,4}){0,6})?::(?:[0-9a-f]{1,4}(?::[0-9a-f]{1,4}){0,6})?(?![\w:])|(?<![\w:])(?:[0-9a-f]{1,4}:){7}[0-9a-f]{1,4}(?![\w:])", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+        private static readonly Regex Host = new Regex(@"(?im)\b(server|host|endpoint|address)(\s*[:=]\s*|\s+)(?:https?://)?[a-z0-9][a-z0-9.-]*\.[a-z]{2,63}(?::\d{1,5})?", RegexOptions.CultureInvariant);
+        private static readonly Regex UserPath = new Regex(@"(?i)([a-z]:[\\/]Users[\\/])[^\\/\r\n]+|(/home/)[^/\r\n]+", RegexOptions.CultureInvariant);
 
         private readonly object _lock = new object();
         private readonly List<KeyValuePair<string, string>> _known = new List<KeyValuePair<string, string>>();
 
-        /// <summary>Registers a value to hide. Values shorter than 3 characters are ignored: they would erase ordinary words.</summary>
-        public void AddSecret(string value, string label)
+        /// <summary>Explicit short context values use whole-word matches; other values below 3 characters are ignored.</summary>
+        public void AddSecret(string value, string label, bool includeShort = false)
         {
-            if (string.IsNullOrWhiteSpace(value) || value.Trim().Length < 3) return;
+            if (string.IsNullOrWhiteSpace(value) || (!includeShort && value.Trim().Length < 3)) return;
             lock (_lock)
             {
                 if (_known.Any(k => k.Key == value)) return;
@@ -47,10 +50,15 @@ namespace GenesisUI.Foundation.Logging
             lock (_lock) known = _known.ToList();
 
             foreach (var k in known)
-                text = ReplaceOrdinalIgnoreCase(text, k.Key, "<" + k.Value + ">");
+                text = k.Key.Length < 3
+                    ? Regex.Replace(text, @"(?<![\w.])" + Regex.Escape(k.Key) + @"(?![\w.])", _ => "<" + k.Value + ">", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)
+                    : ReplaceOrdinalIgnoreCase(text, k.Key, "<" + k.Value + ">");
 
             text = SteamId.Replace(text, "<platform-id>");
             text = Ipv4.Replace(text, "<address>");
+            text = Ipv6.Replace(text, "<address>");
+            text = Host.Replace(text, "$1$2<address>");
+            text = UserPath.Replace(text, "<user-path>");
             return text;
         }
 

@@ -19,9 +19,10 @@ namespace GenesisUI.Modules.Enemy
     /// keep their own HUDs (hud.boss, vanilla).
     /// </summary>
     [GameContract("assembly_valheim", "EnemyHud", "instance")]
-    [GameContract("assembly_valheim", "EnemyHud", "m_hudRoot")]
-    [GameContract("assembly_valheim", "EnemyHud", "m_baseHud")]
+    [GameContract("assembly_valheim", "EnemyHud", "m_hudRoot", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.GameObject")]
+    [GameContract("assembly_valheim", "EnemyHud", "m_baseHud", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.GameObject")]
     [GameContract("assembly_guiutils", "GuiBar", "GetSmoothValue")]
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Host.ModuleContext), typeof(GenesisUI.Host.RegionRegistry), typeof(GenesisUI.Foundation.VanillaVeil), typeof(GenesisUI.Modules.Enemy.EnemyPlateView))]
     internal sealed class EnemyModule : IUiModule
     {
         private const float PruneSeconds = 1f;

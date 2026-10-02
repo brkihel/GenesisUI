@@ -41,10 +41,19 @@ namespace GenesisUI.Host
         void CloseVanillaWindow();
     }
 
+    internal interface IModulePrerequisites
+    {
+        string UnsupportedReason { get; }
+    }
+
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Foundation.OwnerResources))]
     internal sealed class ModuleContext
     {
         public RectTransform Root;
         public Theme.ThemeRuntime Theme;
+        public string Owner;
+        public int Generation;
+        public void OnRelease(System.Action cleanup) => Foundation.OwnerResources.OnRelease(Owner, cleanup);
     }
 
     internal enum ModuleState
@@ -58,6 +67,8 @@ namespace GenesisUI.Host
         /// <summary>A region is owned by someone else (another mod, another module).</summary>
         Blocked,
         Active,
+        Building,
+        Recovering,
         /// <summary>Threw; switched off for the session, vanilla is back.</summary>
         Faulted,
     }

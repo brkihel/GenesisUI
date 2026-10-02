@@ -1,6 +1,8 @@
 # Inventory gameplay — requirements and design (F4)
 
-Status: **requirements approved by Diego 2026-09-29; technical design below; building.**
+Status: inventory layout shipped; `1.1.2-preview.1` adds verified resize prerequisites, position
+snapshots/journals and grow-before-move rollback under D-040. R-065 client verification is pending.
+Independent foreign equipment/container adapters below remain planned; see CAPABILITIES.md.
 Decision: D-028 (same plugin, during F4), D-030 (patches). Plan: F4-PLAN §7.
 The first proposal (every special slot kept in rows vanilla shows, driven by "never lose an item
 on uninstall") was **rejected**: the concept's layout is the design, and losing items when the

@@ -22,40 +22,50 @@ namespace GenesisUI.Modules.Build
     /// </summary>
     [GameContract("assembly_valheim", "Hud", "IsPieceSelectionVisible")]
     [GameContract("assembly_valheim", "Hud", "instance")]
-    [GameContract("assembly_valheim", "Hud", "m_buildUi")]
+    [GameContract("assembly_valheim", "Hud", "m_buildUi", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "BuildUi")]
     [GameContract("assembly_valheim", "Hud", "CloseBuildUi")]
-    [GameContract("assembly_valheim", "Hud", "m_buildHud")]
-    [GameContract("assembly_valheim", "Hud", "m_buildSelection")]
-    [GameContract("assembly_valheim", "Hud", "m_pieceDescription")]
-    [GameContract("assembly_valheim", "Hud", "m_buildIcon")]
-    [GameContract("assembly_valheim", "Hud", "m_requirementItems")]
-    [GameContract("assembly_valheim", "BuildUi", "m_tabHandler")]
-    [GameContract("assembly_valheim", "BuildUi", "m_tagButtons")]
-    [GameContract("assembly_valheim", "BuildUi", "m_showAllTagsButton")]
-    [GameContract("assembly_valheim", "BuildUi", "m_pieceButtons")]
-    [GameContract("assembly_valheim", "BuildUi", "m_specialPieceButton")]
-    [GameContract("assembly_valheim", "BuildUi", "m_searchField")]
-    [GameContract("assembly_valheim", "BuildUi", "m_currentTagId")]
+    [GameContract("assembly_valheim", "Hud", "m_buildHud", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.GameObject")]
+    [GameContract("assembly_valheim", "Hud", "m_buildSelection", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "TMPro.TMP_Text")]
+    [GameContract("assembly_valheim", "Hud", "m_pieceDescription", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "TMPro.TMP_Text")]
+    [GameContract("assembly_valheim", "Hud", "m_buildIcon", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.UI.Image")]
+    [GameContract("assembly_valheim", "Hud", "m_requirementItems", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.GameObject[]")]
+    [GameContract("assembly_valheim", "BuildUi", "m_tabHandler", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "TabHandler")]
+    [GameContract("assembly_valheim", "BuildUi", "m_tagButtons", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Collections.Generic.List\u00601[[BuildUiTagButton, assembly_valheim, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]")]
+    [GameContract("assembly_valheim", "BuildUi", "m_showAllTagsButton", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "BuildUiTagButton")]
+    [GameContract("assembly_valheim", "BuildUi", "m_pieceButtons", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Collections.Generic.List\u00601[[BuildUiPieceButton, assembly_valheim, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]")]
+    [GameContract("assembly_valheim", "BuildUi", "m_specialPieceButton", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "BuildUiPieceButton")]
+    [GameContract("assembly_valheim", "BuildUi", "m_searchField", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "GUIFramework.GuiInputField")]
+    [GameContract("assembly_valheim", "BuildUi", "m_currentTagId", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Int32")]
     [GameContract("assembly_valheim", "BuildUi", "OnHoverPiece")]
     [GameContract("assembly_valheim", "BuildUi", "ToggleFavorite")]
     [GameContract("assembly_valheim", "BuildUi", "IsFavoritePiece")]
     [GameContract("assembly_valheim", "BuildUiPieceButton", "get_Piece")]
-    [GameContract("assembly_valheim", "BuildUiPieceButton", "m_button")]
-    [GameContract("assembly_valheim", "BuildUiTagButton", "buttonComponent")]
-    [GameContract("assembly_valheim", "BuildUiTagButton", "m_tagId")]
+    [GameContract("assembly_valheim", "BuildUiPieceButton", "m_button", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.UI.Button")]
+    [GameContract("assembly_valheim", "BuildUiTagButton", "buttonComponent", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.UI.Button")]
+    [GameContract("assembly_valheim", "BuildUiTagButton", "m_tagId", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Int32")]
     [GameContract("assembly_valheim", "BuildUiTagButton", "get_CurrentText")]
-    [GameContract("assembly_valheim", "TabHandler", "m_tabs")]
+    [GameContract("assembly_valheim", "TabHandler", "m_tabs", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Collections.Generic.List\u00601[[TabHandler\u002BTab, assembly_valheim, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]")]
     [GameContract("assembly_valheim", "TabHandler", "GetActiveTab")]
-    [GameContract("assembly_valheim", "TabHandler+Tab", "m_button")]
+    [GameContract("assembly_valheim", "TabHandler+Tab", "m_button", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.UI.Button")]
     [GameContract("assembly_valheim", "Player", "GetSelectedPiece")]
     [GameContract("assembly_valheim", "Player", "HaveRequirements", Parameters = new[] { "Piece", "Player+RequirementMode" })]
-    [GameContract("assembly_valheim", "Piece", "m_name")]
-    [GameContract("assembly_valheim", "Piece", "m_description")]
-    [GameContract("assembly_valheim", "Piece", "m_icon")]
-    [GameContract("assembly_valheim", "Piece", "m_resources")]
-    [GameContract("assembly_valheim", "Piece", "m_craftingStation")]
-    [GameContract("assembly_valheim", "Piece+Requirement", "m_amount")]
+    [GameContract("assembly_valheim", "Piece", "m_name", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.String")]
+    [GameContract("assembly_valheim", "Piece", "m_description", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.String")]
+    [GameContract("assembly_valheim", "Piece", "m_icon", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.Sprite")]
+    [GameContract("assembly_valheim", "Piece", "m_resources", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "Piece\u002BRequirement[]")]
+    [GameContract("assembly_valheim", "Piece", "m_craftingStation", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "CraftingStation")]
+    [GameContract("assembly_valheim", "Piece+Requirement", "m_amount", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Int32")]
     [GameContract("assembly_valheim", "CraftingStation", "HaveBuildStationInRange")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Player", "m_localPlayer", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "Player")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Humanoid", "GetInventory", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "Inventory")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Piece\u002BRequirement", "m_resItem", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "ItemDrop")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop", "m_itemData", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "ItemDrop\u002BItemData")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop\u002BItemData", "GetIcon", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.Sprite")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop\u002BItemData", "m_shared", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "ItemDrop\u002BItemData\u002BSharedData")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop\u002BItemData\u002BSharedData", "m_name", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.String")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Inventory", "CountItems", Parameters = new string[] { "System.String", "System.Int32", "System.Boolean" }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Int32")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "CraftingStation", "m_name", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.String")]
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Host.ModuleContext), typeof(GenesisUI.Widgets.WindowParts), typeof(GenesisUI.Widgets.WindowCanvas), typeof(GenesisUI.Foundation.VanillaSkin), typeof(GenesisUI.Foundation.GenesisLog), typeof(GenesisUI.Widgets.ScrollArea), typeof(GenesisUI.Theme.ThemeRuntime), typeof(GenesisUI.Theme.ThemeTokens), typeof(GenesisUI.Widgets.Frame), typeof(GenesisUI.Widgets.Ui), typeof(GenesisUI.Widgets.ColorExtensions), typeof(GenesisUI.Foundation.Guard))]
     internal sealed class BuildMenuModule : IUiModule, IRecoverable
     {
         /// <summary>IRecoverable: on a fault vanilla's build menu closes (its look never shows instead).</summary>
@@ -129,7 +139,7 @@ namespace GenesisUI.Modules.Build
 
         public string Id => "hud.build";
         public string NameToken => "$genesisui_module_build_menu";
-        public IReadOnlyList<string> Regions => NoRegions;
+        public IReadOnlyList<string> Regions => new[] { Id };
         public float RefreshRate => 0f;
 
         public void Build(ModuleContext context)
@@ -653,12 +663,12 @@ namespace GenesisUI.Modules.Build
 
             public void OnPointerClick(PointerEventData e)
             {
-                if (e.button == PointerEventData.InputButton.Left) Guard.Try("build piece", () => _owner.PressPiece(_cell));
+                if (e.button == PointerEventData.InputButton.Left) Guard.Run("module:hud.build", () => _owner.PressPiece(_cell));
                 // Middle click favourites, like vanilla's menu (right click toggles the build menu itself).
-                else if (e.button == PointerEventData.InputButton.Middle) Guard.Try("build favourite", () => _owner.ToggleFavorite(_cell.Source != null ? _cell.Source.Piece : null));
+                else if (e.button == PointerEventData.InputButton.Middle) Guard.Run("module:hud.build", () => _owner.ToggleFavorite(_cell.Source != null ? _cell.Source.Piece : null));
             }
 
-            public void OnPointerEnter(PointerEventData e) => Guard.Try("build hover", () => _owner.HoverPiece(_cell));
+            public void OnPointerEnter(PointerEventData e) => Guard.Run("module:hud.build", () => _owner.HoverPiece(_cell));
         }
     }
 }

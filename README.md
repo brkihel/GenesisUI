@@ -17,7 +17,7 @@ so your other mods keep working and any part can be switched back.
 
 </div>
 
-Development: Diego approved the 3D character and item previews, including the pink-edge correction, in `1.1.1-preview.2` ([R-063](docs/testing/results/R-063-1.1.1-preview.2.md), commit `2a1854a`). The [stability and FullPlaythrough review](docs/review/2026-10-02/README.md) is complete; its stabilization and integration plan awaits implementation.
+Development: `1.1.2-preview.1` implements the [stability corrections](docs/STABILITY-FIXES.md) after the complete code/FullPlaythrough review. [R-065](docs/testing/scripts/R-065-stability-base.md) client verification is pending. The approved 3D shader from `2a1854a` is preserved; [mod-specific resource adapters and certification](docs/CAPABILITIES.md) follow separately.
 
 ---
 

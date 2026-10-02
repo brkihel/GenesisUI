@@ -12,6 +12,8 @@ namespace GenesisUI.Modules.Enemy
     /// children and draws it in our style. Allocation-free per frame; a missing vanilla child
     /// just leaves that detail out.
     /// </summary>
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_guiutils", "GuiBar", "GetSmoothValue", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Single")]
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Theme.ThemeRuntime), typeof(GenesisUI.Theme.ThemeTokens), typeof(GenesisUI.Widgets.Ui), typeof(GenesisUI.Widgets.LiquidLayer))]
     internal sealed class EnemyPlateView
     {
         private const float Width = 112f;

@@ -17,6 +17,8 @@ namespace GenesisUI.Foundation.Faults
         public double FirstAtSeconds { get; internal set; }
         public double LastAtSeconds { get; internal set; }
         public bool Tripped { get; internal set; }
+        public int NotificationFailures { get; internal set; }
+        public string LastNotificationError { get; internal set; }
 
         internal FaultRecord Copy() => (FaultRecord)MemberwiseClone();
     }
@@ -84,7 +86,26 @@ namespace GenesisUI.Foundation.Faults
                 snapshot = r.Copy();
             }
 
-            if (justTripped) Tripped?.Invoke(snapshot);
+            if (justTripped && Tripped != null)
+            {
+                foreach (Action<FaultRecord> subscriber in Tripped.GetInvocationList())
+                {
+                    try { subscriber(snapshot.Copy()); }
+                    catch (Exception e)
+                    {
+                        snapshot.NotificationFailures++;
+                        snapshot.LastNotificationError = e.GetType().Name + ": " + e.Message;
+                    }
+                }
+                lock (_lock)
+                {
+                    if (_records.TryGetValue(owner, out var stored))
+                    {
+                        stored.NotificationFailures += snapshot.NotificationFailures;
+                        stored.LastNotificationError = snapshot.LastNotificationError;
+                    }
+                }
+            }
             return snapshot;
         }
 

@@ -8,7 +8,8 @@ namespace GenesisUI.Widgets
     /// critically damped feel, about a quarter of a second). The first target is taken at once, so a
     /// piece never slides in from the corner when the HUD is built. No work once settled.
     /// </summary>
-    internal sealed class Glide : MonoBehaviour
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Foundation.GuardedBehaviour))]
+    internal sealed class Glide : GenesisUI.Foundation.GuardedBehaviour
     {
         private const float Rate = 9f;
 
@@ -45,7 +46,7 @@ namespace GenesisUI.Widgets
 
         public bool Shown => _alpha > 0.01f || _targetAlpha > 0f;
 
-        private void Update()
+        protected override void OnOwnerUpdate()
         {
             if (!_placed) return;
             float k = 1f - Mathf.Exp(-Time.unscaledDeltaTime * Rate);

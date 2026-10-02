@@ -13,7 +13,8 @@ namespace GenesisUI.Widgets
     /// sound on its own; changes apply at once.
     /// </summary>
     [GameContract("assembly_valheim", "AudioMan", "get_instance")]
-    [GameContract("assembly_valheim", "AudioMan", "m_guiMixer")]
+    [GameContract("assembly_valheim", "AudioMan", "m_guiMixer", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.Audio.AudioMixerGroup")]
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Foundation.Guard))]
     internal static class UiSound
     {
         internal enum Cue { Hover, Tab, Open, Craft }
@@ -27,8 +28,8 @@ namespace GenesisUI.Widgets
         /// <summary>Each sound on its own, by <see cref="Cue"/>.</summary>
         internal static readonly bool[] CueEnabled = { true, true, true, true };
 
-        private static readonly System.Reflection.MethodInfo SetData =
-            typeof(AudioClip).GetMethod("SetData", new[] { typeof(float[]), typeof(int) });
+        private static System.Reflection.MethodInfo SetData;
+        private static readonly Action<Cue> PlayGuarded = PlayNow;
 
         private static AudioSource _source;
         private static AudioClip[] _clips;
@@ -37,7 +38,7 @@ namespace GenesisUI.Widgets
         public static void Play(Cue cue)
         {
             if (!Enabled || Volume <= 0f || !CueEnabled[(int)cue]) return;
-            Guard.Try("ui sound", () => PlayNow(cue));
+            Guard.Run("shared:ui-sound", PlayGuarded, cue);
         }
 
         private static void PlayNow(Cue cue)
@@ -54,6 +55,7 @@ namespace GenesisUI.Widgets
 
         private static void Build()
         {
+            SetData = typeof(AudioClip).GetMethod("SetData", new[] { typeof(float[]), typeof(int) });
             var go = new GameObject("GenesisUI.Sound");
             UnityEngine.Object.DontDestroyOnLoad(go);
             _source = go.AddComponent<AudioSource>();
@@ -72,6 +74,13 @@ namespace GenesisUI.Widgets
             _clips[(int)Cue.Open] = Open(random);
             // Two light hammer strikes on metal: an item made.
             _clips[(int)Cue.Craft] = Craft(random);
+        }
+
+        internal static void Shutdown()
+        {
+            if (_source != null) { _source.Stop(); UnityEngine.Object.Destroy(_source.gameObject); }
+            if (_clips != null) foreach (var clip in _clips) if (clip != null) UnityEngine.Object.Destroy(clip);
+            _source = null; _clips = null; _lastHover = -1f; SetData = null;
         }
 
         private static AudioClip Clip(string name, float seconds, System.Random random, float amp, float attack, float noise,

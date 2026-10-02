@@ -9,11 +9,15 @@ namespace GenesisUI.Foundation
     /// A throwing owner is recorded, logged once with its full stack, and tripped:
     /// further calls for it are skipped until an explicit reset.
     /// </summary>
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Foundation.Faults.FaultRegistry), typeof(GenesisUI.Foundation.GenesisLog), typeof(GenesisUI.Foundation.Faults.FaultRecord))]
     internal static class Guard
     {
         private static readonly Stopwatch Clock = Stopwatch.StartNew();
 
         public static readonly FaultRegistry Faults = new FaultRegistry();
+        // Callbacks run on the Unity main thread; nested scopes restore their caller.
+        [ThreadStatic] private static string _currentOwner;
+        public static string CurrentOwner => _currentOwner;
 
         public static double Now => Clock.Elapsed.TotalSeconds;
 
@@ -23,8 +27,10 @@ namespace GenesisUI.Foundation
         public static bool Run(string owner, Action action)
         {
             if (Faults.IsTripped(owner)) return false;
+            string previous = _currentOwner;
             try
             {
+                _currentOwner = owner;
                 action();
                 return true;
             }
@@ -33,6 +39,7 @@ namespace GenesisUI.Foundation
                 Fault(owner, e);
                 return false;
             }
+            finally { _currentOwner = previous; }
         }
 
         /// <summary>
@@ -42,8 +49,10 @@ namespace GenesisUI.Foundation
         public static bool Run<TArg>(string owner, Action<TArg> action, TArg arg)
         {
             if (Faults.IsTripped(owner)) return false;
+            string previous = _currentOwner;
             try
             {
+                _currentOwner = owner;
                 action(arg);
                 return true;
             }
@@ -52,6 +61,7 @@ namespace GenesisUI.Foundation
                 Fault(owner, e);
                 return false;
             }
+            finally { _currentOwner = previous; }
         }
 
         /// <summary>
@@ -75,8 +85,10 @@ namespace GenesisUI.Foundation
         public static T Run<T>(string owner, Func<T> func, T fallback)
         {
             if (Faults.IsTripped(owner)) return fallback;
+            string previous = _currentOwner;
             try
             {
+                _currentOwner = owner;
                 return func();
             }
             catch (Exception e)
@@ -84,6 +96,7 @@ namespace GenesisUI.Foundation
                 Fault(owner, e);
                 return fallback;
             }
+            finally { _currentOwner = previous; }
         }
 
         /// <summary>Records a fault caught elsewhere (e.g. by the patcher).</summary>
@@ -98,6 +111,8 @@ namespace GenesisUI.Foundation
                     GenesisLog.Error("Guard", owner + " faulted and was switched off for this session: " + detail);
                 else
                     GenesisLog.Error("Guard", owner + " faulted again (" + record.Count + " total): " + message, "fault:" + owner);
+                if (record.NotificationFailures > 0)
+                    GenesisLog.Error("Guard", owner + " cleanup notification failed " + record.NotificationFailures + " time(s): " + record.LastNotificationError);
             }
             catch
             {

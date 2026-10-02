@@ -15,9 +15,10 @@ namespace GenesisUI.Modules.Hover
     /// so every object and every mod's hover text shows up without special cases.
     /// </summary>
     [GameContract("assembly_valheim", "Hud", "instance")]
-    [GameContract("assembly_valheim", "Hud", "m_hoverName")]
+    [GameContract("assembly_valheim", "Hud", "m_hoverName", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "TMPro.TextMeshProUGUI")]
     [GameContract("assembly_valheim", "Minimap", "instance")]
     [GameContract("assembly_valheim", "Minimap", "IsOpen")]
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Host.ModuleContext), typeof(GenesisUI.Theme.ThemeRuntime), typeof(GenesisUI.Widgets.Ui), typeof(GenesisUI.Widgets.Frame), typeof(GenesisUI.Theme.ThemeTokens))]
     internal sealed class HoverModule : IUiModule
     {
         private const float MaxWidth = 340f;

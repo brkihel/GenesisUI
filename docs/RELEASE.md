@@ -24,10 +24,11 @@ GenesisMods-GenesisUI-<version>[-preview.N].zip
   LICENSE
   plugins/
     GenesisUI.dll        GenesisUI.Core merged in (ILRepack); the package refuses a DLL without it
+  build-evidence.json    source commit, channel, reference assembly hashes, packaged file hashes
     Translations/English/genesisui.json
     Translations/Portuguese_Brazilian/genesisui.json
     fonts/               Cinzel, Cormorant Garamond + OFL.txt
-    art/                 sprites.json + the PNGs it lists
+    art/                 sprites.json + its PNGs + genesisui.shaders + shader-provenance.json
 ```
 
 Dependency in the manifest: `ValheimModding-Jotunn-<version in ref/>`, checked
@@ -40,11 +41,21 @@ On Windows, `pwsh -File tools/package.ps1 Preview` produces the same layout and
 validates the completed archive. It uses restored dependencies and serial MSBuild
 to keep packaging bounded on development machines.
 
-For shader changes on Windows, `pwsh -File tools/shaders/build.ps1 -DirectEditor -PackagePreview`
+Both package paths require committed tracked/new project files, the keyed bundle and matching
+source/bundle provenance. Every completed ZIP entry is compared by SHA256, including generated
+metadata. Runtime shader loading checks the provenance and bundle hash; missing/incompatible
+evidence keeps sprite/2D fallbacks and names the reason in the log/F8 report.
+
+For shader changes on Windows, `pwsh -File tools/shaders/build.ps1 -DirectEditor`
 builds with Unity 6000.0.75f1 in `dist/shader-build`, checks the shipped keyed shader on
 the GPU, and only then replaces the bundle and packages the Preview. The licensing
 service must be accessible to that process. A failed shader build never replaces the
-last working bundle or produces a Preview through this command.
+last working bundle. Commit the shader bundle/provenance/source changes, then run the package command.
+`-PackagePreview` is usable only when that command's commit gate is already satisfied.
+
+The stability preview reuses the byte-identical bundle approved in R-063 (`2a1854a`), with its
+2026-10-02 Direct3D11 GPU check. No new Unity process or game launch was needed to verify these
+unchanged sources and hashes. This historical GPU result does not verify new C# preview behavior.
 
 ## Preview delivery (current stage)
 

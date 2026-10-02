@@ -22,6 +22,7 @@ namespace GenesisUI.Modules.Windows
     /// Changes apply at once and are saved by BepInEx; inventory options synced from a locking server
     /// are shown read-only.
     /// </summary>
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Theme.ThemeRuntime), typeof(GenesisUI.Widgets.WindowParts), typeof(GenesisUI.Widgets.WindowCanvas), typeof(GenesisUI.Widgets.Frame), typeof(GenesisUI.Widgets.Ui), typeof(GenesisUI.Theme.ThemeTokens), typeof(GenesisUI.Widgets.ColorExtensions), typeof(GenesisUI.Widgets.ScrollArea), typeof(GenesisUI.Gameplay.InventorySettings), typeof(GenesisUI.Widgets.KeyText), typeof(GenesisUI.Foundation.GenesisLog), typeof(GenesisUI.Patches.TextInputFocus), typeof(GenesisUI.Foundation.InputLeases), typeof(GenesisUI.Foundation.Guard))]
     internal sealed class SettingsWindowModule : WindowModuleBase
     {
         private const float NavW = 336f, CenterX = 340f, CenterW = 664f, InfoX = 1008f, InfoW = 572f;
@@ -242,7 +243,7 @@ namespace GenesisUI.Modules.Windows
                 row.Slider = MakeSlider(rt, cx, cw - 76f, min, max, type == typeof(int));
                 row.Value = Parts.Label(rt, "Value", FontRole.Body, 16f, t.TextTitle, w - 72f, 0f, 64f, RowH, TextAlignmentOptions.MidlineRight);
                 row.Slider.interactable = !row.ReadOnly;
-                row.Slider.onValueChanged.AddListener(v => Guard.Try("setting slider", () =>
+                row.Slider.onValueChanged.AddListener(v => Guard.Run("module:win.settings", () =>
                 {
                     object value = type == typeof(int) ? (object)Mathf.RoundToInt(v) : (object)(float)Math.Round(v, 2);
                     if (!Equals(entry.BoxedValue, value)) entry.BoxedValue = value;
@@ -421,7 +422,7 @@ namespace GenesisUI.Modules.Windows
         {
             private Action _onEnter;
             internal void Init(Action onEnter) => _onEnter = onEnter;
-            public void OnPointerEnter(PointerEventData e) => Guard.Try("settings hover", _onEnter);
+            public void OnPointerEnter(PointerEventData e) => Guard.Run("module:win.settings", _onEnter);
         }
     }
 }

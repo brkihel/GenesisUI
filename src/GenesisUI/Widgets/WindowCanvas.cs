@@ -10,10 +10,12 @@ namespace GenesisUI.Widgets
     /// share one coordinate system, one scale and one raycaster. The window board (<see cref="Design"/>) is centred and
     /// scaled to <see cref="Size"/> of the screen's width (Diego: about 75%, R-049).
     /// </summary>
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Widgets.Ui), typeof(GenesisUI.Widgets.Frame), typeof(GenesisUI.Foundation.GenesisLog))]
     internal static class WindowCanvas
     {
         internal static ConfigEntry<float> Size;
         internal static ConfigEntry<float> Height;
+        internal static void Shutdown() { Size = null; Height = null; }
 
         internal static void Bind(ConfigFile config)
         {

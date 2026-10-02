@@ -17,19 +17,24 @@ namespace GenesisUI.Patches
     [GameContract("assembly_valheim", "Humanoid", "UnequipItem", Parameters = new[] { "ItemDrop+ItemData", "System.Boolean" })]
     [GameContract("assembly_valheim", "InventoryGui", "OnSelectedItem", Parameters = new[]
         { "InventoryGrid", "ItemDrop+ItemData", "Vector2i", "InventoryGrid+Modifier" })]
-    [GameContract("assembly_valheim", "InventoryGui", "m_dragItem")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_dragInventory")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_dragItem", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "ItemDrop\u002BItemData")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_dragInventory", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "Inventory")]
     [GameContract("assembly_valheim", "Inventory", "GetItemAt")]
     [GameContract("assembly_valheim", "Inventory", "GetAllItems")]
     [GameContract("assembly_valheim", "Inventory", "ContainsItem")]
-    [GameContract("assembly_valheim", "Inventory", "m_onChanged")]
+    [GameContract("assembly_valheim", "Inventory", "m_onChanged", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Action")]
     [GameContract("assembly_valheim", "InventoryGrid", "GetInventory")]
     [GameContract("assembly_valheim", "Humanoid", "GetInventory")]
     [GameContract("assembly_valheim", "Player", "Message")]
-    [GameContract("assembly_valheim", "ItemDrop+ItemData", "m_equipped")]
-    [GameContract("assembly_valheim", "ItemDrop+ItemData", "m_stack")]
-    [GameContract("assembly_valheim", "ItemDrop+ItemData", "m_gridPos")]
-    [GameContract("assembly_valheim", "ItemDrop+ItemData+SharedData", "m_itemType")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData", "m_equipped", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Boolean")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData", "m_stack", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Int32")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData", "m_gridPos", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "Vector2i")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData+SharedData", "m_itemType", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "ItemDrop\u002BItemData\u002BItemType")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Player", "m_localPlayer", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "Player")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_utils", "Vector2i", "x", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Int32")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_utils", "Vector2i", "y", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Int32")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Character", "Message", Parameters = new string[] { "MessageHud\u002BMessageType", "System.String", "System.Int32", "UnityEngine.Sprite", "System.Boolean" }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Void")]
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Foundation.Guard), typeof(GenesisUI.InventoryModel.SlotLayout), typeof(GenesisUI.Gameplay.EquipmentRules), typeof(GenesisUI.Gameplay.ItemCategories), typeof(GenesisUI.InventoryModel.SlotRules), typeof(GenesisUI.Foundation.GenesisLog))]
     internal static class EquipmentPatches
     {
         [ThreadStatic] private static int _equipDepth;
@@ -51,6 +56,7 @@ namespace GenesisUI.Patches
         private static void EquipPrefix(Humanoid __instance, out bool __state)
         {
             __state = __instance == Player.m_localPlayer && InventoryModule.Current != null;
+            if (Guard.IsTripped(InventorySafety.Owner)) __state = false;
             if (__state) _equipDepth++;
         }
 
@@ -59,7 +65,7 @@ namespace GenesisUI.Patches
         private static void EquipPostfix(Humanoid __instance, ItemDrop.ItemData item, bool __result, bool __state)
         {
             if (!__state || !__result || _selectionDepth > 0) return;
-            Guard.Try("equipment equip relocation", () => EquipmentRules.AfterEquip((Player)__instance, item));
+            Guard.Run("module:inv.slots", () => EquipmentRules.AfterEquip((Player)__instance, item));
         }
 
         [HarmonyPatch(typeof(Humanoid), nameof(Humanoid.EquipItem))]
@@ -75,7 +81,7 @@ namespace GenesisUI.Patches
         private static void UnequipPostfix(Humanoid __instance, ItemDrop.ItemData item)
         {
             if (_equipDepth > 0 || _selectionDepth > 0 || __instance != Player.m_localPlayer) return;
-            Guard.Try("equipment unequip relocation", () => EquipmentRules.AfterUnequip((Player)__instance, item));
+            Guard.Run("module:inv.slots", () => EquipmentRules.AfterUnequip((Player)__instance, item));
         }
 
         [HarmonyPatch(typeof(InventoryGui), "OnSelectedItem")]
@@ -85,6 +91,9 @@ namespace GenesisUI.Patches
                                          out SelectionState __state)
         {
             __state = default;
+            if (Guard.IsTripped(InventorySafety.Owner)) return true;
+            try
+            {
             var player = Player.m_localPlayer;
             var layout = InventoryModule.Current;
             if (player == null || layout == null || grid == null || grid.GetInventory() != player.GetInventory()) return true;
@@ -126,6 +135,8 @@ namespace GenesisUI.Patches
             __state.Active = true;
             _selectionDepth++;
             return true;
+            }
+            catch (Exception error) { __state = default; Guard.Fault(InventorySafety.Owner, error); return true; }
         }
 
         [HarmonyPatch(typeof(InventoryGui), "OnSelectedItem")]
@@ -133,7 +144,7 @@ namespace GenesisUI.Patches
         private static void SelectPostfix(SelectionState __state)
         {
             if (!__state.Active || __state.Drag == null) return;
-            Guard.Try("equipment drop reconciliation", () => ReconcileDrop(__state));
+            Guard.Run("module:inv.slots", () => ReconcileDrop(__state));
         }
 
         [HarmonyPatch(typeof(InventoryGui), "OnSelectedItem")]

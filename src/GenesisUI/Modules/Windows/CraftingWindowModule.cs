@@ -31,48 +31,62 @@ namespace GenesisUI.Modules.Windows
     /// </summary>
     [GameContract("assembly_valheim", "InventoryGui", "Hide")]
     [GameContract("assembly_valheim", "InventoryGui", "IsVisible")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_availableRecipes")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_craftButton")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_craftProgressPanel")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_craftProgressBar")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_craftTimer")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_tabCraft")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_tabUpgrade")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_availableRecipes", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Collections.Generic.List\u00601[[InventoryGui\u002BRecipeDataPair, assembly_valheim, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_craftButton", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.UI.Button")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_craftProgressPanel", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.Transform")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_craftProgressBar", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "GuiBar")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_craftTimer", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Single")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_tabCraft", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.UI.Button")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_tabUpgrade", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.UI.Button")]
     [GameContract("assembly_valheim", "InventoryGui", "OnTabCraftPressed")]
     [GameContract("assembly_valheim", "InventoryGui", "OnTabUpgradePressed")]
     [GameContract("assembly_valheim", "InventoryGui", "InCraftTab")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_repairButton")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_variantButton")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_variantDialog")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_recipeName")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_itemCraftType")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_recipeRequirementList")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_craftingStationName")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_craftingStationLevel")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_craftingStationLevelRoot")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_player")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_crafting")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_info")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_container")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_repairButton", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.UI.Button")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_variantButton", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.UI.Button")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_variantDialog", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "VariantDialog")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_recipeName", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "TMPro.TMP_Text")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_itemCraftType", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "TMPro.TMP_Text")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_recipeRequirementList", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.GameObject[]")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_craftingStationName", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "TMPro.TMP_Text")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_craftingStationLevel", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "TMPro.TMP_Text")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_craftingStationLevelRoot", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.RectTransform")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_player", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.RectTransform")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_crafting", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.RectTransform")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_info", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.RectTransform")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_container", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.RectTransform")]
     [GameContract("assembly_valheim", "Player", "GetAvailableRecipes")]
     [GameContract("assembly_valheim", "Player", "HaveRequirements", Parameters = new[] { "Recipe", "System.Boolean", "System.Int32", "System.Int32" })]
     [GameContract("assembly_valheim", "Player", "GetCurrentCraftingStation")]
-    [GameContract("assembly_valheim", "CraftingStation", "m_name")]
-    [GameContract("assembly_valheim", "CraftingStation", "m_upgrader")]
-    [GameContract("assembly_valheim", "CraftingStation", "m_name")]
+    [GameContract("assembly_valheim", "CraftingStation", "m_name", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.String")]
+    [GameContract("assembly_valheim", "CraftingStation", "m_upgrader", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Boolean")]
+    [GameContract("assembly_valheim", "CraftingStation", "m_name", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.String")]
     [GameContract("assembly_valheim", "CraftingStation", "GetLevel")]
-    [GameContract("assembly_valheim", "Recipe", "m_item")]
-    [GameContract("assembly_valheim", "Recipe", "m_amount")]
-    [GameContract("assembly_valheim", "Recipe", "m_resources")]
-    [GameContract("assembly_valheim", "Recipe", "m_noCraftOnlyUpgrade")]
+    [GameContract("assembly_valheim", "Recipe", "m_item", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "ItemDrop")]
+    [GameContract("assembly_valheim", "Recipe", "m_amount", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Int32")]
+    [GameContract("assembly_valheim", "Recipe", "m_resources", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "Piece\u002BRequirement[]")]
+    [GameContract("assembly_valheim", "Recipe", "m_noCraftOnlyUpgrade", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Boolean")]
     [GameContract("assembly_valheim", "Recipe", "GetRequiredStation")]
     [GameContract("assembly_valheim", "Recipe", "GetRequiredStationLevel")]
-    [GameContract("assembly_valheim", "Piece+Requirement", "m_resItem")]
-    [GameContract("assembly_valheim", "Piece+Requirement", "m_upgraderResource")]
+    [GameContract("assembly_valheim", "Piece+Requirement", "m_resItem", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "ItemDrop")]
+    [GameContract("assembly_valheim", "Piece+Requirement", "m_upgraderResource", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Boolean")]
     [GameContract("assembly_valheim", "Inventory", "CountItems")]
     [GameContract("assembly_valheim", "Inventory", "GetAllItems", Parameters = new[] { "System.String", "System.Collections.Generic.List`1[[ItemDrop+ItemData, assembly_valheim, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]" })]
     [GameContract("assembly_valheim", "ZoneSystem", "GetGlobalKey", Parameters = new[] { "GlobalKeys" })]
-    [GameContract("assembly_guiutils", "GuiBar", "m_maxValue")]
+    [GameContract("assembly_guiutils", "GuiBar", "m_maxValue", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Single")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "InventoryGui", "get_instance", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "InventoryGui")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Player", "m_localPlayer", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "Player")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ZoneSystem", "get_instance", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "ZoneSystem")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Humanoid", "GetInventory", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "Inventory")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop", "m_itemData", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "ItemDrop\u002BItemData")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop\u002BItemData", "m_shared", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "ItemDrop\u002BItemData\u002BSharedData")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop\u002BItemData\u002BSharedData", "m_maxQuality", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Int32")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop\u002BItemData\u002BSharedData", "m_name", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.String")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop\u002BItemData", "m_quality", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Int32")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop\u002BItemData", "GetIcon", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.Sprite")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop\u002BItemData\u002BSharedData", "m_description", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.String")]
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Host.ModuleContext), typeof(GenesisUI.Widgets.WindowParts), typeof(GenesisUI.Widgets.WindowCanvas), typeof(GenesisUI.Patches.CraftingListPatch), typeof(GenesisUI.Widgets.Backdrop), typeof(GenesisUI.Modules.Windows.VanillaPanels), typeof(GenesisUI.Foundation.GenesisLog), typeof(GenesisUI.Collections.ListOrder), typeof(GenesisUI.Gameplay.ItemCategories), typeof(GenesisUI.Theme.ThemeRuntime), typeof(GenesisUI.Theme.ThemeTokens), typeof(GenesisUI.Widgets.ItemStats), typeof(GenesisUI.Widgets.OneShotLight), typeof(GenesisUI.Modules.Windows.RequirementBindings), typeof(GenesisUI.Widgets.UiSound), typeof(GenesisUI.Widgets.EdgeLight), typeof(GenesisUI.Widgets.EmberField), typeof(GenesisUI.Patches.TextInputFocus), typeof(GenesisUI.Foundation.InputLeases), typeof(GenesisUI.Widgets.Ui), typeof(GenesisUI.Widgets.ColorExtensions), typeof(GenesisUI.Widgets.Frame), typeof(GenesisUI.Foundation.Guard))]
+    [GameContract("assembly_guiutils", "Localization", "get_instance", Parameters = new string[0], ValueType = "Localization")]
+    [GameContract("assembly_guiutils", "Localization", "GetSelectedLanguage", Parameters = new string[0], ValueType = "System.String")]
     internal sealed class CraftingWindowModule : IUiModule, IRecoverable
     {
         /// <summary>IRecoverable: on a fault the windows close (vanilla's never shows in their place).</summary>
@@ -105,6 +119,8 @@ namespace GenesisUI.Modules.Windows
 
         private sealed class Entry
         {
+            public string NameToken;
+            public int Amount;
             public Recipe Recipe;
             public ItemDrop.ItemData Upgrade;
             public bool CanCraft;
@@ -153,10 +169,19 @@ namespace GenesisUI.Modules.Windows
             public TextMeshProUGUI Name, Amount;
             public int Have = -1, Need = -1;
             public string ItemName, Label;
+            public Transform NativeRoot;
+            public Image NativeIcon;
+            public TMP_Text NativeName, NativeAmount;
+            public string ShownAmount;
         }
 
         private readonly Column _craftColumn = new Column { Upgrade = false };
         private readonly Column _upgradeColumn = new Column { Upgrade = true };
+        private readonly Column[] _columns;
+        private readonly Dictionary<(Recipe, ItemDrop.ItemData), Entry> _entryCache = new Dictionary<(Recipe, ItemDrop.ItemData), Entry>();
+        private readonly List<(Recipe, ItemDrop.ItemData)> _retiredEntries = new List<(Recipe, ItemDrop.ItemData)>();
+        private string _language;
+        public CraftingWindowModule() { _columns = new[] { _craftColumn, _upgradeColumn }; }
         private readonly List<Material> _materials = new List<Material>(MaxMaterials);
         private readonly List<StatRow> _stats = new List<StatRow>(12);
         private readonly List<StatRow> _next = new List<StatRow>(12);
@@ -205,7 +230,7 @@ namespace GenesisUI.Modules.Windows
 
         public string Id => "win.crafting";
         public string NameToken => "$genesisui_module_crafting_window";
-        public IReadOnlyList<string> Regions => NoRegions;
+        public IReadOnlyList<string> Regions => new[] { Id };
         public float RefreshRate => 0f;
 
         /// <summary>
@@ -246,7 +271,8 @@ namespace GenesisUI.Modules.Windows
             _behind = false;
             _shownCraftText = _shownReason = null;
             _shownStation = null;
-            foreach (var c in new[] { _craftColumn, _upgradeColumn }) { c.All.Clear(); c.Shown.Clear(); c.Scroll = 0; }
+            foreach (var c in _columns) { c.All.Clear(); c.Shown.Clear(); c.Scroll = 0; }
+            _entryCache.Clear(); _retiredEntries.Clear(); _language = null;
             EndTyping();
         }
 
@@ -372,6 +398,8 @@ namespace GenesisUI.Modules.Windows
         /// </summary>
         private void Recompute(InventoryGui gui, Player player)
         {
+            string language = Localization.instance != null ? Localization.instance.GetSelectedLanguage() : "";
+            if (_language != language) { _language = language; _entryCache.Clear(); }
             _listVersion = CraftingListPatch.Version;
             _recomputeIn = RecomputeSeconds;
             bool noCost = ZoneSystem.instance != null && ZoneSystem.instance.GetGlobalKey(GlobalKeys.NoCraftCost);
@@ -413,6 +441,11 @@ namespace GenesisUI.Modules.Windows
             GenesisUI.Collections.ListOrder.StablePartition(_craftColumn.All, CanCraftFirst, _partitionBuffer);
             GenesisUI.Collections.ListOrder.StablePartition(_upgradeColumn.All, CanCraftFirst, _partitionBuffer);
             FindJustReady();
+            _retiredEntries.Clear();
+            foreach (var entry in _entryCache) if (!_listed.Contains(entry.Key)) _retiredEntries.Add(entry.Key);
+            foreach (var key in _retiredEntries) _entryCache.Remove(key);
+            foreach (var column in _columns) foreach (var row in column.Rows) row.ShownState = -1;
+            _detailsDirty = true;
             _filterDirty = true;
         }
 
@@ -435,7 +468,7 @@ namespace GenesisUI.Modules.Windows
             float now = Time.unscaledTime;
             _nextListed.Clear();
             _nextCraftable.Clear();
-            foreach (var column in new[] { _craftColumn, _upgradeColumn })
+            foreach (var column in _columns)
                 foreach (var e in column.All)
                 {
                     var key = (e.Recipe, e.Upgrade);
@@ -448,7 +481,7 @@ namespace GenesisUI.Modules.Windows
             foreach (var pair in _readySince)
                 if (now - pair.Value > ShineWithinSeconds || !_nextCraftable.Contains(pair.Key)) _expired.Add(pair.Key);
             foreach (var key in _expired) _readySince.Remove(key);
-            foreach (var column in new[] { _craftColumn, _upgradeColumn })
+            foreach (var column in _columns)
                 foreach (var e in column.All)
                     e.JustReady = e.CanCraft && _readySince.ContainsKey((e.Recipe, e.Upgrade));
             (_listed, _nextListed) = (_nextListed, _listed);
@@ -456,22 +489,29 @@ namespace GenesisUI.Modules.Windows
         }
         private static readonly Func<Entry, bool> CanCraftFirst = e => e.CanCraft;
 
-        private static Entry NewEntry(Recipe recipe, ItemDrop.ItemData upgrade, bool canCraft)
+        private Entry NewEntry(Recipe recipe, ItemDrop.ItemData upgrade, bool canCraft)
         {
+            var key = (recipe, upgrade);
             var data = recipe.m_item.m_itemData;
+            bool exists = _entryCache.TryGetValue(key, out var cached);
+            var category = ItemCategories.Of(data);
+            if (exists && cached.NameToken == data.m_shared.m_name && cached.Amount == recipe.m_amount && cached.Category == category)
+            { cached.CanCraft = canCraft; return cached; }
             string name = Localize(data.m_shared.m_name);
             if (upgrade == null && recipe.m_amount > 1) name += " x" + recipe.m_amount;
-            return new Entry
+            var entry = new Entry
             {
                 Recipe = recipe, Upgrade = upgrade, CanCraft = canCraft, Name = name,
-                Search = name.ToLowerInvariant(), Category = ItemCategories.Of(data),
+                Search = name.ToLowerInvariant(), Category = category, NameToken = data.m_shared.m_name, Amount = recipe.m_amount,
             };
+            _entryCache[key] = entry;
+            return entry;
         }
 
         private void Filter()
         {
             _filterDirty = false;
-            foreach (var column in new[] { _craftColumn, _upgradeColumn })
+            foreach (var column in _columns)
             {
                 column.Shown.Clear();
                 foreach (var e in column.All)
@@ -660,41 +700,40 @@ namespace GenesisUI.Modules.Windows
             {
                 var m = _materials[i];
                 Transform element = list != null && i < list.Length && list[i] != null ? list[i].transform : null;
-                var icon = element != null ? element.Find("res_icon") : null;
-                bool show = _selValid && icon != null && icon.gameObject.activeSelf;
+                if (m.NativeRoot != element || m.NativeIcon == null)
+                {
+                    m.NativeRoot = element;
+                    var icon = element != null ? element.Find("res_icon") : null;
+                    var name = element != null ? element.Find("res_name") : null;
+                    var amount = element != null ? element.Find("res_amount") : null;
+                    m.NativeIcon = icon != null ? icon.GetComponent<Image>() : null;
+                    m.NativeName = name != null ? name.GetComponent<TMP_Text>() : null;
+                    m.NativeAmount = amount != null ? amount.GetComponent<TMP_Text>() : null;
+                }
+                bool show = _selValid && m.NativeIcon != null && m.NativeIcon.gameObject.activeSelf;
                 if (m.Root.gameObject.activeSelf != show) m.Root.gameObject.SetActive(show);
                 if (!show) continue;
-                var sprite = icon.GetComponent<Image>().sprite;
-                if (m.Icon.sprite != sprite || m.ItemName == null)
+                var sprite = m.NativeIcon.sprite;
+                var binding = RequirementBindings.Get(element);
+                m.ItemName = binding != null && binding.m_resItem != null ? binding.m_resItem.m_itemData.m_shared.m_name : null;
+                string label = m.NativeName != null ? m.NativeName.text : "";
+                if (m.Icon.sprite != sprite || m.Label != label)
                 {
                     m.Icon.sprite = sprite;
-                    m.ItemName = NameFor(sprite);
-                    var nameText = element.Find("res_name");
-                    m.Label = nameText != null ? nameText.GetComponent<TMP_Text>().text : "";
+                    m.Label = label;
                     m.Name.text = m.Label;
                     m.Have = m.Need = -1;
                 }
-                var amount = element.Find("res_amount");
-                int need = 0;
-                if (amount != null) int.TryParse(amount.GetComponent<TMP_Text>().text, out need);
+                string need = m.NativeAmount != null ? m.NativeAmount.text : "";
                 int have = m.ItemName != null ? inventory.CountItems(m.ItemName) : 0;
-                if (have != m.Have || need != m.Need)
+                if (have != m.Have || need != m.ShownAmount)
                 {
                     m.Have = have;
-                    m.Need = need;
-                    m.Amount.SetText("{0} / {1}", have, need);
-                    m.Amount.color = ThemeRuntime.ToUnity(have >= need ? _theme.Tokens.StatePositive : _theme.Tokens.StateDanger);
+                    m.ShownAmount = need;
+                    m.Amount.text = m.ItemName != null ? have + " / " + need : need;
                 }
+                if (m.NativeAmount != null) m.Amount.color = m.NativeAmount.color;
             }
-        }
-
-        private string NameFor(Sprite icon)
-        {
-            if (!_selValid || _selRecipe.m_resources == null) return null;
-            foreach (var req in _selRecipe.m_resources)
-                if (req != null && req.m_resItem != null && req.m_resItem.m_itemData.GetIcon() == icon)
-                    return req.m_resItem.m_itemData.m_shared.m_name;
-            return null;
         }
 
         /// <summary>The craft button (vanilla's label and state), its progress, and why it cannot be pressed.</summary>
@@ -991,10 +1030,10 @@ namespace GenesisUI.Modules.Windows
             _search.characterLimit = 40;
             _search.caretColor = ThemeRuntime.ToUnity(t.AccentGoldBright);
             _search.selectionColor = ThemeRuntime.ToUnity(t.AccentGold).WithA(0.3f);
-            _search.onSelect.AddListener(_ => Guard.Try("recipe search focus", BeginTyping));
+            _search.onSelect.AddListener(_ => Guard.Run("module:win.crafting", BeginTyping));
             _search.onDeselect.AddListener(_ => Guard.Try("recipe search blur", EndTyping));
             _search.onEndEdit.AddListener(_ => Guard.Try("recipe search end", EndTyping));
-            _search.onValueChanged.AddListener(value => Guard.Try("recipe search", () =>
+            _search.onValueChanged.AddListener(value => Guard.Run("module:win.crafting", () =>
             {
                 _query = (value ?? "").Trim().ToLowerInvariant();
                 _craftColumn.Scroll = _upgradeColumn.Scroll = 0;
@@ -1024,11 +1063,11 @@ namespace GenesisUI.Modules.Windows
         private static string Localize(string text) => WindowParts.Localize(text);
 
         /// <summary>Mouse wheel over a column.</summary>
-        private sealed class ListScroll : MonoBehaviour, IScrollHandler
+        private sealed class ListScroll : GuardedBehaviour, IScrollHandler
         {
             private Action<float> _onScroll;
             internal void Init(Action<float> onScroll) => _onScroll = onScroll;
-            public void OnScroll(PointerEventData e) => _onScroll?.Invoke(e.scrollDelta.y);
+            public void OnScroll(PointerEventData e) { if (_onScroll != null) Guard.Run(CallbackOwner, _onScroll, e.scrollDelta.y); }
         }
     }
 }

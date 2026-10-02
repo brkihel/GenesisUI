@@ -14,19 +14,23 @@ namespace GenesisUI.Modules.Windows
     /// of the one picked. Read-only: everything comes from Achievements, the player's trophies and the
     /// item database, exactly what vanilla's panels show.
     /// </summary>
-    [GameContract("assembly_valheim", "Achievements", "m_instance")]
-    [GameContract("assembly_valheim", "Achievements", "m_achievementLists")]
-    [GameContract("assembly_valheim", "AchievementList", "m_achievements")]
-    [GameContract("assembly_valheim", "Achievement", "m_name")]
-    [GameContract("assembly_valheim", "Achievement", "m_description")]
-    [GameContract("assembly_valheim", "Achievement", "m_icon")]
-    [GameContract("assembly_valheim", "Achievement", "m_iconLocked")]
-    [GameContract("assembly_valheim", "Achievement", "m_unlocked")]
-    [GameContract("assembly_valheim", "Achievement", "m_isSecret")]
+    [GameContract("assembly_valheim", "Achievements", "m_instance", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "Achievements")]
+    [GameContract("assembly_valheim", "Achievements", "m_achievementLists", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Collections.Generic.List\u00601[[AchievementList, assembly_valheim, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]")]
+    [GameContract("assembly_valheim", "AchievementList", "m_achievements", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Collections.Generic.List\u00601[[Achievement, assembly_valheim, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]")]
+    [GameContract("assembly_valheim", "Achievement", "m_name", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.String")]
+    [GameContract("assembly_valheim", "Achievement", "m_description", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.String")]
+    [GameContract("assembly_valheim", "Achievement", "m_icon", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.Sprite")]
+    [GameContract("assembly_valheim", "Achievement", "m_iconLocked", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.Sprite")]
+    [GameContract("assembly_valheim", "Achievement", "m_unlocked", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Boolean")]
+    [GameContract("assembly_valheim", "Achievement", "m_isSecret", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Boolean")]
     [GameContract("assembly_valheim", "Player", "GetTrophies")]
     [GameContract("assembly_valheim", "ObjectDB", "get_instance")]
     [GameContract("assembly_valheim", "ObjectDB", "GetItemPrefab", Parameters = new[] { "System.String" })]
-    [GameContract("assembly_valheim", "ItemDrop", "m_itemData")]
+    [GameContract("assembly_valheim", "ItemDrop", "m_itemData", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "ItemDrop\u002BItemData")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop\u002BItemData", "m_shared", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "ItemDrop\u002BItemData\u002BSharedData")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop\u002BItemData\u002BSharedData", "m_name", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.String")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop\u002BItemData", "GetIcon", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.Sprite")]
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Theme.ThemeRuntime), typeof(GenesisUI.Widgets.WindowParts), typeof(GenesisUI.Theme.ThemeTokens), typeof(GenesisUI.Widgets.ScrollArea), typeof(GenesisUI.Widgets.WindowCanvas), typeof(GenesisUI.Widgets.Ui), typeof(GenesisUI.Widgets.Frame))]
     internal sealed class AchievementsWindowModule : WindowModuleBase
     {
         private const float AchievementsW = 776f, TrophiesX = 780f, TrophiesW = 444f, DetailsX = 1228f, DetailsW = 352f;

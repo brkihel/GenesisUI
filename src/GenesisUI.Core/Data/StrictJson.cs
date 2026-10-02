@@ -148,12 +148,18 @@ namespace GenesisUI.Data
             {
                 int start = _i;
                 if (Peek('-')) _i++;
-                while (!AtEnd && ((_s[_i] >= '0' && _s[_i] <= '9') || _s[_i] == '.' || _s[_i] == 'e' || _s[_i] == 'E' || _s[_i] == '+' || _s[_i] == '-')) _i++;
+                if (Peek('0')) _i++;
+                else { if (AtEnd || _s[_i] < '1' || _s[_i] > '9') throw Error("expected integer digits"); Digits(); }
+                if (Peek('.')) { _i++; RequireDigits(); }
+                if (Peek('e') || Peek('E')) { _i++; if (Peek('+') || Peek('-')) _i++; RequireDigits(); }
                 string token = _s.Substring(start, _i - start);
                 if (!double.TryParse(token, NumberStyles.Float, CultureInfo.InvariantCulture, out double value) || double.IsInfinity(value))
                     throw Error("bad number '" + token + "'");
                 return value;
             }
+
+            private void Digits() { while (!AtEnd && _s[_i] >= '0' && _s[_i] <= '9') _i++; }
+            private void RequireDigits() { int start = _i; Digits(); if (_i == start) throw Error("expected digits"); }
 
             private void Expect(string word)
             {

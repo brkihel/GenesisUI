@@ -62,6 +62,7 @@
     <None Include="$(RepoRoot)art/out/*.png;$(RepoRoot)art/out/sprites.json" Link="art/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <!-- The metal and burn shaders (D-033), built by tools/shaders/build.sh; optional at run time. -->
     <None Include="$(RepoRoot)art/shaders/genesisui.shaders" Condition="Exists('$(RepoRoot)art/shaders/genesisui.shaders')" Link="art/genesisui.shaders" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="$(RepoRoot)art/shaders/provenance.json" Condition="Exists('$(RepoRoot)art/shaders/provenance.json')" Link="art/shader-provenance.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <!--

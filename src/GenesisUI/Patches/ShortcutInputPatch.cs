@@ -16,8 +16,9 @@ namespace GenesisUI.Patches
     [GameContract("assembly_utils", "ZInput", "GetButtonDown", Parameters = new[] { "System.String" })]
     [GameContract("assembly_utils", "ZInput", "GetButton", Parameters = new[] { "System.String" })]
     [GameContract("assembly_utils", "ZInput", "GetButtonUp", Parameters = new[] { "System.String" })]
-    [GameContract("assembly_utils", "ZInput", "m_buttons")]
+    [GameContract("assembly_utils", "ZInput", "m_buttons", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Collections.Generic.Dictionary\u00602[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[ZInput\u002BButtonDef, assembly_utils, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]")]
     [GameContract("assembly_utils", "ZInput+ButtonDef", "get_ButtonAction")]
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Gameplay.SlotHotkeys))]
     internal static class ShortcutInputPatch
     {
         [HarmonyPostfix]

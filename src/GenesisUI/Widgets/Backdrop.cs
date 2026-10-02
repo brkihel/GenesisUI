@@ -8,6 +8,7 @@ namespace GenesisUI.Widgets
     /// What dims the world behind an open window: the GenesisUI/Backdrop shader's warm vignette with a
     /// faint grain, or the flat black veil it replaced when the shader is not loaded.
     /// </summary>
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Widgets.Ui), typeof(GenesisUI.Theme.ThemeRuntime))]
     internal static class Backdrop
     {
         public static Graphic Create(RectTransform root, ThemeRuntime theme)

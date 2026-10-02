@@ -13,31 +13,31 @@ namespace GenesisUI.Host
     /// it: GenesisUI and that mod never fight over the same pixels.
     /// </summary>
     [GameContract("assembly_valheim", "Hud", "instance")]
-    [GameContract("assembly_valheim", "Hud", "m_rootObject")]
-    [GameContract("assembly_valheim", "Hud", "m_healthBarRoot")]
-    [GameContract("assembly_valheim", "Hud", "m_staminaBar2Root")]
-    [GameContract("assembly_valheim", "Hud", "m_eitrBarRoot")]
-    [GameContract("assembly_valheim", "Hud", "m_foodBarRoot")]
-    [GameContract("assembly_valheim", "Hud", "m_foodBaseBar")]
-    [GameContract("assembly_valheim", "Hud", "m_foodIcon")]
-    [GameContract("assembly_valheim", "Hud", "m_foodText")]
-    [GameContract("assembly_valheim", "Hud", "m_foodIcons")]
-    [GameContract("assembly_valheim", "Hud", "m_foodTime")]
-    [GameContract("assembly_valheim", "Hud", "m_foodBars")]
-    [GameContract("assembly_valheim", "Hud", "m_statusEffectListRoot")]
-    [GameContract("assembly_valheim", "Hud", "m_gpRoot")]
-    [GameContract("assembly_valheim", "Hud", "m_healthPanel")]
+    [GameContract("assembly_valheim", "Hud", "m_rootObject", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.GameObject")]
+    [GameContract("assembly_valheim", "Hud", "m_healthBarRoot", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.RectTransform")]
+    [GameContract("assembly_valheim", "Hud", "m_staminaBar2Root", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.RectTransform")]
+    [GameContract("assembly_valheim", "Hud", "m_eitrBarRoot", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.RectTransform")]
+    [GameContract("assembly_valheim", "Hud", "m_foodBarRoot", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.RectTransform")]
+    [GameContract("assembly_valheim", "Hud", "m_foodBaseBar", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.RectTransform")]
+    [GameContract("assembly_valheim", "Hud", "m_foodIcon", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.UI.Image")]
+    [GameContract("assembly_valheim", "Hud", "m_foodText", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "TMPro.TMP_Text")]
+    [GameContract("assembly_valheim", "Hud", "m_foodIcons", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.UI.Image[]")]
+    [GameContract("assembly_valheim", "Hud", "m_foodTime", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "TMPro.TMP_Text[]")]
+    [GameContract("assembly_valheim", "Hud", "m_foodBars", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.UI.Image[]")]
+    [GameContract("assembly_valheim", "Hud", "m_statusEffectListRoot", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.RectTransform")]
+    [GameContract("assembly_valheim", "Hud", "m_gpRoot", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.RectTransform")]
+    [GameContract("assembly_valheim", "Hud", "m_healthPanel", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.RectTransform")]
     [GameContract("assembly_valheim", "Minimap", "instance")]
-    [GameContract("assembly_valheim", "Minimap", "m_smallRoot")]
-    [GameContract("assembly_valheim", "Hud", "m_hoverName")]
+    [GameContract("assembly_valheim", "Minimap", "m_smallRoot", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.GameObject")]
+    [GameContract("assembly_valheim", "Hud", "m_hoverName", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "TMPro.TextMeshProUGUI")]
     [GameContract("assembly_valheim", "MessageHud", "instance")]
-    [GameContract("assembly_valheim", "MessageHud", "m_messageText")]
-    [GameContract("assembly_valheim", "MessageHud", "m_messageIcon")]
-    [GameContract("assembly_valheim", "MessageHud", "m_messageCenterText")]
+    [GameContract("assembly_valheim", "MessageHud", "m_messageText", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "TMPro.TMP_Text")]
+    [GameContract("assembly_valheim", "MessageHud", "m_messageIcon", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.UI.Image")]
+    [GameContract("assembly_valheim", "MessageHud", "m_messageCenterText", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "TMPro.TMP_Text")]
     [GameContract("assembly_valheim", "EnemyHud", "instance")]
-    [GameContract("assembly_valheim", "EnemyHud", "m_hudRoot")]
-    [GameContract("assembly_valheim", "EnemyHud", "m_baseHudBoss")]
-    [GameContract("assembly_valheim", "EnemyHud", "m_baseHud")]
+    [GameContract("assembly_valheim", "EnemyHud", "m_hudRoot", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.GameObject")]
+    [GameContract("assembly_valheim", "EnemyHud", "m_baseHudBoss", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.GameObject")]
+    [GameContract("assembly_valheim", "EnemyHud", "m_baseHud", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.GameObject")]
     internal static class RegionRegistry
     {
         private static readonly Dictionary<string, Func<IEnumerable<GameObject>>> Resolvers = new Dictionary<string, Func<IEnumerable<GameObject>>>(StringComparer.Ordinal)
@@ -64,17 +64,31 @@ namespace GenesisUI.Host
             // selection and use working while veiled (see docs/regions.md).
             ["hud.hotbar"] = () => Hud.instance == null ? Enumerable.Empty<GameObject>()
                 : Hud.instance.GetComponentsInChildren<HotkeyBar>(true).Select(b => b.gameObject),
+            // These modules skin dynamic windows themselves; the reservation prevents foreign fights.
+            ["win.shell"] = Empty,
+            ["win.inventory"] = Empty,
+            ["win.crafting"] = Empty,
+            ["win.skills"] = Empty,
+            ["win.achievements"] = Empty,
+            ["win.settings"] = Empty,
+            ["win.menu"] = Empty,
+            ["win.dialogs"] = Empty,
+            ["win.store"] = Empty,
+            ["win.map"] = Empty,
+            ["hud.mapmarkers"] = Empty,
+            ["hud.build"] = Empty,
         };
 
         /// <summary>Mods that redraw vanilla regions: GUID → regions they own while installed.</summary>
         private static readonly Dictionary<string, string[]> ForeignOwners = new Dictionary<string, string[]>(StringComparer.Ordinal)
         {
             // SeneaL UI replaces the whole HUD. While both are installed, it keeps it.
-            ["seneaL.valheim.ui"] = new[] { "hud.health", "hud.stamina", "hud.eitr", "hud.healthDecor", "hud.food", "hud.statusEffects", "hud.guardianPower", "hud.hotbar", "hud.minimap", "hud.hover", "hud.messages", "hud.boss", "hud.enemy" },
+            ["seneaL.valheim.ui"] = new[] { "hud.health", "hud.stamina", "hud.eitr", "hud.healthDecor", "hud.food", "hud.statusEffects", "hud.guardianPower", "hud.hotbar", "hud.minimap", "hud.hover", "hud.messages", "hud.boss", "hud.enemy", "win.shell", "win.inventory", "win.crafting", "win.skills", "win.achievements", "win.settings", "win.menu", "win.dialogs", "win.store", "win.map", "hud.mapmarkers", "hud.build" },
         };
 
         /// <summary>Regions whose vanilla objects come and go while playing: empty is normal for them.</summary>
-        private static readonly HashSet<string> Dynamic = new HashSet<string>(StringComparer.Ordinal) { "hud.boss", "hud.enemy" };
+        private static readonly HashSet<string> Dynamic = new HashSet<string>(StringComparer.Ordinal) { "hud.boss", "hud.enemy", "win.shell", "win.inventory", "win.crafting", "win.skills", "win.achievements", "win.settings", "win.menu", "win.dialogs", "win.store", "win.map", "hud.mapmarkers", "hud.build" };
+        private static IEnumerable<GameObject> Empty() => Enumerable.Empty<GameObject>();
 
         public static bool IsDynamic(string region) => Dynamic.Contains(region);
 

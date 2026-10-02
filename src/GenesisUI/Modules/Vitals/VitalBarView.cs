@@ -40,6 +40,7 @@ namespace GenesisUI.Modules.Vitals
     /// plate when the art has one. Low health pulses the frame red, with embers along the sides.
     /// Only draws what a BarAnimator says; allocation-free per frame.
     /// </summary>
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Widgets.Ui), typeof(GenesisUI.Theme.ThemeRuntime), typeof(GenesisUI.Widgets.Frame), typeof(GenesisUI.Theme.ThemeTokens), typeof(GenesisUI.Widgets.LiquidLayer), typeof(GenesisUI.Widgets.BurnLight), typeof(GenesisUI.Vitals.BarAnimator))]
     internal sealed class VitalBarView
     {
         private const int EmberCount = 16;

@@ -19,6 +19,9 @@ namespace GenesisUI.Diagnostics
     /// module, look at vanilla under GenesisUI and write the report. It holds an input
     /// lease while open, so the mouse is free and the character does not move.
     /// </summary>
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_guiutils", "Localization", "get_instance", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "Localization")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_guiutils", "Localization", "Localize", Parameters = new string[] { "System.String" }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.String")]
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Foundation.InputLeases), typeof(GenesisUI.Theme.ThemeRuntime), typeof(GenesisUI.Widgets.Ui), typeof(GenesisUI.Theme.ThemeTokens), typeof(GenesisUI.Build), typeof(GenesisUI.Host.ModuleEntry), typeof(GenesisUI.Foundation.VanillaVeil), typeof(GenesisUI.Host.RegionRegistry), typeof(GenesisUI.Foundation.VeilHandle), typeof(GenesisUI.Foundation.Guard), typeof(GenesisUI.Foundation.Faults.FaultRegistry), typeof(GenesisUI.Foundation.Faults.FaultRecord))]
     internal static class Overlay
     {
         private const string Owner = "diag:overlay";
@@ -28,6 +31,8 @@ namespace GenesisUI.Diagnostics
         private static Func<string> _writeReport;
         private static RectTransform _panel;
         private static TextMeshProUGUI _body;
+        private static RectTransform _content;
+        private static float _bodyTop;
         private static TextMeshProUGUI _veilLabel;
         private static readonly List<(ModuleEntry entry, Button inject, Button retry)> Rows = new List<(ModuleEntry, Button, Button)>();
         private static IDisposable _lease;
@@ -35,6 +40,12 @@ namespace GenesisUI.Diagnostics
         private static string _status = "";
 
         public static bool IsOpen => _panel != null && _panel.gameObject.activeSelf;
+        internal static void Shutdown()
+        {
+            Close();
+            if (_panel != null) UnityEngine.Object.Destroy(_panel.gameObject);
+            _panel = null; _body = null; _content = null; _veilLabel = null; Rows.Clear(); _theme = null; _writeReport = null;
+        }
 
         public static void Init(ThemeRuntime theme, Func<string> writeReport)
         {
@@ -83,7 +94,8 @@ namespace GenesisUI.Diagnostics
             if (root == null || _theme == null) return;
             var t = _theme.Tokens;
 
-            _panel = Ui.Place(Ui.Child(root.transform, "GenesisUI_Diagnostics"), new Vector2(0f, 1f), new Vector2(24f, -24f), new Vector2(560f, 840f));
+            float height = Mathf.Clamp(((RectTransform)root.transform).rect.height - 48f, 240f, 840f);
+            _panel = Ui.Place(Ui.Child(root.transform, "GenesisUI_Diagnostics"), new Vector2(0f, 1f), new Vector2(24f, -24f), new Vector2(560f, height));
             var bg = Ui.Image(_panel, null, ThemeRuntime.ToUnity(t.PanelBackground), raycast: true);
             var outline = _panel.gameObject.AddComponent<Outline>();
             outline.effectColor = ThemeRuntime.ToUnity(t.LineFrame);
@@ -93,35 +105,43 @@ namespace GenesisUI.Diagnostics
             Ui.Place((RectTransform)title.transform, new Vector2(0f, 1f), new Vector2(18f, -14f), new Vector2(520f, 30f));
             title.text = L("$genesisui_diag_title") + "  <size=14><color=#BA995C>" + GenesisUI.Build.FullVersion + "</color></size>";
 
-            float y = -56f;
+            var viewport = Ui.Place(Ui.Child(_panel, "Viewport"), new Vector2(0f, 1f), new Vector2(0f, -52f), new Vector2(560f, height - 60f));
+            Ui.Image(viewport, null, Color.clear, raycast: true);
+            viewport.gameObject.AddComponent<RectMask2D>();
+            var scroll = viewport.gameObject.AddComponent<ScrollRect>();
+            scroll.viewport = viewport; scroll.horizontal = false; scroll.movementType = ScrollRect.MovementType.Clamped;
+            _content = Ui.Place(Ui.Child(viewport, "Content"), new Vector2(0f, 1f), Vector2.zero, new Vector2(560f, 1600f));
+            scroll.content = _content;
+            float y = -4f;
             foreach (var entry in ModuleHost.Modules)
             {
                 var e = entry;
-                var label = Ui.Text(_panel, "Row " + e.Module.Id, _theme, FontRole.BodyStrong, 18f, ThemeRuntime.ToUnity(t.TextBody), TextAlignmentOptions.Left);
+                var label = Ui.Text(_content, "Row " + e.Module.Id, _theme, FontRole.BodyStrong, 18f, ThemeRuntime.ToUnity(t.TextBody), TextAlignmentOptions.Left);
                 Ui.Place((RectTransform)label.transform, new Vector2(0f, 1f), new Vector2(18f, y), new Vector2(280f, 28f));
                 label.text = L(e.Module.NameToken) + "  <size=13><color=#BA995C>" + e.Module.Id + "</color></size>";
-                var inject = Button(_panel, L("$genesisui_diag_inject"), new Vector2(300f, y), 118f, () => ModuleHost.InjectFault(e));
-                var retry = Button(_panel, L("$genesisui_diag_retry"), new Vector2(424f, y), 118f, () => ModuleHost.Retry(e));
+                var inject = Button(_content, L("$genesisui_diag_inject"), new Vector2(300f, y), 118f, () => ModuleHost.InjectFault(e));
+                var retry = Button(_content, L("$genesisui_diag_retry"), new Vector2(424f, y), 118f, () => ModuleHost.Retry(e));
                 Rows.Add((e, inject, retry));
                 y -= 34f;
             }
 
             y -= 8f;
-            var veil = Button(_panel, "", new Vector2(18f, y), 200f, ToggleVeil);
+            var veil = Button(_content, "", new Vector2(18f, y), 200f, ToggleVeil);
             _veilLabel = veil.GetComponentInChildren<TextMeshProUGUI>();
-            Button(_panel, L("$genesisui_diag_report"), new Vector2(226f, y), 160f, () =>
+            Button(_content, L("$genesisui_diag_report"), new Vector2(226f, y), 160f, () =>
             {
                 string path = _writeReport();
                 _status = path != null ? L("$genesisui_diag_report_done") : L("$genesisui_report_failed");
                 Refresh();
             });
-            Button(_panel, L("$genesisui_diag_close"), new Vector2(394f, y), 148f, Close);
+            Button(_content, L("$genesisui_diag_close"), new Vector2(394f, y), 148f, Close);
             y -= 44f;
 
-            _body = Ui.Text(_panel, "Body", _theme, FontRole.Body, 16f, ThemeRuntime.ToUnity(t.TextBody), TextAlignmentOptions.TopLeft);
-            Ui.Place((RectTransform)_body.transform, new Vector2(0f, 1f), new Vector2(18f, y), new Vector2(524f, 840f + y - 16f));
+            _body = Ui.Text(_content, "Body", _theme, FontRole.Body, 16f, ThemeRuntime.ToUnity(t.TextBody), TextAlignmentOptions.TopLeft);
+            _bodyTop = -y;
+            Ui.Place((RectTransform)_body.transform, new Vector2(0f, 1f), new Vector2(18f, y), new Vector2(524f, 400f));
             _body.textWrappingMode = TextWrappingModes.Normal;
-            _body.overflowMode = TextOverflowModes.Truncate;
+            _body.overflowMode = TextOverflowModes.Overflow;
 
             _panel.gameObject.SetActive(false);
         }
@@ -171,6 +191,9 @@ namespace GenesisUI.Diagnostics
             sb.Append("\n").Append(L("$genesisui_diag_input")).Append(' ').Append(InputLeases.ActiveCount);
             if (_status.Length > 0) sb.Append("\n\n<color=#A2DC88>").Append(_status).Append("</color>");
             _body.text = sb.ToString();
+            float bodyHeight = Mathf.Max(80f, _body.preferredHeight);
+            ((RectTransform)_body.transform).sizeDelta = new Vector2(524f, bodyHeight);
+            if (_content != null) _content.sizeDelta = new Vector2(560f, _bodyTop + bodyHeight + 16f);
         }
 
         private static void ToggleVeil()

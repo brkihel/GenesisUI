@@ -37,8 +37,9 @@ namespace GenesisUI
     [GameContract("assembly_utils", "ZInput", "instance")]
     [GameContract("assembly_valheim", "MessageHud", "ShowMessage")]
     [GameContract("assembly_valheim", "MessageHud", "instance")]
-    [GameContract("assembly_valheim", "Hud", "m_rootObject")]
+    [GameContract("assembly_valheim", "Hud", "m_rootObject", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.GameObject")]
     [GameContract("assembly_guiutils", "Localization", "Localize")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_guiutils", "Localization", "get_instance", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "Localization")]
     public sealed class Plugin : BaseUnityPlugin
     {
         private const string KeyOwner = "host:diagnostics-key";
@@ -48,26 +49,38 @@ namespace GenesisUI
         internal static ConfigEntry<KeyboardShortcut> DiagnosticsKey;
 
         private ButtonConfig _diagnosticsButton;
+        private DiagnosticsButtonRegistration _buttonRegistration;
         private Harmony _harmony;
         private ThemeRuntime _theme;
         private bool _ready;
         private static string _lastDisplay;
+        private readonly List<System.Action> _unsubscribe = new List<System.Action>();
+        private System.Action _guiAvailable;
+        private bool _shutdown;
+        private System.Action _readKey;
+        private readonly Foundation.Logging.RecentSamples _frameSamples = new Foundation.Logging.RecentSamples();
 
         private void Awake()
         {
-            // Client-only (docs/DECISIONS.md D-001). On a dedicated server there is no UI to draw.
-            if (GUIManager.IsHeadless())
-            {
-                Logger.LogInfo(PluginInfo.Name + " is client-only; nothing to do on a dedicated server.");
-                enabled = false;
-                return;
-            }
-
+            _readKey = ReadDiagnosticsKey;
             LogFileSink file = null;
 #if GENESIS_DIAGNOSTICS
             file = LogFileSink.TryOpen(Path.Combine(BepInEx.Paths.BepInExRootPath, PluginInfo.Name, "logs"), "genesisui");
 #endif
             GenesisLog.Init(Logger, PluginInfo.Name, Build.MinimumLogSeverity, file);
+            // D-031/D-040: config authority exists on a server; visual modules/patches do not.
+            if (!Guard.Run("host:config", () =>
+            {
+                var missing = ContractResolver.Missing(typeof(Gameplay.InventorySettings));
+                if (missing.Count > 0) throw new System.InvalidOperationException("Inventory config contracts missing: " + string.Join("; ", missing));
+                Gameplay.InventorySettings.Bind(Config);
+            })) { enabled = false; return; }
+            if (GUIManager.IsHeadless())
+            {
+                Logger.LogInfo(PluginInfo.Name + " initialized inventory configuration sync; visual modules and gameplay patches stay off on a dedicated server.");
+                enabled = false;
+                return;
+            }
 
             foreach (var line in SessionHeader.Build(PluginInfo.Name, Build.FullVersion, Build.Channel.ToString(), includeDisplay: false))
                 GenesisLog.Info("Host", line);
@@ -76,7 +89,6 @@ namespace GenesisUI
             Guard.Run("host:awake", () =>
             {
                 BindConfig();
-                Gameplay.InventorySettings.Bind(Config);
                 Widgets.WindowCanvas.Bind(Config);
 
                 var missing = ContractResolver.Missing(typeof(Plugin));
@@ -102,7 +114,7 @@ namespace GenesisUI
                 Modules.Windows.WindowShellModule.ParallaxEnabled = Config.Bind("Windows", "Parallax", true,
                     "As janelas abertas se deslocam de leve contra o mouse e a luz do dourado se inclina para ele, dando profundidade.").Value;
                 ModuleHost.Init(_theme, Enabled.Value);
-                Enabled.SettingChanged += (_, __) => Guard.Try("master toggle", () => ModuleHost.SetMasterEnabled(Enabled.Value));
+                Watch(Enabled, (_, __) => Guard.Try("master toggle", () => ModuleHost.SetMasterEnabled(Enabled.Value)));
 
                 ModuleHost.Register(new VitalsModule(Config), Config.Bind("Modules", "Vitals", true,
                     "Barras verticais de vida, vigor e eitr no canto inferior esquerdo. Desligado, o jogo mostra as barras originais."));
@@ -160,16 +172,20 @@ namespace GenesisUI
 
                 // Jötunn raises this on every scene: fonts become available on the first one,
                 // and the main scene brings the HUD the modules attach to.
-                GUIManager.OnCustomGUIAvailable += () => Guard.Try("gui available", OnGuiAvailable);
+                _guiAvailable = () => Guard.Run("host:gui", OnGuiAvailable);
+                GUIManager.OnCustomGUIAvailable += _guiAvailable;
 
                 // Patch classes one by one through the guarded patcher (PATCH-POLICY rule 5).
                 _harmony = new Harmony(PluginInfo.Guid);
                 GuardedPatcher.Apply(_harmony, typeof(Patches.InventoryTabKeyPatch));
                 GuardedPatcher.Apply(_harmony, typeof(Patches.ShortcutInputPatch));
                 GuardedPatcher.Apply(_harmony, typeof(Patches.InventorySizePatch));
+                GuardedPatcher.Apply(_harmony, typeof(Patches.InventoryTransitionPatch));
+                GuardedPatcher.Apply(_harmony, typeof(Patches.InventoryHoverPatch));
                 GuardedPatcher.Apply(_harmony, typeof(Patches.InventoryPlacementPatches));
                 GuardedPatcher.Apply(_harmony, typeof(Patches.EquipmentPatches));
                 GuardedPatcher.Apply(_harmony, typeof(Patches.CraftingListPatch));
+                GuardedPatcher.Apply(_harmony, typeof(Patches.RequirementBindingPatch));
 
 #if GENESIS_DIAGNOSTICS
                 Diagnostics.Watermark.Install(Build.Channel, Build.FullVersion);
@@ -245,8 +261,8 @@ namespace GenesisUI
             theme.BackgroundOpacity = panel =>
                 panel != null && panels.TryGetValue(panel, out var e) && e.Value >= 0f ? e.Value : shared.Value;
             System.EventHandler changed = (_, __) => Guard.Try("background opacity", theme.RefreshBackgrounds);
-            shared.SettingChanged += changed;
-            foreach (var e in panels.Values) e.SettingChanged += changed;
+            Watch(shared, changed);
+            foreach (var e in panels.Values) Watch(e, changed);
         }
 
         /// <summary>The [Sound] section (Som in the settings window); every change applies at once (D-036).</summary>
@@ -258,8 +274,8 @@ namespace GenesisUI
                 new ConfigDescription("Volume dos sons do GenesisUI, sobre o volume do jogo.", new AcceptableValueRange<float>(0f, 1f)));
             Widgets.UiSound.Enabled = enabled.Value;
             Widgets.UiSound.Volume = volume.Value;
-            enabled.SettingChanged += (_, __) => Widgets.UiSound.Enabled = enabled.Value;
-            volume.SettingChanged += (_, __) => Widgets.UiSound.Volume = volume.Value;
+            Watch(enabled, (_, __) => Widgets.UiSound.Enabled = enabled.Value);
+            Watch(volume, (_, __) => Widgets.UiSound.Volume = volume.Value);
             var cues = new[]
             {
                 ("TabHover", "Tilintar baixo ao passar o mouse numa aba."),
@@ -272,12 +288,14 @@ namespace GenesisUI
                 int index = i;
                 var entry = Config.Bind("Sound", cues[i].Item1, true, cues[i].Item2);
                 Widgets.UiSound.CueEnabled[index] = entry.Value;
-                entry.SettingChanged += (_, __) => Widgets.UiSound.CueEnabled[index] = entry.Value;
+                Watch(entry, (_, __) => Widgets.UiSound.CueEnabled[index] = entry.Value);
             }
         }
 
         private void RegisterDiagnosticsKey()
         {
+            var missing = ContractResolver.Missing(typeof(DiagnosticsButtonRegistration));
+            if (missing.Count > 0) throw new System.InvalidOperationException("Diagnostic button contracts missing: " + string.Join("; ", missing));
             _diagnosticsButton = new ButtonConfig
             {
                 Name = "GenesisUI_Diagnostics",
@@ -286,14 +304,22 @@ namespace GenesisUI
                 ActiveInCustomGUI = true,
             };
             InputManager.Instance.AddButton(PluginInfo.Guid, _diagnosticsButton);
+            _buttonRegistration = new DiagnosticsButtonRegistration(_diagnosticsButton);
         }
 
         private void Update()
         {
             if (!_ready) return;
 #if GENESIS_DIAGNOSTICS
-            Diagnostics.Overlay.Tick(Time.unscaledDeltaTime);
+            if (!Guard.Run("diag:overlay", OverlayTick, Time.unscaledDeltaTime)) Guard.Try("close faulted diagnostics", Diagnostics.Overlay.Close);
 #endif
+            Guard.Run(KeyOwner, _readKey);
+        }
+#if GENESIS_DIAGNOSTICS
+        private static readonly System.Action<float> OverlayTick = Diagnostics.Overlay.Tick;
+#endif
+        private void ReadDiagnosticsKey()
+        {
             if (_diagnosticsButton == null || ZInput.instance == null || Guard.IsTripped(KeyOwner)) return;
             if (!ZInput.GetButtonDown(_diagnosticsButton.Name)) return;
 #if GENESIS_DIAGNOSTICS
@@ -312,6 +338,7 @@ namespace GenesisUI
         private void LateUpdate()
         {
             if (!_ready) return;
+            _frameSamples.Add(Time.unscaledDeltaTime * 1000.0);
             ModuleHost.Tick(Time.unscaledDeltaTime);
             ModuleHost.LateTick();
         }
@@ -324,6 +351,9 @@ namespace GenesisUI
 
         private IEnumerable<KeyValuePair<string, IEnumerable<string>>> ReportSections()
         {
+            yield return new KeyValuePair<string, IEnumerable<string>>("Shader provenance", new[] { _theme != null ? _theme.ShaderEvidence : "theme unavailable" });
+            yield return new KeyValuePair<string, IEnumerable<string>>("Preview stages", Widgets.PreviewStage.Diagnostics());
+            yield return new KeyValuePair<string, IEnumerable<string>>("Recent frame intervals", new[] { "window samples " + _frameSamples.Count + "; p50/p95 ms " + _frameSamples.Percentile(0.5).ToString("0.000", System.Globalization.CultureInfo.InvariantCulture) + "/" + _frameSamples.Percentile(0.95).ToString("0.000", System.Globalization.CultureInfo.InvariantCulture) + "; includes game, mods, synchronization and UI; not isolated GenesisUI cost" });
             yield return new KeyValuePair<string, IEnumerable<string>>("Modules", ModuleHost.Modules.Select(e =>
                 e.Module.Id + ": " + e.State + (e.Reason == null ? "" : " — " + e.Reason)
                 + (e.RefreshCount > 0 ? " (" + (e.RefreshSecondsTotal / e.RefreshCount * 1000.0).ToString("0.000", System.Globalization.CultureInfo.InvariantCulture) + " ms/refresh over " + e.RefreshCount + ")" : "")));
@@ -347,8 +377,40 @@ namespace GenesisUI
 
         private void OnDestroy()
         {
+            if (_shutdown) return;
+            _shutdown = true; _ready = false;
             GenesisLog.Info("Host", "shutting down");
+            if (_guiAvailable != null) GUIManager.OnCustomGUIAvailable -= _guiAvailable;
+            foreach (var unsubscribe in _unsubscribe) Guard.Try("unsubscribe config", unsubscribe);
+            _unsubscribe.Clear();
+            Guard.Try("module shutdown", ModuleHost.Shutdown);
+            Guard.Try("shared panels shutdown", Modules.Windows.VanillaPanels.Shutdown);
+            Guard.Try("skin shutdown", VanillaSkin.RestoreEveryOwner);
+            Guard.Try("shared groups shutdown", SharedCanvasGroups.ReleaseEveryOwner);
+            Guard.Try("owned resources shutdown", OwnerResources.ReleaseAll);
+            Guard.Try("fault popup shutdown", Diagnostics.FaultPopup.Shutdown);
+#if GENESIS_DIAGNOSTICS
+            Guard.Try("overlay shutdown", Diagnostics.Overlay.Shutdown);
+            Guard.Try("watermark shutdown", Diagnostics.Watermark.Shutdown);
+#endif
+            Guard.Try("input shutdown", InputLeases.Shutdown);
+            Guard.Try("audio shutdown", Widgets.UiSound.Shutdown);
+            Guard.Try("hotkeys shutdown", Gameplay.SlotHotkeys.Shutdown);
+            if (_buttonRegistration != null) Guard.Try("diagnostics button shutdown", _buttonRegistration.Dispose);
+            _buttonRegistration = null;
+            Guard.Try("window settings shutdown", Widgets.WindowCanvas.Shutdown);
+            Guard.Try("inventory config shutdown", Gameplay.InventorySettings.Shutdown);
+            Guard.Try("requirement bindings shutdown", Modules.Windows.RequirementBindings.Clear);
+            if (_harmony != null) Guard.Try("own patch shutdown", () => GuardedPatcher.Shutdown(_harmony));
+            if (_theme != null) Guard.Try("theme shutdown", _theme.Shutdown);
+            _theme = null; _harmony = null; _guiAvailable = null; _diagnosticsButton = null;
+            Enabled = null; RedactReports = null; DiagnosticsKey = null; _lastDisplay = null;
             GenesisLog.Shutdown();
+        }
+        private void Watch<T>(ConfigEntry<T> entry, System.EventHandler handler)
+        {
+            entry.SettingChanged += handler;
+            _unsubscribe.Add(() => entry.SettingChanged -= handler);
         }
     }
 }

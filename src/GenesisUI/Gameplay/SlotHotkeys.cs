@@ -15,6 +15,15 @@ namespace GenesisUI.Gameplay
     /// (<see cref="Patches.ShortcutInputPatch"/>): Alt+X uses an action slot and does not make the
     /// character sit; X alone still sits. Checked once per frame, allocation-free.
     /// </summary>
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Character", "IsDead", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Boolean")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Character", "InCutscene", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Boolean")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Character", "IsTeleporting", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Boolean")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Player", "m_localPlayer", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "Player")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_utils", "ZInput", "get_instance", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "ZInput")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_utils", "ZInput\u002BButtonDef", "get_ButtonAction", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.InputSystem.InputAction")]
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Foundation.Guard), typeof(GenesisUI.Patches.TextInputFocus), typeof(GenesisUI.InventoryModel.SlotLayout))]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_utils", "ZInput", "m_buttons", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Collections.Generic.Dictionary\u00602[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[ZInput\u002BButtonDef, assembly_utils, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Player", "TakeInput", Parameters = new string[0], Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Boolean")]
     internal static class SlotHotkeys
     {
         internal const int Count = 8; // 0-3 quick-use, 4-7 action
@@ -27,6 +36,11 @@ namespace GenesisUI.Gameplay
         private static int _frame = -1;
         private static bool _any;
         private static AccessTools_ButtonsRef _buttons;
+        private static readonly Key[] Keys = new Key[Count];
+        private static readonly EventHandler[] Changed = new EventHandler[Count];
+        private static Func<Player, bool> _takeInput;
+        private static bool _checking;
+        private const string Owner = "module:hud.slots";
 
         /// <summary>On while the slots module runs: off, the input patch does nothing.</summary>
         internal static bool Active;
@@ -42,6 +56,41 @@ namespace GenesisUI.Gameplay
                 Entries[i] = config.Bind("Hotkeys", (quick ? "Quick" : "Action") + n, new KeyboardShortcut(key, KeyCode.LeftAlt),
                     (quick ? "Atalho do espaço de consumo rápido " : "Atalho do espaço de ação ") + n +
                     ". Qualquer tecla, com ou sem Alt/Ctrl/Shift. Enquanto o atalho estiver apertado, a ação do jogo na mesma tecla não acontece (Alt+X não faz sentar).");
+                int index = i;
+                Changed[i] = (_, __) => { ToKey(Shortcut(index).MainKey, out Keys[index]); ResetClaims(); };
+                Entries[i].SettingChanged += Changed[i];
+                ToKey(Shortcut(i).MainKey, out Keys[i]);
+            }
+        }
+
+        internal static void Resolve()
+        {
+            _takeInput = HarmonyLib.AccessTools.MethodDelegate<Func<Player, bool>>(HarmonyLib.AccessTools.Method(typeof(Player), "TakeInput"));
+            _buttons = new AccessTools_ButtonsRef();
+            ResetClaims();
+        }
+
+        internal static bool TakesInput(Player player)
+        {
+            if (!Active || _checking || player == null || _takeInput == null || InventoryModule.Current == null || Guard.IsTripped(Owner)) return false;
+            _checking = true;
+            try { return InputLeases.ActiveCount == 0 && !player.IsDead() && !player.InCutscene() && !player.IsTeleporting() && !Patches.TextInputFocus.Active && _takeInput(player); }
+            finally { _checking = false; }
+        }
+
+        internal static void ResetClaims()
+        {
+            Array.Clear(Claimed, 0, Count);
+            ClaimedKeys.Clear(); ShownKeys.Clear(); Suppressed.Clear(); _any = false; _frame = -1;
+        }
+
+        internal static void Shutdown()
+        {
+            Active = false; ResetClaims(); _takeInput = null; _buttons = null;
+            for (int i = 0; i < Count; i++)
+            {
+                if (Entries[i] != null && Changed[i] != null) Entries[i].SettingChanged -= Changed[i];
+                Entries[i] = null; Changed[i] = null;
             }
         }
 
@@ -56,8 +105,8 @@ namespace GenesisUI.Gameplay
         /// </summary>
         internal static bool Suppresses(string button)
         {
-            if (!Active) return false;
-            if (_frame != Time.frameCount) Update();
+            if (!Active || _checking || Guard.IsTripped(Owner)) return false;
+            if (_frame != Time.frameCount && !Guard.Run(Owner, Update)) { ResetClaims(); return false; }
             return _any && button != null && Suppressed.Contains(button);
         }
 
@@ -68,29 +117,32 @@ namespace GenesisUI.Gameplay
         private static void Update()
         {
             _frame = Time.frameCount;
+            if (!TakesInput(Player.m_localPlayer)) { ResetClaims(); _frame = Time.frameCount; return; }
+            var layout = InventoryModule.Current;
             var input = BepInEx.UnityInput.Current;
             ClaimedKeys.Clear();
             for (int i = 0; i < Count; i++)
             {
                 var s = Entries[i] != null ? Entries[i].Value : KeyboardShortcut.Empty;
+                if (i < 4 ? i >= layout.Quick : i - 4 >= layout.Utility) { Claimed[i] = false; continue; }
                 if (s.MainKey == KeyCode.None) { Claimed[i] = false; continue; }
                 if (!Claimed[i] && s.IsPressed()) Claimed[i] = true;
                 else if (Claimed[i] && !input.GetKey(s.MainKey)) Claimed[i] = false;
-                if (Claimed[i] && ToKey(s.MainKey, out var key)) ClaimedKeys.Add(key);
+                if (Claimed[i] && Keys[i] != Key.None) ClaimedKeys.Add(Keys[i]);
             }
             _any = ClaimedKeys.Count > 0;
-            if (ClaimedKeys.SetEquals(ShownKeys)) return;
-            // The held keys changed (rare): find vanilla's buttons bound to them.
+            // Read the live binding controls while a key is claimed: rebinding must take effect
+            // even when the same key remains held. This enumeration allocates no strings.
             ShownKeys.Clear();
             ShownKeys.UnionWith(ClaimedKeys);
             Suppressed.Clear();
-            if (_any) Guard.Try("hotkeys: vanilla buttons", FindButtons);
+            if (_any) FindButtons();
         }
 
         private static void FindButtons()
         {
             if (ZInput.instance == null) return;
-            if (_buttons == null) _buttons = new AccessTools_ButtonsRef();
+            if (_buttons == null) return;
             var buttons = _buttons.Get(ZInput.instance);
             if (buttons == null) return;
             foreach (var pair in buttons)

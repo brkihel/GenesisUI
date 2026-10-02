@@ -15,6 +15,7 @@ namespace GenesisUI.Foundation
         public bool PreviousBlocksRaycasts;
         public bool PreviousInteractable;
         public int Fought;
+        internal CanvasGroupLease Lease;
 
         public bool Alive => Target != null && Group != null;
     }
@@ -29,6 +30,7 @@ namespace GenesisUI.Foundation
     /// (after animation, before rendering) and logs once per target when vanilla
     /// fought it, which tells us the region needs a different strategy.
     /// </summary>
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Foundation.Guard), typeof(GenesisUI.Foundation.Faults.FaultRegistry), typeof(GenesisUI.Foundation.VeilHandle), typeof(GenesisUI.Foundation.GenesisLog), typeof(GenesisUI.Foundation.SharedCanvasGroups), typeof(GenesisUI.Foundation.CanvasGroupLease), typeof(GenesisUI.Foundation.Faults.FaultRecord))]
     internal static class VanillaVeil
     {
         private static readonly List<VeilHandle> Active = new List<VeilHandle>();
@@ -76,12 +78,13 @@ namespace GenesisUI.Foundation
                 Owner = owner,
                 Label = label,
                 Target = target,
-                Group = group != null ? group : target.AddComponent<CanvasGroup>(),
+                Lease = SharedCanvasGroups.Acquire(owner, target),
                 AddedGroup = group == null,
             };
-            handle.PreviousAlpha = handle.Group.alpha;
-            handle.PreviousBlocksRaycasts = handle.Group.blocksRaycasts;
-            handle.PreviousInteractable = handle.Group.interactable;
+            handle.Group = handle.Lease.Group;
+            handle.PreviousAlpha = handle.Lease.State.Alpha;
+            handle.PreviousBlocksRaycasts = handle.Lease.State.Raycasts;
+            handle.PreviousInteractable = handle.Lease.State.Interactable;
 
             Active.Add(handle);
             Hide(handle);
@@ -97,18 +100,7 @@ namespace GenesisUI.Foundation
         private static void Restore(VeilHandle handle, bool quiet)
         {
             if (handle == null || !Active.Remove(handle)) return;
-            if (!handle.Alive) return; // destroyed with its scene: nothing to give back
-
-            if (handle.AddedGroup)
-            {
-                Object.Destroy(handle.Group);
-            }
-            else
-            {
-                handle.Group.alpha = handle.PreviousAlpha;
-                handle.Group.blocksRaycasts = handle.PreviousBlocksRaycasts;
-                handle.Group.interactable = handle.PreviousInteractable;
-            }
+            handle.Lease.Release();
             if (!quiet) GenesisLog.Info("Veil", handle.Owner + " restored " + handle.Label);
         }
 
@@ -134,8 +126,7 @@ namespace GenesisUI.Foundation
                 if (!h.Alive) continue;
                 if (lifted)
                 {
-                    h.Group.alpha = h.AddedGroup ? 1f : h.PreviousAlpha;
-                    h.Group.blocksRaycasts = h.PreviousBlocksRaycasts;
+                    h.Lease.Hide(false);
                 }
                 else
                 {
@@ -147,28 +138,23 @@ namespace GenesisUI.Foundation
         /// <summary>Called every LateUpdate. Allocation-free.</summary>
         public static void Enforce()
         {
-            for (int i = Active.Count - 1; i >= 0; i--)
+            for (int i = Active.Count - 1; i >= 0; i = System.Math.Min(i - 1, Active.Count - 1))
             {
                 var h = Active[i];
-                if (!h.Alive)
-                {
-                    Active.RemoveAt(i); // its scene is gone
-                    continue;
-                }
-                if (Lifted || h.Group.alpha == 0f) continue;
-
-                h.Fought++;
-                if (h.Fought == 1)
-                    GenesisLog.Warn("Veil", h.Label + ": vanilla changed the veiled alpha (an animator drives it); re-applying every frame");
-                Hide(h);
+                Guard.Run(h.Owner, EnforceHandle, h);
             }
         }
+        private static readonly System.Action<VeilHandle> EnforceHandle = h =>
+        {
+            if (!h.Alive) { h.Lease.Release(); Active.Remove(h); return; }
+            if (Lifted || (h.Group.alpha == 0f && !h.Group.blocksRaycasts && !h.Group.interactable)) return;
+            if (++h.Fought == 1) GenesisLog.Warn("Veil", h.Label + ": vanilla changed hidden alpha/input flags; re-applying every frame");
+            Hide(h);
+        };
 
         private static void Hide(VeilHandle h)
         {
-            h.Group.alpha = 0f;
-            h.Group.blocksRaycasts = false;
-            h.Group.interactable = false;
+            h.Lease.Hide(true);
         }
     }
 }

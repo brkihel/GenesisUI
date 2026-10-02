@@ -15,10 +15,17 @@ namespace GenesisUI.Patches
     [HarmonyPatch(typeof(InventoryGui), "Update")]
     [GameContract("assembly_valheim", "InventoryGui", "Update")]
     [GameContract("assembly_utils", "ZInput", "ResetButtonStatus", Parameters = new[] { "System.String" })]
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Foundation.Guard), typeof(GenesisUI.Patches.TextInputFocus))]
     internal static class InventoryTabKeyPatch
     {
         [HarmonyPrefix]
         private static void Prefix()
+        {
+            if (GenesisUI.Foundation.Guard.IsTripped("module:win.shell")) return;
+            try { Apply(); }
+            catch (System.Exception error) { GenesisUI.Foundation.Guard.Fault("module:win.shell", error); }
+        }
+        private static void Apply()
         {
             // Typing in a GenesisUI text field (recipe search): Tab and E must not close the inventory.
             if (TextInputFocus.Active)

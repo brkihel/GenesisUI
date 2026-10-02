@@ -17,7 +17,7 @@ então seus outros mods continuam funcionando e qualquer parte pode voltar a ser
 
 </div>
 
-Em desenvolvimento: Diego aprovou os previews 3D do personagem e dos itens, incluindo a correção da borda rosa, em `1.1.1-preview.2` ([R-063](docs/testing/results/R-063-1.1.1-preview.2.md), commit `2a1854a`). A [revisão de estabilidade e do FullPlaythrough](docs/review/2026-10-02/README.md) está concluída; o plano de estabilização e integração aguarda implementação.
+Em desenvolvimento: `1.1.2-preview.1` implementa as [correções de estabilidade](docs/STABILITY-FIXES.md) da revisão completa do código e do FullPlaythrough. A validação no cliente pelo [R-065](docs/testing/scripts/R-065-stability-base.md) está pendente. O shader 3D aprovado em `2a1854a` foi preservado; [adaptadores de recursos dos mods e certificação](docs/CAPABILITIES.md) vêm em etapas próprias.
 
 ---
 

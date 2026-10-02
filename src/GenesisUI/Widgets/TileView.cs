@@ -10,6 +10,9 @@ namespace GenesisUI.Widgets
     /// Status tile: the same quiet slot frame as the active food buffs (Diego, R-049), the
     /// effect name below, the time under the name. Setters only touch Unity on change.
     /// </summary>
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_guiutils", "Localization", "get_instance", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "Localization")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_guiutils", "Localization", "Localize", Parameters = new string[] { "System.String" }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.String")]
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Theme.ThemeRuntime), typeof(GenesisUI.Widgets.Ui), typeof(GenesisUI.Theme.ThemeTokens), typeof(GenesisUI.Widgets.Frame))]
     internal sealed class TileView
     {
         public const float CellWidth = 70f;          // tiles close together (Diego, R-046); names shrink to fit

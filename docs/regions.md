@@ -1,5 +1,18 @@
 # GenesisUI — Regions
 
+## Stability ownership additions (1.1.2)
+
+Logical dynamic reservations now cover `win.shell`, `win.inventory`, `win.crafting`, `win.skills`,
+`win.achievements`, `win.settings`, `win.menu`, `win.dialogs`, `win.store`, `win.map`, `hud.mapmarkers`
+and `hud.build`. Their resolvers are empty because the existing views acquire/skin live objects
+on demand. Known SeneaL ownership blocks these regions conservatively, including the shell;
+inventory/crafting/skills/achievements/settings wait for an active shell before hiding vanilla.
+
+Every shared hidden/faded CanvasGroup is a lease over one original snapshot. Hidden claims
+enforce alpha, raycast and interaction flags even when alpha is already zero. The last borrower
+restores all captured values, including ignoreParentGroups; only groups/pins we added are destroyed.
+Host cleanup releases shell subclaims and partial window builds even if module teardown fails.
+
 A region is a named piece of the vanilla UI. One owner at a time
 ([ARCHITECTURE.md §3](ARCHITECTURE.md#region-registry)). Resolvers live in
 `src/GenesisUI/Host/RegionRegistry.cs`; every vanilla member they touch is a

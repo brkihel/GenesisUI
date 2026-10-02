@@ -10,6 +10,7 @@ namespace GenesisUI.Foundation
     /// its leases automatically, so a crashed window can never leave the player
     /// unable to move.
     /// </summary>
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Foundation.Input.LeaseBook), typeof(GenesisUI.Foundation.Guard), typeof(GenesisUI.Foundation.Faults.FaultRegistry), typeof(GenesisUI.Foundation.Faults.FaultRecord), typeof(GenesisUI.Foundation.GenesisLog))]
     internal static class InputLeases
     {
         private static readonly LeaseBook Book = new LeaseBook();
@@ -30,6 +31,7 @@ namespace GenesisUI.Foundation
         public static IDisposable Acquire(string owner) => new Lease(Book.Acquire(owner));
 
         public static int ReleaseAll(string owner) => Book.ReleaseAll(owner);
+        internal static void Shutdown() { foreach (var lease in Book.Snapshot()) Guard.Try("release input lease", () => Book.Release(lease.Key)); }
 
         private sealed class Lease : IDisposable
         {

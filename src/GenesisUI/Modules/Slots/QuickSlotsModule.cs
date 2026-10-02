@@ -31,6 +31,17 @@ namespace GenesisUI.Modules.Slots
     [GameContract("assembly_valheim", "InventoryGui", "IsVisible")]
     [GameContract("assembly_valheim", "Menu", "IsVisible")]
     [GameContract("assembly_valheim", "Minimap", "IsOpen")]
+    [GameContract("assembly_valheim", "Player", "TakeInput", Parameters = new string[0])]
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(Patches.ShortcutInputPatch))]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Player", "m_localPlayer", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "Player")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop\u002BItemData", "GetIcon", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.Sprite")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop\u002BItemData", "m_shared", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "ItemDrop\u002BItemData\u002BSharedData")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop\u002BItemData\u002BSharedData", "m_maxStackSize", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Int32")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop\u002BItemData", "m_stack", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Int32")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop\u002BItemData\u002BSharedData", "m_useDurability", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Boolean")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop\u002BItemData", "m_durability", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Single")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop\u002BItemData", "GetMaxDurability", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Single")]
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Gameplay.SlotHotkeys), typeof(GenesisUI.Host.ModuleContext), typeof(GenesisUI.Widgets.Ui), typeof(GenesisUI.Theme.ThemeRuntime), typeof(GenesisUI.Widgets.SlotView), typeof(GenesisUI.Widgets.Glide), typeof(GenesisUI.InventoryModel.SlotLayout), typeof(GenesisUI.Widgets.HudAnchor), typeof(GenesisUI.Widgets.KeyText))]
     internal sealed class QuickSlotsModule : IUiModule
     {
         private const float QuickCell = 54f, ActionCell = 40f, Gap = 6f, RowGap = 8f, ColumnGap = 10f;
@@ -53,6 +64,7 @@ namespace GenesisUI.Modules.Slots
 
         public void Build(ModuleContext context)
         {
+            SlotHotkeys.Resolve();
             _group = Ui.Place(Ui.Child(context.Root, "Slots"), Vector2.zero, Vector2.zero, new Vector2(10f, 10f));
             string frame = context.Theme.Sprite("hotslot") != null ? "hotslot" : "slot";
             for (int i = 0; i < _quick.Length; i++)
@@ -80,7 +92,7 @@ namespace GenesisUI.Modules.Slots
 
             var inventory = player.GetInventory();
             for (int i = 0; i < SlotHotkeys.Count; i++) if (_flash[i] > 0f) _flash[i] -= deltaSeconds;
-            if (TakesInput(player)) UseHotkeys(player, inventory, layout);
+            if (SlotHotkeys.TakesInput(player)) UseHotkeys(player, inventory, layout);
 
             float s = HudAnchor.Scale > 0f ? HudAnchor.Scale : 1f;
             if (!Mathf.Approximately(_group.localScale.x, s)) _group.localScale = new Vector3(s, s, 1f);
@@ -108,19 +120,9 @@ namespace GenesisUI.Modules.Slots
         public void Teardown()
         {
             SlotHotkeys.Active = false;
+            SlotHotkeys.ResetClaims();
             if (_group != null) Object.Destroy(_group.gameObject);
             _group = null;
-        }
-
-        /// <summary>Vanilla's own conditions for the hotbar keys (Player.TakeInput), plus GenesisUI's text fields.</summary>
-        private static bool TakesInput(Player player)
-        {
-            if (player.IsDead() || player.InCutscene() || player.IsTeleporting()) return false;
-            if (Chat.instance != null && Chat.instance.HasFocus()) return false;
-            if (global::Console.IsVisible() || TextInput.IsVisible() || StoreGui.IsVisible() || InventoryGui.IsVisible()) return false;
-            if (Menu.IsVisible() || global::Minimap.IsOpen()) return false;
-            if (Patches.TextInputFocus.Active) return false;
-            return true;
         }
 
         private void UseHotkeys(Player player, Inventory inventory, SlotLayout layout)

@@ -13,6 +13,9 @@ namespace GenesisUI.Widgets
     /// buttons and chips, the rule knot. One place, so the inventory, crafting and later windows
     /// share one finish.
     /// </summary>
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_guiutils", "Localization", "get_instance", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "Localization")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_guiutils", "Localization", "Localize", Parameters = new string[] { "System.String" }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.String")]
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Widgets.WindowCanvas), typeof(GenesisUI.Widgets.Ui), typeof(GenesisUI.Widgets.Frame), typeof(GenesisUI.Widgets.OneShotLight), typeof(GenesisUI.Theme.ThemeRuntime), typeof(GenesisUI.Theme.ThemeTokens), typeof(GenesisUI.Widgets.RuneTitle), typeof(GenesisUI.Foundation.Guard), typeof(GenesisUI.Widgets.PressFeedback), typeof(GenesisUI.Foundation.GuardedBehaviour))]
     internal sealed class WindowParts
     {
         private readonly ThemeRuntime _theme;
@@ -99,7 +102,8 @@ namespace GenesisUI.Widgets
             var button = rt.gameObject.AddComponent<Button>();
             button.targetGraphic = hit;
             button.transition = Selectable.Transition.None;
-            button.onClick.AddListener(() => Guard.Try(what, onClick));
+            string owner = Guard.CurrentOwner ?? "ui:" + what;
+            button.onClick.AddListener(() => Guard.Run(owner, onClick));
             // Reuse the piece's own group (a crafting row fades with it): a second one cannot be added.
             var group = rt.gameObject.GetComponent<CanvasGroup>();
             if (group == null) group = rt.gameObject.AddComponent<CanvasGroup>();
@@ -112,7 +116,7 @@ namespace GenesisUI.Widgets
         public static string Localize(string text) => Localization.instance != null ? Localization.instance.Localize(text) : text;
 
         /// <summary>Fades a button's whole piece while it is not interactable.</summary>
-        private sealed class DimWhenDisabled : MonoBehaviour
+        private sealed class DimWhenDisabled : GenesisUI.Foundation.GuardedBehaviour
         {
             private Button _button;
             private CanvasGroup _group;
@@ -124,7 +128,7 @@ namespace GenesisUI.Widgets
                 _group = group;
             }
 
-            private void LateUpdate()
+            protected override void OnOwnerLateUpdate()
             {
                 if (_button == null) return;
                 bool on = _button.interactable;

@@ -16,22 +16,37 @@ namespace GenesisUI.Patches
     [HarmonyPatch(typeof(Player), nameof(Player.SetInventorySize))]
     [GameContract("assembly_valheim", "Player", "SetInventorySize")]
     [GameContract("assembly_valheim", "InventoryGui", "SetInventorySize")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Player", "m_localPlayer", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "Player")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "InventoryGui", "get_instance", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "InventoryGui")]
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.InventoryModel.SlotLayout), typeof(GenesisUI.Gameplay.InventorySafety), typeof(GenesisUI.Foundation.Guard))]
     internal static class InventorySizePatch
     {
         [HarmonyPrefix]
         private static void Prefix(Player __instance, ref int rows)
         {
+            if (Guard.IsTripped(InventorySafety.Owner)) return;
+            var original = rows;
+            try
+            {
             var layout = InventoryModule.Current;
             if (layout == null || __instance != Player.m_localPlayer) return;
-            rows = layout.TotalRows;
+            rows = System.Math.Max(layout.TotalRows, InventorySafety.RequiredRows);
+                    }
+            catch (System.Exception error) { rows = original; Guard.Fault(InventorySafety.Owner, error); }
         }
 
         [HarmonyPostfix]
         private static void Postfix(Player __instance)
         {
+            if (Guard.IsTripped(InventorySafety.Owner)) return;
+
+            try
+            {
             var layout = InventoryModule.Current;
             if (layout == null || __instance != Player.m_localPlayer || InventoryGui.instance == null) return;
-            Guard.Try("inventory panel size", () => InventoryGui.instance.SetInventorySize(layout.Rows));
+            Guard.Run("module:inv.slots", () => InventoryGui.instance.SetInventorySize(layout.Rows));
+                    }
+            catch (System.Exception error) {  Guard.Fault(InventorySafety.Owner, error); }
         }
     }
 
@@ -47,6 +62,19 @@ namespace GenesisUI.Patches
     [GameContract("assembly_valheim", "Inventory", "CanAddItem", Parameters = new[] { "ItemDrop+ItemData", "System.Int32" })]
     [GameContract("assembly_valheim", "Inventory", "FindFreeStackSpace")]
     [GameContract("assembly_valheim", "Inventory", "GetItemAt")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Player", "m_localPlayer", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "Player")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Humanoid", "GetInventory", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "Inventory")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Inventory", "GetAllItems", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Collections.Generic.List\u00601[[ItemDrop\u002BItemData, assembly_valheim, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop\u002BItemData", "m_gridPos", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "Vector2i")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_utils", "Vector2i", "x", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Int32")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_utils", "Vector2i", "y", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Int32")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_utils", "Vector2i", ".ctor", Parameters = new string[] { "System.Int32", "System.Int32" }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance)]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop\u002BItemData", "m_stack", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Int32")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop\u002BItemData", "m_shared", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "ItemDrop\u002BItemData\u002BSharedData")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop\u002BItemData\u002BSharedData", "m_name", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.String")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop\u002BItemData", "m_worldLevel", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Int32")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop\u002BItemData\u002BSharedData", "m_maxStackSize", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Int32")]
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.InventoryModel.SlotLayout))]
     internal static class InventoryPlacementPatches
     {
         private static SlotLayout LayoutFor(Inventory inventory)
@@ -69,6 +97,10 @@ namespace GenesisUI.Patches
         [HarmonyPostfix]
         private static void FindEmptySlot(Inventory __instance, bool topFirst, ref Vector2i __result)
         {
+            if (Guard.IsTripped(InventorySafety.Owner)) return;
+            var original = __result;
+            try
+            {
             var layout = LayoutFor(__instance);
             if (layout == null || (__result.x >= 0 && layout.IsOrdinary(__result.x, __result.y))) return;
             // Vanilla found no slot, or one in a special row: look again in the ordinary rows only,
@@ -84,34 +116,54 @@ namespace GenesisUI.Patches
                     return;
                 }
             }
+                    }
+            catch (System.Exception error) { __result = original; Guard.Fault(InventorySafety.Owner, error); }
         }
 
         [HarmonyPatch(typeof(Inventory), nameof(Inventory.GetEmptySlots))]
         [HarmonyPostfix]
         private static void GetEmptySlots(Inventory __instance, ref int __result)
         {
+            if (Guard.IsTripped(InventorySafety.Owner)) return;
+            var original = __result;
+            try
+            {
             var layout = LayoutFor(__instance);
             if (layout != null) __result = OrdinaryFree(__instance, layout);
+                    }
+            catch (System.Exception error) { __result = original; Guard.Fault(InventorySafety.Owner, error); }
         }
 
         [HarmonyPatch(typeof(Inventory), nameof(Inventory.HaveEmptySlot))]
         [HarmonyPostfix]
         private static void HaveEmptySlot(Inventory __instance, ref bool __result)
         {
+            if (Guard.IsTripped(InventorySafety.Owner)) return;
+            var original = __result;
+            try
+            {
             var layout = LayoutFor(__instance);
             if (layout != null) __result = OrdinaryFree(__instance, layout) > 0;
+                    }
+            catch (System.Exception error) { __result = original; Guard.Fault(InventorySafety.Owner, error); }
         }
 
         [HarmonyPatch(typeof(Inventory), nameof(Inventory.CanAddItem), typeof(ItemDrop.ItemData), typeof(int))]
         [HarmonyPostfix]
         private static void CanAddItem(Inventory __instance, ItemDrop.ItemData item, int stack, ref bool __result)
         {
+            if (Guard.IsTripped(InventorySafety.Owner)) return;
+            var original = __result;
+            try
+            {
             var layout = LayoutFor(__instance);
             if (layout == null || !__result || item == null) return;
             if (stack <= 0) stack = item.m_stack;
             // Vanilla counted every empty position; only ordinary ones take new stacks.
             __result = __instance.FindFreeStackSpace(item.m_shared.m_name, item.m_worldLevel) +
                        OrdinaryFree(__instance, layout) * item.m_shared.m_maxStackSize >= stack;
+                    }
+            catch (System.Exception error) { __result = original; Guard.Fault(InventorySafety.Owner, error); }
         }
     }
 }

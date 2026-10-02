@@ -12,7 +12,11 @@ namespace GenesisUI.Widgets
     /// </summary>
     [GameContract("assembly_valheim", "ItemStand", "GetAttachPrefab")]
     [GameContract("assembly_valheim", "ItemStand", "GetAttachGameObject")]
-    [GameContract("assembly_valheim", "ItemDrop+ItemData", "m_dropPrefab")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData", "m_dropPrefab", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.GameObject")]
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Widgets.PreviewStage), typeof(GenesisUI.Foundation.GenesisLog))]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData", "m_variant", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Int32")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData", "m_quality", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Int32")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData", "m_customData", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Collections.Generic.Dictionary\u00602[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089],[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]")]
     internal sealed class ItemPreview
     {
         private const float Spin = 22f; // degrees per second
@@ -21,6 +25,8 @@ namespace GenesisUI.Widgets
         private GameObject _holder;
         private GameObject _shownPrefab;
         private int _generation;
+        private int _variant = -1, _quality = -1;
+        private ulong _customData;
 
         private ItemPreview(PreviewStage stage) { _stage = stage; _generation = stage.Generation; }
 
@@ -36,6 +42,7 @@ namespace GenesisUI.Widgets
         /// <summary>Shows <paramref name="item"/> in 3D; false when it has no model (the caller shows the icon).</summary>
         public bool Show(ItemDrop.ItemData item)
         {
+            if (!_stage.PrepareModel()) { Hide(); return false; }
             var prefab = item != null ? item.m_dropPrefab : null;
             if (prefab == null) { Hide(); return false; }
             // The stage rebuilt its scene, or the model was destroyed under us: build it again.
@@ -45,11 +52,14 @@ namespace GenesisUI.Widgets
                 _generation = _stage.Generation;
                 Clear();
             }
-            if (prefab != _shownPrefab)
+            ulong customData = GenesisUI.Data.TextMapFingerprint.Of(item.m_customData);
+            if (prefab != _shownPrefab || _variant != item.m_variant || _quality != item.m_quality || _customData != customData)
             {
                 Clear();
-                if (!Guard.Try("item preview " + prefab.name, () => Build(prefab)) || _holder == null) { Hide(); return false; }
+                Build(prefab);
+                if (_holder == null) { Hide(); return false; }
                 _shownPrefab = prefab;
+                _variant = item.m_variant; _quality = item.m_quality; _customData = customData;
             }
             _stage.Show(true);
             return true;
@@ -82,176 +92,90 @@ namespace GenesisUI.Widgets
 
         private void Clear()
         {
-            if (_holder != null) Object.Destroy(_holder);
+            if (_holder != null) { _holder.SetActive(false); Object.Destroy(_holder); }
             _holder = null;
             _shownPrefab = null;
         }
     }
 
-    /// <summary>
-    /// The player's character in the inventory's equipment panel (D-034): a visual copy of the player
-    /// prefab — never woken as a character (no <c>Player</c>, physics, network or game logic: removed
-    /// before it is activated, so the game's lists of characters and players never see it) — dressed
-    /// by vanilla's own <c>VisEquipment</c> from the local player's equipment, lit by the stage's gold
-    /// light from above and swaying slowly.
-    /// </summary>
-    [GameContract("assembly_valheim", "Game", "m_playerPrefab")]
-    [GameContract("assembly_valheim", "ZNetView", "m_forceDisableInit")]
-    [GameContract("assembly_valheim", "VisEquipment", "m_leftItem")]
-    [GameContract("assembly_valheim", "VisEquipment", "m_rightItem")]
-    [GameContract("assembly_valheim", "VisEquipment", "m_chestItem")]
-    [GameContract("assembly_valheim", "VisEquipment", "m_legItem")]
-    [GameContract("assembly_valheim", "VisEquipment", "m_helmetItem")]
-    [GameContract("assembly_valheim", "VisEquipment", "m_shoulderItem")]
-    [GameContract("assembly_valheim", "VisEquipment", "m_beardItem")]
-    [GameContract("assembly_valheim", "VisEquipment", "m_hairItem")]
-    [GameContract("assembly_valheim", "VisEquipment", "m_utilityItem")]
-    [GameContract("assembly_valheim", "VisEquipment", "m_leftBackItem")]
-    [GameContract("assembly_valheim", "VisEquipment", "m_rightBackItem")]
-    [GameContract("assembly_valheim", "VisEquipment", "m_trinketItem")]
-    [GameContract("assembly_valheim", "VisEquipment", "m_modelIndex")]
-    [GameContract("assembly_valheim", "VisEquipment", "m_skinColor")]
-    [GameContract("assembly_valheim", "VisEquipment", "m_hairColor")]
+    /// <summary>A visual snapshot of the player's live equipment, sanitized while inactive.
+    /// No VisEquipment or foreign behaviour remains to instantiate attachments after activation.</summary>
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Widgets.PreviewStage))]
+    [GameContract("assembly_valheim", "VisEquipment", "m_skinColor", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.Vector3")]
+    [GameContract("assembly_valheim", "VisEquipment", "m_hairColor", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.Vector3")]
+    [GameContract("assembly_valheim", "VisEquipment", "m_modelIndex", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Int32")]
     internal sealed class CharacterPreview
     {
         private const float CopyEvery = 0.25f;
-
-        // VisEquipment's own state (what its non-networked branch draws from), copied one to one.
-        private static readonly string[] IntFields =
-        {
-            "m_leftItem", "m_rightItem", "m_chestItem", "m_legItem", "m_helmetItem", "m_shoulderItem",
-            "m_beardItem", "m_hairItem", "m_utilityItem", "m_leftBackItem", "m_rightBackItem",
-            "m_shoulderItemVariant", "m_leftItemVariant", "m_leftBackItemVariant",
-            "m_rightItemQuality", "m_rightBackItemQuality", "m_shoulderItemQuality", "m_leftItemQuality",
-            "m_leftBackItemQuality", "m_modelIndex",
-        };
-
         private readonly PreviewStage _stage;
-        private AccessTools.FieldRef<VisEquipment, int>[] _ints;
-        private AccessTools.FieldRef<VisEquipment, string> _trinket;
-        private AccessTools.FieldRef<VisEquipment, Vector3> _skin, _hair;
+        private readonly System.Collections.Generic.List<Renderer> _renderers = new System.Collections.Generic.List<Renderer>(64);
         private GameObject _holder;
-        private VisEquipment _copy;
-        private int _childCount = -1;
-        private VisEquipment _source;
-        private readonly System.Collections.Generic.List<Transform> _children = new System.Collections.Generic.List<Transform>(256);
+        private Player _player;
+        private int _fingerprint, _generation = -1;
         private float _copyIn;
-        private bool _failed;
-        private int _failures, _generation = -1;
-        private const int MaxFailures = 3;
-
+        private AccessTools.FieldRef<VisEquipment, Vector3> _skin, _hair;
+        private AccessTools.FieldRef<VisEquipment, int> _model;
         private CharacterPreview(PreviewStage stage) { _stage = stage; }
-
-        /// <summary>Null when 3D previews are not possible here (the equipment panel stays as it was).</summary>
         public static CharacterPreview Create(RectTransform area)
         {
             var stage = PreviewStage.Create(area, "character");
             if (stage == null) return null;
-            stage.Sway = 22f;
-            stage.BaseYaw = -12f;
-            return new CharacterPreview(stage);
+            stage.Sway = 22f; stage.BaseYaw = -12f;
+            return new CharacterPreview(stage)
+            {
+                _skin = AccessTools.FieldRefAccess<VisEquipment, Vector3>("m_skinColor"),
+                _hair = AccessTools.FieldRefAccess<VisEquipment, Vector3>("m_hairColor"),
+                _model = AccessTools.FieldRefAccess<VisEquipment, int>("m_modelIndex"),
+            };
         }
-
-        /// <summary>Every frame while the inventory shows: builds once, then follows the player's equipment.</summary>
         public void Show(Player player, float deltaSeconds)
         {
-            if (_failed || player == null) { _stage.Show(false); return; }
-            // Lost (the stage rebuilt its scene, or the copy was destroyed): build it again, never give up
-            // silently; after a few failed attempts the panel stays empty and the log says why.
-            if (_copy == null || _generation != _stage.Generation)
-            {
-                if (_generation >= 0) GenesisLog.Info("Preview", "character copy lost (" + (_copy == null ? "destroyed" : "stage rebuilt") + "): rebuilding");
-                Destroy();
-                _generation = _stage.Generation;
-                _childCount = -1;
-                _copyIn = 0f;
-                if (!Guard.Try("character preview", Build) || _copy == null) { Fail("could not build the copy"); return; }
-            }
+            if (player == null || !_stage.PrepareModel()) { Hide(); return; }
             _copyIn -= deltaSeconds;
-            if (_copyIn <= 0f)
+            if (_holder == null || _generation != _stage.Generation || _player != player || _copyIn <= 0f)
             {
                 _copyIn = CopyEvery;
-                _source = player.GetComponent<VisEquipment>();
-                if (!Guard.Try("character preview dress", Dress)) { Fail("could not dress the copy"); return; }
+                player.GetComponentsInChildren(true, _renderers);
+                int fingerprint = 17;
+                var equipment = player.GetComponent<VisEquipment>();
+                if (equipment != null) fingerprint = _skin(equipment).GetHashCode() ^ _hair(equipment).GetHashCode() ^ _model(equipment);
+                unchecked
+                {
+                    foreach (var renderer in _renderers)
+                    {
+                        fingerprint = fingerprint * 31 + renderer.GetInstanceID();
+                        fingerprint = fingerprint * 31 + (renderer.enabled && renderer.gameObject.activeInHierarchy ? 1 : 0);
+                        fingerprint = fingerprint * 31 + (renderer.sharedMaterial != null ? renderer.sharedMaterial.GetInstanceID() : 0);
+                        if (renderer is SkinnedMeshRenderer skin) fingerprint = fingerprint * 31 + (skin.sharedMesh != null ? skin.sharedMesh.GetInstanceID() : 0);
+                    }
+                }
+                if (_holder == null || _player != player || _generation != _stage.Generation || _fingerprint != fingerprint)
+                {
+                    Destroy();
+                    _player = player; _fingerprint = fingerprint; _generation = _stage.Generation;
+                    _holder = new GameObject("Character");
+                    _holder.SetActive(false);
+                    _holder.transform.SetParent(_stage.Pivot, false);
+                    var copy = Object.Instantiate(player.gameObject, _holder.transform, false);
+                    copy.transform.localPosition = Vector3.zero;
+                    copy.transform.localRotation = Quaternion.identity;
+                    copy.transform.localScale = player.transform.localScale;
+                    PreviewStage.Strip(copy);
+                    PreviewStage.StillAnimators(copy);
+                    _holder.SetActive(true);
+                    var p = _stage.Pivot.position;
+                    _stage.Frame(new Bounds(p + new Vector3(0f, 0.95f, 0f), new Vector3(0.9f, 2f, 0.7f)), 4f, 1f);
+                    _stage.UsePathFor(copy);
+                    _stage.Inspect(copy, "character visual snapshot");
+                }
             }
-            _failures = 0;
             _stage.Show(true);
         }
-
-        private void Fail(string why)
-        {
-            _stage.Show(false);
-            Destroy();
-            if (++_failures < MaxFailures) return; // tried again next frame
-            _failed = true;
-            GenesisLog.Warn("Preview", "character preview off after " + MaxFailures + " attempts: " + why);
-        }
-
         public void Hide() => _stage.Show(false);
-
         public void Destroy()
         {
-            if (_holder != null) Object.Destroy(_holder);
+            if (_holder != null) { _holder.SetActive(false); Object.Destroy(_holder); }
             _holder = null;
-            _copy = null;
-        }
-
-        private void Build()
-        {
-            var prefab = Game.instance != null ? Game.instance.m_playerPrefab : null;
-            if (prefab == null) return;
-            _ints = new AccessTools.FieldRef<VisEquipment, int>[IntFields.Length];
-            for (int i = 0; i < IntFields.Length; i++) _ints[i] = AccessTools.FieldRefAccess<VisEquipment, int>(IntFields[i]);
-            _trinket = AccessTools.FieldRefAccess<VisEquipment, string>("m_trinketItem");
-            _skin = AccessTools.FieldRefAccess<VisEquipment, Vector3>("m_skinColor");
-            _hair = AccessTools.FieldRefAccess<VisEquipment, Vector3>("m_hairColor");
-
-            // An inactive holder: the copy's Awake never runs as a character. Everything but the picture
-            // and VisEquipment goes before it wakes; its network view is kept only so VisEquipment finds
-            // one, and removes itself on wake (vanilla's preview switch, as in the main menu).
-            _holder = new GameObject("Character");
-            _holder.SetActive(false);
-            _holder.transform.SetParent(_stage.Pivot, false);
-            var copy = Object.Instantiate(prefab, _holder.transform, false);
-            copy.transform.localPosition = Vector3.zero;
-            copy.transform.localRotation = Quaternion.identity;
-            PreviewStage.Strip(copy, c => c is VisEquipment || c is ZNetView);
-            PreviewStage.StillAnimators(copy);
-            _copy = copy.GetComponent<VisEquipment>();
-            if (_copy == null) { Destroy(); return; }
-            ZNetView.m_forceDisableInit = true;
-            try { _holder.SetActive(true); }
-            finally { ZNetView.m_forceDisableInit = false; }
-            // A standing viking: about 1.85 m tall; framed once, so a raised weapon never moves the camera.
-            var p = _stage.Pivot.position;
-            _stage.Frame(new Bounds(p + new Vector3(0f, 0.95f, 0f), new Vector3(0.9f, 2.0f, 0.7f)), pitch: 4f, margin: 1.0f);
-            _stage.UsePathFor(copy);
-            _stage.Inspect(copy, "character");
-            GenesisLog.Info("Preview", "character preview built (layer " + PreviewStage.Layer + ")");
-        }
-
-        private void Dress()
-        {
-            var source = _source;
-            if (source == null || _copy == null) return;
-            for (int i = 0; i < _ints.Length; i++)
-            {
-                int v = _ints[i](source);
-                if (_ints[i](_copy) != v) _ints[i](_copy) = v;
-            }
-            var trinket = _trinket(source) ?? "";
-            if (_trinket(_copy) != trinket) _trinket(_copy) = trinket;
-            _skin(_copy) = _skin(source);
-            _hair(_copy) = _hair(source);
-            // Vanilla attaches new equipment on the default layer: bring it onto the stage's.
-            _copy.transform.GetComponentsInChildren(true, _children);
-            int count = _children.Count;
-            if (count != _childCount)
-            {
-                _childCount = count;
-                PreviewStage.Restage(_copy.gameObject);
-                _stage.UsePathFor(_copy.gameObject);
-            }
         }
     }
 }

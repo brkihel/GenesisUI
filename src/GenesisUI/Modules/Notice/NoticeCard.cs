@@ -8,6 +8,7 @@ using UnityEngine.UI;
 namespace GenesisUI.Modules.Notice
 {
     /// <summary>One top-left notice card: the card frame, an optional icon and the text, sized to it.</summary>
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Theme.ThemeRuntime), typeof(GenesisUI.Widgets.Ui), typeof(GenesisUI.Widgets.Frame), typeof(GenesisUI.Theme.ThemeTokens), typeof(GenesisUI.HudModel.NoticeStack))]
     internal sealed class NoticeCard
     {
         private const float IconSize = 30f;

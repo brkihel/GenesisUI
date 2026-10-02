@@ -19,10 +19,13 @@ namespace GenesisUI.Modules.Notice
     /// and in which order. The centre message mirrors vanilla's text and fade in the display font.
     /// </summary>
     [GameContract("assembly_valheim", "MessageHud", "instance")]
-    [GameContract("assembly_valheim", "MessageHud", "m_messageText")]
-    [GameContract("assembly_valheim", "MessageHud", "m_messageIcon")]
-    [GameContract("assembly_valheim", "MessageHud", "m_messageCenterText")]
-    [GameContract("assembly_valheim", "MessageHud", "m_unlockMessages")]
+    [GameContract("assembly_valheim", "MessageHud", "m_messageText", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "TMPro.TMP_Text")]
+    [GameContract("assembly_valheim", "MessageHud", "m_messageIcon", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.UI.Image")]
+    [GameContract("assembly_valheim", "MessageHud", "m_messageCenterText", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "TMPro.TMP_Text")]
+    [GameContract("assembly_valheim", "MessageHud", "m_unlockMessages", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Collections.Generic.List\u00601[[UnityEngine.GameObject, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_guiutils", "Localization", "get_instance", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "Localization")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_guiutils", "Localization", "Localize", Parameters = new string[] { "System.String" }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.String")]
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.HudModel.NoticeStack), typeof(GenesisUI.Host.ModuleContext), typeof(GenesisUI.Theme.ThemeRuntime), typeof(GenesisUI.Widgets.Ui), typeof(GenesisUI.Modules.Notice.NoticeCard), typeof(GenesisUI.Theme.ThemeTokens))]
     internal sealed class NoticeModule : IUiModule
     {
         private const float CardHeight = 46f;

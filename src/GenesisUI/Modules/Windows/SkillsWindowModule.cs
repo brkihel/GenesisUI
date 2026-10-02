@@ -26,12 +26,12 @@ namespace GenesisUI.Modules.Windows
     [GameContract("assembly_valheim", "Skills", "GetSkillLevel")]
     [GameContract("assembly_valheim", "Skills", "GetTotalSkill")]
     [GameContract("assembly_valheim", "Skills", "GetTotalSkillCap")]
-    [GameContract("assembly_valheim", "Skills+Skill", "m_info")]
-    [GameContract("assembly_valheim", "Skills+Skill", "m_level")]
+    [GameContract("assembly_valheim", "Skills+Skill", "m_info", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "Skills\u002BSkillDef")]
+    [GameContract("assembly_valheim", "Skills+Skill", "m_level", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Single")]
     [GameContract("assembly_valheim", "Skills+Skill", "GetLevelPercentage")]
-    [GameContract("assembly_valheim", "Skills+SkillDef", "m_skill")]
-    [GameContract("assembly_valheim", "Skills+SkillDef", "m_icon")]
-    [GameContract("assembly_valheim", "Skills+SkillDef", "m_description")]
+    [GameContract("assembly_valheim", "Skills+SkillDef", "m_skill", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "Skills\u002BSkillType")]
+    [GameContract("assembly_valheim", "Skills+SkillDef", "m_icon", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.Sprite")]
+    [GameContract("assembly_valheim", "Skills+SkillDef", "m_description", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.String")]
     [GameContract("assembly_valheim", "Character", "GetMaxHealth")]
     [GameContract("assembly_valheim", "Character", "GetSEMan")]
     [GameContract("assembly_valheim", "Player", "GetMaxStamina")]
@@ -42,19 +42,27 @@ namespace GenesisUI.Modules.Windows
     [GameContract("assembly_valheim", "Player", "GetGuardianPowerHUD")]
     [GameContract("assembly_valheim", "Player", "CanSwitchPVP")]
     [GameContract("assembly_valheim", "SEMan", "GetHUDStatusEffects")]
-    [GameContract("assembly_valheim", "StatusEffect", "m_name")]
-    [GameContract("assembly_valheim", "StatusEffect", "m_icon")]
+    [GameContract("assembly_valheim", "StatusEffect", "m_name", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.String")]
+    [GameContract("assembly_valheim", "StatusEffect", "m_icon", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.Sprite")]
     [GameContract("assembly_valheim", "StatusEffect", "GetIconText")]
     [GameContract("assembly_valheim", "EnvMan", "instance")]
     [GameContract("assembly_valheim", "EnvMan", "GetDay", Parameters = new string[0])]
     [GameContract("assembly_valheim", "Game", "GetPlayerProfile")]
     [GameContract("assembly_valheim", "PlayerProfile", "GetName")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_pvp")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_textsDialog")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_pvp", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.UI.Toggle")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_textsDialog", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "TextsDialog")]
     [GameContract("assembly_valheim", "TextsDialog", "UpdateTextsList")]
-    [GameContract("assembly_valheim", "TextsDialog", "m_texts")]
-    [GameContract("assembly_valheim", "TextsDialog+TextInfo", "m_topic")]
-    [GameContract("assembly_valheim", "TextsDialog+TextInfo", "m_text")]
+    [GameContract("assembly_valheim", "TextsDialog", "m_texts", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Collections.Generic.List\u00601[[TextsDialog\u002BTextInfo, assembly_valheim, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]")]
+    [GameContract("assembly_valheim", "TextsDialog+TextInfo", "m_topic", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.String")]
+    [GameContract("assembly_valheim", "TextsDialog+TextInfo", "m_text", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.String")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Game", "get_instance", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "Game")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Character", "GetSkills", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "Skills")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Character", "GetMaxStamina", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Single")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Character", "GetMaxEitr", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Single")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Character", "GetBodyArmor", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Single")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "InventoryGui", "get_instance", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "InventoryGui")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Player", "m_localPlayer", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "Player")]
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Widgets.ScrollArea), typeof(GenesisUI.Theme.ThemeRuntime), typeof(GenesisUI.Widgets.WindowParts), typeof(GenesisUI.Theme.ThemeTokens), typeof(GenesisUI.Widgets.WindowCanvas), typeof(GenesisUI.Widgets.Ui), typeof(GenesisUI.Widgets.ColorExtensions), typeof(GenesisUI.Widgets.Frame), typeof(GenesisUI.Foundation.Guard))]
     internal sealed class SkillsWindowModule : WindowModuleBase
     {
         private const float CharacterW = 400f, SkillsX = 404f, SkillsW = 760f, TextsX = 1168f, TextsW = 412f;
@@ -490,7 +498,7 @@ namespace GenesisUI.Modules.Windows
         {
             private Action _onEnter;
             internal void Init(Action onEnter) => _onEnter = onEnter;
-            public void OnPointerEnter(PointerEventData e) => Guard.Try("skills hover", _onEnter);
+            public void OnPointerEnter(PointerEventData e) => Guard.Run("module:win.skills", _onEnter);
         }
     }
 }

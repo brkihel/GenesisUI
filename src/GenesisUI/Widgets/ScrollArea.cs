@@ -11,6 +11,7 @@ namespace GenesisUI.Widgets
     /// window uses. Content is laid out by the caller in design units from its top (y downwards);
     /// the caller tells the content height.
     /// </summary>
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Widgets.WindowCanvas), typeof(GenesisUI.Widgets.Ui), typeof(GenesisUI.Theme.ThemeTokens), typeof(GenesisUI.Theme.ThemeRuntime), typeof(GenesisUI.Widgets.ColorExtensions), typeof(GenesisUI.Foundation.GuardedBehaviour))]
     internal sealed class ScrollArea
     {
         public readonly RectTransform Viewport;
@@ -64,11 +65,11 @@ namespace GenesisUI.Widgets
         }
 
         /// <summary>Mouse wheel anywhere over the viewport (events bubble up from its children).</summary>
-        internal sealed class Wheel : MonoBehaviour, IScrollHandler
+        internal sealed class Wheel : GenesisUI.Foundation.GuardedBehaviour, IScrollHandler
         {
             private Action<float> _onScroll;
             internal Wheel Init(Action<float> onScroll) { _onScroll = onScroll; return this; }
-            public void OnScroll(PointerEventData e) => _onScroll?.Invoke(e.scrollDelta.y);
+            public void OnScroll(PointerEventData e) { if (_onScroll != null) GenesisUI.Foundation.Guard.Run(CallbackOwner, _onScroll, e.scrollDelta.y); }
         }
     }
 }

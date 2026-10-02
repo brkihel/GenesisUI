@@ -21,6 +21,7 @@ namespace GenesisUI.Widgets
     /// shown. What stands on it is a visual copy only: nothing networked, no physics, no game logic
     /// (<see cref="Strip"/>).
     /// </summary>
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Theme.ThemeRuntime), typeof(GenesisUI.Foundation.GenesisLog), typeof(GenesisUI.Widgets.Ui), typeof(GenesisUI.Foundation.Guard))]
     internal sealed class PreviewStage : MonoBehaviour
     {
         // Far outside the world (its radius is 10 500 m) but at an ordinary height, just above the sea
@@ -31,6 +32,14 @@ namespace GenesisUI.Widgets
         private const int MaxTexture = 1024;
         private static int _nextSlot;
         private static int _layer = -2;
+        private static readonly List<PreviewStage> Stages = new List<PreviewStage>();
+        private readonly GenesisUI.Foundation.Logging.RecentSamples _renderSamples = new GenesisUI.Foundation.Logging.RecentSamples();
+        private long _renderCount;
+        internal static IEnumerable<string> Diagnostics()
+        {
+            foreach (var stage in Stages)
+                if (stage != null) yield return stage._name + ": generation " + stage.Generation + ", shown " + stage._shown + ", renders " + stage._renderCount + ", texture " + stage._size.x + "x" + stage._size.y + ", estimated color+depth bytes " + (long)stage._size.x * stage._size.y * 8 + ", Camera.Render CPU/submission p50/p95 ms " + stage._renderSamples.Percentile(0.5).ToString("0.000", System.Globalization.CultureInfo.InvariantCulture) + "/" + stage._renderSamples.Percentile(0.95).ToString("0.000", System.Globalization.CultureInfo.InvariantCulture) + ", samples " + stage._renderSamples.Count + "; GPU time not measured";
+        }
 
         private Camera _camera;
         private RawImage _image;
@@ -41,6 +50,16 @@ namespace GenesisUI.Widgets
         private bool _shown, _deferred;
         private string _name;
         private Material _keyed;
+        private string _owner;
+        private System.Action _tick;
+        private bool _failed;
+        public bool Available => !_failed && _keyed != null;
+        internal bool PrepareModel()
+        {
+            if (!Available) return false;
+            if (_root == null || _camera == null || _pivot == null) Healthy();
+            return Available && _pivot != null;
+        }
         private static readonly Color Key = new Color(1f, 0f, 1f, 1f);
         private int _emptyCheck;
         private readonly HashSet<string> _logged = new HashSet<string>();
@@ -66,6 +85,8 @@ namespace GenesisUI.Widgets
         {
             var theme = Theme.ThemeRuntime.Current;
             if (theme != null && !theme.ModelsEnabled) return null;
+            if (theme == null || !theme.HasShader("GenesisUI/Keyed"))
+            { GenesisLog.Warn("Preview", "keyed compositor unavailable; keeping 2D presentation"); return null; }
             if (_layer == -2) _layer = FindLayer();
             if (_layer < 0) return null;
             var rt = Ui.Fill(Ui.Child(area, "Preview " + name));
@@ -76,6 +97,9 @@ namespace GenesisUI.Widgets
             var stage = rt.gameObject.AddComponent<PreviewStage>();
             stage._image = image;
             stage._name = name;
+            stage._owner = Guard.CurrentOwner ?? "preview:" + name;
+            stage._tick = stage.Tick;
+            Stages.Add(stage);
             stage.BuildScene(name);
             return stage;
         }
@@ -97,7 +121,7 @@ namespace GenesisUI.Widgets
         private void BuildScene(string name)
         {
             int slot = _nextSlot++;
-            _root = new GameObject("GenesisUI.PreviewStage " + name).transform;
+            _root = OwnerResources.Own(new GameObject("GenesisUI.PreviewStage " + name)).transform;
             _root.position = Origin + new Vector3(slot * 60f, 0f, 0f);
             Object.DontDestroyOnLoad(_root.gameObject);
             _pivot = new GameObject("Pivot").transform;
@@ -112,7 +136,7 @@ namespace GenesisUI.Widgets
             {
                 var theme = Theme.ThemeRuntime.Current;
                 _keyed = theme != null ? theme.NewMaterial("GenesisUI/Keyed") : null;
-                if (_keyed == null) Problem("keyed shader unavailable: model alpha may hide previews");
+                if (_keyed == null) throw new System.InvalidOperationException("Keyed compositor unavailable");
             }
             cam.backgroundColor = _keyed != null ? Key : new Color(0f, 0f, 0f, 0f);
             _image.material = _keyed;
@@ -167,7 +191,8 @@ namespace GenesisUI.Widgets
         {
             bounds = default;
             bool any = false;
-            foreach (var r in _pivot.GetComponentsInChildren<Renderer>())
+            _pivot.GetComponentsInChildren(false, _renderers);
+            foreach (var r in _renderers)
             {
                 if (IsType(r, "UnityEngine.ParticleSystemRenderer")) continue;
                 if (!any) { bounds = r.bounds; any = true; }
@@ -179,6 +204,7 @@ namespace GenesisUI.Widgets
         /// <summary>Shows or hides the picture; the stage renders only while shown.</summary>
         public void Show(bool show)
         {
+            show = show && !_failed && _keyed != null;
             _shown = show;
             if (_image != null && _image.enabled != show) _image.enabled = show;
         }
@@ -186,6 +212,11 @@ namespace GenesisUI.Widgets
         private void LateUpdate()
         {
             if (!_shown || _image == null) return;
+            if (!Guard.Run(_owner, _tick)) { _failed = true; Show(false); }
+        }
+
+        private void Tick()
+        {
             if (!Healthy()) return;
             if (Spin != 0f) { _yaw = Mathf.Repeat(_yaw + Spin * Time.unscaledDeltaTime, 360f); _pivot.localRotation = Quaternion.Euler(0f, _yaw, 0f); }
             else if (Sway != 0f)
@@ -225,7 +256,8 @@ namespace GenesisUI.Widgets
             {
                 _emptyCheck = 0;
                 int drawn = 0;
-                foreach (var r in _pivot.GetComponentsInChildren<Renderer>())
+                _pivot.GetComponentsInChildren(false, _renderers);
+            foreach (var r in _renderers)
                     if (r.enabled && r.gameObject.layer == _layer) drawn++;
                 if (drawn == 0 && _pivot.childCount > 0) Problem("nothing drawable on the stage (" + _pivot.childCount + " object(s), no enabled renderer on layer " + _layer + ")");
             }
@@ -265,6 +297,7 @@ namespace GenesisUI.Widgets
         /// </summary>
         private void Render()
         {
+            long started = System.Diagnostics.Stopwatch.GetTimestamp();
             _root.GetComponentsInChildren(true, _renderLights);
             bool fog = RenderSettings.fog;
             try
@@ -272,19 +305,18 @@ namespace GenesisUI.Widgets
                 for (int i = 0; i < _renderLights.Count; i++) _renderLights[i].enabled = true;
                 RenderSettings.fog = false;
                 _camera.Render();
-            }
-            catch (System.Exception e)
-            {
-                Problem("render failed: " + e.GetType().Name + ": " + e.Message);
+                _renderCount++;
             }
             finally
             {
                 for (int i = 0; i < _renderLights.Count; i++) if (_renderLights[i] != null) _renderLights[i].enabled = false;
                 RenderSettings.fog = fog;
+                _renderSamples.Add((System.Diagnostics.Stopwatch.GetTimestamp() - started) * 1000.0 / System.Diagnostics.Stopwatch.Frequency);
             }
         }
 
         private readonly List<Light> _renderLights = new List<Light>(8);
+        private readonly List<Renderer> _renderers = new List<Renderer>(64);
 
         // One look at what the stage really draws, a moment after a model is put on it (logged once per model).
         private GameObject _inspect;
@@ -434,6 +466,7 @@ namespace GenesisUI.Widgets
 
         private void OnDestroy()
         {
+            Stages.Remove(this);
             if (_keyed != null) Object.Destroy(_keyed);
             if (_camera != null) _camera.targetTexture = null;
             if (_texture != null) { _texture.Release(); Object.Destroy(_texture); }
@@ -461,6 +494,9 @@ namespace GenesisUI.Widgets
                 }
                 if (!left) break;
             }
+            foreach (var c in go.GetComponentsInChildren<Component>(true))
+                if (c != null && !Visual(c) && (keep == null || !keep(c)))
+                    throw new System.InvalidOperationException("Preview still contains nonvisual component " + c.GetType().FullName);
             Restage(go);
         }
 
@@ -490,6 +526,7 @@ namespace GenesisUI.Widgets
                 if (!IsType(c, "UnityEngine.Animator")) continue;
                 var type = c.GetType();
                 type.GetProperty("applyRootMotion")?.SetValue(c, false, null);
+                type.GetProperty("fireEvents")?.SetValue(c, false, null);
                 var culling = type.GetProperty("cullingMode");
                 if (culling != null) culling.SetValue(c, System.Enum.ToObject(culling.PropertyType, 0), null); // AlwaysAnimate
             }

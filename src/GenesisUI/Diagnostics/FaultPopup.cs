@@ -17,6 +17,7 @@ namespace GenesisUI.Diagnostics
     /// It sits on Jötunn's front GUI canvas, holds an input lease (cursor free, game input blocked) while
     /// open, and shows the latest fault with a count when several arrive.
     /// </summary>
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Build), typeof(GenesisUI.Foundation.Faults.FaultRecord), typeof(GenesisUI.Widgets.ScrollArea), typeof(GenesisUI.Foundation.InputLeases), typeof(GenesisUI.Foundation.GenesisLog), typeof(GenesisUI.Theme.ThemeRuntime), typeof(GenesisUI.Widgets.WindowParts), typeof(GenesisUI.Widgets.Ui), typeof(GenesisUI.Widgets.WindowCanvas), typeof(GenesisUI.Widgets.Frame), typeof(GenesisUI.Theme.ThemeTokens))]
     internal static class FaultPopup
     {
         private const string Owner = "diagnostics:fault-popup";
@@ -61,6 +62,12 @@ namespace GenesisUI.Diagnostics
             if (_root != null) _root.gameObject.SetActive(false);
             _lease?.Dispose();
             _lease = null;
+        }
+        internal static void Shutdown()
+        {
+            Close();
+            if (_root != null) UnityEngine.Object.Destroy(_root.gameObject);
+            _root = null; _text = _error = _count = null; _errorScroll = null; _detail = "";
         }
 
         private static void Copy()

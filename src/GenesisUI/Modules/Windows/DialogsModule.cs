@@ -21,34 +21,36 @@ namespace GenesisUI.Modules.Windows
     /// </summary>
     [GameContract("assembly_valheim", "TextInput", "Hide")]
     [GameContract("assembly_valheim", "InventoryGui", "Hide")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_splitDialog")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_variantDialog")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_splitDialog", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "SplitDialog")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_variantDialog", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "VariantDialog")]
     [GameContract("assembly_valheim", "SplitDialog", "get_IsActive")]
-    [GameContract("assembly_valheim", "SplitDialog", "m_splitSlider")]
-    [GameContract("assembly_valheim", "SplitDialog", "m_panel")]
-    [GameContract("assembly_valheim", "SplitDialog", "m_splitIcon")]
-    [GameContract("assembly_valheim", "SplitDialog", "m_splitIconName")]
-    [GameContract("assembly_valheim", "SplitDialog", "m_splitAmount")]
-    [GameContract("assembly_valheim", "SplitDialog", "m_splitOkButton")]
-    [GameContract("assembly_valheim", "SplitDialog", "m_splitCancelButton")]
-    [GameContract("assembly_valheim", "VariantDialog", "m_elements")]
+    [GameContract("assembly_valheim", "SplitDialog", "m_splitSlider", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.UI.Slider")]
+    [GameContract("assembly_valheim", "SplitDialog", "m_panel", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.RectTransform")]
+    [GameContract("assembly_valheim", "SplitDialog", "m_splitIcon", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.UI.Image")]
+    [GameContract("assembly_valheim", "SplitDialog", "m_splitIconName", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "TMPro.TMP_Text")]
+    [GameContract("assembly_valheim", "SplitDialog", "m_splitAmount", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "TMPro.TMP_Text")]
+    [GameContract("assembly_valheim", "SplitDialog", "m_splitOkButton", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.UI.Button")]
+    [GameContract("assembly_valheim", "SplitDialog", "m_splitCancelButton", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.UI.Button")]
+    [GameContract("assembly_valheim", "VariantDialog", "m_elements", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Collections.Generic.List\u00601[[UnityEngine.GameObject, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]")]
     [GameContract("assembly_valheim", "VariantDialog", "OnClose")]
     [GameContract("assembly_valheim", "TextViewer", "get_instance")]
     [GameContract("assembly_valheim", "TextViewer", "IsVisible")]
-    [GameContract("assembly_valheim", "TextViewer", "m_root")]
-    [GameContract("assembly_valheim", "TextViewer", "m_ravenRoot")]
-    [GameContract("assembly_valheim", "TextViewer", "m_topic")]
-    [GameContract("assembly_valheim", "TextViewer", "m_text")]
-    [GameContract("assembly_valheim", "TextViewer", "m_ravenTopic")]
-    [GameContract("assembly_valheim", "TextViewer", "m_ravenText")]
+    [GameContract("assembly_valheim", "TextViewer", "m_root", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.GameObject")]
+    [GameContract("assembly_valheim", "TextViewer", "m_ravenRoot", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.GameObject")]
+    [GameContract("assembly_valheim", "TextViewer", "m_topic", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "TMPro.TMP_Text")]
+    [GameContract("assembly_valheim", "TextViewer", "m_text", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "TMPro.TMP_Text")]
+    [GameContract("assembly_valheim", "TextViewer", "m_ravenTopic", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "TMPro.TMP_Text")]
+    [GameContract("assembly_valheim", "TextViewer", "m_ravenText", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "TMPro.TMP_Text")]
     [GameContract("assembly_valheim", "TextViewer", "Hide")]
     [GameContract("assembly_valheim", "TextInput", "get_instance")]
     [GameContract("assembly_valheim", "TextInput", "IsVisible")]
-    [GameContract("assembly_valheim", "TextInput", "m_panel")]
-    [GameContract("assembly_valheim", "TextInput", "m_topic")]
-    [GameContract("assembly_valheim", "TextInput", "m_inputField")]
+    [GameContract("assembly_valheim", "TextInput", "m_panel", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.GameObject")]
+    [GameContract("assembly_valheim", "TextInput", "m_topic", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "TMPro.TMP_Text")]
+    [GameContract("assembly_valheim", "TextInput", "m_inputField", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "GUIFramework.GuiInputField")]
     [GameContract("assembly_valheim", "TextInput", "OnEnter")]
     [GameContract("assembly_valheim", "TextInput", "OnCancel")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "InventoryGui", "get_instance", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "InventoryGui")]
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Host.ModuleContext), typeof(GenesisUI.Widgets.WindowParts), typeof(GenesisUI.Foundation.VanillaSkin), typeof(GenesisUI.Widgets.WindowCanvas), typeof(GenesisUI.Theme.ThemeRuntime), typeof(GenesisUI.Widgets.Ui), typeof(GenesisUI.Widgets.Frame), typeof(GenesisUI.Theme.ThemeTokens), typeof(GenesisUI.Foundation.Guard))]
     internal sealed class DialogsModule : IUiModule, IRecoverable
     {
         /// <summary>IRecoverable: on a fault the open dialogs close (split and style close with the inventory).</summary>
@@ -105,7 +107,7 @@ namespace GenesisUI.Modules.Windows
 
         public string Id => "win.dialogs";
         public string NameToken => "$genesisui_module_dialogs";
-        public IReadOnlyList<string> Regions => NoRegions;
+        public IReadOnlyList<string> Regions => new[] { Id };
         public float RefreshRate => 0f;
 
         public void Build(ModuleContext context)
@@ -226,7 +228,7 @@ namespace GenesisUI.Modules.Windows
             _splitName = _parts.Label(card, "Name", FontRole.Body, 18f, t.TextTitle, 114f, 62f, w - 150f, 26f, TextAlignmentOptions.Left);
             _splitAmount = _parts.Label(card, "Amount", FontRole.Display, 26f, t.AccentGoldBright, 114f, 90f, w - 150f, 34f, TextAlignmentOptions.Left);
             _splitSlider = MakeSlider(card, 36f, 140f, w - 72f);
-            _splitSlider.onValueChanged.AddListener(v => Guard.Try("split slider", () =>
+            _splitSlider.onValueChanged.AddListener(v => Guard.Run("module:win.dialogs", () =>
             {
                 if (_syncingSlider) return;
                 var gui = InventoryGui.instance;

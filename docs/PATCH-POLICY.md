@@ -28,8 +28,9 @@ own screen, but what their patches do to everyone else.
    a patch body never throws into vanilla.
 8. **No patches on other mods' code** except inside an adapter, with a decision
    entry and a contract test against that mod's DLL.
-9. **Headless servers get no patches.** The plugin checks
-   `GUIManager.IsHeadless()` in `Awake` and stops.
+9. **Headless servers get no GenesisUI visual/gameplay patches.** Under D-031/D-040,
+   minimal inventory configuration sync binds before the UI-only exit. Its already
+   vendored ServerSync config-sync patches remain the separate allowed exception.
 
 ## Review checklist for a patch
 

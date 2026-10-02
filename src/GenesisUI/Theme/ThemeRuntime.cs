@@ -30,6 +30,7 @@ namespace GenesisUI.Theme
     /// degrades to the game font or a plain rectangle and is logged; the UI never ends
     /// up without text.
     /// </summary>
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Theme.ThemeTokens), typeof(GenesisUI.Foundation.OwnerResources), typeof(GenesisUI.Foundation.GenesisLog), typeof(GenesisUI.Theme.SpriteEntry), typeof(GenesisUI.Foundation.Guard), typeof(GenesisUI.Theme.SpriteManifestValidator), typeof(GenesisUI.Data.PngBudget), typeof(GenesisUI.Theme.SpriteManifest))]
     internal sealed class ThemeRuntime
     {
         private static readonly Dictionary<FontRole, string> FontFiles = new Dictionary<FontRole, string>
@@ -52,6 +53,8 @@ namespace GenesisUI.Theme
         private readonly Dictionary<string, Sprite> _sprites = new Dictionary<string, Sprite>(StringComparer.Ordinal);
         private TMP_FontAsset _vanilla;
         private bool _loaded;
+        private TMP_FontAsset _runic;
+        private readonly List<Shader> _shaderAssets = new List<Shader>();
 
         public ThemeTokens Tokens { get; } = ThemeTokens.Default();
 
@@ -80,7 +83,7 @@ namespace GenesisUI.Theme
 
         /// <summary>A new material for a blurred backdrop; null when unavailable or turned off.</summary>
         public Material NewBlurMaterial() =>
-            BlurEnabled && _blurShader != null ? new Material(_blurShader) { name = "GenesisUI blur", hideFlags = HideFlags.DontSave } : null;
+            BlurEnabled && _blurShader != null ? OwnerResources.Own(new Material(_blurShader) { name = "GenesisUI blur", hideFlags = HideFlags.DontSave }) : null;
 
         /// <summary>[Theme] MetalShader: frames lit by the metal shader when it is available.</summary>
         public bool MetalEnabled = true;
@@ -105,7 +108,7 @@ namespace GenesisUI.Theme
 
         /// <summary>A new material for one bar's burn light; null when the shader is not available.</summary>
         public Material NewBurnMaterial() =>
-            _burnShader != null ? new Material(_burnShader) { name = "GenesisUI burn light", hideFlags = HideFlags.DontSave } : null;
+            _burnShader != null ? OwnerResources.Own(new Material(_burnShader) { name = "GenesisUI burn light", hideFlags = HideFlags.DontSave }) : null;
 
         /// <summary>[Theme] LightEffects: the tab beam, the panels' reveal and the craft-ready shine.</summary>
         public bool LightsEnabled = true;
@@ -115,11 +118,12 @@ namespace GenesisUI.Theme
 
         /// <summary>A new material for one light effect (GenesisUI/Beam, Reveal, Shine); null when off or unavailable.</summary>
         public Material NewLightMaterial(string shader) =>
-            LightsEnabled && _shaders.TryGetValue(shader, out var s) ? new Material(s) { name = shader, hideFlags = HideFlags.DontSave } : null;
+            LightsEnabled && _shaders.TryGetValue(shader, out var s) ? OwnerResources.Own(new Material(s) { name = shader, hideFlags = HideFlags.DontSave }) : null;
 
         /// <summary>A new material of one of the bundle's shaders, not gated by any option; null when unavailable.</summary>
+        public bool HasShader(string shader) => _shaders.TryGetValue(shader, out var found) && found != null && found.isSupported;
         public Material NewMaterial(string shader) =>
-            _shaders.TryGetValue(shader, out var s) ? new Material(s) { name = shader, hideFlags = HideFlags.DontSave } : null;
+            _shaders.TryGetValue(shader, out var s) ? OwnerResources.Own(new Material(s) { name = shader, hideFlags = HideFlags.DontSave }) : null;
 
         /// <summary>The shared material of the windows' backdrop (warm vignette); null when unavailable.</summary>
         public Material BackdropMaterial
@@ -138,6 +142,15 @@ namespace GenesisUI.Theme
             var info = new FileInfo(path);
             if (!info.Exists) { GenesisLog.Info("Theme", "no shader bundle: frames use their lit sprites"); return; }
             if (info.Length > MaxBundleBytes) { GenesisLog.Warn("Theme", "shader bundle too large; ignored"); return; }
+            string evidencePath = Path.Combine(_pluginDir, "art", "shader-provenance.json");
+            var evidenceInfo = new FileInfo(evidencePath);
+            if (!evidenceInfo.Exists || evidenceInfo.Length > 16384) { GenesisLog.Warn("Theme", "shader provenance missing/oversized; using sprite/2D fallbacks"); return; }
+            var provenance = GenesisUI.Data.ShaderProvenance.Parse(File.ReadAllText(evidencePath));
+            string hash;
+            using (var hasher = System.Security.Cryptography.SHA256.Create()) hash = BitConverter.ToString(hasher.ComputeHash(File.ReadAllBytes(path))).Replace("-", "");
+            if (!string.Equals(hash, provenance.BundleSha256, StringComparison.OrdinalIgnoreCase)) { GenesisLog.Warn("Theme", "shader bundle hash mismatch; using sprite/2D fallbacks"); return; }
+            ShaderEvidence = "SHA256 " + hash + "; source " + provenance.SourceCommit + "; Unity " + provenance.UnityVersion + "; keyed GPU check " + provenance.GpuApi + " at " + provenance.VerifiedAtUtc + "; current GPU compatibility requires client verification";
+            GenesisLog.Info("Theme", ShaderEvidence);
             // An AssetBundle holds assets only (no code); this one holds our two shaders.
             var bundle = AssetBundle.LoadFromFile(path);
             if (bundle == null) { GenesisLog.Warn("Theme", "shader bundle could not be loaded (other platform or game version?)"); return; }
@@ -146,6 +159,7 @@ namespace GenesisUI.Theme
                 foreach (var shader in bundle.LoadAllAssets<Shader>())
                 {
                     if (shader == null) continue;
+                    _shaderAssets.Add(shader);
                     if (!shader.isSupported) { GenesisLog.Warn("Theme", "shader not supported on this GPU/API: " + shader.name); continue; }
                     if (shader.name == "GenesisUI/Metal") _metal = new Material(shader) { name = "GenesisUI metal", hideFlags = HideFlags.DontSave };
                     else if (shader.name == "GenesisUI/Burn") _burnShader = shader;
@@ -161,6 +175,8 @@ namespace GenesisUI.Theme
                 ", blur " + (_blurShader != null ? "on" : "off") + ", effects [" + string.Join(", ", _shaders.Keys) + "]" +
                 " (" + SystemInfo.graphicsDeviceType + ")");
         }
+
+        internal string ShaderEvidence { get; private set; } = "shader bundle/provenance not loaded; sprite/2D fallbacks";
 
         /// <summary>
         /// Where a frame's contents go, in design units (left, bottom, right, top), as declared in
@@ -309,6 +325,7 @@ namespace GenesisUI.Theme
             // The runes of the window titles (D-036): Elder Futhark from Noto Sans Runic, a fallback only.
             TMP_FontAsset runic = null;
             Guard.Try("load runic font", () => runic = LoadFallbackFont(Path.Combine(dir, RunicFile)));
+            _runic = runic;
 
             // Fallback chain: Cinzel lacks some symbols (e.g. ◆), Cormorant has them, the runes, then the game font.
             TMP_FontAsset body = _fonts.TryGetValue(FontRole.Body, out var b) ? b : null;
@@ -361,12 +378,16 @@ namespace GenesisUI.Theme
                 return;
             }
 
+            var budget = new GenesisUI.Data.PngBudget();
             foreach (var entry in manifest.sprites)
             {
                 string path = Path.GetFullPath(Path.Combine(dir, entry.file));
                 if (!path.StartsWith(dir + Path.DirectorySeparatorChar, StringComparison.Ordinal)) continue; // validated already; belt and braces
                 var info = new FileInfo(path);
                 if (!info.Exists || info.Length > MaxImageBytes) { GenesisLog.Warn("Theme", "sprite file missing or too large: " + entry.file); continue; }
+                byte[] bytes = File.ReadAllBytes(path);
+                if (!budget.Reserve(bytes, checked(entry.width * manifest.scale), checked(entry.height * manifest.scale)))
+                { GenesisLog.Warn("Theme", "PNG dimensions or decoded image budget rejected: " + entry.file); continue; }
 
                 var tex = new Texture2D(2, 2, TextureFormat.RGBA32, false, entry.color == "linear")
                 {
@@ -375,7 +396,7 @@ namespace GenesisUI.Theme
                     wrapMode = entry.wrap == "repeat" ? TextureWrapMode.Repeat : TextureWrapMode.Clamp,
                 };
                 // Jötunn's wrapper: Unity 6's ImageConversion needs netstandard 2.1, which net48 cannot reference.
-                if (!Jotunn.Utils.AssetUtils.LoadImage(tex, File.ReadAllBytes(path)))
+                if (!Jotunn.Utils.AssetUtils.LoadImage(tex, bytes))
                 {
                     GenesisLog.Warn("Theme", "not a valid PNG: " + entry.file);
                     UnityEngine.Object.Destroy(tex);
@@ -396,6 +417,29 @@ namespace GenesisUI.Theme
                     _sprites.TryGetValue(kv.Key.Substring(0, kv.Key.Length - "_relief".Length), out var lit))
                     _relief[lit] = kv.Value;
             GenesisLog.Info("Theme", "sprites loaded " + _sprites.Count + "/" + manifest.sprites.Length + ", " + _relief.Count + " with relief maps");
+        }
+
+        internal void Shutdown()
+        {
+            foreach (var material in _outlined.Values) if (material != null) UnityEngine.Object.Destroy(material);
+            foreach (var sprite in _sprites.Values)
+                if (sprite != null) { if (sprite.texture != null) UnityEngine.Object.Destroy(sprite.texture); UnityEngine.Object.Destroy(sprite); }
+            foreach (var font in _fonts.Values) DestroyFont(font);
+            DestroyFont(_runic);
+            if (_metal != null) UnityEngine.Object.Destroy(_metal);
+            if (_backdrop != null) UnityEngine.Object.Destroy(_backdrop);
+            foreach (var shader in _shaderAssets) if (shader != null) UnityEngine.Object.Destroy(shader);
+            _outlined.Clear(); _sprites.Clear(); _fonts.Clear(); _entries.Clear(); _relief.Clear(); _backgrounds.Clear(); _shaders.Clear(); _shaderAssets.Clear();
+            _runic = null; _vanilla = null; _metal = null; _backdrop = null; _burnShader = null; _blurShader = null; _loaded = false;
+            BackgroundOpacity = null;
+            if (ReferenceEquals(Current, this)) Current = null;
+        }
+        private static void DestroyFont(TMP_FontAsset font)
+        {
+            if (font == null) return;
+            if (font.material != null) UnityEngine.Object.Destroy(font.material);
+            if (font.atlasTextures != null) foreach (var texture in font.atlasTextures) if (texture != null) UnityEngine.Object.Destroy(texture);
+            UnityEngine.Object.Destroy(font);
         }
     }
 }

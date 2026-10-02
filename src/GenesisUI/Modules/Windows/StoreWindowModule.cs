@@ -19,21 +19,30 @@ namespace GenesisUI.Modules.Windows
     /// </summary>
     [GameContract("assembly_valheim", "StoreGui", "IsVisible")]
     [GameContract("assembly_valheim", "StoreGui", "get_instance")]
-    [GameContract("assembly_valheim", "StoreGui", "m_rootPanel")]
-    [GameContract("assembly_valheim", "StoreGui", "m_buyButton")]
-    [GameContract("assembly_valheim", "StoreGui", "m_sellButton")]
-    [GameContract("assembly_valheim", "StoreGui", "m_coinText")]
-    [GameContract("assembly_valheim", "StoreGui", "m_itemList")]
-    [GameContract("assembly_valheim", "StoreGui", "m_trader")]
+    [GameContract("assembly_valheim", "StoreGui", "m_rootPanel", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.GameObject")]
+    [GameContract("assembly_valheim", "StoreGui", "m_buyButton", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.UI.Button")]
+    [GameContract("assembly_valheim", "StoreGui", "m_sellButton", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.UI.Button")]
+    [GameContract("assembly_valheim", "StoreGui", "m_coinText", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "TMPro.TMP_Text")]
+    [GameContract("assembly_valheim", "StoreGui", "m_itemList", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Collections.Generic.List\u00601[[UnityEngine.GameObject, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]")]
+    [GameContract("assembly_valheim", "StoreGui", "m_trader", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "Trader")]
     [GameContract("assembly_valheim", "StoreGui", "GetSellableItem")]
     [GameContract("assembly_valheim", "StoreGui", "Hide")]
     [GameContract("assembly_valheim", "Trader", "GetAvailableItems")]
-    [GameContract("assembly_valheim", "Trader", "m_name")]
-    [GameContract("assembly_valheim", "Trader+TradeItem", "m_prefab")]
-    [GameContract("assembly_valheim", "Trader+TradeItem", "m_icon")]
-    [GameContract("assembly_valheim", "Trader+TradeItem", "m_name")]
-    [GameContract("assembly_valheim", "Trader+TradeItem", "m_price")]
-    [GameContract("assembly_valheim", "Trader+TradeItem", "m_stack")]
+    [GameContract("assembly_valheim", "Trader", "m_name", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.String")]
+    [GameContract("assembly_valheim", "Trader+TradeItem", "m_prefab", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "ItemDrop")]
+    [GameContract("assembly_valheim", "Trader+TradeItem", "m_icon", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.Sprite")]
+    [GameContract("assembly_valheim", "Trader+TradeItem", "m_name", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.String")]
+    [GameContract("assembly_valheim", "Trader+TradeItem", "m_price", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Int32")]
+    [GameContract("assembly_valheim", "Trader+TradeItem", "m_stack", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Int32")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Player", "m_localPlayer", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "Player")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop", "m_itemData", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "ItemDrop\u002BItemData")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop\u002BItemData", "GetIcon", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.Sprite")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop\u002BItemData", "m_shared", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "ItemDrop\u002BItemData\u002BSharedData")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop\u002BItemData\u002BSharedData", "m_name", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.String")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop\u002BItemData\u002BSharedData", "m_description", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.String")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop\u002BItemData", "m_stack", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Int32")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop\u002BItemData\u002BSharedData", "m_value", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Int32")]
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Host.ModuleContext), typeof(GenesisUI.Widgets.WindowParts), typeof(GenesisUI.Widgets.WindowCanvas), typeof(GenesisUI.Widgets.Backdrop), typeof(GenesisUI.Foundation.VanillaSkin), typeof(GenesisUI.Foundation.GenesisLog), typeof(GenesisUI.Widgets.ScrollArea), typeof(GenesisUI.Theme.ThemeRuntime), typeof(GenesisUI.Theme.ThemeTokens), typeof(GenesisUI.Widgets.Ui), typeof(GenesisUI.Widgets.Frame), typeof(GenesisUI.Widgets.ColorExtensions))]
     internal sealed class StoreWindowModule : IUiModule, IRecoverable
     {
         /// <summary>IRecoverable: on a fault the store closes.</summary>
@@ -82,7 +91,7 @@ namespace GenesisUI.Modules.Windows
 
         public string Id => "win.store";
         public string NameToken => "$genesisui_module_store_window";
-        public IReadOnlyList<string> Regions => NoRegions;
+        public IReadOnlyList<string> Regions => new[] { Id };
         public float RefreshRate => 0f;
 
         public void Build(ModuleContext context)

@@ -22,23 +22,23 @@ namespace GenesisUI.Modules.Minimap
     [GameContract("assembly_valheim", "Minimap", "SetMapMode")]
     [GameContract("assembly_valheim", "Minimap", "get_instance")]
     [GameContract("assembly_valheim", "Minimap", "IsOpen")]
-    [GameContract("assembly_valheim", "Minimap", "m_mode")]
-    [GameContract("assembly_valheim", "Minimap", "m_largeRoot")]
-    [GameContract("assembly_valheim", "Minimap", "m_biomeNameLarge")]
-    [GameContract("assembly_valheim", "Minimap", "m_publicPosition")]
-    [GameContract("assembly_valheim", "Minimap", "m_hints")]
-    [GameContract("assembly_valheim", "Minimap", "m_icons")]
-    [GameContract("assembly_valheim", "Minimap", "m_selectedIcon0")]
-    [GameContract("assembly_valheim", "Minimap", "m_selectedIcon1")]
-    [GameContract("assembly_valheim", "Minimap", "m_selectedIcon2")]
-    [GameContract("assembly_valheim", "Minimap", "m_selectedIcon3")]
-    [GameContract("assembly_valheim", "Minimap", "m_selectedIcon4")]
-    [GameContract("assembly_valheim", "Minimap", "m_selectedIconPing")]
-    [GameContract("assembly_valheim", "Minimap", "m_minZoom")]
-    [GameContract("assembly_valheim", "Minimap", "m_maxZoom")]
-    [GameContract("assembly_valheim", "Minimap", "m_visibleIconTypes")]
-    [GameContract("assembly_valheim", "Minimap", "m_showSharedMapData")]
-    [GameContract("assembly_valheim", "Minimap", "m_mapOffset")]
+    [GameContract("assembly_valheim", "Minimap", "m_mode", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "Minimap\u002BMapMode")]
+    [GameContract("assembly_valheim", "Minimap", "m_largeRoot", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.GameObject")]
+    [GameContract("assembly_valheim", "Minimap", "m_biomeNameLarge", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "TMPro.TMP_Text")]
+    [GameContract("assembly_valheim", "Minimap", "m_publicPosition", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.UI.Toggle")]
+    [GameContract("assembly_valheim", "Minimap", "m_hints", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Collections.Generic.List\u00601[[UnityEngine.GameObject, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]")]
+    [GameContract("assembly_valheim", "Minimap", "m_icons", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Collections.Generic.List\u00601[[Minimap\u002BSpriteData, assembly_valheim, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]")]
+    [GameContract("assembly_valheim", "Minimap", "m_selectedIcon0", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.UI.Image")]
+    [GameContract("assembly_valheim", "Minimap", "m_selectedIcon1", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.UI.Image")]
+    [GameContract("assembly_valheim", "Minimap", "m_selectedIcon2", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.UI.Image")]
+    [GameContract("assembly_valheim", "Minimap", "m_selectedIcon3", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.UI.Image")]
+    [GameContract("assembly_valheim", "Minimap", "m_selectedIcon4", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.UI.Image")]
+    [GameContract("assembly_valheim", "Minimap", "m_selectedIconPing", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.UI.Image")]
+    [GameContract("assembly_valheim", "Minimap", "m_minZoom", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Single")]
+    [GameContract("assembly_valheim", "Minimap", "m_maxZoom", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Single")]
+    [GameContract("assembly_valheim", "Minimap", "m_visibleIconTypes", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Boolean[]")]
+    [GameContract("assembly_valheim", "Minimap", "m_showSharedMapData", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Boolean")]
+    [GameContract("assembly_valheim", "Minimap", "m_mapOffset", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.Vector3")]
     [GameContract("assembly_valheim", "Minimap", "get_LargeZoom")]
     [GameContract("assembly_valheim", "Minimap", "set_LargeZoom")]
     [GameContract("assembly_valheim", "Minimap", "OnPressedIcon0")]
@@ -56,16 +56,24 @@ namespace GenesisUI.Modules.Minimap
     [GameContract("assembly_valheim", "Minimap", "OnAltPressedIconDeath")]
     [GameContract("assembly_valheim", "Minimap", "OnToggleSharedMapData")]
     [GameContract("assembly_valheim", "EnvMan", "GetDayFraction")]
-    [GameContract("assembly_valheim", "Minimap", "m_namePin")]
-    [GameContract("assembly_valheim", "Minimap", "m_mapImageLarge")]
-    [GameContract("assembly_valheim", "Minimap", "m_pinRootLarge")]
-    [GameContract("assembly_valheim", "Minimap", "m_pinNameRootLarge")]
-    [GameContract("assembly_valheim", "Minimap", "m_largeMarker")]
-    [GameContract("assembly_valheim", "Minimap", "m_largeShipMarker")]
-    [GameContract("assembly_valheim", "Minimap", "m_gamepadCrosshair")]
-    [GameContract("assembly_valheim", "Minimap", "m_nameInput")]
-    [GameContract("assembly_valheim", "Minimap", "m_pins")]
-    [GameContract("assembly_valheim", "Minimap+PinData", "m_uiElement")]
+    [GameContract("assembly_valheim", "Minimap", "m_namePin", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "Minimap\u002BPinData")]
+    [GameContract("assembly_valheim", "Minimap", "m_mapImageLarge", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.UI.RawImage")]
+    [GameContract("assembly_valheim", "Minimap", "m_pinRootLarge", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.RectTransform")]
+    [GameContract("assembly_valheim", "Minimap", "m_pinNameRootLarge", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.RectTransform")]
+    [GameContract("assembly_valheim", "Minimap", "m_largeMarker", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.RectTransform")]
+    [GameContract("assembly_valheim", "Minimap", "m_largeShipMarker", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.RectTransform")]
+    [GameContract("assembly_valheim", "Minimap", "m_gamepadCrosshair", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.RectTransform")]
+    [GameContract("assembly_valheim", "Minimap", "m_nameInput", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "GUIFramework.GuiInputField")]
+    [GameContract("assembly_valheim", "Minimap", "m_pins", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Collections.Generic.List\u00601[[Minimap\u002BPinData, assembly_valheim, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]")]
+    [GameContract("assembly_valheim", "Minimap+PinData", "m_uiElement", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.RectTransform")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Player", "m_localPlayer", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "Player")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "EnvMan", "get_instance", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "EnvMan")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "EnvMan", "GetDay", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Int32")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Minimap\u002BPinData", "m_type", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "Minimap\u002BPinType")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Minimap\u002BPinData", "m_name", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.String")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Minimap\u002BSpriteData", "m_name", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "Minimap\u002BPinType")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Minimap\u002BSpriteData", "m_icon", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.Sprite")]
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Host.ModuleContext), typeof(GenesisUI.Widgets.WindowParts), typeof(GenesisUI.Widgets.WindowCanvas), typeof(GenesisUI.Theme.ThemeRuntime), typeof(GenesisUI.Theme.ThemeTokens), typeof(GenesisUI.Widgets.ColorExtensions), typeof(GenesisUI.Widgets.OneShotLight), typeof(GenesisUI.Foundation.VanillaSkin), typeof(GenesisUI.Foundation.GenesisLog), typeof(GenesisUI.Widgets.Ui), typeof(GenesisUI.Widgets.Frame))]
     internal sealed class MapWindowModule : IUiModule, IRecoverable
     {
         /// <summary>IRecoverable: on a fault the large map closes back to the minimap.</summary>
@@ -126,7 +134,7 @@ namespace GenesisUI.Modules.Minimap
 
         public string Id => "win.map";
         public string NameToken => "$genesisui_module_map_window";
-        public IReadOnlyList<string> Regions => NoRegions;
+        public IReadOnlyList<string> Regions => new[] { Id };
         public float RefreshRate => 0f;
 
         public void Build(ModuleContext context)
@@ -415,7 +423,7 @@ namespace GenesisUI.Modules.Minimap
             private MapWindowModule _owner;
             private string _token;
             internal void Init(MapWindowModule owner, string token) { _owner = owner; _token = token; }
-            public void OnPointerEnter(UnityEngine.EventSystems.PointerEventData e) => _owner._hint = WindowParts.Localize(_token);
+            public void OnPointerEnter(UnityEngine.EventSystems.PointerEventData e) => Guard.Run("module:win.map", () => _owner._hint = WindowParts.Localize(_token));
             public void OnPointerExit(UnityEngine.EventSystems.PointerEventData e) => _owner._hint = null;
         }
 

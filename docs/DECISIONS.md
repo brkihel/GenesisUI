@@ -524,3 +524,38 @@ at a bounded 2x resolution (longest side at most 1024). The UI shader decodes fo
 centres first, interpolates premultiplied colour and coverage, then converts to straight
 colour for the UI blend. Shader compilation and a GPU edge regression check precede
 packaging; R-063 verifies the real model silhouettes on Diego's client.
+
+## D-040 — Stability boundaries and safe inventory transitions
+
+**Decision (2026-10-02, authorized by Diego after the complete review):** fault recovery is
+queued until every cleanup subscriber has returned. Failed/partial construction receives the
+same owner cleanup as normal teardown. Own objects, subscriptions and shared CanvasGroup claims
+have explicit lifetimes; the original group snapshot is restored after its last borrower leaves.
+
+Inventory relocation requires the entire size/placement/equipment/transition patch capability.
+The transition snapshots item references/counts/positions, grows capacity before moves, validates
+the complete plan and resulting bounds, and restores remaining original positions on failure.
+Only this isolated transaction may restore `Inventory.m_height` to undo its own resize, without
+rerunning foreign resize callbacks. It never adds/removes/replaces items or overrides foreign
+membership/count changes. A stale snapshot refuses the operation and faults its owner.
+
+**Approved skipping prefix:** `Humanoid.DropInvalidItems` skips the original only for the local
+player while our resize transaction is on the stack. Vanilla `Player.SetInventorySize` invokes
+destructive cleanup before the caller can validate the result; this prevents item drops when a
+foreign height hook reduces the requested capacity. Outside that synchronous transaction it is
+a no-op. Other postfixes still run; side-effecting prefixes after a skipped original may be skipped
+by Harmony's normal semantics. This narrow scope is required to validate/roll back safely and is
+covered by a declared target contract. No foreign patch is removed.
+
+Minimal inventory configuration sync initializes on headless servers under D-031; all GenesisUI
+visual modules and gameplay patches remain client-only. The vendored ServerSync library retains
+its existing, separately allowed config-sync patches. Headless initialization is not tested on
+production and does not authorize server installation.
+
+**Implementation amendment:** inventory rollback journals only our writes and preserves later
+foreign position changes as well as foreign membership/count changes. Diagnostics registration
+cleanup removes only entries still referencing our own Jotunn button/native definition; no
+foreign entry or patch is removed. Report retention may delete only checked, owned report names
+in our report folder (10 retained). Shader provenance is size-bounded typed StrictJson data;
+bundle/source hashes and the keyed GPU check gate packaging. Missing runtime evidence uses the
+existing sprite/2D fallback. These changes add no runtime dependency or public provider API.

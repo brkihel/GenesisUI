@@ -17,7 +17,7 @@ namespace GenesisUI.Foundation
     [GameContract("assembly_valheim", "Version", "GetVersionString")]
     [GameContract("assembly_guiutils", "Localization", "GetSelectedLanguage")]
     [GameContract("assembly_guiutils", "Localization", "instance")]
-    [GameContract("assembly_guiutils", "GuiScaler", "m_largeGuiScale")]
+    [GameContract("assembly_guiutils", "GuiScaler", "m_largeGuiScale", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "System.Single")]
     internal static class SessionHeader
     {
         /// <param name="includeDisplay">

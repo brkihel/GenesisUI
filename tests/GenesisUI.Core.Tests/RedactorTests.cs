@@ -6,6 +6,14 @@ namespace GenesisUI.Core.Tests
     public class RedactorTests
     {
         [Fact]
+        public void Explicit_short_context_values_are_redacted_as_words_without_erasing_versions()
+        {
+            var redactor = new Redactor();
+            redactor.AddSecret("Jo", "character", includeShort: true);
+            redactor.AddSecret("16", "world", includeShort: true);
+            Assert.Equal("<character> joined the journey; world <world>; Valheim 1.0.16.0", redactor.Redact("Jo joined the journey; world 16; Valheim 1.0.16.0"));
+        }
+        [Fact]
         public void Known_values_are_replaced_case_insensitively()
         {
             var r = new Redactor();
@@ -57,9 +65,21 @@ namespace GenesisUI.Core.Tests
         [InlineData("BepInEx: 5.4.2333.0")]
         [InlineData("GenesisUI 0.1.0.0")]
         [InlineData("Unity: 6000.0.75f1")]
+        [InlineData("2026-10-02 17:25:35")]
+        [InlineData("[00:00:00.23] timing")]
         public void Version_strings_survive(string line)
         {
             Assert.Equal(line, new Redactor().Redact(line));
+        }
+
+        [Theory]
+        [InlineData("peer 2001:db8:85a3::8a2e:370:7334", "peer <address>")]
+        [InlineData("peer ::1", "peer <address>")]
+        [InlineData("host: server.example.org:2456", "host: <address>")]
+        [InlineData("C:\\Users\\Diego\\BepInEx\\x.log", "<user-path>\\BepInEx\\x.log")]
+        public void Endpoint_and_user_path_patterns_are_scoped(string input, string expected)
+        {
+            Assert.Equal(expected, new Redactor().Redact(input));
         }
     }
 }

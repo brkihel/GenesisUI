@@ -3,6 +3,8 @@ using GenesisUI.InventoryModel;
 namespace GenesisUI.Gameplay
 {
     /// <summary>The game's item type mapped to GenesisUI's categories (slot rules, sorting, filter).</summary>
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop\u002BItemData", "m_shared", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "ItemDrop\u002BItemData\u002BSharedData")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop\u002BItemData\u002BSharedData", "m_itemType", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "ItemDrop\u002BItemData\u002BItemType")]
     internal static class ItemCategories
     {
         internal static ItemCategory Of(ItemDrop.ItemData item)

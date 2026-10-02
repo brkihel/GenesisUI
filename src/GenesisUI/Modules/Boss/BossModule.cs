@@ -25,6 +25,9 @@ namespace GenesisUI.Modules.Boss
     [GameContract("assembly_valheim", "Character", "GetHealth")]
     [GameContract("assembly_valheim", "Character", "GetMaxHealth")]
     [GameContract("assembly_valheim", "Character", "IsDead")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_guiutils", "Localization", "get_instance", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "Localization")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_guiutils", "Localization", "Localize", Parameters = new string[] { "System.String" }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.String")]
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Vitals.BarAnimator), typeof(GenesisUI.Host.ModuleContext), typeof(GenesisUI.Theme.ThemeRuntime), typeof(GenesisUI.Widgets.Ui), typeof(GenesisUI.Widgets.Frame), typeof(GenesisUI.Theme.ThemeTokens), typeof(GenesisUI.Widgets.LiquidLayer), typeof(GenesisUI.Host.RegionRegistry), typeof(GenesisUI.Foundation.VanillaVeil))]
     internal sealed class BossModule : IUiModule
     {
         private const float Width = 520f;

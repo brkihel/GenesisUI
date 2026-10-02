@@ -19,6 +19,7 @@ namespace GenesisUI.Foundation
     /// in diagnostics builds, an own log file (docs/DIAGNOSTICS.md §2).
     /// Safe to call before Init (lines are kept in the buffer only) and from any thread.
     /// </summary>
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Foundation.LogFileSink), typeof(GenesisUI.Foundation.Logging.RateLimiter))]
     internal static class GenesisLog
     {
         private const int RecentCapacity = 200;

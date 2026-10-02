@@ -13,15 +13,19 @@ namespace GenesisUI.Modules.Vitals
     /// Health, stamina and eitr as framed vertical bars at the bottom-left (concepts 4-6).
     /// Read-only: it samples the local player and draws; it never changes anything.
     /// </summary>
-    [GameContract("assembly_valheim", "Player", "m_localPlayer")]
+    [GameContract("assembly_valheim", "Player", "m_localPlayer", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "Player")]
     [GameContract("assembly_valheim", "Character", "GetHealth")]
     [GameContract("assembly_valheim", "Character", "GetMaxHealth")]
     [GameContract("assembly_valheim", "Player", "GetStamina")]
     [GameContract("assembly_valheim", "Player", "GetMaxStamina")]
     [GameContract("assembly_valheim", "Player", "GetEitr")]
     [GameContract("assembly_valheim", "Player", "GetMaxEitr")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Character", "GetMaxStamina", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Single")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Character", "GetMaxEitr", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Single")]
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Vitals.BarAnimator), typeof(GenesisUI.Host.ModuleContext), typeof(GenesisUI.Widgets.Ui), typeof(GenesisUI.Theme.ThemeRuntime), typeof(GenesisUI.Theme.ThemeTokens), typeof(GenesisUI.Modules.Vitals.VitalBarView), typeof(GenesisUI.Widgets.HudAnchor), typeof(GenesisUI.Motion.Pulse))]
     internal sealed class VitalsModule : IUiModule
     {
+        internal static RectTransform VisualAnchor { get; private set; }
         private const float LowHealthFraction = 0.25f;
 
         private static readonly string[] OwnedRegions = { "hud.health", "hud.stamina", "hud.eitr", "hud.healthDecor" };
@@ -69,6 +73,7 @@ namespace GenesisUI.Modules.Vitals
         {
             var theme = context.Theme;
             _group = Ui.Place(Ui.Child(context.Root, "Vitals"), Vector2.zero, Vector2.zero, new Vector2(150f, 260f));
+            VisualAnchor = _group;
 
             // Health is the widest and tallest bar; stamina and eitr share one smaller frame and sit to
             // its right (Diego, R-042). Frames are drawn at the size Diego drew them, never stretched.
@@ -145,6 +150,7 @@ namespace GenesisUI.Modules.Vitals
         public void Teardown()
         {
             HudAnchor.Valid = false;
+            VisualAnchor = null;
             if (_group != null) Object.Destroy(_group.gameObject);
             _group = null;
             _healthView = _staminaView = _eitrView = null;

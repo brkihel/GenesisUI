@@ -1,5 +1,38 @@
 # Changelog
 
+## 1.1.2-preview.1 — Stability base before modpack integrations
+
+### Fixed
+- Defer recovery until cleanup subscribers finish; restore partial builds, owner resources,
+  shared CanvasGroup claims, shell dependencies and plugin/config/input/asset lifetimes.
+- Require the complete inventory patch capability; grow before moving, validate original item
+  references/counts/positions and full plans, and roll back only our surviving writes without
+  overlapping later foreign occupants. Preserve vanilla actions and prohibit count/identity writes.
+- Honor native pointer/modifier/touch handlers, mirror controller selection/scroll in inventories
+  and containers, and use the same native input eligibility for hotkeys and suppression/rebinding.
+- Sanitize inactive live character visual snapshots, detect equal-count attachment replacements,
+  refresh same-instance item details/model generations, and use explicit shader/2D fallback.
+- Keep full bounded scrollable native item tooltip text; route status effects by actually presented
+  food tiles, bind crafting materials by native requirement identity, and restore live map appearance.
+- Initialize minimal inventory config sync before the headless visual exit, keeping visual/gameplay
+  patches client-only. Known foreign window/build/map owners block conflicting GenesisUI regions.
+
+### Security, diagnostics and development gates
+- Enforce JSON number grammar, PNG dimension/decoded-memory budgets, redaction context health,
+  short known names, IPv6/hostname/path coverage, bounded unique reports and retention.
+- Check helper/base/nested contracts, reflected field shape, per-owner compiled overload/return
+  signatures and banned item/network writes. Add regression tests for recovery, stale plans and data.
+- Cache hot-path buffers/entries/key mappings and expose bounded frame/render distributions,
+  stage generation/render count/texture memory and verified shader provenance. GPU/GC benchmarks
+  remain client work. Make the complete F8 module/report panel scrollable.
+- Require committed package sources, the approved keyed bundle/source/GPU provenance and SHA256
+  archive-entry verification. Ship build evidence and accurate implemented/planned capability docs.
+
+### Verification scope
+- Unchanged shader/GPU evidence from approved R-063 is reused; new C# behavior requires R-065.
+  No new public provider API, independent mod resource adapters, modpack certification or server
+  rollout is included. R-064 remains the later integration script.
+
 ## Unreleased — engineering review
 
 ### Documentation and development tools

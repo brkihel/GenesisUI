@@ -1,5 +1,18 @@
 # GenesisUI — Diagnostics (debug layer and logs)
 
+## Stability preview additions (1.1.2)
+
+- F8 reports identify the verified shader SHA/source/Unity/GPU-check date and stage generations,
+  render counts, target sizes and estimated color/depth bytes.
+- Frame-interval and `Camera.Render` CPU/submission p50/p95 use bounded recent samples. Frame
+  intervals include the game/all mods/synchronization; neither metric isolates UI GPU cost or GC.
+- Reports use schema 2, at most 1,048,576 characters (16,384 per input line), unique millisecond/GUID
+  names and retention of 10 owned report files. Redaction-context collection must succeed when on;
+  IPv6/hostname/user-path patterns and secret config keys are covered without hiding timestamps.
+- Recovery waits for cleanup subscribers; notification failures are recorded independently.
+  Partial builds and shared CanvasGroup leases are restored by owner.
+- The F8 panel scrolls through all module controls and report details, including on shorter canvases.
+
 **Every build that is not `Release` ships the full diagnostics layer.** It is not
 optional: tests happen on Diego's client, far from the developer, so the build
 itself must explain everything that goes wrong. A preview without diagnostics is not

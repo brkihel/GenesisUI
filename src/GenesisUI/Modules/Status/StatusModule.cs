@@ -19,16 +19,18 @@ namespace GenesisUI.Modules.Status
     /// </summary>
     [GameContract("assembly_valheim", "Character", "GetSEMan")]
     [GameContract("assembly_valheim", "SEMan", "GetHUDStatusEffects")]
-    [GameContract("assembly_valheim", "StatusEffect", "m_name")]
-    [GameContract("assembly_valheim", "StatusEffect", "m_icon")]
-    [GameContract("assembly_valheim", "StatusEffect", "m_flashIcon")]
-    [GameContract("assembly_valheim", "StatusEffect", "m_cooldownIcon")]
-    [GameContract("assembly_valheim", "StatusEffect", "m_hidden")]
+    [GameContract("assembly_valheim", "StatusEffect", "m_name", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.String")]
+    [GameContract("assembly_valheim", "StatusEffect", "m_icon", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.Sprite")]
+    [GameContract("assembly_valheim", "StatusEffect", "m_flashIcon", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Boolean")]
+    [GameContract("assembly_valheim", "StatusEffect", "m_cooldownIcon", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Boolean")]
+    [GameContract("assembly_valheim", "StatusEffect", "m_hidden", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Boolean")]
     [GameContract("assembly_valheim", "StatusEffect", "GetIconText")]
     [GameContract("assembly_valheim", "StatusEffect", "GetRemaningTime")]
-    [GameContract("assembly_valheim", "StatusEffect", "m_ttl")]
+    [GameContract("assembly_valheim", "StatusEffect", "m_ttl", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Single")]
     [GameContract("assembly_valheim", "Player", "GetGuardianPowerHUD")]
     [GameContract("assembly_valheim", "Character", "IsDead")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Player", "m_localPlayer", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "Player")]
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Host.ModuleContext), typeof(GenesisUI.Widgets.Ui), typeof(GenesisUI.Motion.Pulse), typeof(GenesisUI.Widgets.TileView), typeof(GenesisUI.Widgets.EdgeLight), typeof(GenesisUI.HudModel.TileGrid))]
     internal sealed class StatusModule : IUiModule
     {
         private const int MaxTiles = 24;
@@ -123,7 +125,7 @@ namespace GenesisUI.Modules.Status
             foreach (var se in _effects)
             {
                 // Potions and meads live in their own column beside the vital bars (D-037).
-                if (se == null || se.m_hidden || se == activePower || used >= MaxTiles || Food.PotionEffects.Is(se)) continue;
+                if (se == null || se.m_hidden || se == activePower || Food.FoodModule.Presents(se)) continue;
                 var tile = Tile(used++);
                 tile.SetIcon(se.m_icon);
                 tile.SetName(se.m_name);

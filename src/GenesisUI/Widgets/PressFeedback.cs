@@ -11,7 +11,8 @@ namespace GenesisUI.Widgets
     /// sinks a little under the press. A disabled button gives none. Eased with unscaled time; no work
     /// once settled.
     /// </summary>
-    internal sealed class PressFeedback : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Widgets.Ui), typeof(GenesisUI.Theme.ThemeRuntime), typeof(GenesisUI.Theme.ThemeTokens), typeof(GenesisUI.Foundation.GuardedBehaviour))]
+    internal sealed class PressFeedback : GenesisUI.Foundation.GuardedBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler
     {
         private const float HoverLight = 0.10f, PressLight = 0.2f, PressScale = 0.965f, Speed = 14f;
 
@@ -51,7 +52,7 @@ namespace GenesisUI.Widgets
             if (e.button == PointerEventData.InputButton.Left) _down = false;
         }
 
-        private void OnDisable()
+        protected override void OnOwnerDisabled()
         {
             _over = _down = false;
             _glow = _sink = 0f;
@@ -59,7 +60,7 @@ namespace GenesisUI.Widgets
             if (_rt != null) _rt.localScale = _scale;
         }
 
-        private void Update()
+        protected override void OnOwnerUpdate()
         {
             bool live = _button == null || _button.interactable;
             float glow = !live ? 0f : _down ? PressLight : _over ? HoverLight : 0f;

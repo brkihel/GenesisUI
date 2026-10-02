@@ -23,22 +23,23 @@ namespace GenesisUI.Modules.Windows
     [GameContract("assembly_valheim", "Menu", "Hide")]
     [GameContract("assembly_valheim", "Menu", "get_instance")]
     [GameContract("assembly_valheim", "Menu", "IsVisible")]
-    [GameContract("assembly_valheim", "Menu", "m_menuDialog")]
-    [GameContract("assembly_valheim", "Menu", "m_logoutDialog")]
-    [GameContract("assembly_valheim", "Menu", "m_quitDialog")]
-    [GameContract("assembly_valheim", "Menu", "m_continueButton")]
-    [GameContract("assembly_valheim", "Menu", "m_saveButton")]
-    [GameContract("assembly_valheim", "Menu", "m_playerListButton")]
-    [GameContract("assembly_valheim", "Menu", "m_inviteButton")]
-    [GameContract("assembly_valheim", "Menu", "m_settingsButton")]
-    [GameContract("assembly_valheim", "Menu", "m_logoutButton")]
-    [GameContract("assembly_valheim", "Menu", "m_quitButton")]
-    [GameContract("assembly_valheim", "Menu", "m_skipButton")]
-    [GameContract("assembly_valheim", "Menu", "lastSaveText")]
+    [GameContract("assembly_valheim", "Menu", "m_menuDialog", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.Transform")]
+    [GameContract("assembly_valheim", "Menu", "m_logoutDialog", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.Transform")]
+    [GameContract("assembly_valheim", "Menu", "m_quitDialog", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.Transform")]
+    [GameContract("assembly_valheim", "Menu", "m_continueButton", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.UI.Button")]
+    [GameContract("assembly_valheim", "Menu", "m_saveButton", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.UI.Button")]
+    [GameContract("assembly_valheim", "Menu", "m_playerListButton", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.UI.Button")]
+    [GameContract("assembly_valheim", "Menu", "m_inviteButton", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.UI.Button")]
+    [GameContract("assembly_valheim", "Menu", "m_settingsButton", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.UI.Button")]
+    [GameContract("assembly_valheim", "Menu", "m_logoutButton", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.UI.Button")]
+    [GameContract("assembly_valheim", "Menu", "m_quitButton", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.UI.Button")]
+    [GameContract("assembly_valheim", "Menu", "m_skipButton", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.UI.Button")]
+    [GameContract("assembly_valheim", "Menu", "lastSaveText", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "TMPro.TMP_Text")]
     [GameContract("assembly_valheim", "Menu", "OnLogoutYes")]
     [GameContract("assembly_valheim", "Menu", "OnLogoutNo")]
     [GameContract("assembly_valheim", "Menu", "OnQuitYes")]
     [GameContract("assembly_valheim", "Menu", "OnQuitNo")]
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Host.ModuleContext), typeof(GenesisUI.Widgets.WindowParts), typeof(GenesisUI.Widgets.WindowCanvas), typeof(GenesisUI.Foundation.VanillaSkin), typeof(GenesisUI.Foundation.GenesisLog), typeof(GenesisUI.Theme.ThemeRuntime), typeof(GenesisUI.Widgets.Ui), typeof(GenesisUI.Theme.ThemeTokens), typeof(GenesisUI.Foundation.Guard))]
     internal sealed class PauseMenuModule : IUiModule, IRecoverable
     {
         private const string Owner = "module:win.menu";
@@ -64,7 +65,7 @@ namespace GenesisUI.Modules.Windows
 
         public string Id => "win.menu";
         public string NameToken => "$genesisui_module_pause_menu";
-        public IReadOnlyList<string> Regions => NoRegions;
+        public IReadOnlyList<string> Regions => new[] { Id };
         public float RefreshRate => 0f;
 
         /// <summary>IRecoverable: on a fault the pause menu closes.</summary>
@@ -303,7 +304,7 @@ namespace GenesisUI.Modules.Windows
         }
 
         /// <summary>The hover: eased with unscaled time (the game may be paused behind the menu).</summary>
-        private sealed class Hover : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
+        private sealed class Hover : GuardedBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
         {
             private TextMeshProUGUI _label;
             private Image _knot;
@@ -339,10 +340,10 @@ namespace GenesisUI.Modules.Windows
 
             public void OnPointerClick(PointerEventData e)
             {
-                if (e.button == PointerEventData.InputButton.Left && _enabled) Guard.Try("pause menu option", _onClick);
+                if (e.button == PointerEventData.InputButton.Left && _enabled) Guard.Run("module:win.menu", _onClick);
             }
 
-            private void Update()
+            protected override void OnOwnerUpdate()
             {
                 float target = _over && _enabled ? 1f : 0f;
                 if (Mathf.Approximately(_t, target)) return;

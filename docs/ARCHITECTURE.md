@@ -1,7 +1,8 @@
 # GenesisUI — Architecture
 
-Status: HUD complete (F3 approved, 0.5.0); F4 windows next. Sections marked **Spike**
-still need a prototype on a real client before they are final.
+Status: HUD and in-game windows shipped; the main menu and game settings remain planned.
+`1.1.2-preview.1` implements the stability corrections tracked in [STABILITY-FIXES](STABILITY-FIXES.md),
+with client verification pending. [CAPABILITIES](CAPABILITIES.md) separates implemented and planned integration surfaces.
 
 ## 1. Repository layout
 
@@ -13,13 +14,13 @@ GenesisUI/
   src/
     GenesisUI.Core/              netstandard2.0 — NO Unity, Valheim, Harmony, BepInEx
     GenesisUI/                   net48 BepInEx plugin
-      Api/                       public extension API (namespace GenesisUI.Api)
+      Api/                       planned public extension API (F7; not shipped)
       Host/                      plugin entry, ModuleHost, RegionRegistry, VanillaVeil, Scheduler
-      Game/                      readers (game → snapshots) and actions (UI → vanilla entry points)
+      Game/                      planned reader/action facade; current modules read live objects directly
       Modules/<ModuleName>/      one folder per module
       Widgets/                   reusable UI components (Panel, Slot, Bar, KeyCap, ...)
       Theme/                     tokens, runtime fonts, sprites from art/sprites.json
-      Adapters/<ModName>/        one folder per third-party adapter
+      Adapters/<ModName>/        planned exact-version third-party adapters (not shipped)
       Diagnostics/               overlay, inspector, report, fault injection (non-Release)
       Patches/                   Harmony patch classes, one class per target area
       Foundation/                guard, guarded patcher, contracts, input leases, log/report plumbing
@@ -53,7 +54,8 @@ it references Unity, Valheim, Harmony or BepInEx, or the plugin project.
   They never write game state.
 - **Core** turns snapshots into view models: formatting, diffing, layout solving,
   settings validation. It is where almost all testable logic lives.
-- **Views** only render view models. A view never reads the game directly.
+- **Views:** the target separation is pure view models. Current modules/views also read live game
+  objects directly, under declared contracts and owner guards; a complete reader facade is deferred.
 - **Actions** are the only path from a click back to the game, and they call the
   same vanilla methods the vanilla UI calls (e.g. `InventoryGui`, `Humanoid.EquipItem`,
   `Player.ConsumeItem`). An action never claims ZDO ownership, never removes items
@@ -90,10 +92,14 @@ diagnostics and live enable/disable from the host.
 
 1. The `[GameContract]`s are checked before `Build`. A missing member means
    state `Unsupported` with the exact member named; vanilla keeps the region.
+   Base/nested/helper contracts are included with field/parameter/static/return shapes.
+   Helper links exclude other module lifecycles; those use explicit host prerequisites so a
+   broken optional module cannot disable unrelated regions through a broad dependency graph.
 2. Every call is wrapped by the Foundation guard. An exception moves the module
    to `Faulted`: `Teardown` runs, the veil is lifted from its regions (vanilla is
    back), input leases are released, the fault is logged once with full context.
-   No automatic retry in the same session (Debug builds offer a manual retry).
+   Recovery is queued until all fault subscribers finish. D-038/D-040 allow bounded automatic
+   rebuilding; repeated failures stay off. A partial Build receives the same cleanup as teardown.
 3. A module's refresh never receives more than 0.25 s of elapsed time (a fresh build or a
    long hitch would otherwise feed animation clocks nonsense: R-040 striped bars).
    The host's HUD root stays below the large map when both hang under the vanilla HUD root.
@@ -103,7 +109,7 @@ diagnostics and live enable/disable from the host.
 
 States (`Host/IUiModule.cs`): `Disabled` (off in config), `Waiting` (no HUD yet: main
 menu, loading), `Unsupported` (a contract is missing), `Blocked` (region owned by someone
-else), `Active`, `Faulted` (switched off for the session; the diagnostics panel can retry).
+else), `Building`, `Recovering`, `Active`, `Faulted` (restart limit reached; diagnostics can retry).
 
 ### Region registry
 
@@ -151,16 +157,15 @@ and never reveals more than vanilla would.
 
 ### Foreign-element dock
 
-Children that other mods add under veiled vanilla roots would disappear with the
-veil. The host watches veiled roots for GameObjects whose components come from a
-non-vanilla assembly, and **re-hosts a visible proxy of their position** in a dock
-the player can place. This is the generic compatibility path for mods that draw
-into the vanilla HUD without knowing GenesisUI. (**Spike** in F7: proxy by
-reparenting vs. by leaving it in place and punching a hole in the veil.)
+**Design only (F7), not implemented.** Foreign children under hidden vanilla roots may still
+need explicit adapters. Generic detection/docking needs a capability and lifetime prototype;
+the current host does not re-host foreign objects. Known replacement owners block the conflicting
+GenesisUI regions instead. Item details retain the full vanilla tooltip text as the baseline fallback.
 
 ## 4. Scheduling and data flow
 
-- No `Update()` per view. `ModuleHost.Tick` (from the plugin's `LateUpdate`, so after vanilla
+- Modules use `ModuleHost.Tick`; visual effects and preview stages have separately guarded Unity
+  callbacks. `ModuleHost.Tick` (from the plugin's `LateUpdate`, so after vanilla
   opened or closed its windows in its own `Update`: nothing vanilla is drawn for a frame before
   GenesisUI hides it, R-059) refreshes each
   module at the rate it declares: every frame for what follows vanilla positions

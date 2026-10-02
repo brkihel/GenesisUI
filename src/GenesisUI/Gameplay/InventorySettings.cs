@@ -12,9 +12,13 @@ namespace GenesisUI.Gameplay
     /// server locks the configuration; in single player and local worlds the player's own config
     /// is the admin's. Hotkeys are always the player's.
     /// </summary>
+    [GenesisUI.Foundation.Contracts.GameContract("GenesisUI", "ServerSync.ConfigSync", "configSyncs", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "System.Collections.Generic.HashSet`1<ServerSync.ConfigSync>")]
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.InventoryModel.SlotLayout))]
     internal static class InventorySettings
     {
         private static ConfigSync _sync;
+        private static readonly List<Action> Watched = new List<Action>();
+        private static readonly EventHandler OnChanged = (_, __) => Changed?.Invoke();
 
         internal static ConfigEntry<bool> Lock;
         internal static ConfigEntry<int> Rows;
@@ -26,6 +30,7 @@ namespace GenesisUI.Gameplay
 
         internal static void Bind(ConfigFile config)
         {
+            if (_sync != null) return;
             _sync = new ConfigSync(PluginInfo.Guid)
             {
                 DisplayName = PluginInfo.Name,
@@ -76,8 +81,17 @@ namespace GenesisUI.Gameplay
         private static ConfigEntry<T> Synced<T>(ConfigEntry<T> entry)
         {
             _sync.AddConfigEntry(entry);
-            entry.SettingChanged += (_, __) => Changed?.Invoke();
+            entry.SettingChanged += OnChanged;
+            Watched.Add(() => entry.SettingChanged -= OnChanged);
             return entry;
+        }
+        internal static void Shutdown()
+        {
+            foreach (var unsubscribe in Watched) unsubscribe();
+            Watched.Clear(); Changed = null;
+            var registry = typeof(ConfigSync).GetField("configSyncs", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)?.GetValue(null) as ICollection<ConfigSync>;
+            if (_sync != null && registry != null) registry.Remove(_sync); // this instance only; never another mod's sync or patches
+            _sync = null; Lock = null; Rows = null; QuickSlots = null; UtilitySlots = null;
         }
     }
 }

@@ -9,6 +9,9 @@ namespace GenesisUI.Gameplay
     /// unique key/value store ("genesisui_layout" = "rows,quick,utility,equipmentMask"), so a change
     /// the admin made while the player was away is planned from the right starting point.
     /// </summary>
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Player", "TryGetUniqueKeyValue", Parameters = new string[] { "System.String", "System.String\u0026" }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Boolean")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Player", "AddUniqueKeyValue", Parameters = new string[] { "System.String", "System.String" }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Void")]
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.InventoryModel.SlotLayout))]
     internal static class SavedLayout
     {
         internal const string Key = "genesisui_layout";

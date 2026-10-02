@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using Xunit;
+using GenesisUI.Foundation.Contracts;
 
 namespace GenesisUI.Contract.Tests
 {
@@ -20,7 +21,7 @@ namespace GenesisUI.Contract.Tests
         private const string ContractAttribute = "GenesisUI.Foundation.Contracts.GameContractAttribute";
         private const BindingFlags All = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
 
-        private static MetadataLoadContext Load(out Assembly plugin)
+        internal static MetadataLoadContext Load(out Assembly plugin)
         {
             var paths = Directory.GetFiles(TestPaths.RefDir, "*.dll").ToList();
             var names = new HashSet<string>(paths.Select(Path.GetFileNameWithoutExtension), StringComparer.OrdinalIgnoreCase);
@@ -33,21 +34,25 @@ namespace GenesisUI.Contract.Tests
             return ctx;
         }
 
-        private static IEnumerable<(Type owner, string asm, string type, string member, string[] parameters)> Contracts(Assembly plugin)
+        internal static IEnumerable<(Type owner, string asm, string type, string member, string[] parameters, GameContractAttribute shape)> Contracts(Assembly plugin)
         {
             foreach (var t in plugin.GetTypes())
             {
                 foreach (var a in t.GetCustomAttributesData().Where(a => a.AttributeType.FullName == ContractAttribute))
                 {
                     string[] parameters = null;
+                    var shape = new GameContractAttribute((string)a.ConstructorArguments[0].Value, (string)a.ConstructorArguments[1].Value, (string)a.ConstructorArguments[2].Value);
                     foreach (var named in a.NamedArguments)
                     {
                         if (named.MemberName == "Parameters" && named.TypedValue.Value is IReadOnlyCollection<CustomAttributeTypedArgument> items)
                             parameters = items.Select(i => (string)i.Value).ToArray();
+                        if (named.MemberName == "ValueType") shape.ValueType = (string)named.TypedValue.Value;
+                        if (named.MemberName == "Kind") shape.Kind = (ContractMemberKind)Convert.ToInt32(named.TypedValue.Value);
+                        if (named.MemberName == "Static") shape.Static = (ContractStatic)Convert.ToInt32(named.TypedValue.Value);
                     }
 
-                    yield return (t, (string)a.ConstructorArguments[0].Value, (string)a.ConstructorArguments[1].Value,
-                                  (string)a.ConstructorArguments[2].Value, parameters);
+                    shape.Parameters = parameters;
+                    yield return (t, shape.Assembly, shape.Type, shape.Member, parameters, shape);
                 }
             }
         }
@@ -66,7 +71,7 @@ namespace GenesisUI.Contract.Tests
             foreach (var c in contracts)
             {
                 string where = c.owner.FullName + " -> " + c.asm + ":" + c.type + "::" + c.member;
-                string file = Path.Combine(TestPaths.RefDir, c.asm + ".dll");
+                string file = c.asm == "GenesisUI" ? TestPaths.PluginDll : Path.Combine(TestPaths.RefDir, c.asm + ".dll");
                 if (!File.Exists(file)) { missing.Add(where + " (assembly not in ref/)"); continue; }
 
                 var type = ctx.LoadFromAssemblyPath(file).GetType(c.type, false);
@@ -75,13 +80,42 @@ namespace GenesisUI.Contract.Tests
                 var members = type.GetMember(c.member, All);
                 if (members.Length == 0) { missing.Add(where + " (member not found)"); continue; }
 
-                if (c.parameters != null && !members.OfType<MethodBase>().Any(m =>
-                        m.GetParameters().Select(p => p.ParameterType.FullName).SequenceEqual(c.parameters)))
-                    missing.Add(where + " (no overload (" + string.Join(", ", c.parameters) + "))");
+                if (!members.Any(m => ContractMatcher.Matches(m, c.shape))) missing.Add(where + " (signature/kind/staticness mismatch)");
             }
 
             Assert.True(missing.Count == 0,
                 "Game contracts broken (verified against " + VerifiedAgainst + "):\n" + string.Join("\n", missing));
+        }
+
+        [SkippableFact]
+        public void Helper_contract_dependencies_do_not_import_other_module_lifecycles()
+        {
+            TestPaths.SkipUnlessRefs(); TestPaths.SkipUnlessPlugin();
+            using var context = Load(out var plugin);
+            var coupled = new List<string>();
+            foreach (var owner in plugin.GetTypes())
+            foreach (var attribute in owner.GetCustomAttributesData().Where(a => a.AttributeType.Name == "ContractDependencyAttribute"))
+            foreach (var argument in (IReadOnlyCollection<CustomAttributeTypedArgument>)attribute.ConstructorArguments[0].Value)
+            {
+                var target = (Type)argument.Value;
+                if (target.GetInterfaces().Any(i => i.FullName == "GenesisUI.Host.IUiModule")) coupled.Add(owner.FullName + " -> " + target.FullName);
+            }
+            Assert.True(coupled.Count == 0, "Use explicit host prerequisites for module lifecycles; helpers must not disable unrelated modules:\n" + string.Join("\n", coupled));
+        }
+
+        [SkippableFact]
+        public void Field_contracts_pin_kind_type_and_staticness()
+        {
+            TestPaths.SkipUnlessRefs(); TestPaths.SkipUnlessPlugin();
+            using var context = Load(out var plugin);
+            var weak = new List<string>();
+            foreach (var contract in Contracts(plugin))
+            {
+                var type = context.LoadFromAssemblyName(contract.asm).GetType(contract.type, false);
+                if (type == null || type.GetField(contract.member, All) == null) continue;
+                if (contract.shape.Kind != ContractMemberKind.Field || contract.shape.Static == ContractStatic.Any || string.IsNullOrEmpty(contract.shape.ValueType)) weak.Add(contract.owner.FullName + " -> " + contract.type + "::" + contract.member);
+            }
+            Assert.True(weak.Count == 0, "Field contracts must validate reflected/compiled field shape:\n" + string.Join("\n", weak));
         }
 
         [SkippableFact]

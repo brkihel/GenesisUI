@@ -10,7 +10,8 @@ namespace GenesisUI.Widgets
     /// after another, left to right with a little randomness, in under half a second. If anything
     /// else changes the text meanwhile, that text wins and the effect stops.
     /// </summary>
-    internal sealed class RuneTitle : MonoBehaviour
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Theme.ThemeRuntime), typeof(GenesisUI.Foundation.GuardedBehaviour))]
+    internal sealed class RuneTitle : GenesisUI.Foundation.GuardedBehaviour
     {
         private const float Duration = 0.45f;
 
@@ -28,7 +29,7 @@ namespace GenesisUI.Widgets
             title._delay = delay;
         }
 
-        private void OnEnable()
+        protected override void OnOwnerEnabled()
         {
             if (_label == null) return;
             _final = _label.text;
@@ -38,13 +39,13 @@ namespace GenesisUI.Widgets
             Write(0f);
         }
 
-        private void OnDisable()
+        protected override void OnOwnerDisabled()
         {
             if (_time >= 0f && _label != null && _label.text == _written) _label.text = _final;
             _time = -1f;
         }
 
-        private void Update()
+        protected override void OnOwnerUpdate()
         {
             if (_time < 0f) return;
             if (_label.text != _written) { _time = -1f; return; } // someone else wrote a new title: it wins

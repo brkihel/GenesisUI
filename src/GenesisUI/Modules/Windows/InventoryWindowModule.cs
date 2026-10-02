@@ -25,25 +25,25 @@ namespace GenesisUI.Modules.Windows
     /// </summary>
     [GameContract("assembly_valheim", "InventoryGui", "Hide")]
     [GameContract("assembly_valheim", "InventoryGui", "IsVisible")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_player")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_crafting")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_info")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_container")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_playerGrid")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_containerGrid")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_currentContainer")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_dragItem")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_dragAmount")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_dragGo")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_dropButton")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_takeAllButton")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_stackAllButton")]
-    [GameContract("assembly_valheim", "InventoryGui", "m_splitDialog")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_player", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.RectTransform")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_crafting", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.RectTransform")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_info", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.RectTransform")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_container", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.RectTransform")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_playerGrid", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "InventoryGrid")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_containerGrid", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "InventoryGrid")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_currentContainer", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "Container")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_dragItem", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "ItemDrop\u002BItemData")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_dragAmount", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Int32")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_dragGo", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.GameObject")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_dropButton", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.UI.Button")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_takeAllButton", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.UI.Button")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_stackAllButton", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.UI.Button")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_splitDialog", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "SplitDialog")]
     [GameContract("assembly_valheim", "InventoryGui", "IsContainerOpen")]
     [GameContract("assembly_valheim", "SplitDialog", "get_IsActive")]
-    [GameContract("assembly_valheim", "InventoryGrid", "m_onSelected")]
-    [GameContract("assembly_valheim", "InventoryGrid", "m_onRightClick")]
-    [GameContract("assembly_valheim", "InventoryGrid", "m_onReleased")]
+    [GameContract("assembly_valheim", "InventoryGrid", "m_onSelected", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Action\u00604[[InventoryGrid, assembly_valheim, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null],[ItemDrop\u002BItemData, assembly_valheim, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null],[Vector2i, assembly_utils, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null],[InventoryGrid\u002BModifier, assembly_valheim, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]")]
+    [GameContract("assembly_valheim", "InventoryGrid", "m_onRightClick", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Action\u00603[[InventoryGrid, assembly_valheim, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null],[ItemDrop\u002BItemData, assembly_valheim, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null],[Vector2i, assembly_utils, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]")]
+    [GameContract("assembly_valheim", "InventoryGrid", "m_onReleased", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Action\u00603[[InventoryGrid, assembly_valheim, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null],[ItemDrop\u002BItemData, assembly_valheim, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null],[Vector2i, assembly_utils, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]")]
     [GameContract("assembly_valheim", "InventoryGrid", "GetInventory")]
     [GameContract("assembly_valheim", "Container", "GetInventory")]
     [GameContract("assembly_valheim", "Inventory", "GetItemAt")]
@@ -52,7 +52,7 @@ namespace GenesisUI.Modules.Windows
     [GameContract("assembly_valheim", "Inventory", "GetName")]
     [GameContract("assembly_valheim", "Inventory", "GetAllItems")]
     [GameContract("assembly_valheim", "Inventory", "GetTotalWeight")]
-    [GameContract("assembly_valheim", "Inventory", "m_onChanged")]
+    [GameContract("assembly_valheim", "Inventory", "m_onChanged", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Action")]
     [GameContract("assembly_valheim", "Humanoid", "IsItemEquiped")]
     [GameContract("assembly_valheim", "Player", "GetMaxCarryWeight")]
     [GameContract("assembly_valheim", "Player", "GetBodyArmor")]
@@ -62,21 +62,40 @@ namespace GenesisUI.Modules.Windows
     [GameContract("assembly_valheim", "ItemDrop+ItemData", "GetArmor", Parameters = new string[0])]
     [GameContract("assembly_valheim", "ItemDrop+ItemData", "GetDamage", Parameters = new string[0])]
     [GameContract("assembly_valheim", "ItemDrop+ItemData", "GetBaseBlockPower", Parameters = new string[0])]
-    [GameContract("assembly_valheim", "ItemDrop+ItemData", "m_durability")]
-    [GameContract("assembly_valheim", "ItemDrop+ItemData", "m_quality")]
-    [GameContract("assembly_valheim", "ItemDrop+ItemData", "m_stack")]
-    [GameContract("assembly_valheim", "ItemDrop+ItemData+SharedData", "m_itemType")]
-    [GameContract("assembly_valheim", "ItemDrop+ItemData+SharedData", "m_maxStackSize")]
-    [GameContract("assembly_valheim", "ItemDrop+ItemData+SharedData", "m_maxQuality")]
-    [GameContract("assembly_valheim", "ItemDrop+ItemData+SharedData", "m_useDurability")]
-    [GameContract("assembly_valheim", "ItemDrop+ItemData+SharedData", "m_description")]
-    [GameContract("assembly_valheim", "ItemDrop+ItemData+SharedData", "m_food")]
-    [GameContract("assembly_valheim", "ItemDrop+ItemData+SharedData", "m_foodStamina")]
-    [GameContract("assembly_valheim", "ItemDrop+ItemData+SharedData", "m_foodEitr")]
-    [GameContract("assembly_valheim", "ItemDrop+ItemData+SharedData", "m_foodBurnTime")]
-    [GameContract("assembly_valheim", "ItemDrop+ItemData+SharedData", "m_value")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData", "m_durability", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Single")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData", "m_quality", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Int32")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData", "m_stack", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Int32")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData+SharedData", "m_itemType", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "ItemDrop\u002BItemData\u002BItemType")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData+SharedData", "m_maxStackSize", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Int32")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData+SharedData", "m_maxQuality", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Int32")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData+SharedData", "m_useDurability", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Boolean")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData+SharedData", "m_description", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.String")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData+SharedData", "m_food", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Single")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData+SharedData", "m_foodStamina", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Single")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData+SharedData", "m_foodEitr", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Single")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData+SharedData", "m_foodBurnTime", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Single")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData+SharedData", "m_value", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Int32")]
     [GameContract("assembly_valheim", "HitData+DamageTypes", "GetTotalDamage")]
     [GameContract("assembly_utils", "ZInput", "get_pointerPosition")]
+    [GameContract("assembly_utils", "ZInput", "IsGamepadActive")]
+    [GameContract("assembly_utils", "ZInput", "IsTouchActive")]
+    [GameContract("assembly_valheim", "InventoryGrid", "m_elements", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Collections.Generic.List\u00601[[InventoryElement, assembly_valheim, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]")]
+    [GameContract("assembly_valheim", "InventoryGrid", "GetGamepadSelectedElement")]
+    [GameContract("assembly_valheim", "InventoryElement", "get_Position")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData", "GetTooltip", Parameters = new[] { "System.Int32" })]
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(VanillaPanels), typeof(ItemPreview), typeof(CharacterPreview), typeof(ItemStats))]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "InventoryGui", "get_instance", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "InventoryGui")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Player", "m_localPlayer", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "Player")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Humanoid", "GetInventory", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "Inventory")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_utils", "Vector2i", "x", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Int32")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_utils", "Vector2i", "y", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Int32")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_utils", "Vector2i", "op_Equality", Parameters = new string[] { "Vector2i", "Vector2i" }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "System.Boolean")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_utils", "Vector2i", ".ctor", Parameters = new string[] { "System.Int32", "System.Int32" }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance)]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop\u002BItemData", "m_gridPos", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "Vector2i")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Character", "GetBodyArmor", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Single")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop\u002BItemData", "m_shared", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "ItemDrop\u002BItemData\u002BSharedData")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop\u002BItemData\u002BSharedData", "m_name", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.String")]
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Foundation.VanillaSkin), typeof(GenesisUI.Host.ModuleContext), typeof(GenesisUI.Widgets.WindowParts), typeof(GenesisUI.Widgets.WindowCanvas), typeof(GenesisUI.InventoryModel.SlotLayout), typeof(GenesisUI.Widgets.CharacterPreview), typeof(GenesisUI.Widgets.Backdrop), typeof(GenesisUI.Widgets.EdgeLight), typeof(GenesisUI.Modules.Windows.VanillaPanels), typeof(GenesisUI.Foundation.GenesisLog), typeof(GenesisUI.Foundation.SharedCanvasGroups), typeof(GenesisUI.Foundation.CanvasGroupLease), typeof(GenesisUI.Foundation.Guard), typeof(GenesisUI.Gameplay.SlotHotkeys), typeof(GenesisUI.Widgets.KeyText), typeof(GenesisUI.Theme.ThemeRuntime), typeof(GenesisUI.Theme.ThemeTokens), typeof(GenesisUI.Widgets.EmberField), typeof(GenesisUI.InventoryModel.InventorySort), typeof(GenesisUI.Gameplay.ItemCategories), typeof(GenesisUI.Widgets.Ui), typeof(GenesisUI.Widgets.Frame), typeof(GenesisUI.Widgets.ColorExtensions), typeof(GenesisUI.Widgets.ItemPreview), typeof(GenesisUI.Widgets.ItemStats))]
     internal sealed class InventoryWindowModule : IUiModule, IRecoverable
     {
         /// <summary>IRecoverable: on a fault the windows close (vanilla's never shows in their place).</summary>
@@ -87,6 +106,8 @@ namespace GenesisUI.Modules.Windows
         }
 
         private const string Owner = "module:win.inventory";
+        private static readonly SlotLayout VanillaLayout = new SlotLayout(SlotLayout.MinRows, 0, 0, null);
+        private static readonly string[] OrdinaryLabels = { "1", "2", "3", "4", "5", "6", "7", "8" };
         private static readonly string[] NoRegions = new string[0];
         private const float CloseHoldSeconds = 0.6f;
 
@@ -160,11 +181,16 @@ namespace GenesisUI.Modules.Windows
         private int _containerVisibleRows;
         private bool _containerShown;
         private ItemCell _hovered;
+        private ItemCell _focused;
+        private float _detailsIn;
+        private static InventoryWindowModule _live;
         private ItemDrop.ItemData _shownItem;
         private bool _droppedOnCell;
-        private string _layoutKey;
+        private SlotLayout _layoutKey;
+        private string _containerName;
         private int _shownSlots = -1, _shownOrdinary = -1, _shownWeight = -1, _shownMax = -1, _shownArmor = -1;
         private GameObject _hiddenDragGo;
+        private CanvasGroupLease _dragLease;
         private Transform _guiAncestor;
         private bool _behind;
 
@@ -173,6 +199,7 @@ namespace GenesisUI.Modules.Windows
         private AccessTools.FieldRef<InventoryGui, ItemDrop.ItemData> _dragItem;
         private AccessTools.FieldRef<InventoryGui, int> _dragAmount;
         private AccessTools.FieldRef<InventoryGui, GameObject> _dragGo;
+        private AccessTools.FieldRef<InventoryGrid, List<InventoryElement>> _elements;
 
         public InventoryWindowModule(BepInEx.Configuration.ConfigFile config)
         {
@@ -182,7 +209,7 @@ namespace GenesisUI.Modules.Windows
 
         public string Id => "win.inventory";
         public string NameToken => "$genesisui_module_inventory_window";
-        public IReadOnlyList<string> Regions => NoRegions;
+        public IReadOnlyList<string> Regions => new[] { Id };
         public float RefreshRate => 0f;
 
         /// <summary>
@@ -201,6 +228,8 @@ namespace GenesisUI.Modules.Windows
             _dragItem = AccessTools.FieldRefAccess<InventoryGui, ItemDrop.ItemData>("m_dragItem");
             _dragAmount = AccessTools.FieldRefAccess<InventoryGui, int>("m_dragAmount");
             _dragGo = AccessTools.FieldRefAccess<InventoryGui, GameObject>("m_dragGo");
+            _elements = AccessTools.FieldRefAccess<InventoryGrid, List<InventoryElement>>("m_elements");
+            _live = this;
             ResetState();
         }
 
@@ -231,7 +260,8 @@ namespace GenesisUI.Modules.Windows
             WindowCanvas.Fit(_area);
             SetFade(WindowShellModule.Opacity, true);
 
-            var layout = InventoryModule.Current ?? new SlotLayout(SlotLayout.MinRows, 0, 0, null);
+            var layout = InventoryModule.Current ?? VanillaLayout;
+            MirrorSelection(gui, layout);
             ApplyLayout(layout);
             HideVanillaDrag(gui);
             FollowSplitDialog(gui);
@@ -259,7 +289,7 @@ namespace GenesisUI.Modules.Windows
             }
             UpdateGhost(gui, dragged);
             UpdateDropLight(dragged);
-            if (!container) UpdateDetails(inventory);
+            if (!container) UpdateDetails(inventory, deltaSeconds);
             UpdateStats(player, inventory, layout);
 
             if (_sortKey.Value.IsDown()) Sort(gui, player, layout);
@@ -279,6 +309,9 @@ namespace GenesisUI.Modules.Windows
             _containerScroll = _scroll = 0;
             _containerShown = false;
             _hovered = null;
+            _focused = null;
+            _containerName = null;
+            _detailsIn = 0f;
             _shownItem = null;
             _droppedOnCell = false;
             _hiddenDragGo = null;
@@ -289,6 +322,7 @@ namespace GenesisUI.Modules.Windows
 
         public void Teardown()
         {
+            if (_live == this) _live = null;
             Running = false;
             if (_applied) Unapply();
             if (_character != null) _character.Destroy();
@@ -392,21 +426,18 @@ namespace GenesisUI.Modules.Windows
         private void HideVanillaDrag(InventoryGui gui)
         {
             var go = _dragGo(gui);
-            if (go == null || go == _hiddenDragGo) return;
+            if (go == _hiddenDragGo) return;
+            ShowVanillaDrag();
+            if (go == null) return;
             _hiddenDragGo = go;
-            var group = go.GetComponent<CanvasGroup>();
-            if (group == null) group = go.AddComponent<CanvasGroup>();
-            group.alpha = 0f;
-            group.blocksRaycasts = false;
+            _dragLease = SharedCanvasGroups.Acquire(Owner, go);
+            _dragLease.Hide(true);
         }
 
         private void ShowVanillaDrag()
         {
-            if (_hiddenDragGo != null)
-            {
-                var group = _hiddenDragGo.GetComponent<CanvasGroup>();
-                if (group != null) group.alpha = 1f;
-            }
+            if (_dragLease != null) _dragLease.Release();
+            _dragLease = null;
             _hiddenDragGo = null;
         }
 
@@ -429,24 +460,14 @@ namespace GenesisUI.Modules.Windows
             var grid = GridOf(gui, cell);
             var inventory = InventoryOf(gui, cell);
             if (grid == null || inventory == null) return;
-            var item = inventory.GetItemAt(cell.Pos.x, cell.Pos.y);
-            if (e.button == PointerEventData.InputButton.Right)
-            {
-                grid.m_onRightClick?.Invoke(grid, item, cell.Pos);
-                return;
-            }
-            if (e.button != PointerEventData.InputButton.Left) return;
-            var input = BepInEx.UnityInput.Current;
-            var mod = InventoryGrid.Modifier.Select;
-            if (input.GetKey(KeyCode.LeftShift) || input.GetKey(KeyCode.RightShift)) mod = InventoryGrid.Modifier.Split;
-            else if (input.GetKey(KeyCode.LeftControl) || input.GetKey(KeyCode.RightControl)) mod = InventoryGrid.Modifier.Move;
-            grid.m_onSelected?.Invoke(grid, item, cell.Pos, mod);
+            Forward(cell, e, ExecuteEvents.pointerDownHandler);
             if (_filterList != null) _filterList.gameObject.SetActive(false);
         }
 
         /// <summary>A drag released on a cell: vanilla's OnReleasedItem, as vanilla's own drag handler calls it.</summary>
         internal void OnDrop(ItemCell cell)
         {
+            if (ZInput.IsTouchActive()) return; // native drag release handles touch once
             var gui = InventoryGui.instance;
             if (gui == null || !_applied || !cell.Active || _dragItem(gui) == null) return;
             _droppedOnCell = true;
@@ -469,6 +490,50 @@ namespace GenesisUI.Modules.Windows
         }
 
         internal void OnEnter(ItemCell cell) => _hovered = cell;
+
+        private InventoryElement Element(InventoryGrid grid, Vector2i position)
+        {
+            if (grid == null || _elements == null) return null;
+            var elements = _elements(grid);
+            if (elements == null) return null;
+            foreach (var element in elements) if (element != null && element.Position == position) return element;
+            return null;
+        }
+        private void Forward<T>(ItemCell cell, PointerEventData e, ExecuteEvents.EventFunction<T> handler) where T : IEventSystemHandler
+        {
+            if (!_applied || cell == null || !cell.Active || InventoryGui.instance == null) return;
+            var element = Element(GridOf(InventoryGui.instance, cell), cell.Pos);
+            if (element != null) ExecuteEvents.Execute(element.gameObject, e, handler);
+        }
+        internal static InventoryElement ProjectHover(InventoryGrid grid)
+        {
+            var live = _live;
+            if (live == null || !live._applied || live._hovered == null || InventoryGui.instance == null || Guard.IsTripped(Owner)) return null;
+            if (live.GridOf(InventoryGui.instance, live._hovered) != grid) return null;
+            return live.Element(grid, live._hovered.Pos);
+        }
+        private void MirrorSelection(InventoryGui gui, SlotLayout layout)
+        {
+            _focused = null;
+            if (!ZInput.IsGamepadActive() && !ZInput.IsTouchActive()) return;
+            var selected = gui.m_playerGrid != null ? gui.m_playerGrid.GetGamepadSelectedElement() : null;
+            var element = selected != null ? selected.GetComponent<InventoryElement>() : null;
+            if (element == null) return;
+            var pos = element.Position;
+            if (pos.y < layout.Rows)
+            {
+                if (pos.y < _scroll) _scroll = pos.y;
+                else if (pos.y >= _scroll + VisibleRows) _scroll = pos.y - VisibleRows + 1;
+                int index = (pos.y - _scroll) * SlotLayout.Width + pos.x;
+                if (index >= 0 && index < _gridCells.Count) _focused = _gridCells[index];
+            }
+            else
+            {
+                foreach (var cell in _quickCells) if (cell.Active && cell.Pos == pos) _focused = cell;
+                foreach (var cell in _utilityCells) if (cell.Active && cell.Pos == pos) _focused = cell;
+                foreach (var cell in _wornCells.Values) if (cell.Active && cell.Pos == pos) _focused = cell;
+            }
+        }
 
         internal void OnExit(ItemCell cell)
         {
@@ -494,13 +559,12 @@ namespace GenesisUI.Modules.Windows
             {
                 var cell = _gridCells[i];
                 int x = i % SlotLayout.Width, y = i / SlotLayout.Width + _scroll;
-                cell.Bind(new Vector2i(x, y), y < layout.Rows, y == 0 ? (x + 1).ToString() : null);
+                cell.Bind(new Vector2i(x, y), y < layout.Rows, y == 0 ? OrdinaryLabels[x] : null);
             }
             UpdateScrollbar(layout.Rows);
 
-            string key = layout.Rows + "/" + layout.Quick + "/" + layout.Utility + "/" + layout.Equipment.Count;
-            if (key == _layoutKey) return;
-            _layoutKey = key;
+            if (ReferenceEquals(layout, _layoutKey)) return;
+            _layoutKey = layout;
             for (int i = 0; i < _quickCells.Count; i++)
             {
                 var p = layout.QuickPosition(i);
@@ -531,7 +595,7 @@ namespace GenesisUI.Modules.Windows
                 PlaceWorn(cell, placed);
                 placed++;
             }
-            GenesisLog.Info("Module:win.inventory", "layout bound: " + key);
+            GenesisLog.Info("Module:win.inventory", "layout bound: " + layout.Rows + "/" + layout.Quick + "/" + layout.Utility + "/" + layout.Equipment.Count);
         }
 
         private void PlaceWorn(ItemCell cell, int index)
@@ -564,7 +628,7 @@ namespace GenesisUI.Modules.Windows
         {
             var item = cell.Active && inventory != null ? inventory.GetItemAt(cell.Pos.x, cell.Pos.y) : null;
             bool dim = item != null && (item == dragged || (_filter != Filter.All && !Matches(item, _filter)));
-            cell.Show(item, player != null && item != null && player.IsItemEquiped(item), cell == _hovered, dim ? DimAlpha : 1f);
+            cell.Show(item, player != null && item != null && player.IsItemEquiped(item), cell == _hovered || cell == _focused, dim ? DimAlpha : 1f);
         }
 
         /// <summary>While an item is dragged, the slot under the pointer is outlined in light (where it lands).</summary>
@@ -619,6 +683,20 @@ namespace GenesisUI.Modules.Windows
             if (inventory == null) return true;
             int w = inventory.GetWidth(), h = inventory.GetHeight();
             if (w != _builtContainerW || h != _builtContainerH) BuildContainerCells(w, h);
+            var nativeGrid = _containerGridRef(gui);
+            if ((ZInput.IsGamepadActive() || ZInput.IsTouchActive()) && nativeGrid != null)
+            {
+                var selected = nativeGrid.GetGamepadSelectedElement();
+                var element = selected != null ? selected.GetComponent<InventoryElement>() : null;
+                if (element != null)
+                {
+                    var pos = element.Position;
+                    if (pos.y < _containerScroll) _containerScroll = pos.y;
+                    else if (pos.y >= _containerScroll + _containerVisibleRows) _containerScroll = pos.y - _containerVisibleRows + 1;
+                    int index = (pos.y - _containerScroll) * w + pos.x;
+                    if (index >= 0 && index < _containerCells.Count) _focused = _containerCells[index];
+                }
+            }
             _containerScroll = Mathf.Clamp(_containerScroll, 0, Mathf.Max(0, h - _containerVisibleRows));
             for (int i = 0; i < _containerCells.Count; i++)
             {
@@ -628,14 +706,19 @@ namespace GenesisUI.Modules.Windows
                 UpdateCell(cell, inventory, null, dragged);
             }
             string name = Localize(inventory.GetName());
-            if (_containerTitle.text != name) _containerTitle.text = name.ToUpperInvariant();
+            if (_containerName != name) { _containerName = name; _containerTitle.text = name.ToUpperInvariant(); }
             return true;
         }
 
-        private void UpdateDetails(Inventory inventory)
+        private void UpdateDetails(Inventory inventory, float deltaSeconds)
         {
-            var item = _hovered != null && _hovered.Active ? InventoryOf(InventoryGui.instance, _hovered)?.GetItemAt(_hovered.Pos.x, _hovered.Pos.y) : null;
-            if (item == null || item == _shownItem) return; // the last item stays, like a selection
+            var cell = _hovered ?? _focused;
+            var item = cell != null && cell.Active ? InventoryOf(InventoryGui.instance, cell)?.GetItemAt(cell.Pos.x, cell.Pos.y) : _shownItem;
+            if (cell == null && item != null && !inventory.GetAllItems().Contains(item)) item = null;
+            _detailsIn -= deltaSeconds;
+            if (item == null) { _shownItem = null; _details.Clear(); return; }
+            if (item == _shownItem && _detailsIn > 0f) return;
+            _detailsIn = 0.25f;
             _shownItem = item;
             _details.Show(item);
         }
@@ -685,7 +768,8 @@ namespace GenesisUI.Modules.Windows
         {
             if (_dragItem(gui) != null) return; // never while an item is held
             var inventory = player.GetInventory();
-            var all = inventory.GetAllItems();
+            var snapshot = new PositionSnapshot<ItemDrop.ItemData>(inventory.GetAllItems(), item => item.m_stack, item => (item.m_gridPos.x, item.m_gridPos.y));
+            var all = snapshot.Items;
             _sortEntries.Clear();
             for (int i = 0; i < all.Count; i++)
                 _sortEntries.Add(new InventorySort.Entry
@@ -694,9 +778,14 @@ namespace GenesisUI.Modules.Windows
                     Category = ItemCategories.Of(all[i]), Name = Localize(all[i].m_shared.m_name), Stack = all[i].m_stack,
                 });
             var moves = InventorySort.Plan(layout, _sortEntries);
-            foreach (var move in moves) all[move.Id].m_gridPos = new Vector2i(move.X, move.Y);
-            if (moves.Count > 0) inventory.m_onChanged?.Invoke();
-            GenesisLog.Info("Module:win.inventory", "sorted: moved " + moves.Count + " item(s); items " + all.Count + " before and after");
+            try
+            {
+                snapshot.Apply(inventory.GetAllItems(), moves, inventory.GetWidth(), inventory.GetHeight(), (item, x, y) => item.m_gridPos = new Vector2i(x, y));
+                if (moves.Count > 0) inventory.m_onChanged?.Invoke();
+                if (!snapshot.Matches(inventory.GetAllItems())) throw new InvalidOperationException("Sort callback changed the inventory snapshot");
+            }
+            catch { snapshot.RestoreRemaining(inventory.GetAllItems(), (item, x, y) => item.m_gridPos = new Vector2i(x, y)); throw; }
+            GenesisLog.Info("Module:win.inventory", "sorted: moved " + moves.Count + " item(s); verified " + all.Count + " original item(s)");
         }
 
         internal static bool Matches(ItemDrop.ItemData item, Filter filter)
@@ -1074,7 +1163,7 @@ namespace GenesisUI.Modules.Windows
         }
 
         /// <summary>Pointer events of one cell, handed to the module (and from there to vanilla).</summary>
-        internal sealed class CellInput : MonoBehaviour, IPointerDownHandler, IPointerEnterHandler, IPointerExitHandler,
+        internal sealed class CellInput : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler,
             IBeginDragHandler, IDragHandler, IEndDragHandler, IDropHandler, IScrollHandler
         {
             private InventoryWindowModule _owner;
@@ -1085,25 +1174,54 @@ namespace GenesisUI.Modules.Windows
             {
                 _owner = owner;
                 _cell = cell;
+                BindEvents();
                 return this;
             }
 
-            public void OnPointerDown(PointerEventData e) { if (_cell != null) Guard.Try("inventory cell press", () => _owner.OnDown(_cell, e)); }
-            public void OnPointerEnter(PointerEventData e) { if (_cell != null) _owner.OnEnter(_cell); }
-            public void OnPointerExit(PointerEventData e) { if (_cell != null) _owner.OnExit(_cell); }
-            public void OnBeginDrag(PointerEventData e) { }
-            public void OnDrag(PointerEventData e) { }
-            public void OnEndDrag(PointerEventData e) => Guard.Try("inventory drag end", () => _owner.OnEndDrag(e));
-            public void OnDrop(PointerEventData e) { if (_cell != null) Guard.Try("inventory drop", () => _owner.OnDrop(_cell)); }
-
-            public void OnScroll(PointerEventData e)
+            private Action<PointerEventData> _down, _up, _click, _enter, _exit, _begin, _drag, _end, _drop, _scroll;
+            private void BindEvents()
             {
-                if (_cell != null) _owner.OnScroll(_cell, e);
-                else if (ContainerScroll) _owner._containerScroll += e.scrollDelta.y > 0f ? -1 : e.scrollDelta.y < 0f ? 1 : 0;
-                else _owner.OnScroll(null, e);
+                _down = e => { if (_cell != null) _owner.OnDown(_cell, e); };
+                _up = e => _owner.Forward(_cell, e, ExecuteEvents.pointerUpHandler);
+                _click = e => _owner.Forward(_cell, e, ExecuteEvents.pointerClickHandler);
+                _enter = e => { if (_cell != null) { _owner.OnEnter(_cell); _owner.Forward(_cell, e, ExecuteEvents.pointerEnterHandler); } };
+                _exit = e => { if (_cell != null) { _owner.Forward(_cell, e, ExecuteEvents.pointerExitHandler); _owner.OnExit(_cell); } };
+                _begin = e => _owner.Forward(_cell, e, ExecuteEvents.beginDragHandler);
+                _drag = e => _owner.Forward(_cell, e, ExecuteEvents.dragHandler);
+                _end = e =>
+                {
+                    if (ZInput.IsTouchActive())
+                    {
+                        var original = e.pointerCurrentRaycast;
+                        var projected = original;
+                        var hovered = _owner._hovered;
+                        var element = hovered != null && InventoryGui.instance != null ? _owner.Element(_owner.GridOf(InventoryGui.instance, hovered), hovered.Pos) : null;
+                        if (element != null) projected.gameObject = element.gameObject;
+                        e.pointerCurrentRaycast = projected;
+                        try { _owner.Forward(_cell, e, ExecuteEvents.endDragHandler); }
+                        finally { e.pointerCurrentRaycast = original; }
+                    }
+                    else _owner.OnEndDrag(e);
+                };
+                _drop = e => { if (_cell != null) _owner.OnDrop(_cell); };
+                _scroll = e =>
+                {
+                    if (_cell != null) _owner.OnScroll(_cell, e);
+                    else if (ContainerScroll) _owner._containerScroll += e.scrollDelta.y > 0f ? -1 : e.scrollDelta.y < 0f ? 1 : 0;
+                    else _owner.OnScroll(null, e);
+                };
             }
+            public void OnPointerDown(PointerEventData e) => Guard.Run(Owner, _down, e);
+            public void OnPointerUp(PointerEventData e) => Guard.Run(Owner, _up, e);
+            public void OnPointerClick(PointerEventData e) => Guard.Run(Owner, _click, e);
+            public void OnPointerEnter(PointerEventData e) => Guard.Run(Owner, _enter, e);
+            public void OnPointerExit(PointerEventData e) => Guard.Run(Owner, _exit, e);
+            public void OnBeginDrag(PointerEventData e) => Guard.Run(Owner, _begin, e);
+            public void OnDrag(PointerEventData e) => Guard.Run(Owner, _drag, e);
+            public void OnEndDrag(PointerEventData e) => Guard.Run(Owner, _end, e);
+            public void OnDrop(PointerEventData e) => Guard.Run(Owner, _drop, e);
+            public void OnScroll(PointerEventData e) => Guard.Run(Owner, _scroll, e);
         }
-
         /// <summary>The details panel (replaces vanilla's tooltip): icon, name, type, description, stats.</summary>
         private sealed class Details
         {
@@ -1118,6 +1236,7 @@ namespace GenesisUI.Modules.Windows
             private readonly Image _durBack, _dur;
             private readonly GameObject _body;
             private readonly List<StatRow> _stats = new List<StatRow>(12);
+            private string _tooltip;
 
             internal Details(InventoryWindowModule m, RectTransform p)
             {
@@ -1132,14 +1251,21 @@ namespace GenesisUI.Modules.Windows
                 _model = ItemPreview.Create(WindowCanvas.At(body, "Model", pad, 66f, w, 166f));
                 _name = m.Label(body, "Name", FontRole.Display, 24f, t.AccentGoldBright, pad, 236f, w, 32f, TextAlignmentOptions.Left);
                 _type = m.Label(body, "Type", FontRole.Body, 17f, t.TextFlavor, pad, 268f, w, 22f, TextAlignmentOptions.Left);
-                _description = Ui.Text(body, "Description", m._theme, FontRole.Body, 16f, ThemeRuntime.ToUnity(t.TextBody), TextAlignmentOptions.TopLeft);
+                var viewport = WindowCanvas.At(body, "Tooltip", pad, 298f, w, 352f);
+                Ui.Image(viewport, null, Color.clear, true);
+                viewport.gameObject.AddComponent<RectMask2D>();
+                var scroll = viewport.gameObject.AddComponent<ScrollRect>();
+                scroll.viewport = viewport;
+                scroll.horizontal = false;
+                scroll.movementType = ScrollRect.MovementType.Clamped;
+                _description = Ui.Text(viewport, "Description", m._theme, FontRole.Body, 16f, ThemeRuntime.ToUnity(t.TextBody), TextAlignmentOptions.TopLeft);
                 var drt = (RectTransform)_description.transform;
                 drt.anchorMin = drt.anchorMax = drt.pivot = new Vector2(0f, 1f);
-                drt.anchoredPosition = new Vector2(pad, -298f);
-                drt.sizeDelta = new Vector2(w, 70f);
+                drt.anchoredPosition = Vector2.zero;
+                drt.sizeDelta = new Vector2(w, 352f);
+                scroll.content = drt;
                 _description.textWrappingMode = TextWrappingModes.Normal;
-                _description.overflowMode = TextOverflowModes.Ellipsis;
-                Ui.Image(WindowCanvas.At(body, "Rule", pad, 376f, w, 1f), null, ThemeRuntime.ToUnity(t.AccentGold).WithA(0.35f));
+                _description.overflowMode = TextOverflowModes.Overflow;
                 for (int i = 0; i < MaxRows; i++)
                 {
                     var row = WindowCanvas.At(body, "Row " + i, pad, 386f + i * 34f, w, 32f);
@@ -1171,11 +1297,20 @@ namespace GenesisUI.Modules.Windows
                 _icon.enabled = !model;
                 _name.text = Localize(s.m_name).ToUpperInvariant();
                 _type.text = Localize(ItemStats.TypeToken(item));
-                _description.text = Localize(s.m_description);
+                // Use the actual instance: mod tooltip postfixes can read quality/custom data.
+                string tooltip = Localize(item.GetTooltip(-1) ?? "");
+                if (tooltip.Length > 16384) tooltip = tooltip.Substring(0, 16384) + "\n…";
+                if (_tooltip != tooltip)
+                {
+                    _tooltip = tooltip;
+                    _description.text = tooltip;
+                    ((RectTransform)_description.transform).sizeDelta = new Vector2(((RectTransform)_description.transform).rect.width, Mathf.Max(352f, _description.preferredHeight));
+                }
 
                 int n = 0;
                 _durBack.gameObject.SetActive(false);
-                ItemStats.Collect(item, item.m_quality, crafting: false, _stats);
+                // The complete scrollable vanilla tooltip replaces the lossy fixed stat table.
+                _stats.Clear();
                 foreach (var row in _stats)
                 {
                     Row(ref n, row.Token, row.Value);
@@ -1186,6 +1321,13 @@ namespace GenesisUI.Modules.Windows
                     _durBack.gameObject.SetActive(true);
                 }
                 for (int i = n; i < MaxRows; i++) if (_rows[i].activeSelf) _rows[i].SetActive(false);
+            }
+
+            internal void Clear()
+            {
+                _body.SetActive(false);
+                _empty.gameObject.SetActive(true);
+                if (_model != null) _model.Hide();
             }
 
             private void Row(ref int n, string token, string value)

@@ -4,6 +4,7 @@ using GenesisUI.Foundation.Versioning;
 namespace GenesisUI
 {
     /// <summary>What this build is (docs/ARCHITECTURE.md §9). Chosen by the build configuration, never at runtime.</summary>
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Foundation.Versioning.BuildInfo))]
     internal static class Build
     {
 #if GENESIS_CHANNEL_DEV

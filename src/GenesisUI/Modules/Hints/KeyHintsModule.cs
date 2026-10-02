@@ -19,6 +19,7 @@ namespace GenesisUI.Modules.Hints
     /// with the lift above the hotbar ([Hotbar] KeyHintsLift) that the hotbar module applied before.
     /// </summary>
     [GameContract("assembly_valheim", "KeyHints", "get_instance")]
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Foundation.VanillaSkin), typeof(GenesisUI.Host.ModuleContext), typeof(GenesisUI.Foundation.VanillaNudge), typeof(GenesisUI.Theme.ThemeRuntime), typeof(GenesisUI.Theme.ThemeTokens), typeof(GenesisUI.Widgets.Frame), typeof(GenesisUI.Foundation.GenesisLog))]
     internal sealed class KeyHintsModule : IUiModule
     {
         private const string Owner = "module:hud.keyhints";

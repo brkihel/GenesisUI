@@ -8,6 +8,9 @@ $jotunnVersion = '2.30.2'
 Push-Location $repoRoot
 try {
     if (!(Test-Path -LiteralPath 'ref/assembly_valheim.dll')) { throw 'ref/ is empty: refresh the reference assemblies first' }
+    $dirty = git status --porcelain --untracked-files=no
+    if ($LASTEXITCODE -ne 0 -or $dirty) { throw 'Commit tracked changes before packaging: the watermark must identify the packaged code' }
+    if (git ls-files --others --exclude-standard -- src tests docs tools art unity) { throw 'Commit new project files before packaging' }
     $env:DOTNET_GCHeapHardLimit = '0x40000000'
     dotnet test GenesisUI.sln -c $Channel --no-restore --nologo -v q -m:1 -nr:false
     if ($LASTEXITCODE -ne 0) { throw 'Tests failed; no package produced' }
@@ -18,6 +21,11 @@ try {
     if (!$version -or !$preview) { throw 'Invalid package version in PluginInfo.cs' }
     $outDir = Join-Path $repoRoot "src/GenesisUI/bin/$Channel/net48"
     $dll = Join-Path $outDir 'GenesisUI.dll'
+    $stampJson = dotnet run --project tools/review --no-restore -- stamp $repoRoot $dll
+    if ($LASTEXITCODE -ne 0) { throw 'Could not inspect compiled package stamp' }
+    $stamp = $stampJson | ConvertFrom-Json
+    $expectedSha = (git rev-parse --short=7 HEAD).Trim()
+    if ($stamp.sha -ne $expectedSha -or $stamp.version -ne $version -or [string]$stamp.preview -ne $preview -or $stamp.channel -ne $Channel) { throw 'Compiled package source/version/channel mismatch' }
     $dllData = [Text.Encoding]::UTF8.GetString([IO.File]::ReadAllBytes($dll))
     if (!$dllData.Contains('FaultRegistry') -or !$dllData.Contains('SendConfigsAfterLogin')) { throw 'Core or ServerSync was not merged into GenesisUI.dll' }
     $jotunnData = [Text.Encoding]::Unicode.GetString([IO.File]::ReadAllBytes((Join-Path $repoRoot 'ref/Jotunn.dll')))
@@ -45,7 +53,9 @@ try {
         $entries["plugins/art/$file"] = Join-Path $artDir $file
     }
     $bundle = Join-Path $artDir 'genesisui.shaders'
-    if (Test-Path -LiteralPath $bundle) { $entries.Add('plugins/art/genesisui.shaders', $bundle) }
+    & (Join-Path $PSScriptRoot 'shaders/provenance.ps1') Verify $bundle
+    $entries.Add('plugins/art/genesisui.shaders', $bundle)
+    $entries.Add('plugins/art/shader-provenance.json', (Join-Path $repoRoot 'art/shaders/provenance.json'))
     foreach ($folder in @('Translations', 'fonts')) {
         $source = if ($folder -eq 'Translations') { Join-Path $repoRoot 'src/GenesisUI/Translations' } else { $fontsDir }
         foreach ($file in Get-ChildItem -LiteralPath $source -File -Recurse) {
@@ -64,6 +74,14 @@ try {
         description = "Valheim's whole interface redrawn in fine gold metal: living health bars, a clear inventory and crafting, a framed map with new markers. Turn any part off; it repairs itself if something breaks."
         dependencies = @("ValheimModding-Jotunn-$jotunnVersion")
     } | ConvertTo-Json
+    $references = [ordered]@{}
+    foreach ($reference in @('assembly_valheim', 'assembly_utils', 'assembly_guiutils', 'gui_framework', 'Jotunn')) {
+        $references["$reference.dll"] = (Get-FileHash -LiteralPath (Join-Path $repoRoot "ref/$reference.dll")).Hash
+    }
+    $fileHashes = [ordered]@{}
+    foreach ($entry in $entries.GetEnumerator() | Sort-Object Key) { $fileHashes[$entry.Key] = (Get-FileHash -LiteralPath $entry.Value).Hash }
+    $evidence = [ordered]@{ schema = 1; commit = (git rev-parse HEAD).Trim(); channel = $Channel; version = $version; preview = $preview; references = $references; filesSha256 = $fileHashes } | ConvertTo-Json -Depth 6
+    $generated = [ordered]@{ 'manifest.json' = $manifest; 'build-evidence.json' = $evidence }
     $name = "GenesisMods-GenesisUI-$version"
     if ($Channel -eq 'Preview') { $name += "-preview.$preview" }
     $dist = Join-Path $repoRoot 'dist'
@@ -76,25 +94,40 @@ try {
         foreach ($entry in $entries.GetEnumerator() | Sort-Object Key) {
             [IO.Compression.ZipFileExtensions]::CreateEntryFromFile($zip, $entry.Value, $entry.Key, [IO.Compression.CompressionLevel]::Optimal) | Out-Null
         }
-        $writer = [IO.StreamWriter]::new($zip.CreateEntry('manifest.json').Open(), [Text.UTF8Encoding]::new($false))
-        try { $writer.Write($manifest) } finally { $writer.Dispose() }
+        foreach ($name in $generated.Keys) {
+            $writer = [IO.StreamWriter]::new($zip.CreateEntry($name).Open(), [Text.UTF8Encoding]::new($false))
+            try { $writer.Write($generated[$name]) } finally { $writer.Dispose() }
+        }
     } finally { $zip.Dispose(); $stream.Dispose() }
 
     $check = [IO.Compression.ZipFile]::OpenRead($zipPath)
     try {
-        if ($check.Entries.Count -ne $entries.Count + 1) { throw 'Package file count mismatch' }
+        if ($check.Entries.Count -ne $entries.Count + $generated.Count) { throw 'Package file count mismatch' }
         foreach ($name in $entries.Keys) {
             $entry = $check.GetEntry($name)
             if ($null -eq $entry -or $entry.Length -ne (Get-Item -LiteralPath $entries[$name]).Length) { throw "Package entry mismatch: $name" }
+            $entryStream = $entry.Open()
+            $hasher = [Security.Cryptography.SHA256]::Create()
+            try { $actualHash = [Convert]::ToHexString($hasher.ComputeHash($entryStream)) } finally { $entryStream.Dispose(); $hasher.Dispose() }
+            if ($actualHash -ne (Get-FileHash -LiteralPath $entries[$name] -Algorithm SHA256).Hash) { throw "Package content hash mismatch: $name" }
         }
         $reader = [IO.StreamReader]::new($check.GetEntry('manifest.json').Open())
-        try { $actual = $reader.ReadToEnd() | ConvertFrom-Json } finally { $reader.Dispose() }
+        try { $actualText = $reader.ReadToEnd(); $actual = $actualText | ConvertFrom-Json } finally { $reader.Dispose() }
+        if ($actualText -cne $manifest) { throw 'Package manifest content mismatch' }
         if ($actual.version_number -ne $version -or $actual.dependencies[0] -ne "ValheimModding-Jotunn-$jotunnVersion") { throw 'Package manifest mismatch' }
+        foreach ($name in $generated.Keys) {
+            $entryStream = $check.GetEntry($name).Open(); $hasher = [Security.Cryptography.SHA256]::Create()
+            try {
+                $actualHash = [Convert]::ToHexString($hasher.ComputeHash($entryStream))
+                $expectedHash = [Convert]::ToHexString($hasher.ComputeHash([Text.Encoding]::UTF8.GetBytes($generated[$name])))
+                if ($actualHash -ne $expectedHash) { throw "Generated entry hash mismatch: $name" }
+            } finally { $entryStream.Dispose(); $hasher.Dispose() }
+        }
     } finally { $check.Dispose() }
     [pscustomobject]@{
         Package = $zipPath
         Bytes = (Get-Item -LiteralPath $zipPath).Length
-        Files = $entries.Count + 1
+        Files = $entries.Count + $generated.Count
         Sprites = $art.sprites.Count
         SHA256 = (Get-FileHash -LiteralPath $zipPath -Algorithm SHA256).Hash
     } | Format-List

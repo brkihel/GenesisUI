@@ -29,6 +29,14 @@ namespace GenesisUI.Core.Tests
         [InlineData("'x'")]
         [InlineData("\"tab\there\"")]
         [InlineData("1.2.3")]
+        [InlineData("01")]
+        [InlineData("-01")]
+        [InlineData("1.")]
+        [InlineData("-.1")]
+        [InlineData("1e+")]
+        [InlineData("1e")]
+        [InlineData("1+2")]
+        [InlineData("1e9999")]
         [InlineData("tru")]
         public void Malformed_input_throws(string json)
         {

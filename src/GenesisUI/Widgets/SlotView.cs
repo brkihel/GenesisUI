@@ -11,6 +11,7 @@ namespace GenesisUI.Widgets
     /// time bottom-right, a thin bar at the bottom (durability or food left), and a gold
     /// overlay for the active state. Every setter only touches Unity when the value changed.
     /// </summary>
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Theme.ThemeRuntime), typeof(GenesisUI.Widgets.Ui), typeof(GenesisUI.Widgets.Frame), typeof(GenesisUI.Theme.ThemeTokens), typeof(GenesisUI.Widgets.ColorExtensions))]
     internal sealed class SlotView
     {
         public readonly RectTransform Root;

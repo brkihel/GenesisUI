@@ -25,17 +25,21 @@ namespace GenesisUI.Modules.Minimap
     /// Only the ordinary UI pin images sit under a Mask.
     /// </summary>
     [GameContract("assembly_valheim", "Minimap", "instance")]
-    [GameContract("assembly_valheim", "Minimap", "m_smallRoot")]
-    [GameContract("assembly_valheim", "Minimap", "m_mapImageSmall")]
-    [GameContract("assembly_valheim", "Minimap", "m_pinRootSmall")]
-    [GameContract("assembly_valheim", "Minimap", "m_smallMarker")]
-    [GameContract("assembly_valheim", "Minimap", "m_smallShipMarker")]
-    [GameContract("assembly_valheim", "Minimap", "m_windMarker")]
-    [GameContract("assembly_valheim", "Minimap", "m_biomeNameSmall")]
+    [GameContract("assembly_valheim", "Minimap", "m_smallRoot", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.GameObject")]
+    [GameContract("assembly_valheim", "Minimap", "m_mapImageSmall", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.UI.RawImage")]
+    [GameContract("assembly_valheim", "Minimap", "m_pinRootSmall", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.RectTransform")]
+    [GameContract("assembly_valheim", "Minimap", "m_smallMarker", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.RectTransform")]
+    [GameContract("assembly_valheim", "Minimap", "m_smallShipMarker", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.RectTransform")]
+    [GameContract("assembly_valheim", "Minimap", "m_windMarker", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.RectTransform")]
+    [GameContract("assembly_valheim", "Minimap", "m_biomeNameSmall", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "TMPro.TMP_Text")]
     [GameContract("assembly_valheim", "EnvMan", "instance")]
     [GameContract("assembly_valheim", "EnvMan", "GetDay", Parameters = new string[0])]
     [GameContract("assembly_valheim", "EnvMan", "GetDayFraction")]
     [GameContract("assembly_valheim", "EnvMan", "GetWindIntensity")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_guiutils", "Localization", "get_instance", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "Localization")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_guiutils", "Localization", "Localize", Parameters = new string[] { "System.String" }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.String")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Player", "m_localPlayer", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "Player")]
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Host.ModuleContext), typeof(GenesisUI.Theme.ThemeRuntime), typeof(GenesisUI.Widgets.Ui), typeof(GenesisUI.Foundation.GenesisLog), typeof(GenesisUI.Theme.ThemeTokens), typeof(GenesisUI.Widgets.Frame))]
     internal sealed class MinimapModule : IUiModule
     {
         private const float RingSize = 250f;

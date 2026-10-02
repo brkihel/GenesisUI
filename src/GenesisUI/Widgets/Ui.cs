@@ -1,4 +1,5 @@
 using GenesisUI.Theme;
+using GenesisUI.Foundation;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -6,11 +7,12 @@ using UnityEngine.UI;
 namespace GenesisUI.Widgets
 {
     /// <summary>Small helpers to build uGUI objects from code with theme fonts and sprites.</summary>
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Foundation.OwnerResources), typeof(GenesisUI.Theme.ThemeRuntime))]
     internal static class Ui
     {
         public static RectTransform Child(Transform parent, string name)
         {
-            var go = new GameObject(name, typeof(RectTransform));
+            var go = OwnerResources.Own(new GameObject(name, typeof(RectTransform)));
             go.layer = 5; // UI
             var rt = (RectTransform)go.transform;
             rt.SetParent(parent, false);
@@ -56,7 +58,7 @@ namespace GenesisUI.Widgets
         public static TextMeshProUGUI Text(Transform parent, string name, ThemeRuntime theme, FontRole role, float size,
                                            Color color, TextAlignmentOptions alignment, bool outlined = false)
         {
-            var go = new GameObject(name, typeof(RectTransform));
+            var go = OwnerResources.Own(new GameObject(name, typeof(RectTransform)));
             go.layer = 5;
             go.SetActive(false);
             go.transform.SetParent(parent, false);

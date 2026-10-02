@@ -11,7 +11,8 @@ namespace GenesisUI.Widgets
     /// moves or changes; disabled while dark. Null from <see cref="Create"/> when the effects are off
     /// or the shader is not loaded.
     /// </summary>
-    internal sealed class EdgeLight : MonoBehaviour
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Theme.ThemeRuntime), typeof(GenesisUI.Widgets.Ui), typeof(GenesisUI.Foundation.GuardedBehaviour))]
+    internal sealed class EdgeLight : GenesisUI.Foundation.GuardedBehaviour
     {
         private static readonly int RectId = Shader.PropertyToID("_Rect");
         private static readonly int IntensityId = Shader.PropertyToID("_Intensity");
@@ -59,18 +60,18 @@ namespace GenesisUI.Widgets
 
         public void SetFloat(string name, float value) => _material.SetFloat(name, value);
 
-        private void OnDisable()
+        protected override void OnOwnerDisabled()
         {
             _current = 0f;
             if (_image != null) _image.enabled = false;
         }
 
-        private void OnDestroy()
+        protected override void OnOwnerDestroyed()
         {
             if (_material != null) Destroy(_material);
         }
 
-        private void Update()
+        protected override void OnOwnerUpdate()
         {
             float target = Target != null && Target.gameObject.activeInHierarchy ? Intensity : 0f;
             if (target == 0f && _current == 0f) return;

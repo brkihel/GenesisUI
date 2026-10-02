@@ -10,6 +10,7 @@ namespace GenesisUI.Foundation
     /// Checks [GameContract] declarations against the assemblies loaded in the game.
     /// Runs once per class; the result decides whether the class may be used.
     /// </summary>
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Foundation.Contracts.ContractDependencyAttribute), typeof(GenesisUI.Foundation.Contracts.GameContractAttribute), typeof(GenesisUI.Foundation.Contracts.ContractMatcher))]
     internal static class ContractResolver
     {
         private const BindingFlags All = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static;
@@ -18,11 +19,20 @@ namespace GenesisUI.Foundation
         public static IReadOnlyList<string> Missing(Type declaring)
         {
             var missing = new List<string>();
+            Collect(declaring, new HashSet<Type>(), missing);
+            return missing;
+        }
+        private static void Collect(Type declaring, HashSet<Type> seen, List<string> missing)
+        {
+            if (declaring == null || !seen.Add(declaring)) return;
             foreach (var c in declaring.GetCustomAttributes(typeof(GameContractAttribute), false).Cast<GameContractAttribute>())
             {
                 if (!Resolve(c, out string reason)) missing.Add(c + " — " + reason);
             }
-            return missing;
+            if (declaring.BaseType != null && declaring.BaseType.Assembly == declaring.Assembly) Collect(declaring.BaseType, seen, missing);
+            foreach (var nested in declaring.GetNestedTypes(All)) Collect(nested, seen, missing);
+            foreach (var dependency in declaring.GetCustomAttributes(typeof(ContractDependencyAttribute), false).Cast<ContractDependencyAttribute>())
+                foreach (var type in dependency.Types) Collect(type, seen, missing);
         }
 
         public static bool Resolve(GameContractAttribute c, out string reason)
@@ -48,15 +58,10 @@ namespace GenesisUI.Foundation
                 return false;
             }
 
-            if (c.Parameters != null)
+            if (!members.Any(m => ContractMatcher.Matches(m, c)))
             {
-                bool any = members.OfType<MethodBase>().Any(m =>
-                    m.GetParameters().Select(p => p.ParameterType.FullName).SequenceEqual(c.Parameters));
-                if (!any)
-                {
-                    reason = "no overload with parameters (" + string.Join(", ", c.Parameters) + ")";
-                    return false;
-                }
+                reason = "member signature/kind/staticness changed";
+                return false;
             }
 
             reason = null;

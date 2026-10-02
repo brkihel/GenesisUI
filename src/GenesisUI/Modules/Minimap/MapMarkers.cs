@@ -16,16 +16,19 @@ namespace GenesisUI.Modules.Minimap
     /// with the tag in its name.
     /// </summary>
     [GameContract("assembly_valheim", "Minimap", "get_instance")]
-    [GameContract("assembly_valheim", "Minimap", "m_pins")]
-    [GameContract("assembly_valheim", "Minimap+PinData", "m_name")]
-    [GameContract("assembly_valheim", "Minimap+PinData", "m_icon")]
-    [GameContract("assembly_valheim", "Minimap+PinData", "m_iconElement")]
-    [GameContract("assembly_valheim", "Minimap+PinData", "m_NamePinData")]
+    [GameContract("assembly_valheim", "Minimap", "m_pins", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Collections.Generic.List\u00601[[Minimap\u002BPinData, assembly_valheim, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]")]
+    [GameContract("assembly_valheim", "Minimap+PinData", "m_name", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.String")]
+    [GameContract("assembly_valheim", "Minimap+PinData", "m_icon", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.Sprite")]
+    [GameContract("assembly_valheim", "Minimap+PinData", "m_iconElement", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.UI.Image")]
+    [GameContract("assembly_valheim", "Minimap+PinData", "m_NamePinData", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "Minimap\u002BPinNameData")]
     [GameContract("assembly_valheim", "Minimap+PinNameData", "get_PinNameText")]
     [GameContract("assembly_valheim", "ObjectDB", "get_instance")]
     [GameContract("assembly_valheim", "ObjectDB", "GetItemPrefab", Parameters = new[] { "System.String" })]
     [GameContract("assembly_valheim", "ZNetScene", "get_instance")]
     [GameContract("assembly_valheim", "ZNetScene", "GetPrefab", Parameters = new[] { "System.String" })]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop", "m_itemData", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "ItemDrop\u002BItemData")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop\u002BItemData", "GetIcon", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.Sprite")]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Piece", "m_icon", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.Sprite")]
     internal sealed class MapMarkersModule : IUiModule
     {
         internal const string TagPrefix = "[gui:";
@@ -53,12 +56,34 @@ namespace GenesisUI.Modules.Minimap
         private static readonly string[] NoRegions = new string[0];
         private AccessTools.FieldRef<global::Minimap, List<global::Minimap.PinData>> _pins;
         private bool _iconsResolved;
+        private global::Minimap _map;
+        private readonly Dictionary<global::Minimap.PinData, Appearance> _appearances = new Dictionary<global::Minimap.PinData, Appearance>();
+        private readonly List<global::Minimap.PinData> _removed = new List<global::Minimap.PinData>();
+        private float _pruneIn;
+        private sealed class Appearance
+        {
+            internal Sprite Original, Written, ElementOriginal;
+            internal UnityEngine.UI.Image Element;
+            internal TMPro.TMP_Text Label;
+            internal string OriginalText, WrittenText;
+            internal void Restore(global::Minimap.PinData pin)
+            {
+                if (pin.m_icon == Written) pin.m_icon = Original;
+                if (Element != null && Element.sprite == Written) Element.sprite = ElementOriginal;
+                if (Label != null && Label.text == WrittenText) Label.text = OriginalText;
+            }
+        }
+        private void RestoreAppearances()
+        {
+            foreach (var entry in _appearances) entry.Value.Restore(entry.Key);
+            _appearances.Clear(); _map = null;
+        }
 
         internal static bool Active { get; private set; }
 
         public string Id => "hud.mapmarkers";
         public string NameToken => "$genesisui_module_map_markers";
-        public IReadOnlyList<string> Regions => NoRegions;
+        public IReadOnlyList<string> Regions => new[] { Id };
         public float RefreshRate => 0f;
 
         public void Build(ModuleContext context)
@@ -71,6 +96,7 @@ namespace GenesisUI.Modules.Minimap
         public void Teardown()
         {
             Active = false;
+            RestoreAppearances();
         }
 
         /// <summary>The icons come from the game's items and pieces, found once the databases exist.</summary>
@@ -106,6 +132,7 @@ namespace GenesisUI.Modules.Minimap
         {
             var map = global::Minimap.instance;
             if (map == null) return;
+            if (_map != map) { RestoreAppearances(); _map = map; }
             if (!_iconsResolved)
             {
                 ResolveIcons();
@@ -113,17 +140,45 @@ namespace GenesisUI.Modules.Minimap
             }
             var pins = _pins(map);
             if (pins == null) return;
+            _pruneIn -= deltaSeconds;
+            if (_pruneIn <= 0f)
+            {
+                _pruneIn = 5f; _removed.Clear();
+                foreach (var entry in _appearances) if (!pins.Contains(entry.Key)) _removed.Add(entry.Key);
+                foreach (var pin in _removed) { _appearances[pin].Restore(pin); _appearances.Remove(pin); }
+            }
             for (int i = 0; i < pins.Count; i++)
             {
                 var pin = pins[i];
                 var kind = pin != null ? KindOf(pin.m_name) : null;
-                if (kind == null || kind.Icon == null) continue;
+                if (pin == null) continue;
+                if (kind == null || kind.Icon == null)
+                {
+                    if (_appearances.TryGetValue(pin, out var previous)) { previous.Restore(pin); _appearances.Remove(pin); }
+                    continue;
+                }
+                if (!_appearances.TryGetValue(pin, out var state))
+                { state = new Appearance { Original = pin.m_icon }; _appearances.Add(pin, state); }
+                else if (pin.m_icon != state.Written) state.Original = pin.m_icon;
+                if (state.Element != pin.m_iconElement)
+                {
+                    if (state.Element != null && state.Element.sprite == state.Written) state.Element.sprite = state.ElementOriginal;
+                    state.Element = pin.m_iconElement;
+                    state.ElementOriginal = state.Element != null && state.Element.sprite != state.Written ? state.Element.sprite : state.Original;
+                }
+                else if (state.Element != null && state.Element.sprite != state.Written) state.ElementOriginal = state.Element.sprite;
+                state.Written = kind.Icon;
                 // Vanilla builds pin elements from m_icon (and rebuilds them often): set both.
                 if (pin.m_icon != kind.Icon) pin.m_icon = kind.Icon;
                 if (pin.m_iconElement != null && pin.m_iconElement.sprite != kind.Icon) pin.m_iconElement.sprite = kind.Icon;
                 var label = pin.m_NamePinData != null ? pin.m_NamePinData.PinNameText : null;
+                if (state.Label != label)
+                {
+                    if (state.Label != null && state.Label.text == state.WrittenText) state.Label.text = state.OriginalText;
+                    state.Label = label; state.OriginalText = label != null ? label.text : null; state.WrittenText = null;
+                }
                 if (label != null && label.text != null && label.text.StartsWith(TagPrefix, System.StringComparison.Ordinal))
-                    label.text = Untagged(label.text, kind);
+                { state.OriginalText = label.text; state.WrittenText = Untagged(label.text, kind); label.text = state.WrittenText; }
             }
         }
     }

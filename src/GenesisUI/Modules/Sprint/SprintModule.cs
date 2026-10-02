@@ -17,9 +17,11 @@ namespace GenesisUI.Modules.Sprint
     /// whatever spent it (running, attacking, jumping, dodging, blocking, swimming), and only
     /// fades once stamina is completely back (Diego, R-032).
     /// </summary>
-    [GameContract("assembly_valheim", "Player", "m_localPlayer")]
+    [GameContract("assembly_valheim", "Player", "m_localPlayer", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "Player")]
     [GameContract("assembly_valheim", "Player", "GetStamina", Parameters = new string[0])]
     [GameContract("assembly_valheim", "Player", "GetMaxStamina", Parameters = new string[0])]
+    [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Character", "GetMaxStamina", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Single")]
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Host.ModuleContext), typeof(GenesisUI.Widgets.Ui), typeof(GenesisUI.Theme.ThemeRuntime), typeof(GenesisUI.Theme.ThemeTokens), typeof(GenesisUI.Widgets.LiquidLayer), typeof(GenesisUI.Widgets.BurnLight), typeof(GenesisUI.Foundation.GenesisLog), typeof(GenesisUI.Vitals.BarAnimator), typeof(GenesisUI.Widgets.Frame))]
     internal sealed class SprintModule : IUiModule
     {
         private const float Width = 220f;

@@ -9,7 +9,8 @@ namespace GenesisUI.Widgets
     /// crafting details, a load near the carry limit over the weight bar. Eased in and out; disabled
     /// while dark. Null from <see cref="Create"/> when the effects are off or the shader is not loaded.
     /// </summary>
-    internal sealed class EmberField : MonoBehaviour
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Theme.ThemeRuntime), typeof(GenesisUI.Widgets.Ui), typeof(GenesisUI.Foundation.GuardedBehaviour))]
+    internal sealed class EmberField : GenesisUI.Foundation.GuardedBehaviour
     {
         private static readonly int SizeId = Shader.PropertyToID("_Size");
         private static readonly int IntensityId = Shader.PropertyToID("_Intensity");
@@ -52,18 +53,18 @@ namespace GenesisUI.Widgets
             _material.SetColor("_Cool", cool);
         }
 
-        private void OnDisable()
+        protected override void OnOwnerDisabled()
         {
             _current = 0f;
             if (_image != null) _image.enabled = false;
         }
 
-        private void OnDestroy()
+        protected override void OnOwnerDestroyed()
         {
             if (_material != null) Destroy(_material);
         }
 
-        private void Update()
+        protected override void OnOwnerUpdate()
         {
             if (Intensity == 0f && _current == 0f) return;
             _current = Mathf.MoveTowards(_current, Intensity, Time.unscaledDeltaTime * Speed);

@@ -11,7 +11,8 @@ namespace GenesisUI.Widgets
     /// paused game still plays it. Null from the factories when the effects are off or the shader is
     /// not loaded: nothing replaces them.
     /// </summary>
-    internal sealed class OneShotLight : MonoBehaviour
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Theme.ThemeRuntime), typeof(GenesisUI.Widgets.Ui), typeof(GenesisUI.Foundation.GuardedBehaviour))]
+    internal sealed class OneShotLight : GenesisUI.Foundation.GuardedBehaviour
     {
         private static readonly int ProgressId = Shader.PropertyToID("_Progress");
         private static readonly int RectId = Shader.PropertyToID("_Rect");
@@ -96,7 +97,7 @@ namespace GenesisUI.Widgets
             _time = 0f;
         }
 
-        private void OnEnable()
+        protected override void OnOwnerEnabled()
         {
             if (!_onEnable) return;
             // Left to right across the screen: up to a tenth of a second apart; after the window's own fade starts.
@@ -113,18 +114,18 @@ namespace GenesisUI.Widgets
             Play(delay);
         }
 
-        private void OnDisable()
+        protected override void OnOwnerDisabled()
         {
             _time = -1f;
             if (_graphic != null) _graphic.enabled = false;
         }
 
-        private void OnDestroy()
+        protected override void OnOwnerDestroyed()
         {
             if (_material != null) Destroy(_material);
         }
 
-        private void Update()
+        protected override void OnOwnerUpdate()
         {
             if (_time < 0f) return;
             _time += Time.unscaledDeltaTime;
