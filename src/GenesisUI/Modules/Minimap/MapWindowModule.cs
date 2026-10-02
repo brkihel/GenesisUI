@@ -257,7 +257,7 @@ namespace GenesisUI.Modules.Minimap
             _newPin = null;
             _root.gameObject.SetActive(true);
             _slowIn = 0f;
-            GenesisLog.Info(Owner, "map chrome shown; vanilla chrome hidden (" + _skin.Count + " change(s))");
+            GenesisLog.Info(Owner, "map chrome shown without a panel background over the native image; vanilla chrome hidden (" + _skin.Count + " change(s))");
         }
 
         private void Hide(GameObject go)
@@ -312,7 +312,8 @@ namespace GenesisUI.Modules.Minimap
             Map(map.m_selectedIconPing, global::Minimap.PinType.Ping);
 
             // The window: a panel like every other, the map inside it (FitMap), the chrome on its header.
-            var panel = _parts.Panel(_board, "Map", 0f, 102f, WindowCanvas.Design.x, 673f, null, 0f, 0f, TextAlignmentOptions.Left);
+            // The native map is behind this chrome. A panel background here would veil the map.
+            var panel = _parts.Panel(_board, "Map", 0f, 102f, WindowCanvas.Design.x, 673f, null, 0f, 0f, TextAlignmentOptions.Left, background: false);
             // The panel draws in front of the map: its click blocker would take every click from
             // vanilla's map image (drag, pins, ping), which is the map's only input (R-059). Only the
             // chrome on it takes clicks.

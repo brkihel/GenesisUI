@@ -32,11 +32,11 @@ namespace GenesisUI.Widgets
         /// drop-outside button behind the window), the title and the tab marker as its rule.
         /// </summary>
         public RectTransform Panel(RectTransform parent, string name, float x, float y, float width, float height,
-                                   string titleToken, float titleX, float titleSize, TextAlignmentOptions align)
+                                   string titleToken, float titleX, float titleSize, TextAlignmentOptions align, bool background = true)
         {
             var rt = WindowCanvas.At(parent, name, x, y, width, height);
             Ui.Image(rt, null, new Color(0f, 0f, 0f, 0f), raycast: true);
-            var frame = Frame.Dress(rt, _theme, "window_panel", "Windows");
+            var frame = Frame.Dress(rt, _theme, "window_panel", "Windows", background: background);
             // When its window opens, light runs once along the frame's lines.
             OneShotLight.Reveal(rt, frame, _theme);
             if (titleToken == null) return rt;

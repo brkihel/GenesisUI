@@ -13,6 +13,12 @@ enforce alpha, raycast and interaction flags even when alpha is already zero. Th
 restores all captured values, including ignoreParentGroups; only groups/pins we added are destroyed.
 Host cleanup releases shell subclaims and partial window builds even if module teardown fails.
 
+R-065 follow-up (D-041): `win.menu` mirrors Menu's actual active root before the opening frame
+draws. `win.dialogs` holds native TextViewer rune/raven root and text-graphic veils for its enabled
+lifetime, including fade-out, while selecting a single requested animator style. Intro is native.
+`hud.hover` refreshes each frame and suppresses its card while TextViewer is reading. `win.map`
+draws a frame without a panel background over the native map image; map input is unchanged.
+
 A region is a named piece of the vanilla UI. One owner at a time
 ([ARCHITECTURE.md §3](ARCHITECTURE.md#region-registry)). Resolvers live in
 `src/GenesisUI/Host/RegionRegistry.cs`; every vanilla member they touch is a

@@ -14,6 +14,7 @@ $bundleHash = (Get-FileHash -LiteralPath $Bundle -Algorithm SHA256).Hash
 if ($Mode -eq 'Record') {
     $logText = Get-Content -LiteralPath $BuildLog -Raw
     if ($logText -match 'Shader error' -or $logText -notmatch 'Initialize engine version: 6000\.0\.75f1' -or $logText -notmatch 'GenesisUI preview key verification passed: solid 256, edge 512, clear 256 \(Direct3D11\)') { throw 'Required Unity version/keyed GPU verification missing/failed' }
+    if ($logText -notmatch 'GenesisUI edge verification passed: 3 shapes, border lit, interior clear \(Direct3D11\)') { throw 'Required edge GPU verification missing/failed' }
     if (!$SourceCommit) { $SourceCommit = (& git -C $repoRoot rev-parse HEAD).Trim() }
     if ($SourceCommit -notmatch '^[0-9a-f]{40}$') { throw 'Invalid shader source commit' }
     $stagedSources = Join-Path ([IO.Path]::GetDirectoryName([IO.Path]::GetFullPath($BuildLog))) 'Assets/GenesisUI'

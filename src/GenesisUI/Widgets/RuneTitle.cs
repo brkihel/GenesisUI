@@ -77,47 +77,6 @@ namespace GenesisUI.Widgets
         private static float Jitter(int i) => Mathf.Repeat(Mathf.Sin(i * 12.9898f) * 43758.5453f, 1f);
 
         /// <summary>The Elder Futhark rune closest to a Latin letter; anything else stays as it is.</summary>
-        internal static char Rune(char c)
-        {
-            switch (Base(char.ToUpperInvariant(c)))
-            {
-                case 'A': return 'ᚨ';
-                case 'B': return 'ᛒ';
-                case 'C': case 'K': case 'Q': return 'ᚲ';
-                case 'D': return 'ᛞ';
-                case 'E': return 'ᛖ';
-                case 'F': return 'ᚠ';
-                case 'G': return 'ᚷ';
-                case 'H': return 'ᚺ';
-                case 'I': return 'ᛁ';
-                case 'J': case 'Y': return 'ᛃ';
-                case 'L': return 'ᛚ';
-                case 'M': return 'ᛗ';
-                case 'N': return 'ᚾ';
-                case 'O': return 'ᛟ';
-                case 'P': return 'ᛈ';
-                case 'R': return 'ᚱ';
-                case 'S': return 'ᛊ';
-                case 'T': return 'ᛏ';
-                case 'U': return 'ᚢ';
-                case 'V': case 'W': return 'ᚹ';
-                case 'X': case 'Z': return 'ᛉ';
-                default: return c;
-            }
-        }
-
-        private static char Base(char c)
-        {
-            switch (c)
-            {
-                case 'Á': case 'À': case 'Â': case 'Ã': case 'Ä': return 'A';
-                case 'É': case 'È': case 'Ê': case 'Ë': return 'E';
-                case 'Í': case 'Ì': case 'Î': case 'Ï': return 'I';
-                case 'Ó': case 'Ò': case 'Ô': case 'Õ': case 'Ö': return 'O';
-                case 'Ú': case 'Ù': case 'Û': case 'Ü': return 'U';
-                case 'Ç': return 'C';
-                default: return c;
-            }
-        }
+        internal static char Rune(char c) => GenesisUI.Text.RuneText.Rune(c);
     }
 }

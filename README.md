@@ -17,7 +17,7 @@ so your other mods keep working and any part can be switched back.
 
 </div>
 
-Development: `1.1.2-preview.1` implements the [stability corrections](docs/STABILITY-FIXES.md) after the complete code/FullPlaythrough review. [R-065](docs/testing/scripts/R-065-stability-base.md) client verification is pending. The approved 3D shader from `2a1854a` is preserved; [mod-specific resource adapters and certification](docs/CAPABILITIES.md) follow separately.
+Development: `1.1.2-preview.2` follows the partial vanilla test with character/cape, map, Produce, Esc and lore fixes (D-041). [R-066](docs/testing/scripts/R-066-vanilla-visuals-and-lore.md) client verification is pending; [stability corrections](docs/STABILITY-FIXES.md) and [mod-specific adapters/certification](docs/CAPABILITIES.md) have separate acceptance scopes.
 
 ---
 

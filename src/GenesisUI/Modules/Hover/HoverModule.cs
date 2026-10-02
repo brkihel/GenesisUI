@@ -18,6 +18,8 @@ namespace GenesisUI.Modules.Hover
     [GameContract("assembly_valheim", "Hud", "m_hoverName", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "TMPro.TextMeshProUGUI")]
     [GameContract("assembly_valheim", "Minimap", "instance")]
     [GameContract("assembly_valheim", "Minimap", "IsOpen")]
+    [GameContract("assembly_valheim", "TextViewer", "get_instance", Kind = ContractMemberKind.Method, Static = ContractStatic.Static, ValueType = "TextViewer", Parameters = new string[0])]
+    [GameContract("assembly_valheim", "TextViewer", "IsVisible", Kind = ContractMemberKind.Method, Static = ContractStatic.Instance, ValueType = "System.Boolean", Parameters = new string[0])]
     [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Host.ModuleContext), typeof(GenesisUI.Theme.ThemeRuntime), typeof(GenesisUI.Widgets.Ui), typeof(GenesisUI.Widgets.Frame), typeof(GenesisUI.Theme.ThemeTokens))]
     internal sealed class HoverModule : IUiModule
     {
@@ -49,7 +51,7 @@ namespace GenesisUI.Modules.Hover
         public string Id => "hud.hover";
         public string NameToken => "$genesisui_module_hover";
         public IReadOnlyList<string> Regions => OwnedRegions;
-        public float RefreshRate => 20f;
+        public float RefreshRate => 0f; // suppress the interaction card in the frame reading begins
 
         public void Build(ModuleContext context)
         {
@@ -88,7 +90,9 @@ namespace GenesisUI.Modules.Hover
             // Vanilla keeps the hover text while the large map is open (a Vegvísir opens it) and
             // lets the map cover it; the card hides instead (R-040).
             bool mapOpen = global::Minimap.instance != null && global::Minimap.IsOpen();
-            string text = !mapOpen && source != null && source.gameObject.activeInHierarchy ? source.text : null;
+            var viewer = TextViewer.instance;
+            bool reading = viewer != null && viewer.IsVisible();
+            string text = !mapOpen && !reading && source != null && source.gameObject.activeInHierarchy ? source.text : null;
             bool show = !string.IsNullOrEmpty(text);
             if (_card.gameObject.activeSelf != show) _card.gameObject.SetActive(show);
             if (!show) { _shown = null; return; }

@@ -756,15 +756,15 @@ namespace GenesisUI.Modules.Windows
                 float max = _barMax(gui.m_craftProgressBar);
                 ratio = max > 0f ? Mathf.Clamp01(_craftTimer(gui) / max) : 0f;
             }
-            if (!Mathf.Approximately(_progress.anchorMax.x, ratio)) _progress.anchorMax = new Vector2(ratio, 1f);
+            if (!Mathf.Approximately(_progress.anchorMax.x, ratio)) _progress.anchorMax = new Vector2(ratio, 0f);
             // A craft that ran to its end (not one cancelled halfway): two light strikes on metal.
             if (!crafting && _craftRatio > 0.9f) UiSound.Play(UiSound.Cue.Craft);
             _craftRatio = crafting ? ratio : 0f;
             if (_craftLight != null)
             {
-                // The light closes the loop as the craft completes, then fades.
-                _craftLight.Intensity = crafting ? 1f : 0f;
-                if (crafting) _craftLight.Progress = ratio;
+                // A quiet, narrow border breathes while working; completion brightens it slightly.
+                _craftLight.Intensity = crafting ? 0.35f + 0.2f * ratio : 0f;
+                _craftLight.Progress = 1f;
             }
             UpdateForge(player);
 
@@ -939,13 +939,13 @@ namespace GenesisUI.Modules.Windows
             _craftLabel.font = _theme.Font(FontRole.Display);
             _craftLabel.characterSpacing = 4f;
             _progress = Ui.Child(_craft.transform, "Progress");
-            _progress.anchorMin = Vector2.zero;
-            _progress.anchorMax = new Vector2(0f, 1f);
+            _progress.anchorMin = new Vector2(0f, 0f);
+            _progress.anchorMax = new Vector2(0f, 0f);
             _progress.offsetMin = new Vector2(3f, 3f);
-            _progress.offsetMax = new Vector2(-3f, -3f);
+            _progress.offsetMax = new Vector2(-3f, 4.5f);
             _progress.SetSiblingIndex(1);
             Ui.Image(_progress, _theme.Sprite("bar_fill"), ThemeRuntime.ToUnity(t.AccentGold).WithA(0.45f));
-            // With the shader, the progress runs around the button's border in light instead of a fill.
+            // Without shaders, progress is a thin rule; the button interior is never filled.
             _craftLight = EdgeLight.Create((RectTransform)_craft.transform, _theme, 10f);
             if (_craftLight != null)
             {
@@ -954,6 +954,8 @@ namespace GenesisUI.Modules.Windows
                 _craftLight.SetFloat("_Inset", 2f);
                 _craftLight.SetFloat("_Radius", 4f);
                 _craftLight.SetFloat("_Line", 0.9f);
+                _craftLight.SetFloat("_Halo", 1.5f);
+                _craftLight.Pulse = 0.18f;
                 _progress.gameObject.SetActive(false);
             }
             _detailsBody.SetActive(false);

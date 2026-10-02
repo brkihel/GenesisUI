@@ -23,14 +23,14 @@ namespace GenesisUI.Widgets
         /// When above zero, the whole piece is drawn at this height's scale (corners and rails
         /// grow or shrink uniformly); only its plain straight rails stretch along the width.
         /// </param>
-        public static Image Dress(RectTransform rt, ThemeRuntime theme, string sprite, string panel, float fitHeight = 0f)
+        public static Image Dress(RectTransform rt, ThemeRuntime theme, string sprite, string panel, float fitHeight = 0f, bool background = true)
         {
             var frameSprite = theme.Sprite(sprite);
             float multiplier = CanvasScale(rt);
             if (fitHeight > 0f && frameSprite != null)
                 multiplier *= theme.Size(sprite).y / fitHeight;
 
-            Background(rt, theme, sprite, panel, multiplier);
+            if (background) Background(rt, theme, sprite, panel, multiplier);
             var frame = Ui.Image(Ui.Fill(Ui.Child(rt, "Frame")), frameSprite,
                 frameSprite != null ? Color.white : ThemeRuntime.ToUnity(theme.Tokens.PanelBackground));
             frame.pixelsPerUnitMultiplier = multiplier;

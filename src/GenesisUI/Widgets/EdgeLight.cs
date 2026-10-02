@@ -15,6 +15,7 @@ namespace GenesisUI.Widgets
     internal sealed class EdgeLight : GenesisUI.Foundation.GuardedBehaviour
     {
         private static readonly int RectId = Shader.PropertyToID("_Rect");
+        private static readonly int QuadSizeId = Shader.PropertyToID("_QuadSize");
         private static readonly int IntensityId = Shader.PropertyToID("_Intensity");
         private static readonly int ProgressId = Shader.PropertyToID("_Progress");
         private static readonly int PulseId = Shader.PropertyToID("_Pulse");
@@ -86,14 +87,10 @@ namespace GenesisUI.Widgets
             Vector2 max = _parent.InverseTransformPoint(Corners[2]);
             _rt.localPosition = (min + max) * 0.5f;
             _rt.sizeDelta = max - min + new Vector2(2f * _margin, 2f * _margin);
-            var canvas = _image.canvas;
-            if (canvas != null)
-            {
-                var space = canvas.transform;
-                Vector2 cmin = space.InverseTransformPoint(Corners[0]);
-                Vector2 cmax = space.InverseTransformPoint(Corners[2]);
-                _material.SetVector(RectId, new Vector4(cmin.x, cmin.y, cmax.x, cmax.y));
-            }
+            // UV-derived design units are stable under Canvas batching and uniform board scaling.
+            var half = (max - min) * 0.5f;
+            _material.SetVector(RectId, new Vector4(-half.x, -half.y, half.x, half.y));
+            _material.SetVector(QuadSizeId, new Vector4(_rt.sizeDelta.x, _rt.sizeDelta.y, 0f, 0f));
             if (!Mathf.Approximately(_current, _shown)) { _shown = _current; _material.SetFloat(IntensityId, _current); }
             if (!Mathf.Approximately(Progress, _shownProgress)) { _shownProgress = Progress; _material.SetFloat(ProgressId, Progress); }
             if (!Mathf.Approximately(Pulse, _shownPulse)) { _shownPulse = Pulse; _material.SetFloat(PulseId, Pulse); }

@@ -1,8 +1,18 @@
 # GenesisUI — Architecture
 
 Status: HUD and in-game windows shipped; the main menu and game settings remain planned.
-`1.1.2-preview.1` implements the stability corrections tracked in [STABILITY-FIXES](STABILITY-FIXES.md),
-with client verification pending. [CAPABILITIES](CAPABILITIES.md) separates implemented and planned integration surfaces.
+`1.1.2-preview.2` follows the partial vanilla R-065 feedback with visual/lore fixes (D-041),
+tracked in [STABILITY-FIXES](STABILITY-FIXES.md); client R-066 is pending.
+[CAPABILITIES](CAPABILITIES.md) separates implemented and planned integration surfaces.
+
+Visual timing: Plugin reads source state after native LateUpdates (execution order 30000),
+preview stages render after those module changes (31000), shared CanvasGroup pins enforce last
+(32000). Pause-menu drawing follows its active root rather than input visibility hysteresis.
+TextViewer roots are permanently active: requested animator flags select one reader. Its native
+rune/raven graphics are veiled through closing animations and restored on module teardown.
+Lore is unframed, with Core's bounded reusable rune-reveal buffer and native dismissal.
+Character previews bake the current visible pose into owned static meshes, with no copied bones,
+cloth or gameplay components; framing establishes texture aspect first and refits on resize.
 
 ## 1. Repository layout
 

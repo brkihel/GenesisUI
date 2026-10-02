@@ -40,6 +40,7 @@ namespace GenesisUI.Modules.Windows
     [GameContract("assembly_valheim", "Menu", "OnQuitYes")]
     [GameContract("assembly_valheim", "Menu", "OnQuitNo")]
     [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Host.ModuleContext), typeof(GenesisUI.Widgets.WindowParts), typeof(GenesisUI.Widgets.WindowCanvas), typeof(GenesisUI.Foundation.VanillaSkin), typeof(GenesisUI.Foundation.GenesisLog), typeof(GenesisUI.Theme.ThemeRuntime), typeof(GenesisUI.Widgets.Ui), typeof(GenesisUI.Theme.ThemeTokens), typeof(GenesisUI.Foundation.Guard))]
+    [GameContract("assembly_valheim", "Menu", "m_root", Kind = ContractMemberKind.Field, Static = ContractStatic.Instance, ValueType = "UnityEngine.Transform")]
     internal sealed class PauseMenuModule : IUiModule, IRecoverable
     {
         private const string Owner = "module:win.menu";
@@ -72,7 +73,7 @@ namespace GenesisUI.Modules.Windows
         public void CloseVanillaWindow()
         {
             var menu = Menu.instance;
-            if (menu != null && Menu.IsVisible()) menu.Hide();
+            if (menu != null && menu.m_root != null && menu.m_root.gameObject.activeSelf) menu.Hide();
         }
 
         public void Build(ModuleContext context)
@@ -85,7 +86,9 @@ namespace GenesisUI.Modules.Windows
         public void Refresh(float deltaSeconds)
         {
             var menu = Menu.instance;
-            bool open = menu != null && Menu.IsVisible() && menu.m_menuDialog != null;
+            // IsVisible deliberately lags m_root by up to two frames for input suppression.
+            // Drawing must follow the root Show/Hide changed in this frame.
+            bool open = menu != null && menu.m_root != null && menu.m_root.gameObject.activeSelf && menu.m_menuDialog != null;
             if (!open)
             {
                 if (_applied) Unapply();

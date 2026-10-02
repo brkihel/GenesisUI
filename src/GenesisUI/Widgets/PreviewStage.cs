@@ -22,6 +22,7 @@ namespace GenesisUI.Widgets
     /// (<see cref="Strip"/>).
     /// </summary>
     [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Theme.ThemeRuntime), typeof(GenesisUI.Foundation.GenesisLog), typeof(GenesisUI.Widgets.Ui), typeof(GenesisUI.Foundation.Guard))]
+    [DefaultExecutionOrder(31000)]
     internal sealed class PreviewStage : MonoBehaviour
     {
         // Far outside the world (its radius is 10 500 m) but at an ordinary height, just above the sea
@@ -48,6 +49,9 @@ namespace GenesisUI.Widgets
         private readonly List<Light> _lights = new List<Light>(3);
         private Vector2Int _size;
         private bool _shown, _deferred;
+        private Bounds _frameBounds;
+        private float _framePitch, _frameMargin;
+        private bool _hasFrame, _tightFrame;
         private string _name;
         private Material _keyed;
         private string _owner;
@@ -173,12 +177,24 @@ namespace GenesisUI.Widgets
         }
 
         /// <summary>Places the camera to frame <paramref name="bounds"/> (world space), looking slightly down.</summary>
-        public void Frame(Bounds bounds, float pitch = 8f, float margin = 1.15f)
+        public void Frame(Bounds bounds, float pitch = 8f, float margin = 1.15f, bool tight = false)
         {
+            // Establish the portrait/landscape texture aspect before the first fit as well as rebuilds.
+            EnsureTexture();
+            _frameBounds = bounds; _framePitch = pitch; _frameMargin = margin; _tightFrame = tight; _hasFrame = true;
+            FitCamera();
+        }
+
+        private void FitCamera()
+        {
+            var bounds = _frameBounds;
+            float pitch = _framePitch, margin = _frameMargin;
             float radius = Mathf.Max(0.05f, bounds.extents.magnitude) * margin;
             float aspect = _camera.aspect > 0f ? _camera.aspect : 1f;
             float fov = Mathf.Min(_camera.fieldOfView, Camera.VerticalToHorizontalFieldOfView(_camera.fieldOfView, aspect));
             float distance = radius / Mathf.Sin(fov * 0.5f * Mathf.Deg2Rad);
+            if (_tightFrame) distance = GenesisUI.Geometry.PreviewFraming.Distance(bounds.size.x, bounds.size.y, bounds.size.z,
+                pitch, _camera.fieldOfView, aspect, margin);
             var rotation = Quaternion.Euler(pitch, 180f, 0f); // looking at the model's front (+Z faces the camera)
             _camera.transform.position = bounds.center - rotation * Vector3.forward * distance;
             _camera.transform.rotation = rotation;
@@ -289,6 +305,7 @@ namespace GenesisUI.Widgets
             _camera.targetTexture = _texture;
             _camera.aspect = (float)size.x / size.y;
             _image.texture = _texture;
+            if (_hasFrame) FitCamera();
         }
 
         /// <summary>

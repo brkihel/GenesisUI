@@ -98,8 +98,8 @@ namespace GenesisUI.Widgets
         }
     }
 
-    /// <summary>A visual snapshot of the player's live equipment, sanitized while inactive.
-    /// No VisEquipment or foreign behaviour remains to instantiate attachments after activation.</summary>
+    /// <summary>Static meshes of the player's current pose and equipment. No copied animator,
+    /// cloth solver, bones or gameplay component can keep world-space references to the player.</summary>
     [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Widgets.PreviewStage))]
     [GameContract("assembly_valheim", "VisEquipment", "m_skinColor", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.Vector3")]
     [GameContract("assembly_valheim", "VisEquipment", "m_hairColor", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.Vector3")]
@@ -109,6 +109,8 @@ namespace GenesisUI.Widgets
         private const float CopyEvery = 0.25f;
         private readonly PreviewStage _stage;
         private readonly System.Collections.Generic.List<Renderer> _renderers = new System.Collections.Generic.List<Renderer>(64);
+        private readonly System.Collections.Generic.List<Mesh> _meshes = new System.Collections.Generic.List<Mesh>(32);
+        private readonly System.Collections.Generic.HashSet<Renderer> _lowerLods = new System.Collections.Generic.HashSet<Renderer>();
         private GameObject _holder;
         private Player _player;
         private int _fingerprint, _generation = -1;
@@ -156,26 +158,69 @@ namespace GenesisUI.Widgets
                     _holder = new GameObject("Character");
                     _holder.SetActive(false);
                     _holder.transform.SetParent(_stage.Pivot, false);
-                    var copy = Object.Instantiate(player.gameObject, _holder.transform, false);
-                    copy.transform.localPosition = Vector3.zero;
-                    copy.transform.localRotation = Quaternion.identity;
-                    copy.transform.localScale = player.transform.localScale;
-                    PreviewStage.Strip(copy);
-                    PreviewStage.StillAnimators(copy);
+                    _holder.transform.localScale = player.transform.localScale;
+                    Snapshot(player);
+                    PreviewStage.Restage(_holder);
                     _holder.SetActive(true);
                     var p = _stage.Pivot.position;
-                    _stage.Frame(new Bounds(p + new Vector3(0f, 0.95f, 0f), new Vector3(0.9f, 2f, 0.7f)), 4f, 1f);
-                    _stage.UsePathFor(copy);
-                    _stage.Inspect(copy, "character visual snapshot");
+                    _stage.Frame(new Bounds(p + new Vector3(0f, 0.95f, 0f), new Vector3(0.9f, 2f, 0.7f)), 4f, 1.06f, tight: true);
+                    _stage.UsePathFor(_holder);
+                    _stage.Inspect(_holder, "character baked pose (no cloth/animator)");
                 }
             }
             _stage.Show(true);
         }
         public void Hide() => _stage.Show(false);
+        private void Snapshot(Player player)
+        {
+            _lowerLods.Clear();
+            foreach (var group in player.GetComponentsInChildren<LODGroup>(true))
+            {
+                var lods = group.GetLODs();
+                for (int i = 1; i < lods.Length; i++)
+                    foreach (var renderer in lods[i].renderers) if (renderer != null) _lowerLods.Add(renderer);
+                // A renderer may be shared by more than one LOD: retain it if the first uses it.
+                if (lods.Length > 0) foreach (var renderer in lods[0].renderers) _lowerLods.Remove(renderer);
+            }
+            foreach (var source in _renderers)
+            {
+                if (source == null || !source.enabled || !source.gameObject.activeInHierarchy || _lowerLods.Contains(source)) continue;
+                Mesh mesh;
+                if (source is SkinnedMeshRenderer skin)
+                {
+                    if (skin.sharedMesh == null) continue;
+                    mesh = new Mesh { name = "GenesisUI character pose" };
+                    _meshes.Add(mesh); // tracked before baking, including a partial failure
+                    skin.BakeMesh(mesh, false);
+                }
+                else if (source is MeshRenderer)
+                {
+                    var filter = source.GetComponent<MeshFilter>();
+                    if (filter == null || filter.sharedMesh == null) continue;
+                    mesh = filter.sharedMesh; // borrowed read-only; never destroyed
+                }
+                else continue;
+                var picture = new GameObject(source.name + " picture");
+                var t = picture.transform;
+                t.SetParent(_holder.transform, false);
+                var relative = player.transform.worldToLocalMatrix * source.transform.localToWorldMatrix;
+                t.localPosition = relative.GetColumn(3);
+                t.localRotation = Quaternion.Inverse(player.transform.rotation) * source.transform.rotation;
+                t.localScale = relative.lossyScale;
+                picture.AddComponent<MeshFilter>().sharedMesh = mesh;
+                var renderer = picture.AddComponent<MeshRenderer>();
+                renderer.sharedMaterials = source.sharedMaterials;
+                var properties = new MaterialPropertyBlock();
+                source.GetPropertyBlock(properties);
+                renderer.SetPropertyBlock(properties);
+            }
+        }
         public void Destroy()
         {
             if (_holder != null) { _holder.SetActive(false); Object.Destroy(_holder); }
             _holder = null;
+            foreach (var mesh in _meshes) if (mesh != null) Object.Destroy(mesh);
+            _meshes.Clear();
         }
     }
 }

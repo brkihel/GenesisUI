@@ -1,5 +1,32 @@
 # Changelog
 
+## 1.1.2-preview.2 — Vanilla visual regressions and lore reading
+
+### Fixed
+
+- Bake the character's visible pose into owned static meshes, with no copied cloth solver,
+  animator or skeleton. Keep the highest LOD, native materials and renderer property blocks.
+  Establish the preview texture aspect before framing; use a fixed upright character box and
+  refit on texture resize, so equipment changes do not move the camera farther away.
+- Remove the map panel's opaque background from the chrome drawn over the native map.
+- Follow the pause menu's actual root state instead of its delayed input visibility predicate;
+  schedule module drawing after native LateUpdates, previews after modules and veils last.
+- Use UV-derived dimensions for the Edge shader so Canvas vertex batching cannot displace its
+  distance field. Produce now uses a narrow, quiet border glow; without shaders, a thin progress
+  rule replaces the interior fill.
+- Select rune/raven readers by their native animator flags, not permanently active roots.
+  Hold reversible native text veils through closing animations. Lore stones show one unframed
+  text, revealing runes into localized letters over 2.5–8 seconds; ordinary hover cards hide
+  while reading. Native E/Esc/movement dismissal and gameplay effects remain vanilla.
+
+### Verification scope
+
+- R-065 records Diego's partial vanilla feedback and Desktop screenshot; item details/models
+  passed, the above regressions did not. FullPlaythrough is not certified.
+- Core framing/rune-buffer regressions and existing L2 gates precede delivery. A fresh shader
+  build must pass keyed-edge and narrow-border GPU probes before packaging. R-066 verifies the
+  client visuals, transitions and restoration; no game result is claimed by the code build.
+
 ## 1.1.2-preview.1 — Stability base before modpack integrations
 
 ### Fixed

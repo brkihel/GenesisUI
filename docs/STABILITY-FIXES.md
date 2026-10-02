@@ -4,7 +4,10 @@ Authorized by Diego on 2026-10-02 after the [review](review/2026-10-02/README.md
 Branch: `fix/stability-1.1.2`. Preserve the approved preview as the visual baseline.
 This tracks implementation separately from client verification and modpack certification.
 
-Target: `1.1.2-preview.1`; [client script R-065](testing/scripts/R-065-stability-base.md).
+Target: `1.1.2-preview.2`; [focused client script R-066](testing/scripts/R-066-vanilla-visuals-and-lore.md).
+R-065 received partial vanilla feedback: item details/models passed; character/cape, map,
+Produce feedback, Esc timing and overlapping lore readers require the D-041 follow-up.
+The fixes are implemented; client approval and FullPlaythrough certification remain pending.
 The rows mean the base code correction is implemented, not that every acceptance scenario or
 future mod-specific provider is certified. Detailed scope: [CAPABILITIES](CAPABILITIES.md).
 

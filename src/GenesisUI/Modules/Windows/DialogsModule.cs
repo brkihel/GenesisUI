@@ -42,6 +42,10 @@ namespace GenesisUI.Modules.Windows
     [GameContract("assembly_valheim", "TextViewer", "m_ravenTopic", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "TMPro.TMP_Text")]
     [GameContract("assembly_valheim", "TextViewer", "m_ravenText", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "TMPro.TMP_Text")]
     [GameContract("assembly_valheim", "TextViewer", "Hide")]
+    [GameContract("assembly_valheim", "TextViewer", "IsShowingIntro", Kind = ContractMemberKind.Method, Static = ContractStatic.Static, ValueType = "System.Boolean", Parameters = new string[0])]
+    [GameContract("assembly_valheim", "TextViewer", "m_animator", Kind = ContractMemberKind.Field, Static = ContractStatic.Instance, ValueType = "UnityEngine.Animator")]
+    [GameContract("assembly_valheim", "TextViewer", "m_animatorRaven", Kind = ContractMemberKind.Field, Static = ContractStatic.Instance, ValueType = "UnityEngine.Animator")]
+    [GameContract("assembly_valheim", "TextViewer", "m_runeText", Kind = ContractMemberKind.Field, Static = ContractStatic.Instance, ValueType = "TMPro.TMP_Text")]
     [GameContract("assembly_valheim", "TextInput", "get_instance")]
     [GameContract("assembly_valheim", "TextInput", "IsVisible")]
     [GameContract("assembly_valheim", "TextInput", "m_panel", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.GameObject")]
@@ -96,6 +100,13 @@ namespace GenesisUI.Modules.Windows
         // Readers.
         private TextMeshProUGUI _readerTopic, _readerText, _ravenTopic, _ravenText;
         private string _shownReader, _shownRaven;
+        private string _shownReaderTopic, _shownRavenTopic;
+        private GenesisUI.Text.RuneText _lore;
+        private float _loreTime;
+        private AccessTools.FieldRef<TextViewer, Animator> _runeAnimator, _ravenAnimator;
+        private readonly VanillaSkin _readersSkin = new VanillaSkin(Owner + ":textviewer");
+        private TextViewer _viewer;
+        private GameObject _runeRoot, _ravenRoot;
         // Input.
         private TextMeshProUGUI _inputTopic, _inputText;
 
@@ -121,6 +132,8 @@ namespace GenesisUI.Modules.Windows
             _splitOk = AccessTools.FieldRefAccess<SplitDialog, Button>("m_splitOkButton");
             _splitCancel = AccessTools.FieldRefAccess<SplitDialog, Button>("m_splitCancelButton");
             _variantElements = AccessTools.FieldRefAccess<VariantDialog, List<GameObject>>("m_elements");
+            _runeAnimator = AccessTools.FieldRefAccess<TextViewer, Animator>("m_animator");
+            _ravenAnimator = AccessTools.FieldRefAccess<TextViewer, Animator>("m_animatorRaven");
             foreach (var d in All()) { d.Skin = new VanillaSkin(Owner + ":" + d.Name); d.Shown = false; }
         }
 
@@ -129,7 +142,7 @@ namespace GenesisUI.Modules.Windows
             var gui = InventoryGui.instance;
             UpdateSplit(gui);
             UpdateVariant(gui);
-            UpdateReaders();
+            UpdateReaders(deltaSeconds);
             UpdateInput();
         }
 
@@ -145,6 +158,10 @@ namespace GenesisUI.Modules.Windows
             _variantCells.Clear();
             _variantCount = -1;
             _shownReader = _shownRaven = null;
+            _shownReaderTopic = _shownRavenTopic = null;
+            _lore = null;
+            _readersSkin.Restore();
+            _viewer = null; _runeRoot = _ravenRoot = null;
         }
 
         private IEnumerable<Dialog> All()
@@ -330,47 +347,76 @@ namespace GenesisUI.Modules.Windows
 
         // ------------------------------------------------------------------ rune stones and ravens
 
-        private void UpdateReaders()
+        private void UpdateReaders(float deltaSeconds)
         {
             var tv = TextViewer.instance;
-            bool visible = tv != null && tv.IsVisible();
-            bool normal = visible && tv.m_root != null && tv.m_root.activeInHierarchy;
-            bool raven = visible && tv.m_ravenRoot != null && tv.m_ravenRoot.activeInHierarchy;
-            if (Show(_reader, normal, tv, normal ? tv.m_root : null, true, DrawReader))
+            EnsureReaderVeils(tv);
+            // Awake activates all three roots permanently. Only the animator's requested state
+            // identifies the reader: activeInHierarchy would show the dormant raven placeholder too.
+            bool visible = tv != null && !TextViewer.IsShowingIntro();
+            var runeAnimator = visible ? _runeAnimator(tv) : null;
+            var ravenAnimator = visible ? _ravenAnimator(tv) : null;
+            bool normal = runeAnimator != null && runeAnimator.GetBool("visible");
+            bool raven = !normal && ravenAnimator != null && ravenAnimator.GetBool("visible");
+            bool wasReader = _reader.Shown;
+            if (Show(_reader, normal, tv, null, true, DrawReader))
             {
-                string key = (tv.m_topic != null ? tv.m_topic.text : "") + "\n" + (tv.m_text != null ? tv.m_text.text : "");
-                if (key != _shownReader)
+                string text = tv.m_text != null ? tv.m_text.text : "";
+                string topic = tv.m_topic != null ? tv.m_topic.text : "";
+                if (!wasReader || text != _shownReader || topic != _shownReaderTopic)
                 {
-                    _shownReader = key;
-                    _readerTopic.text = tv.m_topic != null ? tv.m_topic.text.ToUpperInvariant() : "";
-                    _readerText.text = tv.m_text != null ? tv.m_text.text : "";
+                    _shownReader = text; _shownReaderTopic = topic;
+                    _readerTopic.text = topic.ToUpperInvariant();
+                    _lore = new GenesisUI.Text.RuneText(text);
+                    _loreTime = 0f;
+                    GenesisLog.Info(Owner, "lore reader: single unframed text, " + _lore.LetterCount + " letters, reveal " + _lore.Duration.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture) + " s; native text veiled");
+                }
+                _loreTime = Mathf.Min(_loreTime + deltaSeconds, _lore.Duration + 0.35f);
+                float progress = _theme.RunesAvailable && _theme.LightsEnabled ? (_loreTime - 0.35f) / _lore.Duration : 1f;
+                if (_lore.Write(progress)) _readerText.SetCharArray(_lore.Buffer, 0, _lore.Buffer.Length);
+            }
+            if (Show(_raven, raven, tv, null, true, DrawRaven))
+            {
+                string text = tv.m_ravenText != null ? tv.m_ravenText.text : "";
+                string topic = tv.m_ravenTopic != null ? tv.m_ravenTopic.text : "";
+                if (text != _shownRaven || topic != _shownRavenTopic)
+                {
+                    _shownRaven = text; _shownRavenTopic = topic;
+                    _ravenTopic.text = topic.ToUpperInvariant();
+                    _ravenText.text = text;
                 }
             }
-            if (Show(_raven, raven, tv, raven ? tv.m_ravenRoot : null, true, DrawRaven))
-            {
-                string key = (tv.m_ravenTopic != null ? tv.m_ravenTopic.text : "") + "\n" + (tv.m_ravenText != null ? tv.m_ravenText.text : "");
-                if (key != _shownRaven)
-                {
-                    _shownRaven = key;
-                    _ravenTopic.text = tv.m_ravenTopic != null ? tv.m_ravenTopic.text.ToUpperInvariant() : "";
-                    _ravenText.text = tv.m_ravenText != null ? tv.m_ravenText.text : "";
-                }
-            }
+        }
+
+        private void EnsureReaderVeils(TextViewer tv)
+        {
+            if (tv == null) return;
+            if (_viewer == tv && _runeRoot == tv.m_root && _ravenRoot == tv.m_ravenRoot) return;
+            _readersSkin.Restore();
+            _viewer = tv; _runeRoot = tv.m_root; _ravenRoot = tv.m_ravenRoot;
+            // The native roots stay active and their animator fades out after GetBool becomes false.
+            // Hold the drawing for the enabled module's lifetime, including that fade and first open.
+            if (_runeRoot != null) _readersSkin.Hidden(_runeRoot, interactable: null);
+            if (_ravenRoot != null) _readersSkin.Hidden(_ravenRoot, interactable: null);
+            if (tv.m_runeText != null) _readersSkin.Hidden(tv.m_runeText.gameObject, interactable: null);
+            if (tv.m_text != null) _readersSkin.Hidden(tv.m_text.gameObject, interactable: null);
+            if (tv.m_topic != null) _readersSkin.Hidden(tv.m_topic.gameObject, interactable: null);
+            if (tv.m_ravenText != null) _readersSkin.Hidden(tv.m_ravenText.gameObject, interactable: null);
+            if (tv.m_ravenTopic != null) _readersSkin.Hidden(tv.m_ravenTopic.gameObject, interactable: null);
         }
 
         private void DrawReader(RectTransform board)
         {
             var t = _theme.Tokens;
-            const float w = 760f, h = 470f;
-            var card = WindowCanvas.At(board, "Card", (WindowCanvas.Design.x - w) / 2f, (WindowCanvas.Design.y - h) / 2f - 40f, w, h);
-            Frame.Dress(card, _theme, "window_panel", "Windows");
-            _readerTopic = _parts.Label(card, "Topic", FontRole.Display, 22f, t.AccentGoldBright, 50f, 16f, w - 100f, 32f, TextAlignmentOptions.Center);
-            _readerTopic.characterSpacing = 4f;
-            _parts.Rule(card, w * 0.2f, 56f, w * 0.6f);
-            _readerText = _parts.Label(card, "Text", FontRole.Body, 19f, t.TextBody, 50f, 76f, w - 100f, h - 130f, TextAlignmentOptions.Top);
+            const float w = 1040f, h = 460f;
+            var card = WindowCanvas.At(board, "Lore", (WindowCanvas.Design.x - w) / 2f, (WindowCanvas.Design.y - h) / 2f - 40f, w, h);
+            // Lore belongs on the world, without a dialog frame, blocker or background.
+            _readerTopic = _parts.Label(card, "Topic", FontRole.Display, 19f, t.AccentGoldBright, 30f, 0f, w - 60f, 32f, TextAlignmentOptions.Center);
+            _readerTopic.characterSpacing = 3f;
+            _readerText = _parts.Label(card, "Text", FontRole.BodyStrong, 27f, t.TextTitle, 30f, 50f, w - 60f, h - 110f, TextAlignmentOptions.Center);
             _readerText.textWrappingMode = TextWrappingModes.Normal;
             _readerText.enableAutoSizing = true;
-            _readerText.fontSizeMin = 13f;
+            _readerText.fontSizeMin = 16f;
             var hint = _parts.Label(card, "Hint", FontRole.Body, 15f, t.TextFlavor, 50f, h - 44f, w - 100f, 24f, TextAlignmentOptions.Center);
             hint.text = Localize("$genesisui_reader_close");
         }

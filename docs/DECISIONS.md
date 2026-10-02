@@ -559,3 +559,43 @@ foreign entry or patch is removed. Report retention may delete only checked, own
 in our report folder (10 retained). Shader provenance is size-bounded typed StrictJson data;
 bundle/source hashes and the keyed GPU check gate packaging. Missing runtime evidence uses the
 existing sprite/2D fallback. These changes add no runtime dependency or public provider API.
+
+## D-041 — Stable visual snapshots and a single lore presentation
+
+**Context (2026-10-02):** Diego's partial vanilla R-065 run found pinned cape geometry,
+character shrinkage after equipment changes, obscured map content, an Esc opening flash and
+overlapping lore/raven readers. Item models/details worked. The Desktop screenshot is recorded
+in R-065. Native behavior was read from production `Menu`, `TextViewer`, `RuneStone` and
+`VisEquipment` types individually; no decompiled code is included here.
+
+**Decision:** the character preview contains owned baked meshes of the current visible pose,
+native read-only materials/property blocks and the highest LOD. It never copies a gameplay
+object, bones, an animator or MagicaCloth's initialized solver. The cape is a static pose snapshot;
+the complete picture keeps its gentle sway. Bake only on the existing equipment/model invalidation,
+not every frame, and release generated meshes on rebuild/teardown. Unity's documented
+[BakeMesh](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/SkinnedMeshRenderer.BakeMesh.html)
+returns renderer-relative vertices; transform/scale is applied once in the visual copy.
+
+Frame against the actual target aspect before first render and rebuild; character framing uses
+a fixed upright box rather than equipment bounds. Resize refits that same box. The map chrome
+has no panel material over the native map. Edge's border distance field uses UV-derived design
+units so Canvas batching cannot change its coordinate space; Produce has only a narrow breathing
+border, with a thin bottom progress rule when the shader is unavailable.
+
+Drawing uses actual menu root activity, not native input hysteresis. Module LateUpdate runs at
+30000, preview rendering at 31000 and shared veil enforcement at 32000. This places source reads
+after ordinary native LateUpdates and final preview composition after module changes. These are
+Unity execution-order attributes, not Harmony patches; foreign patches remain untouched.
+
+Lore readers use TextViewer's requested animator flags. Its rune and raven roots remain active
+even when their readers are closed, so root activity cannot identify the style. Veil native roots
+and text graphics reversibly for the module's lifetime, including native fade-out; intro remains
+native. Show one unframed localized lore text, preserve rich-text tags/line breaks and reveal runes
+over 2.5–8 seconds after a 0.35-second pause. Reuse a bounded character buffer (16,384 characters).
+The hover card suppresses itself during reading. Keep native dismissal (E/Esc/movement), discovery,
+known texts and guardian interactions unchanged. Raven guidance retains its existing single card.
+`UnityEngine.AnimationModule` is a compile-time reference to Unity already shipped with Valheim;
+no additional runtime DLL or mod dependency is packaged.
+
+**Gate:** all channels' Core/L2 tests; source-bound keyed and narrow-border GPU checks; package
+hash verification; focused client R-066. Shader probes are not Valheim visual approval.

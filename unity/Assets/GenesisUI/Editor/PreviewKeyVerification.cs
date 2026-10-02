@@ -53,6 +53,7 @@ namespace GenesisUI
                 if (solid == 0 || edge == 0 || clear == 0)
                     throw new Exception("Preview must contain solid colour, smooth coverage and a transparent background");
                 Debug.Log("GenesisUI preview key verification passed: solid " + solid + ", edge " + edge + ", clear " + clear + " (" + SystemInfo.graphicsDeviceType + ")");
+                EdgeVerification.Verify(bundle);
             }
             finally
             {

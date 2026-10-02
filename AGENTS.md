@@ -35,9 +35,12 @@ is unclear, ask; do not guess.
   `1.1.1-preview.2` decodes the key before edge filtering (D-039, R-063); all three
   channels pass automated tests. Diego approved its visual result in R-063 (`2a1854a`).
   He authorized the complete stability review fixes. Current branch: `fix/stability-1.1.2`,
-  target `1.1.2-preview.1`, D-040 and `docs/STABILITY-FIXES.md`; client R-065 is pending.
-  The unchanged approved shader has source/hash/Direct3D11 evidence in
-  `art/shaders/provenance.json`. Commit before packaging and verify ZIP contents by hash.
+  target `1.1.2-preview.2`, D-040/D-041 and `docs/STABILITY-FIXES.md`. Partial vanilla R-065:
+  item models/details passed; character/cape, map, Produce, Esc flash and overlapping lore
+  readers need R-066. Character now uses owned baked pose meshes; lore is a single unframed
+  rune reveal. The Edge coordinate change requires a fresh source/hash/Direct3D11 shader
+  build with key-composition and border/interior probes before packaging; provenance is in
+  `art/shaders/provenance.json`. Commit first and verify ZIP contents by hash.
   Structured providers/mod resource adapters remain F7 work; no full-modpack certification
   or production rollout is implied. Earlier uncommitted packaging was a one-session exception.
 - **Current F4.0 art source:** Diego supplied isolated UI sheets and separate background,

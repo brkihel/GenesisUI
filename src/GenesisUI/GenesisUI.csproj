@@ -38,6 +38,7 @@
     <Reference Include="UnityEngine.CoreModule"><HintPath>$(RefDir)/UnityEngine.CoreModule.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.AssetBundleModule"><HintPath>$(RefDir)/UnityEngine.AssetBundleModule.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.AudioModule"><HintPath>$(RefDir)/UnityEngine.AudioModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.AnimationModule"><HintPath>$(RefDir)/UnityEngine.AnimationModule.dll</HintPath><Private>false</Private></Reference>
     <!-- UnityEngine.AudioModule is built against netstandard 2.1: the game's own netstandard facade. -->
     <Reference Include="netstandard"><HintPath>$(RefDir)/netstandard.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="gui_framework"><HintPath>$(RefDir)/gui_framework.dll</HintPath><Private>false</Private></Reference>

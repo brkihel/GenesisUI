@@ -40,6 +40,7 @@ namespace GenesisUI
     [GameContract("assembly_valheim", "Hud", "m_rootObject", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.GameObject")]
     [GameContract("assembly_guiutils", "Localization", "Localize")]
     [GenesisUI.Foundation.Contracts.GameContract("assembly_guiutils", "Localization", "get_instance", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "Localization")]
+    [DefaultExecutionOrder(30000)]
     public sealed class Plugin : BaseUnityPlugin
     {
         private const string KeyOwner = "host:diagnostics-key";

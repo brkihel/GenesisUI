@@ -17,7 +17,7 @@ então seus outros mods continuam funcionando e qualquer parte pode voltar a ser
 
 </div>
 
-Em desenvolvimento: `1.1.2-preview.1` implementa as [correções de estabilidade](docs/STABILITY-FIXES.md) da revisão completa do código e do FullPlaythrough. A validação no cliente pelo [R-065](docs/testing/scripts/R-065-stability-base.md) está pendente. O shader 3D aprovado em `2a1854a` foi preservado; [adaptadores de recursos dos mods e certificação](docs/CAPABILITIES.md) vêm em etapas próprias.
+Em desenvolvimento: `1.1.2-preview.2` corrige personagem/capa, mapa, Produzir, Esc e leitura de lore após o teste parcial vanilla (D-041). A validação visual pelo [R-066](docs/testing/scripts/R-066-vanilla-visuals-and-lore.md) está pendente; [correções de estabilidade](docs/STABILITY-FIXES.md) e [adaptadores dos mods/certificação](docs/CAPABILITIES.md) têm etapas próprias de aprovação.
 
 ---
 
