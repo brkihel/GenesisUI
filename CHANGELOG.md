@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased — engineering review
+
+### Documentation and development tools
+- Record the stability and FullPlaythrough readiness review of `2a1854a`: 25 findings,
+  an exact-version inventory of 71 packages/74 DLLs, focused vanilla behavior evidence,
+  and a staged stabilization/integration plan in `docs/review/2026-10-02/`.
+- Add a read-only metadata/reproduction tool and the planned R-064 client verification script.
+  This review changes no runtime behavior and produces no new test package.
+
 ## 1.1.1-preview.2 — 3D preview edges
 
 ### Fixed (client visual result approved in R-063)

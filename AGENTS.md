@@ -24,6 +24,12 @@ is unclear, ask; do not guess.
   slots, the 3D character, modded slots.
 - **Art direction:** gold only (D-023). The carved-wood style was tried and rejected; do not
   propose another style unless Diego asks.
+- **Stability review (2026-10-02):** approved preview committed as `2a1854a`.
+  [Review](docs/review/2026-10-02/README.md), [FullPlaythrough study](docs/review/2026-10-02/MODPACK.md)
+  and [implementation sequence](docs/review/2026-10-02/IMPLEMENTATION.md) record 25 findings
+  and 71 package/74 DLL metadata inventory. Repair lifecycle, inventory patch prerequisites,
+  server-config initialization, region ownership and preview sanitization before dependent
+  integrations. No fixes or modpack runtime certification are claimed by the review.
 - **Development test (2026-10-02):** R-062 on `1.1.1-preview.1` confirms the character
   and items appear (`report-20261002-134941.log`), with an unwanted pink outline.
   `1.1.1-preview.2` decodes the key before edge filtering (D-039, R-063); all three

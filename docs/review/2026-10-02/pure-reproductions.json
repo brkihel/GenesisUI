@@ -1,0 +1,38 @@
+{
+  "RecoveryOrder": {
+    "Events": [
+      "host: teardown old -\u003E rebuild new",
+      "veil subscriber: restore owner\u0027s newly built veil",
+      "input subscriber: release owner\u0027s newly acquired lease"
+    ],
+    "NewVeilSurvives": false,
+    "NewLeaseSurvives": false
+  },
+  "DuplicateIdPlan": {
+    "Ok": true,
+    "Moves": [
+      {
+        "Id": 0,
+        "X": 1,
+        "Y": 0
+      }
+    ]
+  },
+  "InvalidJsonNumbers": [
+    {
+      "Input": "01",
+      "Accepted": true,
+      "Value": 1
+    },
+    {
+      "Input": "1.",
+      "Accepted": true,
+      "Value": 1
+    },
+    {
+      "Input": "-.1",
+      "Accepted": true,
+      "Value": -0.1
+    }
+  ]
+}
