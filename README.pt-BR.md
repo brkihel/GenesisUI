@@ -17,6 +17,8 @@ então seus outros mods continuam funcionando e qualquer parte pode voltar a ser
 
 </div>
 
+Em desenvolvimento: Diego aprovou os previews 3D do personagem e dos itens, incluindo a correção da borda rosa, em `1.1.1-preview.2` ([R-063](docs/testing/results/R-063-1.1.1-preview.2.md)). A próxima etapa é a revisão de estabilidade e integração com o modpack.
+
 ---
 
 ## Um HUD que parece vivo

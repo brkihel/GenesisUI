@@ -5,6 +5,11 @@
 // ramp lit from the top left, a specular highlight, and a slow glint that sweeps across the
 // screen now and then. Based on the structure of Unity's UI/Default (stencil, RectMask2D clipping,
 // CanvasGroup alpha through the vertex colour) so it behaves like any other UI graphic.
+// The world shows on the metal (D-035), through two GLOBAL shader values (so the stencil copies
+// of this material get them too), zero by default: _GenesisUIClimate.x frost creeping from the
+// frame's corners (Freezing/Cold), .y water drops running down (Wet), .z the metal glowing like an
+// ember (Burning), .w fine ash falling on it (Ashlands); _GenesisUIDayShift shifts the gold a few
+// percent (cooler at night, warmer at dusk). Set by hud.climate (Shader.SetGlobal*).
 Shader "GenesisUI/Metal"
 {
     Properties
@@ -61,7 +66,7 @@ Shader "GenesisUI/Metal"
         CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
-            #pragma target 2.0
+            #pragma target 3.0
 
             #include "UnityCG.cginc"
             #include "UnityUI.cginc"
@@ -95,6 +100,57 @@ Shader "GenesisUI/Metal"
             float4 _LightDir;
             float _Ambient, _Diffuse, _Specular, _Shininess;
             float _GlintStrength, _GlintWidth, _GlintSpeed, _GlintPeriod;
+            float4 _GenesisUIClimate;
+            float4 _GenesisUIDayShift;
+            float4 _GenesisUILightShift; // the light leaning towards the pointer over open windows (D-036)
+
+            float Hash2(float2 p) { return frac(sin(dot(p, float2(12.9898, 78.233))) * 43758.5453); }
+
+            // The world on the metal (D-035). uv: the sprite's (9-slice corners are its corners); w: canvas units.
+            float3 Climate(float3 rgb, float value, float2 uv, float2 w, float shine)
+            {
+                float t = _Time.y;
+                if (_GenesisUIClimate.x > 0.001)
+                {
+                    // Frost: from the nearest corner inwards, with a crystalline, uneven edge, and a few sparkles.
+                    float2 c = min(uv, 1.0 - uv);
+                    float d = length(c);
+                    float grain = Hash2(floor(w / 3.0));
+                    float reach = _GenesisUIClimate.x * 0.75;
+                    float frost = smoothstep(reach, reach - 0.12, d + grain * 0.09);
+                    float3 ice = float3(0.80, 0.90, 1.0) * (0.55 + 0.55 * value);
+                    rgb = lerp(rgb, ice, frost * 0.7);
+                    float sparkle = step(0.992, Hash2(floor(w / 2.0) + floor(t * 3.0))) * frost;
+                    rgb += sparkle * 0.5;
+                }
+                if (_GenesisUIClimate.y > 0.001)
+                {
+                    // Wet: the metal a little darker and glossier; drops running down some of the lines.
+                    rgb *= 1.0 - 0.12 * _GenesisUIClimate.y;
+                    float col = floor(w.x / 6.0);
+                    float h = Hash2(float2(col, 7.0));
+                    float fall = frac(w.y / 160.0 + t * (0.18 + h * 0.22) + h);
+                    float drop = exp(-pow(fall - 0.5, 2.0) / 0.0006) * exp(-pow(frac(w.x / 6.0) - 0.5, 2.0) / 0.02) * step(0.72, h);
+                    rgb += float3(0.75, 0.85, 0.95) * drop * _GenesisUIClimate.y * 0.9 + shine * 0.25 * _GenesisUIClimate.y;
+                }
+                if (_GenesisUIClimate.z > 0.001)
+                {
+                    // Burning: the metal glows like an ember, flickering.
+                    float flicker = 0.7 + 0.3 * sin(t * 7.0 + w.x * 0.03) * sin(t * 4.3 - w.y * 0.05);
+                    rgb = lerp(rgb, rgb * float3(1.25, 0.72, 0.5), _GenesisUIClimate.z * 0.6);
+                    rgb += float3(1.0, 0.36, 0.08) * _GenesisUIClimate.z * flicker * (0.25 + 0.35 * value);
+                }
+                if (_GenesisUIClimate.w > 0.001)
+                {
+                    // Ash: fine grey specks drifting down over the metal, and a duller gold.
+                    float grey = dot(rgb, float3(0.3, 0.59, 0.11));
+                    rgb = lerp(rgb, float3(grey, grey, grey), _GenesisUIClimate.w * 0.25);
+                    float2 cell = floor(float2(w.x, w.y + t * 9.0) / 2.0);
+                    float speck = step(0.975, Hash2(cell));
+                    rgb *= 1.0 - speck * _GenesisUIClimate.w * 0.55;
+                }
+                return rgb * (1.0 + _GenesisUIDayShift.rgb);
+            }
 
             v2f vert(appdata_t v)
             {
@@ -124,7 +180,7 @@ Shader "GenesisUI/Metal"
                 float4 relief = tex2D(_MainTex, IN.texcoord) + _TextureSampleAdd;
                 float2 nxy = relief.rg * 2.0 - 1.0;
                 float3 n = normalize(float3(nxy, sqrt(saturate(1.0 - dot(nxy, nxy)))));
-                float3 l = normalize(_LightDir.xyz);
+                float3 l = normalize(_LightDir.xyz + float3(_GenesisUILightShift.xy, 0.0));
                 float diffuse = saturate(dot(n, l));
                 float3 h = normalize(l + float3(0, 0, 1));
                 float spec = pow(saturate(dot(n, h)), _Shininess);
@@ -137,6 +193,7 @@ Shader "GenesisUI/Metal"
                 float value = _Ambient + _Diffuse * diffuse + 0.08 * n.z;
                 float3 rgb = Ramp(value);
                 rgb += (spec * _Specular + band * _GlintStrength * (0.35 + 0.65 * diffuse)) * _Pale.rgb * 0.8 * relief.b;
+                rgb = Climate(rgb, value, IN.texcoord, IN.worldPosition.xy, spec * relief.b);
 
                 fixed4 color = fixed4(rgb, relief.a) * IN.color;
 

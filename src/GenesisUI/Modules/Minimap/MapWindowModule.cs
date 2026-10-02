@@ -64,6 +64,8 @@ namespace GenesisUI.Modules.Minimap
     [GameContract("assembly_valheim", "Minimap", "m_largeShipMarker")]
     [GameContract("assembly_valheim", "Minimap", "m_gamepadCrosshair")]
     [GameContract("assembly_valheim", "Minimap", "m_nameInput")]
+    [GameContract("assembly_valheim", "Minimap", "m_pins")]
+    [GameContract("assembly_valheim", "Minimap+PinData", "m_uiElement")]
     internal sealed class MapWindowModule : IUiModule, IRecoverable
     {
         /// <summary>IRecoverable: on a fault the large map closes back to the minimap.</summary>
@@ -113,6 +115,11 @@ namespace GenesisUI.Modules.Minimap
         private AccessTools.FieldRef<global::Minimap, bool[]> _visible;
         private AccessTools.FieldRef<global::Minimap, bool> _shared;
         private AccessTools.FieldRef<global::Minimap, Vector3> _offset;
+        private AccessTools.FieldRef<global::Minimap, List<global::Minimap.PinData>> _pins;
+        // A pin placed while the map is open: a ring of light spreads from it once.
+        private OneShotLight _ring;
+        private int _pinCount = -1;
+        private global::Minimap.PinData _newPin;
 
         /// <summary>Whether the map chrome is on (the window shell then frames the open map with its bars).</summary>
         internal static bool Active { get; private set; }
@@ -130,6 +137,7 @@ namespace GenesisUI.Modules.Minimap
             _shared = AccessTools.FieldRefAccess<global::Minimap, bool>("m_showSharedMapData");
             _offset = AccessTools.FieldRefAccess<global::Minimap, Vector3>("m_mapOffset");
             _namePin = AccessTools.FieldRefAccess<global::Minimap, global::Minimap.PinData>("m_namePin");
+            _pins = AccessTools.FieldRefAccess<global::Minimap, List<global::Minimap.PinData>>("m_pins");
             _applied = false;
             _armed = null;
             _tagged = null;
@@ -147,10 +155,11 @@ namespace GenesisUI.Modules.Minimap
             }
             if (!EnsureBuilt(map)) return;
             if (!_applied) Apply(map);
-            WindowCanvas.Fit(_board);
+            WindowCanvas.Fit(_board, 0f); // the map under the chrome does not move: neither does the chrome
 
             FitMap(map);
             TagNewPin(map);
+            RingNewPin(map);
             string biome = map.m_biomeNameLarge != null ? map.m_biomeNameLarge.text : "";
             if (!string.IsNullOrEmpty(_hint)) biome = _hint;
             if (_biome.text != biome) _biome.text = biome;
@@ -191,6 +200,7 @@ namespace GenesisUI.Modules.Minimap
             if (_applied) Unapply();
             if (_root != null) Object.Destroy(_root.gameObject);
             _root = null;
+            _ring = null;
             _palette.Clear();
             _custom.Clear();
             _filters.Clear();
@@ -204,6 +214,7 @@ namespace GenesisUI.Modules.Minimap
             if (_root == null) return false;
             _board = WindowCanvas.Area(_root, "Board");
             Draw(map);
+            _ring = OneShotLight.Ring(_root, _theme, 150f);
             _root.gameObject.SetActive(false);
             return true;
         }
@@ -234,6 +245,8 @@ namespace GenesisUI.Modules.Minimap
             _skin.Rect((RectTransform)map.m_largeRoot.transform);
             _armed = null;
             _tagged = null;
+            _pinCount = -1;
+            _newPin = null;
             _root.gameObject.SetActive(true);
             _slowIn = 0f;
             GenesisLog.Info(Owner, "map chrome shown; vanilla chrome hidden (" + _skin.Count + " change(s))");
@@ -241,9 +254,7 @@ namespace GenesisUI.Modules.Minimap
 
         private void Hide(GameObject go)
         {
-            var g = _skin.Group(go);
-            g.alpha = 0f;
-            g.blocksRaycasts = false;
+            _skin.Hidden(go, interactable: null);
         }
 
         private readonly HashSet<Transform> _keep = new HashSet<Transform>();
@@ -434,6 +445,23 @@ namespace GenesisUI.Modules.Minimap
             if (_tagged != null && (_tagged.m_name == null || !_tagged.m_name.StartsWith(_armed.Tag, System.StringComparison.Ordinal)))
                 _tagged.m_name = _armed.Tag + " " + (_tagged.m_name ?? "");
             if (pin == null && _tagged != null) _tagged = null; // naming finished
+        }
+
+        /// <summary>
+        /// A pin added while the map is open (by the player, or a ping) gets a ring of light once its
+        /// marker exists (vanilla makes it on its next update). Many at once (shared map data) get none.
+        /// </summary>
+        private void RingNewPin(global::Minimap map)
+        {
+            if (_ring == null) return;
+            var pins = _pins(map);
+            int count = pins != null ? pins.Count : 0;
+            if (_pinCount >= 0 && count > _pinCount && count - _pinCount <= 2) _newPin = pins[count - 1];
+            _pinCount = count;
+            if (_newPin == null || _newPin.m_uiElement == null) return;
+            _ring.Follow = _newPin.m_uiElement;
+            _ring.Play();
+            _newPin = null;
         }
 
         /// <summary>Vanilla's large map (root of the map, pins and markers) inside our frame, every frame.</summary>

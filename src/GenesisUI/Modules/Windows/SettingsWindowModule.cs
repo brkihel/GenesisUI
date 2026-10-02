@@ -27,13 +27,14 @@ namespace GenesisUI.Modules.Windows
         private const float NavW = 336f, CenterX = 340f, CenterW = 664f, InfoX = 1008f, InfoW = 572f;
         private const float RowH = 44f;
 
-        private enum Category { General, Hud, Windows, Inventory, Modules }
+        private enum Category { General, Hud, Windows, Sound, Inventory, Modules }
 
         private static readonly (Category Cat, string Token)[] Categories =
         {
             (Category.General, "$genesisui_cfgcat_general"),
             (Category.Hud, "$genesisui_cfgcat_hud"),
             (Category.Windows, "$genesisui_cfgcat_windows"),
+            (Category.Sound, "$genesisui_cfgcat_sound"),
             (Category.Inventory, "$genesisui_cfgcat_inventory"),
             (Category.Modules, "$genesisui_cfgcat_modules"),
         };
@@ -44,7 +45,7 @@ namespace GenesisUI.Modules.Windows
             ("General", Category.General), ("Theme", Category.General), ("Backgrounds", Category.General), ("Diagnostics", Category.General),
             ("Vitals", Category.Hud), ("Food", Category.Hud), ("Hotbar", Category.Hud), ("Sprint", Category.Hud), ("Minimap", Category.Hud),
             ("Status", Category.Hud), ("KeyHints", Category.Hud), ("Notice", Category.Hud), ("Hover", Category.Hud), ("Boss", Category.Hud), ("Enemy", Category.Hud),
-            ("Windows", Category.Windows), ("Inventory", Category.Inventory), ("Modules", Category.Modules),
+            ("Windows", Category.Windows), ("Sound", Category.Sound), ("Inventory", Category.Inventory), ("Hotkeys", Category.Inventory), ("Modules", Category.Modules),
         };
 
         private static readonly HashSet<string> Hidden = new HashSet<string> { "Windows/ViewportDefaultsVersion" };
@@ -133,7 +134,7 @@ namespace GenesisUI.Modules.Windows
                 _navLabels.Add(label);
                 _navMarks.Add(mark);
             }
-            var tip = Parts.Label(nav, "Tip", FontRole.Body, 15f, t.TextFlavor, 24f, 380f, NavW - 48f, 260f, TextAlignmentOptions.TopLeft);
+            var tip = Parts.Label(nav, "Tip", FontRole.Body, 15f, t.TextFlavor, 24f, 70f + Categories.Length * 58f + 22f, NavW - 48f, 230f, TextAlignmentOptions.TopLeft);
             tip.textWrappingMode = TextWrappingModes.Normal;
             tip.enableAutoSizing = false;
             tip.text = Localize("$genesisui_settings_tip");
@@ -323,11 +324,11 @@ namespace GenesisUI.Modules.Windows
         private static string Format(ConfigEntryBase entry, object value)
         {
             if (value is bool b) return Localize(b ? "$genesisui_on" : "$genesisui_off");
-            if (value is KeyboardShortcut k) return k.MainKey == KeyCode.None ? "—" : k.ToString();
+            if (value is KeyboardShortcut k) return KeyText.Of(k);
             if (value is float f)
             {
                 if (entry.Definition.Section == "Backgrounds" && f < 0f) return Localize("$genesisui_settings_use_default");
-                if (entry.Definition.Section == "Backgrounds" || entry.Definition.Key == "Width" || entry.Definition.Key == "Height")
+                if (entry.Definition.Section == "Backgrounds" || entry.Definition.Section == "Sound" || entry.Definition.Key == "Width" || entry.Definition.Key == "Height")
                     return Mathf.RoundToInt(f * 100f) + "%";
                 return f.ToString("0.0#", CultureInfo.CurrentCulture) + (entry.Definition.Key == "Scale" ? "x" : "");
             }
@@ -400,11 +401,17 @@ namespace GenesisUI.Modules.Windows
             foreach (var key in _keys)
             {
                 if (key == KeyCode.None || key >= KeyCode.Mouse0 && key <= KeyCode.Mouse6 || key >= KeyCode.JoystickButton0) continue;
-                if (!input.GetKeyDown(key)) continue;
+                // Alt, Ctrl and Shift alone do not end the capture: they are taken with the next key (Alt+Z).
+                if (KeyText.IsModifier(key) || !input.GetKeyDown(key)) continue;
                 var row = _capturing;
                 EndCapture();
-                row.Entry.BoxedValue = new KeyboardShortcut(key);
-                GenesisLog.Info(Owner, row.Entry.Definition + " set to " + key);
+                var held = new List<KeyCode>(3);
+                if (input.GetKey(KeyCode.LeftControl) || input.GetKey(KeyCode.RightControl)) held.Add(KeyCode.LeftControl);
+                if (input.GetKey(KeyCode.LeftAlt) || input.GetKey(KeyCode.RightAlt)) held.Add(KeyCode.LeftAlt);
+                if (input.GetKey(KeyCode.LeftShift) || input.GetKey(KeyCode.RightShift)) held.Add(KeyCode.LeftShift);
+                var shortcut = new KeyboardShortcut(key, held.ToArray());
+                row.Entry.BoxedValue = shortcut;
+                GenesisLog.Info(Owner, row.Entry.Definition + " set to " + KeyText.Of(shortcut));
                 return;
             }
         }

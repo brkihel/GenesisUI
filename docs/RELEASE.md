@@ -36,6 +36,16 @@ by `tools/package.sh`, which runs every test first. The manifest `version_number
 always `MAJOR.MINOR.PATCH`; the preview number lives in the file name, the watermark
 and the logs.
 
+On Windows, `pwsh -File tools/package.ps1 Preview` produces the same layout and
+validates the completed archive. It uses restored dependencies and serial MSBuild
+to keep packaging bounded on development machines.
+
+For shader changes on Windows, `pwsh -File tools/shaders/build.ps1 -DirectEditor -PackagePreview`
+builds with Unity 6000.0.75f1 in `dist/shader-build`, checks the shipped keyed shader on
+the GPU, and only then replaces the bundle and packages the Preview. The licensing
+service must be accessible to that process. A failed shader build never replaces the
+last working bundle or produces a Preview through this command.
+
 ## Preview delivery (current stage)
 
 1. L1–L3 green.

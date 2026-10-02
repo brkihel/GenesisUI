@@ -33,13 +33,16 @@ namespace GenesisUI.Widgets
         {
             var rt = WindowCanvas.At(parent, name, x, y, width, height);
             Ui.Image(rt, null, new Color(0f, 0f, 0f, 0f), raycast: true);
-            Frame.Dress(rt, _theme, "window_panel", "Windows");
+            var frame = Frame.Dress(rt, _theme, "window_panel", "Windows");
+            // When its window opens, light runs once along the frame's lines.
+            OneShotLight.Reveal(rt, frame, _theme);
             if (titleToken == null) return rt;
             bool centred = align == TextAlignmentOptions.Center;
             var title = Label(rt, "Title", FontRole.Display, titleSize, _theme.Tokens.AccentGoldBright,
                 centred ? 60f : titleX, 12f, centred ? width - 120f : width - titleX - 70f, 36f, align);
             title.characterSpacing = centred ? 5f : 8f;
             title.text = Localize(titleToken).ToUpperInvariant();
+            RuneTitle.Attach(title, _theme); // written in runes first, then in letters (D-036)
             float mw = centred ? width * 0.6f : Mathf.Min(300f, width * 0.5f);
             Rule(rt, centred ? (width - mw) / 2f : titleX - 6f, 48f, mw);
             return rt;

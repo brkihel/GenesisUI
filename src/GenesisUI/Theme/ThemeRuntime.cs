@@ -71,6 +71,9 @@ namespace GenesisUI.Theme
         private Material _metal;
         private Shader _burnShader;
         private Shader _blurShader;
+        // The light effects and the backdrop (beam, reveal, shine, backdrop), by shader name.
+        private readonly Dictionary<string, Shader> _shaders = new Dictionary<string, Shader>();
+        private Material _backdrop;
 
         /// <summary>[Theme] MenuBlur: the pause menu blurs the game behind it when the shader works here.</summary>
         public bool BlurEnabled = true;
@@ -104,6 +107,31 @@ namespace GenesisUI.Theme
         public Material NewBurnMaterial() =>
             _burnShader != null ? new Material(_burnShader) { name = "GenesisUI burn light", hideFlags = HideFlags.DontSave } : null;
 
+        /// <summary>[Theme] LightEffects: the tab beam, the panels' reveal and the craft-ready shine.</summary>
+        public bool LightsEnabled = true;
+
+        /// <summary>[Theme] Models3D: the character and the item drawn in 3D in the inventory (D-034).</summary>
+        public bool ModelsEnabled = true;
+
+        /// <summary>A new material for one light effect (GenesisUI/Beam, Reveal, Shine); null when off or unavailable.</summary>
+        public Material NewLightMaterial(string shader) =>
+            LightsEnabled && _shaders.TryGetValue(shader, out var s) ? new Material(s) { name = shader, hideFlags = HideFlags.DontSave } : null;
+
+        /// <summary>A new material of one of the bundle's shaders, not gated by any option; null when unavailable.</summary>
+        public Material NewMaterial(string shader) =>
+            _shaders.TryGetValue(shader, out var s) ? new Material(s) { name = shader, hideFlags = HideFlags.DontSave } : null;
+
+        /// <summary>The shared material of the windows' backdrop (warm vignette); null when unavailable.</summary>
+        public Material BackdropMaterial
+        {
+            get
+            {
+                if (_backdrop == null && _shaders.TryGetValue("GenesisUI/Backdrop", out var s))
+                    _backdrop = new Material(s) { name = "GenesisUI backdrop", hideFlags = HideFlags.DontSave };
+                return _backdrop;
+            }
+        }
+
         private void LoadShaders()
         {
             string path = Path.Combine(Path.Combine(_pluginDir, "art"), "genesisui.shaders");
@@ -122,6 +150,7 @@ namespace GenesisUI.Theme
                     if (shader.name == "GenesisUI/Metal") _metal = new Material(shader) { name = "GenesisUI metal", hideFlags = HideFlags.DontSave };
                     else if (shader.name == "GenesisUI/Burn") _burnShader = shader;
                     else if (shader.name == "GenesisUI/Blur") _blurShader = shader;
+                    else if (shader.name.StartsWith("GenesisUI/", System.StringComparison.Ordinal)) _shaders[shader.name] = shader;
                 }
             }
             finally
@@ -129,7 +158,7 @@ namespace GenesisUI.Theme
                 bundle.Unload(false); // keeps the loaded shaders
             }
             GenesisLog.Info("Theme", "shaders: metal " + (_metal != null ? "on" : "off") + ", burn " + (_burnShader != null ? "on" : "off") +
-                ", blur " + (_blurShader != null ? "on" : "off") +
+                ", blur " + (_blurShader != null ? "on" : "off") + ", effects [" + string.Join(", ", _shaders.Keys) + "]" +
                 " (" + SystemInfo.graphicsDeviceType + ")");
         }
 
@@ -236,6 +265,23 @@ namespace GenesisUI.Theme
         public int FontCount => _fonts.Count;
         public int SpriteCount => _sprites.Count;
 
+        private const string RunicFile = "NotoSansRunic-Regular.ttf";
+
+        /// <summary>Whether the runes can be drawn (the runic font loaded).</summary>
+        public bool RunesAvailable { get; private set; }
+
+        private TMP_FontAsset LoadFallbackFont(string path)
+        {
+            var info = new FileInfo(path);
+            if (!info.Exists || info.Length > MaxFontBytes) { GenesisLog.Info("Theme", "no runic font: titles appear without runes"); return null; }
+            var asset = TMP_FontAsset.CreateFontAsset(path, 0, 90, 9, GlyphRenderMode.SDFAA, 512, 512);
+            if (asset == null) return null;
+            asset.name = "GenesisUI " + Path.GetFileNameWithoutExtension(path);
+            EnsureMaterial(asset);
+            RunesAvailable = true;
+            return asset;
+        }
+
         private void LoadFonts()
         {
             string dir = Path.Combine(_pluginDir, "fonts");
@@ -260,12 +306,17 @@ namespace GenesisUI.Theme
                 }
             }
 
-            // Fallback chain: Cinzel lacks some symbols (e.g. ◆), Cormorant has them, the game font has the rest.
+            // The runes of the window titles (D-036): Elder Futhark from Noto Sans Runic, a fallback only.
+            TMP_FontAsset runic = null;
+            Guard.Try("load runic font", () => runic = LoadFallbackFont(Path.Combine(dir, RunicFile)));
+
+            // Fallback chain: Cinzel lacks some symbols (e.g. ◆), Cormorant has them, the runes, then the game font.
             TMP_FontAsset body = _fonts.TryGetValue(FontRole.Body, out var b) ? b : null;
             foreach (var kv in _fonts)
             {
                 var chain = new List<TMP_FontAsset>();
                 if (body != null && kv.Value != body) chain.Add(body);
+                if (runic != null) chain.Add(runic);
                 chain.Add(_vanilla);
                 kv.Value.fallbackFontAssetTable = chain;
             }

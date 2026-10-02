@@ -93,12 +93,20 @@ namespace GenesisUI
                     "Molduras com o shader de metal (luz, relevo e brilho que passa). Desligado, as molduras usam a versão pintada, sem movimento. Vale ao reiniciar o jogo.").Value;
                 _theme.BlurEnabled = Config.Bind("Theme", "MenuBlur", true,
                     "Fundo desfocado atrás do menu Esc. Se a tela ficar preta nesse menu, desligue: o fundo fica só escurecido.").Value;
+                _theme.LightsEnabled = Config.Bind("Theme", "LightEffects", true,
+                    "Efeitos de luz nas janelas: o feixe sobre as abas, a luz que percorre a moldura ao abrir e o brilho da receita que acabou de ficar pronta. Vale ao reiniciar o jogo.").Value;
+                _theme.ModelsEnabled = Config.Bind("Theme", "Models3D", true,
+                    "Personagem e item em 3D no inventário (o personagem com o seu equipamento, o item girando nos detalhes). Desligado, volta o ícone. Vale ao reiniciar o jogo.").Value;
+                BindSound();
+                Gameplay.SlotHotkeys.Bind(Config);
+                Modules.Windows.WindowShellModule.ParallaxEnabled = Config.Bind("Windows", "Parallax", true,
+                    "As janelas abertas se deslocam de leve contra o mouse e a luz do dourado se inclina para ele, dando profundidade.").Value;
                 ModuleHost.Init(_theme, Enabled.Value);
                 Enabled.SettingChanged += (_, __) => Guard.Try("master toggle", () => ModuleHost.SetMasterEnabled(Enabled.Value));
 
                 ModuleHost.Register(new VitalsModule(Config), Config.Bind("Modules", "Vitals", true,
                     "Barras verticais de vida, vigor e eitr no canto inferior esquerdo. Desligado, o jogo mostra as barras originais."));
-                ModuleHost.Register(new FoodModule(Config), Config.Bind("Modules", "Food", true,
+                ModuleHost.Register(new FoodModule(), Config.Bind("Modules", "Food", true,
                     "Os três espaços de comida ao lado das barras, com o tempo restante. Desligado, o jogo mostra a comida original."));
                 ModuleHost.Register(new HotbarModule(Config), Config.Bind("Modules", "Hotbar", true,
                     "Barra de itens (1 a 8) emoldurada, no centro de baixo. Desligado, o jogo mostra a barra original."));
@@ -143,6 +151,10 @@ namespace GenesisUI
                     "Menu do Esc (pausa) no estilo do GenesisUI, com as mesmas opções do jogo."));
                 ModuleHost.Register(new Modules.Hints.KeyHintsModule(Config), Config.Bind("Modules", "KeyHints", true,
                     "Dicas de atalho (Atacar, Bloquear, Construir...) com a fonte e as teclas do GenesisUI, menores."));
+                ModuleHost.Register(new Modules.Slots.QuickSlotsModule(), Config.Bind("Modules", "Slots", true,
+                    "Espaços de consumo rápido e de ação no HUD, acima à direita das comidas, com os seus atalhos (Configurações → Inventário → Atalhos)."));
+                ModuleHost.Register(new Modules.Climate.ClimateModule(), Config.Bind("Modules", "Climate", true,
+                    "A interface sente o mundo: geada, gotas, brasa e cinza nas molduras douradas conforme o clima; o ouro esfria à noite; batimento nas bordas com pouca vida; halo dourado quando descansado."));
                 ModuleHost.Register(new SprintModule(Config), Config.Bind("Modules", "Sprint", true,
                     "Barra pequena de vigor acima dos itens: surge quando o vigor é gasto e some só depois de cheio. Desligado, ela não aparece."));
 
@@ -153,6 +165,7 @@ namespace GenesisUI
                 // Patch classes one by one through the guarded patcher (PATCH-POLICY rule 5).
                 _harmony = new Harmony(PluginInfo.Guid);
                 GuardedPatcher.Apply(_harmony, typeof(Patches.InventoryTabKeyPatch));
+                GuardedPatcher.Apply(_harmony, typeof(Patches.ShortcutInputPatch));
                 GuardedPatcher.Apply(_harmony, typeof(Patches.InventorySizePatch));
                 GuardedPatcher.Apply(_harmony, typeof(Patches.InventoryPlacementPatches));
                 GuardedPatcher.Apply(_harmony, typeof(Patches.EquipmentPatches));
@@ -234,6 +247,33 @@ namespace GenesisUI
             System.EventHandler changed = (_, __) => Guard.Try("background opacity", theme.RefreshBackgrounds);
             shared.SettingChanged += changed;
             foreach (var e in panels.Values) e.SettingChanged += changed;
+        }
+
+        /// <summary>The [Sound] section (Som in the settings window); every change applies at once (D-036).</summary>
+        private void BindSound()
+        {
+            var enabled = Config.Bind("Sound", "Enabled", true,
+                "Sons próprios do GenesisUI: um tilintar metálico baixo nas abas, ao abrir uma janela e ao terminar de criar um item. Seguem o volume do jogo.");
+            var volume = Config.Bind("Sound", "Volume", 0.6f,
+                new ConfigDescription("Volume dos sons do GenesisUI, sobre o volume do jogo.", new AcceptableValueRange<float>(0f, 1f)));
+            Widgets.UiSound.Enabled = enabled.Value;
+            Widgets.UiSound.Volume = volume.Value;
+            enabled.SettingChanged += (_, __) => Widgets.UiSound.Enabled = enabled.Value;
+            volume.SettingChanged += (_, __) => Widgets.UiSound.Volume = volume.Value;
+            var cues = new[]
+            {
+                ("TabHover", "Tilintar baixo ao passar o mouse numa aba."),
+                ("TabSelect", "Som ao trocar de aba (clique ou Q/E)."),
+                ("WindowOpen", "Som ao abrir uma janela (inventário, mapa, criação...)."),
+                ("CraftDone", "Duas batidas leves de martelo ao terminar de criar um item."),
+            };
+            for (int i = 0; i < cues.Length; i++)
+            {
+                int index = i;
+                var entry = Config.Bind("Sound", cues[i].Item1, true, cues[i].Item2);
+                Widgets.UiSound.CueEnabled[index] = entry.Value;
+                entry.SettingChanged += (_, __) => Widgets.UiSound.CueEnabled[index] = entry.Value;
+            }
         }
 
         private void RegisterDiagnosticsKey()

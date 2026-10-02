@@ -43,11 +43,7 @@ namespace GenesisUI.Modules.Windows
 
         private static void Hide(GameObject go)
         {
-            var g = Skin.Group(go);
-            if (g == null) return;
-            g.alpha = 0f;
-            g.blocksRaycasts = false;
-            g.interactable = false;
+            Skin.Hidden(go);
         }
     }
 }

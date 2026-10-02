@@ -1,5 +1,69 @@
 # Changelog
 
+## 1.1.1-preview.2 — 3D preview edges
+
+### Fixed (client visual result approved in R-063)
+- Remove the pink silhouette from the character and item previews by decoding the background colour before smoothing the image. The preview uses a bounded 2× source resolution to preserve smooth edges.
+
+## 1.1.1-preview.1 — 3D preview composition
+
+### Fixed (visibility confirmed in R-062)
+- The character and items using Valheim's creature/player shaders are composed from a colour key in the 3D preview. Their output alpha can no longer make otherwise drawn colour invisible in the interface.
+
+### Diagnostics
+- The preview log now samples its rendered texture once per model and reports coloured pixels, including those whose alpha is near zero.
+
+## 1.1.0 — Light in the windows
+
+### Fixed
+- Switching to the **Map** tab no longer makes vanilla's inventory and crafting panels slide across
+  the screen (thanks for the report and the video).
+- Choosing **Quit** or **Logout** in the Esc menu no longer shows the game's own confirmation box,
+  blurred, behind GenesisUI's.
+- The game's own inventory no longer flashes on the first opening, and no piece of the game's
+  interface shows through GenesisUI's windows anymore (some of them faded themselves back in).
+- The 3D character shows again (the game draws characters in a way the preview did not support).
+
+### Changed
+- The **Crafting** tab now sits next to **Inventory** (Q/E follow the new order).
+- The open tab now has a **beam of light** falling from the top bar, swaying gently like a lantern;
+  hovering another tab runs a glint along its rail and lifts its icon and name.
+- Behind an open window the world now fades into a **warm vignette** instead of a flat dark veil.
+
+### Added
+- **Quick-use and action slots on the HUD**: the food slots became your quick-use slots (as many as
+  the server allows), with the smaller action slots above them, each showing its hotkey.
+- **Hotkeys that work and that you choose**: the quick-use and action slots now really answer their
+  keys (Alt+1…4 and Alt+Z/X/C/V by default). Change them in Settings → Inventory → Slot hotkeys: any
+  key, with or without Alt, Ctrl or Shift. While a combination is held, the game's own action on that
+  key does not happen (Alt+X uses a slot and does not make you sit).
+- **Food and potions beside your bars**: what you ate and what you drank now show as two small
+  columns next to the health, stamina and eitr bars, and everything slides smoothly into place when
+  the eitr bar appears or a column empties.
+- When a window opens, **light runs once along its frames**.
+- A recipe that has **just become craftable** shines once in the list.
+- Dragging an item **outlines the slot it will land in** with light.
+- While crafting, the **progress runs around the Craft button** in light.
+- Near the **carry limit**, embers rise from the weight bar; at a **forge**, embers drift behind the
+  crafting details.
+- **Food and effects about to run out** glow softly, dimming as their time ends.
+- A **new pin on the map** sends out a ring of light.
+- **Your character in 3D** between the equipment slots, wearing what you wear, lit from above in gold
+  and turning slowly; the **item in the details panel turns in 3D** too (`[Theme] Models3D`).
+- **The interface feels the world** (`[Modules] Climate`): frost creeps over the gold frames when you
+  freeze, drops run down them when you are wet, they glow like embers when you burn, and fine ash
+  falls on them in the Ashlands; the gold cools at night and warms at dusk.
+- **Low health** makes the screen's edges glow like embers with each heartbeat, faster as it falls;
+  while **Rested**, a faint gold halo surrounds your vital bars.
+- **Depth**: open windows drift gently against the mouse and the light on the gold leans towards it
+  (`[Windows] Parallax`).
+- **Runic titles**: window titles are written in runes first and turn into letters as the window
+  opens.
+- **Sound**: GenesisUI now has its own soft, metallic interface sounds — hovering and choosing a
+  tab, opening a window, finishing a craft. A new **Sound** category in GenesisUI's settings turns
+  them on or off, one by one, and sets their volume (they follow the game's volume too).
+- New option `[Theme] LightEffects` turns the light effects off (restart the game).
+
 ## 1.0.1 — A page for players
 
 No change in the game. The mod page now tells players what GenesisUI gives them, with screenshots,

@@ -84,9 +84,18 @@ namespace GenesisUI.Widgets
             return area;
         }
 
-        /// <summary>Rescales the board to the current screen; cheap, called every refresh.</summary>
-        internal static void Fit(RectTransform area)
+        /// <summary>
+        /// The windows' parallax (D-036), in design units at depth 1: set by the window shell from the
+        /// pointer while a window is open, eased back to zero after. Each board moves by it times its
+        /// depth (panels 1, the shell's bars less, the map's chrome not at all), so the layers separate.
+        /// </summary>
+        internal static Vector2 Parallax;
+
+        /// <summary>Rescales the board to the current screen and places it with the parallax; cheap, called every refresh.</summary>
+        internal static void Fit(RectTransform area, float depth = 1f)
         {
+            var offset = Parallax * depth;
+            if ((area.anchoredPosition - offset).sqrMagnitude > 0.0001f) area.anchoredPosition = offset;
             var parent = area.parent as RectTransform;
             if (parent == null) return;
             var screen = parent.rect.size;

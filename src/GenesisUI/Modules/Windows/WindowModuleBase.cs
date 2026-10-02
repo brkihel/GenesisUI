@@ -132,7 +132,7 @@ namespace GenesisUI.Modules.Windows
             if (_root == null) return false;
             _fade = _root.gameObject.AddComponent<CanvasGroup>();
             _fade.alpha = 0f;
-            Ui.Image(Ui.Fill(Ui.Child(_root, "Dim")), null, new Color(0f, 0f, 0f, 0.35f));
+            Backdrop.Create(_root, Theme);
             Board = WindowCanvas.Area(_root, "Board");
             Panels = WindowCanvas.At(Board, "Panels", 0f, PanelsTop, WindowCanvas.Design.x, PanelsHeight);
             Draw();

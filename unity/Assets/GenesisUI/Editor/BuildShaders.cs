@@ -9,6 +9,15 @@ namespace GenesisUI
 {
     public static class BuildShaders
     {
+        private static readonly string[] Shaders =
+        {
+            "Assets/GenesisUI/Shaders/Metal.shader", "Assets/GenesisUI/Shaders/Burn.shader", "Assets/GenesisUI/Shaders/Blur.shader",
+            "Assets/GenesisUI/Shaders/Beam.shader", "Assets/GenesisUI/Shaders/Reveal.shader", "Assets/GenesisUI/Shaders/Shine.shader",
+            "Assets/GenesisUI/Shaders/Backdrop.shader", "Assets/GenesisUI/Shaders/Edge.shader", "Assets/GenesisUI/Shaders/Ring.shader",
+            "Assets/GenesisUI/Shaders/Embers.shader", "Assets/GenesisUI/Shaders/Heartbeat.shader",
+            "Assets/GenesisUI/Shaders/Keyed.shader",
+        };
+
         public static void Build()
         {
             // Valheim on Windows runs Direct3D 11 by default; Vulkan and Direct3D 12 by launch option.
@@ -17,7 +26,7 @@ namespace GenesisUI
                 { UnityEngine.Rendering.GraphicsDeviceType.Direct3D11, UnityEngine.Rendering.GraphicsDeviceType.Vulkan,
                   UnityEngine.Rendering.GraphicsDeviceType.Direct3D12 });
             // A shader with a compile error still lands in the bundle (and draws pink in game): refuse it.
-            foreach (var path in new[] { "Assets/GenesisUI/Shaders/Metal.shader", "Assets/GenesisUI/Shaders/Burn.shader", "Assets/GenesisUI/Shaders/Blur.shader" })
+            foreach (var path in Shaders)
             {
                 var shader = AssetDatabase.LoadAssetAtPath<Shader>(path);
                 if (shader == null) throw new System.Exception("missing shader " + path);
@@ -30,7 +39,7 @@ namespace GenesisUI
             var build = new AssetBundleBuild
             {
                 assetBundleName = "genesisui.shaders",
-                assetNames = new[] { "Assets/GenesisUI/Shaders/Metal.shader", "Assets/GenesisUI/Shaders/Burn.shader", "Assets/GenesisUI/Shaders/Blur.shader" },
+                assetNames = Shaders,
             };
             var manifest = BuildPipeline.BuildAssetBundles(output, new[] { build },
                 BuildAssetBundleOptions.ChunkBasedCompression | BuildAssetBundleOptions.StrictMode | BuildAssetBundleOptions.DeterministicAssetBundle,

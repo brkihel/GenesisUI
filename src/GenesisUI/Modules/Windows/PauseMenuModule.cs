@@ -157,9 +157,11 @@ namespace GenesisUI.Modules.Windows
             foreach (var t in new[] { menu.m_menuDialog, menu.m_logoutDialog, menu.m_quitDialog })
             {
                 if (t == null) continue;
-                var g = _skin.Group(t.gameObject);
-                g.alpha = 0f;
-                g.blocksRaycasts = false;
+                _skin.Hidden(t.gameObject, interactable: null);
+                // The quit and logout dialogs fade their own group in with an animator, which undid the
+                // alpha above: they showed, blurred, behind our confirmation (Diego, 2026-10-02). A
+                // disabled canvas keeps them undrawn whatever animates them.
+                _skin.Undrawn(t.gameObject);
             }
             _root.gameObject.SetActive(true);
             _root.SetAsLastSibling();

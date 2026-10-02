@@ -57,6 +57,7 @@ namespace GenesisUI.Modules.Windows
     [GameContract("assembly_valheim", "Player", "GetAvailableRecipes")]
     [GameContract("assembly_valheim", "Player", "HaveRequirements", Parameters = new[] { "Recipe", "System.Boolean", "System.Int32", "System.Int32" })]
     [GameContract("assembly_valheim", "Player", "GetCurrentCraftingStation")]
+    [GameContract("assembly_valheim", "CraftingStation", "m_name")]
     [GameContract("assembly_valheim", "CraftingStation", "m_upgrader")]
     [GameContract("assembly_valheim", "CraftingStation", "m_name")]
     [GameContract("assembly_valheim", "CraftingStation", "GetLevel")]
@@ -107,6 +108,7 @@ namespace GenesisUI.Modules.Windows
             public Recipe Recipe;
             public ItemDrop.ItemData Upgrade;
             public bool CanCraft;
+            public bool JustReady;
             public string Name;
             public string Search;
             public ItemCategory Category;
@@ -118,6 +120,7 @@ namespace GenesisUI.Modules.Windows
             public Image Icon, Selection;
             public TextMeshProUGUI Name, Sub, Right;
             public CanvasGroup Group;
+            public OneShotLight Shine;
             public Entry Bound;
             public int ShownState = -1;
         }
@@ -174,6 +177,11 @@ namespace GenesisUI.Modules.Windows
         private Image _icon;
         private GameObject _detailsBody;
         private Button _craft, _repair, _variant;
+        // Light effects: the craft's progress around the button; embers behind the details at a forge.
+        private EdgeLight _craftLight;
+        private EmberField _forgeEmbers;
+        private CraftingStation _shownStation;
+        private float _craftRatio;
         private TMP_InputField _search;
         private IDisposable _typingLease;
 
@@ -200,8 +208,15 @@ namespace GenesisUI.Modules.Windows
         public IReadOnlyList<string> Regions => NoRegions;
         public float RefreshRate => 0f;
 
+        /// <summary>
+        /// While this window module runs (built, not torn down or faulted): with the inventory and the
+        /// crafting windows both running, the window shell keeps vanilla's panels hidden at all times (D-038).
+        /// </summary>
+        internal static bool Running { get; private set; }
+
         public void Build(ModuleContext context)
         {
+            Running = true;
             _theme = context.Theme;
             _parts = new WindowParts(_theme);
             _availableField = AccessTools.Field(typeof(InventoryGui), "m_availableRecipes");
@@ -230,6 +245,7 @@ namespace GenesisUI.Modules.Windows
             _guiAncestor = null;
             _behind = false;
             _shownCraftText = _shownReason = null;
+            _shownStation = null;
             foreach (var c in new[] { _craftColumn, _upgradeColumn }) { c.All.Clear(); c.Shown.Clear(); c.Scroll = 0; }
             EndTyping();
         }
@@ -278,6 +294,7 @@ namespace GenesisUI.Modules.Windows
 
         public void Teardown()
         {
+            Running = false;
             if (_applied) Unapply();
             if (_root != null) UnityEngine.Object.Destroy(_root.gameObject);
             _root = null;
@@ -297,7 +314,7 @@ namespace GenesisUI.Modules.Windows
             if (_root == null) return false;
             _fade = _root.gameObject.AddComponent<CanvasGroup>();
             _fade.alpha = 0f;
-            Ui.Image(Ui.Fill(Ui.Child(_root, "Dim")), null, new Color(0f, 0f, 0f, 0.35f));
+            Backdrop.Create(_root, _theme);
             _area = WindowCanvas.Area(_root, "Board");
             Build();
             _root.gameObject.SetActive(false);
@@ -395,10 +412,48 @@ namespace GenesisUI.Modules.Windows
             // What can be made now first; vanilla's order otherwise (a stable sort).
             GenesisUI.Collections.ListOrder.StablePartition(_craftColumn.All, CanCraftFirst, _partitionBuffer);
             GenesisUI.Collections.ListOrder.StablePartition(_upgradeColumn.All, CanCraftFirst, _partitionBuffer);
+            FindJustReady();
             _filterDirty = true;
         }
 
         private readonly List<Entry> _partitionBuffer = new List<Entry>(128);
+
+        // A recipe that has just become craftable shines once (Diego, 2026-10-02). Only one listed at the
+        // previous check and not craftable then: a new station's list or the session's first check
+        // shine nothing. Kept across openings, so what became craftable while away shines on return.
+        private const float ShineWithinSeconds = 4f;
+        private HashSet<(Recipe, ItemDrop.ItemData)> _listed = new HashSet<(Recipe, ItemDrop.ItemData)>();
+        private HashSet<(Recipe, ItemDrop.ItemData)> _craftable = new HashSet<(Recipe, ItemDrop.ItemData)>();
+        private HashSet<(Recipe, ItemDrop.ItemData)> _nextListed = new HashSet<(Recipe, ItemDrop.ItemData)>();
+        private HashSet<(Recipe, ItemDrop.ItemData)> _nextCraftable = new HashSet<(Recipe, ItemDrop.ItemData)>();
+        private readonly Dictionary<(Recipe, ItemDrop.ItemData), float> _readySince = new Dictionary<(Recipe, ItemDrop.ItemData), float>();
+        private readonly List<(Recipe, ItemDrop.ItemData)> _expired = new List<(Recipe, ItemDrop.ItemData)>();
+
+        /// <summary>Marks the entries that became craftable since the previous check (see <see cref="ShineWithinSeconds"/>).</summary>
+        private void FindJustReady()
+        {
+            float now = Time.unscaledTime;
+            _nextListed.Clear();
+            _nextCraftable.Clear();
+            foreach (var column in new[] { _craftColumn, _upgradeColumn })
+                foreach (var e in column.All)
+                {
+                    var key = (e.Recipe, e.Upgrade);
+                    _nextListed.Add(key);
+                    if (!e.CanCraft) continue;
+                    _nextCraftable.Add(key);
+                    if (_listed.Contains(key) && !_craftable.Contains(key) && !_readySince.ContainsKey(key)) _readySince[key] = now;
+                }
+            _expired.Clear();
+            foreach (var pair in _readySince)
+                if (now - pair.Value > ShineWithinSeconds || !_nextCraftable.Contains(pair.Key)) _expired.Add(pair.Key);
+            foreach (var key in _expired) _readySince.Remove(key);
+            foreach (var column in new[] { _craftColumn, _upgradeColumn })
+                foreach (var e in column.All)
+                    e.JustReady = e.CanCraft && _readySince.ContainsKey((e.Recipe, e.Upgrade));
+            (_listed, _nextListed) = (_nextListed, _listed);
+            (_craftable, _nextCraftable) = (_nextCraftable, _craftable);
+        }
         private static readonly Func<Entry, bool> CanCraftFirst = e => e.CanCraft;
 
         private static Entry NewEntry(Recipe recipe, ItemDrop.ItemData upgrade, bool canCraft)
@@ -518,6 +573,13 @@ namespace GenesisUI.Modules.Windows
                 row.Right.text = entry.Upgrade != null ? Localize("$genesisui_level") + " " + entry.Upgrade.m_quality + " → " + (entry.Upgrade.m_quality + 1) : "";
                 row.Group.alpha = entry.CanCraft ? 1f : 0.55f;
                 row.Selection.enabled = sel;
+                if (entry.JustReady && row.Shine != null)
+                {
+                    // Once: the next check's entry is not marked again.
+                    entry.JustReady = false;
+                    _readySince.Remove((entry.Recipe, entry.Upgrade));
+                    row.Shine.Play();
+                }
             }
             bool bar = column.Shown.Count > VisibleRows;
             if (column.Track.gameObject.activeSelf != bar) column.Track.gameObject.SetActive(bar);
@@ -656,6 +718,16 @@ namespace GenesisUI.Modules.Windows
                 ratio = max > 0f ? Mathf.Clamp01(_craftTimer(gui) / max) : 0f;
             }
             if (!Mathf.Approximately(_progress.anchorMax.x, ratio)) _progress.anchorMax = new Vector2(ratio, 1f);
+            // A craft that ran to its end (not one cancelled halfway): two light strikes on metal.
+            if (!crafting && _craftRatio > 0.9f) UiSound.Play(UiSound.Cue.Craft);
+            _craftRatio = crafting ? ratio : 0f;
+            if (_craftLight != null)
+            {
+                // The light closes the loop as the craft completes, then fades.
+                _craftLight.Intensity = crafting ? 1f : 0f;
+                if (crafting) _craftLight.Progress = ratio;
+            }
+            UpdateForge(player);
 
             string reason = _selValid && !interactable && !crafting ? Reason(gui, player) : "";
             if (reason != _shownReason)
@@ -663,6 +735,17 @@ namespace GenesisUI.Modules.Windows
                 _shownReason = reason;
                 _reasonText.text = reason;
             }
+        }
+
+        /// <summary>At a forge (any station named one: the black forge too), embers rise behind the details.</summary>
+        private void UpdateForge(Player player)
+        {
+            if (_forgeEmbers == null) return;
+            var station = player.GetCurrentCraftingStation();
+            if (station == _shownStation) return;
+            _shownStation = station;
+            bool forge = station != null && station.m_name != null && station.m_name.IndexOf("forge", StringComparison.OrdinalIgnoreCase) >= 0;
+            _forgeEmbers.Intensity = forge ? 0.7f : 0f;
         }
 
         /// <summary>Why vanilla's button is off, in words: missing materials, a better station, or vanilla's own note.</summary>
@@ -764,6 +847,17 @@ namespace GenesisUI.Modules.Windows
             _detailsEmpty = _parts.Label(_details, "Empty", FontRole.Body, 17f, t.TextFlavor, pad, 290f, w, 60f, TextAlignmentOptions.Center);
             _detailsEmpty.textWrappingMode = TextWrappingModes.Normal;
             _detailsEmpty.text = Localize("$genesisui_crafting_pick");
+            // Behind the details' content: the forge's embers rise from the panel's bottom.
+            _forgeEmbers = EmberField.Create(WindowCanvas.At(_details, "Forge", 12f, PanelsHeight * 0.3f, DetailsW - 24f, PanelsHeight * 0.7f - 12f), _theme);
+            if (_forgeEmbers != null)
+            {
+                _forgeEmbers.Speed = 0.8f;
+                _forgeEmbers.SetFloat("_Count", 6f);
+                _forgeEmbers.SetFloat("_Speed", 0.07f);
+                _forgeEmbers.SetFloat("_Glow", 0.18f);
+                _forgeEmbers.SetFloat("_GlowHeight", 30f);
+                _forgeEmbers.SetFloat("_EmberSize", 1.4f);
+            }
             _detailsBody = WindowCanvas.At(_details, "Body", 0f, 0f, DetailsW, PanelsHeight).gameObject;
             var body = (RectTransform)_detailsBody.transform;
             _icon = Ui.Image(WindowCanvas.At(body, "Icon", pad, 66f, w, 118f), null, Color.white);
@@ -812,6 +906,17 @@ namespace GenesisUI.Modules.Windows
             _progress.offsetMax = new Vector2(-3f, -3f);
             _progress.SetSiblingIndex(1);
             Ui.Image(_progress, _theme.Sprite("bar_fill"), ThemeRuntime.ToUnity(t.AccentGold).WithA(0.45f));
+            // With the shader, the progress runs around the button's border in light instead of a fill.
+            _craftLight = EdgeLight.Create((RectTransform)_craft.transform, _theme, 10f);
+            if (_craftLight != null)
+            {
+                _craftLight.Target = (RectTransform)_craft.transform;
+                _craftLight.Speed = 4f;
+                _craftLight.SetFloat("_Inset", 2f);
+                _craftLight.SetFloat("_Radius", 4f);
+                _craftLight.SetFloat("_Line", 0.9f);
+                _progress.gameObject.SetActive(false);
+            }
             _detailsBody.SetActive(false);
         }
 
@@ -905,6 +1010,7 @@ namespace GenesisUI.Modules.Windows
             Frame.Dress(row.Root, _theme, "keycap_wide", "Windows", RowH);
             row.Selection = Ui.Image(Ui.Fill(Ui.Child(row.Root, "Selected"), 3f, 3f, 3f, 3f), null, ThemeRuntime.ToUnity(t.AccentGold).WithA(0.14f));
             row.Selection.enabled = false;
+            row.Shine = OneShotLight.Shine(row.Root, row.Selection.transform.GetSiblingIndex() + 1, _theme);
             row.Icon = Ui.Image(WindowCanvas.At(row.Root, "Icon", 8f, 6f, 42f, 42f), null, Color.white);
             row.Icon.preserveAspect = true;
             row.Name = _parts.Label(row.Root, "Name", FontRole.Body, 17f, t.TextTitle, 60f, 5f, width - 170f, 24f, TextAlignmentOptions.Left);

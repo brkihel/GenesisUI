@@ -27,7 +27,7 @@ for f in assembly_valheim assembly_utils assembly_guiutils gui_framework \
          UnityEngine UnityEngine.CoreModule UnityEngine.UI UnityEngine.UIModule \
          UnityEngine.IMGUIModule UnityEngine.InputLegacyModule UnityEngine.TextRenderingModule \
          UnityEngine.TextCoreFontEngineModule UnityEngine.TextCoreTextEngineModule \
-         UnityEngine.AssetBundleModule UnityEngine.ImageConversionModule \
+         UnityEngine.AssetBundleModule UnityEngine.ImageConversionModule UnityEngine.AudioModule \
          Unity.TextMeshPro Unity.InputSystem \
          mscorlib netstandard System System.Core; do
     cp "$MANAGED/$f.dll" "$DEST/"

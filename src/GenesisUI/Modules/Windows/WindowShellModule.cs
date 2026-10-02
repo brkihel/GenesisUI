@@ -54,17 +54,34 @@ namespace GenesisUI.Modules.Windows
         private const float HintHeight = 62f;
         private const float CapSize = 30f;
         private const float FadeSpeed = 8f;
+        private static readonly Color IconMuted = new Color(0.75f, 0.72f, 0.66f, 0.85f);
+        // Vanilla's inventory slide-out: its panels stay hidden at least this long after the map opens.
+        private const float CloseHoldSeconds = 0.6f;
+        private const string MapHold = "win.shell:map";
+        // D-038: while GenesisUI draws both the inventory and the crafting windows, vanilla's panels are
+        // never seen — not for the first frame of an opening, not between two tabs, not while closing.
+        private const string AlwaysHold = "win.shell:always";
+        private bool _holdingAlways;
+        // Parallax (D-036): the panels move up to this many design units against the pointer; the
+        // metal's light leans towards it by up to this much.
+        private const float ParallaxUnits = 5f, LightLean = 0.35f, ParallaxFollow = 4f;
+        private static readonly int LightShiftId = Shader.PropertyToID("_GenesisUILightShift");
+        private Vector2 _lean, _shownLean = new Vector2(-9f, 0f);
+
+        /// <summary>[Windows] Parallax, set from the config.</summary>
+        internal static bool ParallaxEnabled = true;
 
         private static readonly string[] NoRegions = new string[0];
 
-        internal enum Tab { Inventory, Skills, Map, Crafting, Achievements, Settings }
+        // Bar order, also the Q/E order: Crafting next to Inventory (Diego, 2026-10-02).
+        internal enum Tab { Inventory, Crafting, Skills, Map, Achievements, Settings }
 
         private static readonly (Tab Tab, string Icon, string Token)[] Tabs =
         {
             (Tab.Inventory, "icon_inventory", "$genesisui_tab_inventory"),
+            (Tab.Crafting, "icon_crafting", "$genesisui_tab_crafting"),
             (Tab.Skills, "icon_skills", "$genesisui_tab_skills"),
             (Tab.Map, "icon_map", "$genesisui_tab_map"),
-            (Tab.Crafting, "icon_crafting", "$genesisui_tab_crafting"),
             (Tab.Achievements, "icon_achievements", "$genesisui_tab_achievements"),
             (Tab.Settings, "icon_settings", "$genesisui_tab_settings"),
         };
@@ -81,6 +98,8 @@ namespace GenesisUI.Modules.Windows
         private Tab _active = Tab.Inventory;
         private bool _wasVisible;
         private bool _mapFromTab;
+        private bool _holdingPanels;
+        private float _heldFor;
         private float _hudAlpha = 1f;
         private CanvasGroup _keyHints;
         private bool _keyHintsOwn;
@@ -90,6 +109,7 @@ namespace GenesisUI.Modules.Windows
             public TextMeshProUGUI Label;
             public Image Icon;
             public Image Marker;
+            public TabBeam Beam;
         }
 
         public WindowShellModule(ConfigFile config)
@@ -148,6 +168,8 @@ namespace GenesisUI.Modules.Windows
             var gui = InventoryGui.instance;
             if (!EnsureBuilt(gui)) return;
             bool mapOpen = LargeMapOpen();
+            FollowAlwaysHold(gui);
+            FollowMapHold(gui, mapOpen, deltaSeconds);
             // The large map is one of the windows when GenesisUI frames it (win.map): the bars show over it.
             bool mapWindow = mapOpen && Modules.Minimap.MapWindowModule.Active && Player.m_localPlayer != null;
             bool visible = (gui != null && InventoryGui.IsVisible() && Player.m_localPlayer != null && !mapOpen) || mapWindow;
@@ -183,6 +205,8 @@ namespace GenesisUI.Modules.Windows
             // The key that opened the window (E at a workbench is also the next-tab key) must not
             // also switch its tab in the same frame (R-060: the workbench opened Achievements).
             bool opened = visible && !_wasVisible;
+            if (opened) UiSound.Play(UiSound.Cue.Open);
+            UpdateParallax(visible, deltaSeconds);
             if (opened)
                 Select(mapWindow ? Tab.Map : Player.m_localPlayer.GetCurrentCraftingStation() != null ? Tab.Crafting : Tab.Inventory, callVanilla: false);
             _wasVisible = visible;
@@ -203,7 +227,7 @@ namespace GenesisUI.Modules.Windows
                 if (_previousKey.Value.IsDown()) Select(Step(-1), callVanilla: true);
                 else if (_nextKey.Value.IsDown()) Select(Step(+1), callVanilla: true);
             }
-            WindowCanvas.Fit(_area);
+            WindowCanvas.Fit(_area, 0.4f); // the bars are nearer the back than the panels
             FollowVanilla(gui);
         }
 
@@ -221,6 +245,12 @@ namespace GenesisUI.Modules.Windows
             }
             _keyHints = null;
             _mapFromTab = false;
+            ReleasePanels();
+            if (_holdingAlways) { _holdingAlways = false; VanillaPanels.Release(AlwaysHold); }
+            WindowCanvas.Parallax = Vector2.zero;
+            Shader.SetGlobalVector(LightShiftId, Vector4.zero);
+            _lean = Vector2.zero;
+            _shownLean = new Vector2(-9f, 0f);
             _overMap = null;
             if (_root != null) Object.Destroy(_root.gameObject);
             _root = null;
@@ -260,6 +290,7 @@ namespace GenesisUI.Modules.Windows
         private void Select(Tab tab, bool callVanilla)
         {
             var gui = InventoryGui.instance;
+            if (callVanilla && tab != _active) UiSound.Play(UiSound.Cue.Tab);
             // Another tab picked while the framed map is open: leave the map for the windows.
             if (callVanilla && gui != null && tab != Tab.Map && LargeMapOpen())
             {
@@ -276,6 +307,9 @@ namespace GenesisUI.Modules.Windows
                     case Tab.Achievements: if (!WindowModuleBase.Handles(Tab.Achievements)) gui.OnOpenAchievements(); break;
                     case Tab.Map:
                         // The map is its own screen: leave the inventory and open vanilla's large map.
+                        // Vanilla's panels stay hidden while its inventory slides out (bug report
+                        // 2026-10-01: they slid across the map once our window let go of them).
+                        HoldPanels(gui);
                         gui.Hide();
                         if (global::Minimap.instance != null)
                         {
@@ -288,6 +322,67 @@ namespace GenesisUI.Modules.Windows
                 }
             }
             Show(tab);
+        }
+
+        /// <summary>
+        /// The pointer as the viewpoint (D-036): while a window is open the panels drift a little against
+        /// it and the gold's light leans towards it; both settle back when the windows close.
+        /// </summary>
+        private void UpdateParallax(bool visible, float deltaSeconds)
+        {
+            var target = Vector2.zero;
+            if (visible && ParallaxEnabled && Screen.width > 0 && Screen.height > 0)
+            {
+                Vector2 p = ZInput.pointerPosition;
+                target = new Vector2(Mathf.Clamp(p.x / Screen.width * 2f - 1f, -1f, 1f), Mathf.Clamp(p.y / Screen.height * 2f - 1f, -1f, 1f));
+            }
+            _lean = Vector2.Lerp(_lean, target, 1f - Mathf.Exp(-deltaSeconds * ParallaxFollow));
+            if ((_lean - _shownLean).sqrMagnitude < 0.00001f) return;
+            _shownLean = _lean;
+            WindowCanvas.Parallax = -_lean * ParallaxUnits;
+            Shader.SetGlobalVector(LightShiftId, new Vector4(_lean.x * LightLean, _lean.y * LightLean, 0f, 0f));
+        }
+
+        /// <summary>
+        /// While the large map is open, vanilla's inventory panels stay hidden: the window that held them
+        /// lets go as soon as its tab is no longer active, and vanilla's close animation would then slide
+        /// them across the map. Released once the map is closed and the animation is over.
+        /// </summary>
+        private void FollowMapHold(InventoryGui gui, bool mapOpen, float deltaSeconds)
+        {
+            if (mapOpen && gui != null) HoldPanels(gui);
+            if (!_holdingPanels) return;
+            _heldFor += deltaSeconds;
+            if (!mapOpen && _heldFor >= CloseHoldSeconds) ReleasePanels();
+        }
+
+        /// <summary>
+        /// Vanilla's inventory panels stay hidden for as long as GenesisUI's inventory and crafting windows
+        /// both run; when either is turned off or faults, vanilla's panels come back (every failure local).
+        /// </summary>
+        private void FollowAlwaysHold(InventoryGui gui)
+        {
+            bool want = gui != null && InventoryWindowModule.Running && CraftingWindowModule.Running;
+            if (want == _holdingAlways) return;
+            _holdingAlways = want;
+            if (want) VanillaPanels.Hold(AlwaysHold, gui);
+            else VanillaPanels.Release(AlwaysHold);
+            GenesisLog.Info("Windows", want ? "vanilla's inventory panels hidden for the session" : "vanilla's inventory panels given back");
+        }
+
+        private void HoldPanels(InventoryGui gui)
+        {
+            if (_holdingPanels) return;
+            _holdingPanels = true;
+            _heldFor = 0f;
+            VanillaPanels.Hold(MapHold, gui);
+        }
+
+        private void ReleasePanels()
+        {
+            if (!_holdingPanels) return;
+            _holdingPanels = false;
+            VanillaPanels.Release(MapHold);
         }
 
         /// <summary>
@@ -319,9 +414,14 @@ namespace GenesisUI.Modules.Windows
             {
                 bool on = Tabs[i].Tab == tab;
                 var t = _tabs[i];
-                if (t.Label.color != (on ? gold : muted)) t.Label.color = on ? gold : muted;
-                if (t.Icon != null) t.Icon.color = on ? Color.white : new Color(0.75f, 0.72f, 0.66f, 0.85f);
+                // With the light, the tab's light owns its colours (hover brightens them too).
+                if (t.Beam == null)
+                {
+                    if (t.Label.color != (on ? gold : muted)) t.Label.color = on ? gold : muted;
+                    if (t.Icon != null) t.Icon.color = on ? Color.white : IconMuted;
+                }
                 if (t.Marker != null && t.Marker.gameObject.activeSelf != on) t.Marker.gameObject.SetActive(on);
+                if (t.Beam != null) t.Beam.SetSelected(on);
             }
             if (_craftingHints != null)
             {
@@ -396,7 +496,9 @@ namespace GenesisUI.Modules.Windows
             button.targetGraphic = hit;
             button.transition = Selectable.Transition.None;
             button.onClick.AddListener(() => Guard.Try("window tab " + tab, () => Select(tab, callVanilla: true)));
-            PressFeedback.Attach(cell, button, _theme, 6f);
+            // The tab's light (beam when selected, rail glint on hover); the soft light over the tab without the shader.
+            view.Beam = TabBeam.Attach(cell, button, _theme);
+            if (view.Beam == null) PressFeedback.Attach(cell, button, _theme, 6f);
 
             var iconSprite = _theme.Sprite(icon);
             if (iconSprite != null)
@@ -437,6 +539,9 @@ namespace GenesisUI.Modules.Windows
                 }
                 mrt.gameObject.SetActive(false);
             }
+            if (view.Beam != null)
+                view.Beam.Bind(view.Icon, IconMuted, Color.white, view.Label,
+                    ThemeRuntime.ToUnity(_theme.Tokens.TextFlavor), ThemeRuntime.ToUnity(_theme.Tokens.AccentGoldBright));
             return view;
         }
 

@@ -152,6 +152,66 @@ namespace GenesisUI.Foundation
             return group;
         }
 
+        /// <summary>
+        /// Hides a vanilla object for as long as this skin holds it (Diego, 2026-10-02: fragments of
+        /// vanilla showed through): its group at alpha 0 and taking no pointer, pinned there at the end of
+        /// every frame — after vanilla's animators, which fade some panels' own groups back in — by a small
+        /// component of ours, removed on restore. <paramref name="interactable"/> null leaves that flag
+        /// as it is (a hidden field that must still take typing).
+        /// </summary>
+        public CanvasGroup Hidden(GameObject go, bool? interactable = false)
+        {
+            var group = Group(go);
+            if (group == null) return null;
+            group.alpha = 0f;
+            group.blocksRaycasts = false;
+            if (interactable.HasValue) group.interactable = interactable.Value;
+            if (go.GetComponent<HiddenPin>() == null) // one pin per object; removed on restore
+            {
+                var pin = go.AddComponent<HiddenPin>();
+                pin.Group = group;
+                _restore.Add(() => { if (pin != null) UnityEngine.Object.DestroyImmediate(pin); });
+            }
+            return group;
+        }
+
+        /// <summary>Keeps a hidden group hidden after anything else this frame (see <see cref="Hidden"/>).</summary>
+        private sealed class HiddenPin : MonoBehaviour
+        {
+            internal CanvasGroup Group;
+
+            private void LateUpdate()
+            {
+                if (Group == null) return;
+                if (Group.alpha != 0f) Group.alpha = 0f;
+                if (Group.blocksRaycasts) Group.blocksRaycasts = false;
+            }
+        }
+
+        /// <summary>
+        /// Stops an object from being drawn while it stays active and running: a disabled Canvas on it
+        /// (vanilla's own, its flag restored later; or one of ours, removed later). Unlike a CanvasGroup's
+        /// alpha, no animator can bring it back: vanilla's confirmation dialogs fade their group in.
+        /// </summary>
+        public void Undrawn(GameObject go)
+        {
+            if (go == null || !_recorded.Add(Key(go, 0))) return;
+            var canvas = go.GetComponent<Canvas>();
+            if (canvas != null)
+            {
+                bool enabled = canvas.enabled;
+                var existing = canvas;
+                _restore.Add(() => { if (existing != null) existing.enabled = enabled; });
+            }
+            else
+            {
+                canvas = go.AddComponent<Canvas>();
+                var added = canvas;
+                _restore.Add(() => { if (added != null) UnityEngine.Object.DestroyImmediate(added); });
+            }
+            canvas.enabled = false;
+        }
+
         /// <summary>Records a renderer's alpha multiplier (vanilla resets colours, never this).</summary>
         public CanvasRenderer RendererAlpha(CanvasRenderer renderer)
         {

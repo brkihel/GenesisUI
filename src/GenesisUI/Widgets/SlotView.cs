@@ -100,6 +100,14 @@ namespace GenesisUI.Widgets
             _corner.text = "";
         }
 
+        /// <summary>The small label in the top-left corner (a hotkey); changed only when it differs.</summary>
+        public void SetIndex(string label)
+        {
+            if (_index == null) return;
+            label = label ?? "";
+            if (_index.text != label) _index.text = label;
+        }
+
         public void SetIcon(Sprite sprite, float alpha = 1f)
         {
             if (sprite != _shownSprite)

@@ -109,7 +109,9 @@ namespace GenesisUI.Modules.Windows
             "$genesisui_filter_consumables", "$genesisui_filter_materials", "$genesisui_filter_ammo", "$genesisui_filter_misc",
         };
 
-        private static readonly string[] UtilityKeys = { "Z", "X", "C", "V" };
+        // The quick-use and action slots show their real hotkeys (SlotHotkeys, D-037), re-read when changed.
+        private readonly string[] _hotkeyText = new string[SlotHotkeys.Count];
+        private readonly BepInEx.Configuration.KeyboardShortcut[] _hotkeyShown = new BepInEx.Configuration.KeyboardShortcut[SlotHotkeys.Count];
 
         // Left column like the concept (head, chest, cape, legs), then the right column.
         private static readonly EquipSlot[] WornOrder =
@@ -140,6 +142,11 @@ namespace GenesisUI.Modules.Windows
         private GameObject _quickTitle, _utilityTitle, _specialDivider;
         private TextMeshProUGUI _slotsText, _weightText, _armorText, _filterText, _containerTitle;
         private Image _weightFill;
+        // Light effects: the slot an item is dragged over; embers from the weight bar near the limit.
+        private EdgeLight _dropLight;
+        // The character in 3D between the equipment slots (D-034).
+        private CharacterPreview _character;
+        private EmberField _weightEmbers;
         private Image _ghostIcon;
         private TextMeshProUGUI _ghostAmount;
         private RectTransform _ghost;
@@ -178,8 +185,15 @@ namespace GenesisUI.Modules.Windows
         public IReadOnlyList<string> Regions => NoRegions;
         public float RefreshRate => 0f;
 
+        /// <summary>
+        /// While this window module runs (built, not torn down or faulted): with the inventory and the
+        /// crafting windows both running, the window shell keeps vanilla's panels hidden at all times (D-038).
+        /// </summary>
+        internal static bool Running { get; private set; }
+
         public void Build(ModuleContext context)
         {
+            Running = true;
             _theme = context.Theme;
             _parts = new WindowParts(_theme);
             _containerGridRef = AccessTools.FieldRefAccess<InventoryGui, InventoryGrid>("m_containerGrid");
@@ -226,11 +240,25 @@ namespace GenesisUI.Modules.Windows
             var dragged = _dragItem(gui);
             bool container = UpdateContainer(gui, player, dragged);
             for (int i = 0; i < _gridCells.Count; i++) UpdateCell(_gridCells[i], inventory, player, dragged);
-            for (int i = 0; i < _quickCells.Count; i++) UpdateCell(_quickCells[i], inventory, player, dragged);
-            for (int i = 0; i < _utilityCells.Count; i++) UpdateCell(_utilityCells[i], inventory, player, dragged);
+            for (int i = 0; i < _quickCells.Count; i++)
+            {
+                _quickCells[i].Bind(_quickCells[i].Pos, _quickCells[i].Active, HotkeyText(i));
+                UpdateCell(_quickCells[i], inventory, player, dragged);
+            }
+            for (int i = 0; i < _utilityCells.Count; i++)
+            {
+                _utilityCells[i].Bind(_utilityCells[i].Pos, _utilityCells[i].Active, HotkeyText(4 + i));
+                UpdateCell(_utilityCells[i], inventory, player, dragged);
+            }
             if (!container)
                 foreach (var cell in _wornCells.Values) UpdateCell(cell, inventory, player, dragged);
+            if (_character != null)
+            {
+                if (container) _character.Hide();
+                else _character.Show(player, deltaSeconds);
+            }
             UpdateGhost(gui, dragged);
+            UpdateDropLight(dragged);
             if (!container) UpdateDetails(inventory);
             UpdateStats(player, inventory, layout);
 
@@ -261,7 +289,10 @@ namespace GenesisUI.Modules.Windows
 
         public void Teardown()
         {
+            Running = false;
             if (_applied) Unapply();
+            if (_character != null) _character.Destroy();
+            _character = null;
             if (_root != null) UnityEngine.Object.Destroy(_root.gameObject);
             _root = null;
             ResetState();
@@ -283,9 +314,12 @@ namespace GenesisUI.Modules.Windows
             _fade = _root.gameObject.AddComponent<CanvasGroup>();
             _fade.alpha = 0f;
             // The world dims behind the open window, so the panels read as one dark surface.
-            Ui.Image(Ui.Fill(Ui.Child(_root, "Dim")), null, new Color(0f, 0f, 0f, 0.35f));
+            Backdrop.Create(_root, _theme);
             _area = WindowCanvas.Area(_root, "Board");
             Build();
+            // Last in the board: drawn over the cells it lights.
+            _dropLight = EdgeLight.Create(_area, _theme, 10f);
+            if (_dropLight != null) { _dropLight.Pulse = 0.3f; _dropLight.Speed = 10f; }
             _root.gameObject.SetActive(false);
             return true;
         }
@@ -320,6 +354,7 @@ namespace GenesisUI.Modules.Windows
             VanillaPanels.Release("win.inventory");
             _closedFor = 0f;
             InventoryModule.SetEquipmentPanelVisible(false);
+            if (_character != null) _character.Hide();
             ShowVanillaDrag();
             _skin.Restore();
             _hovered = null;
@@ -532,6 +567,27 @@ namespace GenesisUI.Modules.Windows
             cell.Show(item, player != null && item != null && player.IsItemEquiped(item), cell == _hovered, dim ? DimAlpha : 1f);
         }
 
+        /// <summary>While an item is dragged, the slot under the pointer is outlined in light (where it lands).</summary>
+        private void UpdateDropLight(ItemDrop.ItemData dragged)
+        {
+            if (_dropLight == null) return;
+            bool drop = dragged != null && _hovered != null && _hovered.Active;
+            if (drop) _dropLight.Target = _hovered.Root;
+            _dropLight.Intensity = drop ? 1f : 0f;
+        }
+
+        /// <summary>A slot's hotkey as written for players ("Alt+Z"); built again only when the setting changes.</summary>
+        private string HotkeyText(int index)
+        {
+            var key = SlotHotkeys.Shortcut(index);
+            if (_hotkeyText[index] == null || !key.Equals(_hotkeyShown[index]))
+            {
+                _hotkeyShown[index] = key;
+                _hotkeyText[index] = KeyText.Short(key);
+            }
+            return _hotkeyText[index];
+        }
+
         private void UpdateGhost(InventoryGui gui, ItemDrop.ItemData dragged)
         {
             bool show = dragged != null;
@@ -605,6 +661,13 @@ namespace GenesisUI.Modules.Windows
                 _weightText.SetText("{0} / {1}", weight, max);
                 _weightFill.fillAmount = max > 0 ? Mathf.Clamp01((float)weight / max) : 0f;
                 _weightFill.color = weight > max ? ThemeRuntime.ToUnity(_theme.Tokens.StateDanger) : ThemeRuntime.ToUnity(_theme.Tokens.AccentGold);
+                if (_weightEmbers != null)
+                {
+                    // From 90% of the limit, a few embers rise from the bar, brighter towards it.
+                    float ratio = max > 0 ? (float)weight / max : 0f;
+                    _weightEmbers.Fill = Mathf.Clamp01(ratio);
+                    _weightEmbers.Intensity = ratio < 0.9f ? 0f : ratio > 1f ? 1.2f : Mathf.Lerp(0.35f, 1f, Mathf.InverseLerp(0.9f, 1f, ratio));
+                }
             }
 
             int armor = Mathf.RoundToInt(player.GetBodyArmor());
@@ -667,6 +730,8 @@ namespace GenesisUI.Modules.Windows
 
             BuildInventory(t);
             BuildEquipment(t);
+            // Between the two columns of worn slots, above the protection total.
+            _character = CharacterPreview.Create(WindowCanvas.At(_equipmentPanel, "Character", 112f, 78f, EquipmentW - 224f, 486f));
             _details = new Details(this, _detailsPanel);
             BuildContainer(t);
 
@@ -732,7 +797,7 @@ namespace GenesisUI.Modules.Windows
             _utilityTitle.GetComponent<TextMeshProUGUI>().text = Localize("$genesisui_utility_title").ToUpperInvariant();
             _utilityTitle.GetComponent<TextMeshProUGUI>().characterSpacing = 5f;
             for (int i = 0; i < SlotLayout.MaxUtility; i++)
-                _utilityCells.Add(MakeCell(p, "Utility " + i, UtilityX + i * UtilityPitch, SpecialY, SmallCell, UtilityKeys[i]));
+                _utilityCells.Add(MakeCell(p, "Utility " + i, UtilityX + i * UtilityPitch, SpecialY, SmallCell, null));
 
             // Weight, at the bottom like the concept.
             Label(p, "WeightLabel", FontRole.Label, 16f, t.TextFlavor, 56f, 626f, 90f, 26f, TextAlignmentOptions.Left).text =
@@ -743,6 +808,16 @@ namespace GenesisUI.Modules.Windows
             _weightFill.type = Image.Type.Filled;
             _weightFill.fillMethod = Image.FillMethod.Horizontal;
             _weightText = Label(p, "WeightValue", FontRole.Label, 17f, t.TextTitle, 600f, 626f, 170f, 26f, TextAlignmentOptions.Left);
+            _weightEmbers = EmberField.Create(WindowCanvas.At(p, "WeightEmbers", 130f, 596f, 450f, 46f), _theme);
+            if (_weightEmbers != null)
+            {
+                _weightEmbers.SetColors(new Color(1f, 0.62f, 0.32f), new Color(0.9f, 0.22f, 0.06f));
+                _weightEmbers.SetFloat("_Count", 7f);
+                _weightEmbers.SetFloat("_Speed", 0.35f);
+                _weightEmbers.SetFloat("_Glow", 0.5f);
+                _weightEmbers.SetFloat("_GlowHeight", 4f);
+                _weightEmbers.SetFloat("_EmberSize", 1.1f);
+            }
 
             BuildFilterList(p, filter);
             ShowFilter();
@@ -837,7 +912,7 @@ namespace GenesisUI.Modules.Windows
 
             cell.Amount = Label(cell.Root, "Amount", FontRole.Display, size * 0.22f, t.TextTitle, size * 0.08f, size * 0.62f, size * 0.84f, size * 0.3f, TextAlignmentOptions.BottomRight);
             cell.Quality = Label(cell.Root, "Quality", FontRole.Display, size * 0.2f, t.AccentGoldBright, size * 0.5f, size * 0.06f, size * 0.42f, size * 0.26f, TextAlignmentOptions.TopRight);
-            cell.Index = Label(cell.Root, "Index", FontRole.Label, size * 0.2f, t.TextTitle, size * 0.1f, size * 0.05f, size * 0.4f, size * 0.26f, TextAlignmentOptions.TopLeft);
+            cell.Index = Label(cell.Root, "Index", FontRole.Label, size * 0.2f, t.TextTitle, size * 0.1f, size * 0.05f, size * 0.84f, size * 0.26f, TextAlignmentOptions.TopLeft);
             if (key != null)
             {
                 var cap = WindowCanvas.At(cell.Root, "Key", 4f, 4f, 20f, 20f);
@@ -1035,6 +1110,7 @@ namespace GenesisUI.Modules.Windows
             private const int MaxRows = 8;
             private readonly InventoryWindowModule _m;
             private readonly Image _icon;
+            private readonly ItemPreview _model;
             private readonly TextMeshProUGUI _name, _type, _description, _empty;
             private readonly TextMeshProUGUI[] _labels = new TextMeshProUGUI[MaxRows];
             private readonly TextMeshProUGUI[] _values = new TextMeshProUGUI[MaxRows];
@@ -1052,6 +1128,8 @@ namespace GenesisUI.Modules.Windows
                 var body = (RectTransform)_body.transform;
                 _icon = Ui.Image(WindowCanvas.At(body, "Icon", pad, 74f, w, 150f), null, Color.white);
                 _icon.preserveAspect = true;
+                // The item turning in 3D in the icon's place (D-034); the icon stays for items without a model.
+                _model = ItemPreview.Create(WindowCanvas.At(body, "Model", pad, 66f, w, 166f));
                 _name = m.Label(body, "Name", FontRole.Display, 24f, t.AccentGoldBright, pad, 236f, w, 32f, TextAlignmentOptions.Left);
                 _type = m.Label(body, "Type", FontRole.Body, 17f, t.TextFlavor, pad, 268f, w, 22f, TextAlignmentOptions.Left);
                 _description = Ui.Text(body, "Description", m._theme, FontRole.Body, 16f, ThemeRuntime.ToUnity(t.TextBody), TextAlignmentOptions.TopLeft);
@@ -1089,6 +1167,8 @@ namespace GenesisUI.Modules.Windows
                 _body.SetActive(true);
                 var s = item.m_shared;
                 _icon.sprite = item.GetIcon();
+                bool model = _model != null && _model.Show(item);
+                _icon.enabled = !model;
                 _name.text = Localize(s.m_name).ToUpperInvariant();
                 _type.text = Localize(ItemStats.TypeToken(item));
                 _description.text = Localize(s.m_description);

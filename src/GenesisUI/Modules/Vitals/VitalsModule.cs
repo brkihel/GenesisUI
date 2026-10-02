@@ -41,6 +41,12 @@ namespace GenesisUI.Modules.Vitals
         private VitalBarView _eitrView;
         private Vector2 _appliedOffset = new Vector2(float.NaN, float.NaN);
         private float _appliedScale = float.NaN;
+        // The bars' sizes, for the anchor the pieces beside them follow (HudAnchor, D-037).
+        private Vector2 _hs, _ss, _es;
+        private const float Gap = 6f, Bottom = 22f;
+        // The eitr bar fades in and out (0..1); the pieces to its right slide with it.
+        private float _eitrShown;
+        private CanvasGroup _eitrFade;
 
         public VitalsModule(ConfigFile config)
         {
@@ -73,11 +79,15 @@ namespace GenesisUI.Modules.Vitals
             var hs = BarSize(theme, health.Frame, new Vector2(46f, 226f));
             var ss = BarSize(theme, stamina.Frame, new Vector2(38f, 196f));
             var es = BarSize(theme, eitr.Frame, new Vector2(38f, 196f));
-            const float gap = 6f, bottom = 22f;
+            const float gap = Gap, bottom = Bottom;
+            _hs = hs; _ss = ss; _es = es;
             _healthView = new VitalBarView(_group, "Health", theme, theme.Tokens.BarHealth, new Vector2(0f, bottom), hs, health);
             _staminaView = new VitalBarView(_group, "Stamina", theme, theme.Tokens.BarStamina, new Vector2(hs.x + gap, bottom), ss, stamina);
             _eitrView = new VitalBarView(_group, "Eitr", theme, theme.Tokens.BarEitr, new Vector2(hs.x + ss.x + 2f * gap, bottom), es, eitr);
 
+            _eitrFade = _eitrView.Root.gameObject.AddComponent<CanvasGroup>();
+            _eitrFade.blocksRaycasts = false;
+            _eitrShown = 0f;
             ApplyLayout();
         }
 
@@ -95,6 +105,7 @@ namespace GenesisUI.Modules.Vitals
             var player = Player.m_localPlayer;
             bool show = player != null;
             if (_group.gameObject.activeSelf != show) _group.gameObject.SetActive(show);
+            HudAnchor.Valid = show;
             if (!show) return;
 
             _health.Update(player.GetHealth(), player.GetMaxHealth(), deltaSeconds);
@@ -111,12 +122,29 @@ namespace GenesisUI.Modules.Vitals
             _eitrView.ShowValue(values);
             _healthView.Apply(_health, danger, deltaSeconds);
             _staminaView.Apply(_stamina, 0f, deltaSeconds);
-            _eitrView.SetVisible(_eitr.HasCapacity);
+            // Eitr fades in and out instead of popping; the anchor follows the same curve.
+            _eitrShown = Mathf.MoveTowards(_eitrShown, _eitr.HasCapacity ? 1f : 0f, deltaSeconds * 2.5f);
+            float eitr = Mathf.SmoothStep(0f, 1f, _eitrShown);
+            _eitrView.SetVisible(_eitrShown > 0.001f);
+            if (!Mathf.Approximately(_eitrFade.alpha, eitr)) _eitrFade.alpha = eitr;
             if (_eitr.HasCapacity) _eitrView.Apply(_eitr, 0f, deltaSeconds);
+            PublishAnchor(eitr);
+        }
+
+        /// <summary>Where the bars end (HUD root units): the food and potion columns and the slots line up after it.</summary>
+        private void PublishAnchor(float eitr)
+        {
+            float s = _appliedScale > 0f ? _appliedScale : 1f;
+            float width = _hs.x + Gap + _ss.x + eitr * (Gap + _es.x);
+            HudAnchor.Scale = s;
+            HudAnchor.Right = _appliedOffset.x + width * s;
+            HudAnchor.Bottom = _appliedOffset.y + Bottom * s;
+            HudAnchor.Top = _appliedOffset.y + (Bottom + _hs.y) * s;
         }
 
         public void Teardown()
         {
+            HudAnchor.Valid = false;
             if (_group != null) Object.Destroy(_group.gameObject);
             _group = null;
             _healthView = _staminaView = _eitrView = null;

@@ -25,11 +25,15 @@ namespace GenesisUI.Modules.Status
     [GameContract("assembly_valheim", "StatusEffect", "m_cooldownIcon")]
     [GameContract("assembly_valheim", "StatusEffect", "m_hidden")]
     [GameContract("assembly_valheim", "StatusEffect", "GetIconText")]
+    [GameContract("assembly_valheim", "StatusEffect", "GetRemaningTime")]
+    [GameContract("assembly_valheim", "StatusEffect", "m_ttl")]
     [GameContract("assembly_valheim", "Player", "GetGuardianPowerHUD")]
     [GameContract("assembly_valheim", "Character", "IsDead")]
     internal sealed class StatusModule : IUiModule
     {
         private const int MaxTiles = 24;
+        // A timed effect's last seconds: a light around its tile that dims with what is left.
+        private const float EndingSeconds = 10f;
 
         private static readonly string[] OwnedRegions = { "hud.statusEffects", "hud.guardianPower" };
 
@@ -38,6 +42,7 @@ namespace GenesisUI.Modules.Status
         private readonly ConfigEntry<int> _perRow;
         private readonly List<StatusEffect> _effects = new List<StatusEffect>(16);
         private readonly List<TileView> _tiles = new List<TileView>(MaxTiles);
+        private readonly List<EdgeLight> _ending = new List<EdgeLight>(MaxTiles);
         private RectTransform _group;
         private ModuleContext _context;
         private Vector2 _appliedOffset = new Vector2(float.NaN, float.NaN);
@@ -62,6 +67,7 @@ namespace GenesisUI.Modules.Status
             _context = context;
             _group = Ui.Place(Ui.Child(context.Root, "Status"), new Vector2(1f, 1f), Vector2.zero, new Vector2(10f, 10f));
             _tiles.Clear();
+            _ending.Clear();
             _appliedOffset = new Vector2(float.NaN, float.NaN);
         }
 
@@ -116,16 +122,23 @@ namespace GenesisUI.Modules.Status
 
             foreach (var se in _effects)
             {
-                if (se == null || se.m_hidden || se == activePower || used >= MaxTiles) continue;
+                // Potions and meads live in their own column beside the vital bars (D-037).
+                if (se == null || se.m_hidden || se == activePower || used >= MaxTiles || Food.PotionEffects.Is(se)) continue;
                 var tile = Tile(used++);
                 tile.SetIcon(se.m_icon);
                 tile.SetName(se.m_name);
                 tile.SetTimeText(se.GetIconText());
                 tile.SetBadge(false);
                 tile.SetState(glow: 0f, flash: se.m_flashIcon ? flash : 0f, dimmed: se.m_cooldownIcon);
+                SetEnding(used - 1, se);
             }
 
-            for (int i = 0; i < _tiles.Count; i++) _tiles[i].SetVisible(i < used);
+            for (int i = 0; i < _tiles.Count; i++)
+            {
+                _tiles[i].SetVisible(i < used);
+                if (i >= used && i < _ending.Count && _ending[i] != null) _ending[i].Intensity = 0f;
+            }
+            if (power != null && _ending.Count > 0 && _ending[0] != null) _ending[0].Intensity = 0f; // the power tile has its own glow
         }
 
         public void Teardown()
@@ -133,6 +146,28 @@ namespace GenesisUI.Modules.Status
             if (_group != null) Object.Destroy(_group.gameObject);
             _group = null;
             _tiles.Clear();
+            _ending.Clear();
+        }
+
+        /// <summary>The tile's light: on in a timed effect's last seconds, dimming with what is left.</summary>
+        private void SetEnding(int index, StatusEffect se)
+        {
+            while (_ending.Count < _tiles.Count)
+            {
+                var light = EdgeLight.Create(_group, _context.Theme, 10f);
+                if (light != null)
+                {
+                    light.Target = _tiles[_ending.Count].TileRect;
+                    light.Pulse = 0.35f;
+                    light.Speed = 1.5f;
+                }
+                _ending.Add(light);
+            }
+            var edge = _ending[index];
+            if (edge == null) return;
+            float left = se.m_ttl > 0f ? se.GetRemaningTime() : -1f;
+            float window = Mathf.Min(EndingSeconds, se.m_ttl * 0.3f);
+            edge.Intensity = left >= 0f && left < window ? Mathf.Lerp(0.12f, 0.9f, left / window) : 0f;
         }
 
         private TileView Tile(int index)

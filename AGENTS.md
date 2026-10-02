@@ -24,6 +24,13 @@ is unclear, ask; do not guess.
   slots, the 3D character, modded slots.
 - **Art direction:** gold only (D-023). The carved-wood style was tried and rejected; do not
   propose another style unless Diego asks.
+- **Development test (2026-10-02):** R-062 on `1.1.1-preview.1` confirms the character
+  and items appear (`report-20261002-134941.log`), with an unwanted pink outline.
+  `1.1.1-preview.2` decodes the key before edge filtering (D-039, R-063); all three
+  channels pass automated tests. Shader compilation and the Direct3D11 edge check passed
+  after Diego enabled full access; Diego approved its visual result in R-063.
+  Work is on `fix/preview3d-edge-1.1.1`. Diego authorized packaging without a prior commit
+  during the restricted session; the test package still identifies HEAD `003ad78`.
 - **Current F4.0 art source:** Diego supplied isolated UI sheets and separate background,
   health, stamina and eitr textures at
   `/home/diego/GenesisUI-Concept/GenesisUI-textures/`. `tools/art/sheets.py` cuts every HUD

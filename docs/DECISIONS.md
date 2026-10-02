@@ -366,3 +366,161 @@ behind an open window.
 shaders metálicos, delicado e detalhista mas clean", the burn as real light, and everything
 darker. He liked exactly the thin generated pieces (creature plate, minimal hotbar). A shader is
 the only way to get moving light on metal; the lit fallback keeps rule 5 (every failure local).
+
+## D-034 — Light effects and 3D previews in the UI
+
+**Decision (2026-10-02):** two additions, both visual only and both optional.
+
+1. **Light effects** (`[Theme] LightEffects`): our own UI shaders in the same bundle as D-033 —
+   `Beam` (the selected tab's lantern light; a glint on the hovered tab's rail), `Reveal` (light
+   running along a panel's frame once when its window opens), `Shine` (a recipe that has just become
+   craftable), `Backdrop` (a warm vignette with faint grain behind open windows, replacing the flat
+   veil; not gated, falls back to the veil), `Edge` (a light hugging a piece's border: drag target,
+   craft progress, food and timed effects about to end), `Ring` (a new map pin), `Embers` (near the
+   carry limit; at a forge). Each one is a quad disabled while dark; without the bundle or with the
+   option off, the UI looks as before.
+2. **3D previews** (`[Theme] Models3D`): the item turning in the inventory's details panel and the
+   player's character between the equipment slots, each drawn by a `PreviewStage`: its own camera
+   renders only a free layer into a render texture shown by a RawImage, far below the world
+   (y = -10000), lit by its own lights restricted to that layer, rendering only while shown.
+   What stands on it is a **picture only**:
+   - the item is the visual part of its drop prefab (`ItemStand.GetAttachPrefab`, what vanilla's
+     item stands show);
+   - the character is a copy of `Game.m_playerPrefab` instantiated **under an inactive parent**, so
+     no `Awake` runs; every component that is not a transform, renderer, mesh filter, LOD group,
+     light, animator, particle system or `VisEquipment` is removed **before** it is activated (so
+     `Character.s_characters` / `Player.s_players`, physics and the network never see it); its
+     `ZNetView` is kept only through activation with vanilla's own `ZNetView.m_forceDisableInit`
+     (the main menu's preview switch), and removes itself. Vanilla's `VisEquipment` dresses it from
+     its own fields, copied from the local player's `VisEquipment` four times a second.
+   Nothing networked is created, no ZDO is read or written, no game state changes (hard rule 1).
+   The world's fog is switched off only while the stage's camera renders and restored right after.
+**Why:** Diego (2026-10-02) asked for interface effects that are "delicados e elegantes" and for the
+3D item and character. A copy that is never a character is the only way to show the real equipment
+without touching the game; the inactive-parent instantiation is what makes it safe, and every part
+fails locally (the icon and the empty panel stay).
+
+## D-035 — The interface feels the world
+
+**Decision (2026-10-02):** a module `hud.climate` (`[Modules] Climate`) reads the player's weather
+and health and shows them on the interface, never changing anything:
+- the metal shader (D-033) gets two **global** shader values, zero by default (no change):
+  `_GenesisUIClimate` (frost from the frame's corners while Freezing, a little while Cold; drops
+  running down while Wet; an ember glow while Burning; fine ash in the Ashlands) and
+  `_GenesisUIDayShift` (the gold a few percent cooler at night, warmer at dawn and dusk). Globals,
+  not material properties, so the copies the UI makes of the material for stencil masks follow;
+  reset to zero on teardown;
+- `GenesisUI/Heartbeat`: below 25 % health, an ember vignette (deep red to orange) at the screen's
+  edges swells with each heartbeat (a strong beat and a softer one), 62 to 130 beats a minute as
+  health falls; behind the HUD;
+- while Rested, a faint gold halo (`GenesisUI/Edge`) around the vital bars.
+The art direction stays gold only (D-023): the weather is a skin over the same gold.
+**Why:** Diego (2026-10-02) asked for these after the light effects (D-034); they make the
+interface feel alive without adding any new piece to the screen.
+
+## D-036 — Depth, runes and sound
+
+**Decision (2026-10-02):**
+- **Parallax** (`[Windows] Parallax`): the window canvases have no perspective, so a real tilt would
+  only squash the picture; depth comes from layers instead. While a window is open the boards
+  drift against the pointer (`WindowCanvas.Parallax`, up to 5 design units at depth 1: panels 1,
+  the shell's bars 0.4, the map's chrome 0 since vanilla's map under it does not move), and the metal
+  shader's light leans towards the pointer through a global `_GenesisUILightShift` (zero by default).
+- **Runic titles**: each panel title is written in Elder Futhark first and turns into its letters in
+  under half a second when its window opens (`RuneTitle`). The runes come from **Noto Sans Runic**
+  (SIL OFL 1.1, shipped with its license in `art/fonts/`), loaded only as a fallback font after
+  Cinzel and Cormorant; without it the titles appear as before.
+- **Sound** (section `[Sound]`, the Som category of the settings window: all on/off, volume, each
+  sound on its own, applied at once): GenesisUI's own interface sounds —
+  hover on a tab, a tab chosen, a window opening, an item made — **synthesized at start-up** from
+  sine partials and a little noise (`UiSound`): no audio file, nothing from the game or another mod.
+  Played through the game's GUI mixer group (`AudioMan.m_guiMixer`), so the game's volume applies.
+  The build references the game's `UnityEngine.AudioModule` and its `netstandard` facade (ref/,
+  `tools/fill-ref.sh`).
+**Why:** Diego (2026-10-02) asked for depth, runes and sound after D-034/D-035; the interface had no
+sound at all.
+
+## D-037 — Slot hotkeys that take their key, and the HUD beside the vital bars
+
+**Decision (2026-10-02):**
+- **Hotkeys** for the 4 quick-use and 4 action (utility) slots, section `[Hotkeys]` (the player's own,
+  never synced; Settings → Inventory → Slot hotkeys, which now captures combinations: Alt, Ctrl and
+  Shift held are taken with the next key). Any key with any modifiers; defaults Alt+1…Alt+4 and
+  Alt+Z…Alt+V (Z/X/C/V alone are free for vanilla). A hotkey uses its item through
+  `Humanoid.UseItem(null, item, false)` — exactly what vanilla's hotbar keys do — under the
+  conditions of vanilla's `Player.TakeInput`.
+- **The hotkey takes its key from vanilla** while held with exactly its modifiers: postfixes on
+  `ZInput.GetButtonDown` / `GetButton` / `GetButtonUp(string)` turn the result false for the
+  buttons bound to that key (found once through `ZInput.m_buttons` and each button's Input System
+  controls whenever the set of held hotkeys changes). Alt+X uses an action slot and does not sit;
+  X alone still sits. Postfixes on the result only (PATCH-POLICY rule 1): vanilla and every other
+  patch run as before; with the slots module off or no hotkey held the patch changes nothing, and
+  its common path is two comparisons without allocation. A modifier's own vanilla action (Ctrl is
+  crouch) is not taken: that choice is the player's.
+- **HUD** (Diego, 2026-10-02): the three food slots become the quick-use row (as many as the server
+  allows), with the smaller action row above it, each cell with its hotkey (`hud.slots`); foods and
+  potion/mead effects become two vertical columns beside the vital bars (`hud.food`), potion effects
+  being those some consumable applies (`m_consumeStatusEffect`, modded potions included; they leave
+  the status tiles). Everything lines up after the bars' right edge (`HudAnchor`, published by the
+  vitals module; it moves as the eitr bar fades in or out) and glides and fades there (`Glide`).
+**Why:** the Z/X/C/V on the action slots were drawn labels with no code behind them (GAMEPLAY §1.4
+planned hotkeys and a HUD row; neither was built), and Diego wants combinations that never trigger
+the vanilla action on the same key.
+
+## D-038 — Vanilla never shows through; the 3D stage renders itself
+
+**Decision (2026-10-02, after Diego's report: a flash of vanilla on the first inventory opening,
+fragments of vanilla while moving through the windows, and the 3D previews stopping without any
+error):**
+- **Hidden means pinned.** `VanillaSkin.Hidden(go)` hides a vanilla object (its group at alpha 0, no
+  pointer) and adds a small component of ours that puts those values back at the end of every frame,
+  after vanilla's animators (some Valheim panels and dialogs fade their own group in, which undid the
+  hiding). Removed on restore. Used by every module that hides vanilla UI: inventory panels, Esc
+  menu, build menu and placement card, small dialogs, trader, map chrome.
+- **The inventory panels stay hidden for the session** while GenesisUI's inventory and crafting
+  windows both run (a hold of the window shell, `win.shell:always`), instead of being given back and
+  taken again on every opening, tab switch and closing. Either window turned off or faulted gives
+  them back (every failure local).
+- **The 3D stage renders itself.** Its camera is never left enabled; the stage calls `Camera.Render()`
+  once per frame while shown, switching its lights on and the fog off around that one call (restored
+  in a `finally`). A watchdog checks the scene, camera, culling mask and render texture every frame,
+  repairs what it finds (rebuilding the scene if it was destroyed; the previews then rebuild their
+  model) and logs each kind of problem once, so a report names the cause. The character preview tries
+  again after a failure and only gives up, with a warning, after three in a row.
+**Why:** stability first: hiding that an animation can undo, panels exposed at every hand-over, and
+a camera whose rendering nobody watched were each a class of bug, not one bug.
+
+## D-039 — The 3D stage renders in the path its model needs
+
+**Decision (2026-10-02):** the brightness fix (D-034) set the stage camera to Forward so a light's
+culling mask would hold; the item kept showing but the character vanished, without any error:
+Valheim's character and armour shaders have a deferred pass only, and a forward camera draws
+nothing of them. The stage now looks at the model's materials (`UsePathFor`): a material with a
+DEFERRED pass and no FORWARD one switches the stage to the game's deferred path. Deferred cannot
+keep a transparent background in the texture, so the stage clears to a key colour (magenta) and
+the picture uses `GenesisUI/Keyed`, a UI shader that turns the key back into transparency and takes
+it out of the edge pixels. Antialiasing is off in that path (a deferred camera cannot render into a
+multisampled texture). The lights stay switched on only around the stage's own render (D-038), so
+the world is never lit by them in either path. The choice and the shaders that made it are logged.
+**Why:** both kinds of model must show, and the choice must follow the model, not an assumption.
+**Amended (same day):** the character still did not show and some items (the hammer) did not either,
+with every material reporting a forward pass. The stage sat 10 km below the sea; Valheim's own shaders
+change what lies under the water level. It now stands at an ordinary height just above the sea
+(y = 40), beyond the world's edge (x = z = 15 000), still seen by no world camera (its layer). A few
+renders after a model is put on it, the stage logs once what it really draws (renderers, enabled,
+drawn by its camera, bounds, camera, path, shaders with their passes), so the next report settles it.
+**Amended after the 13:27 report:** the character (6/6 enabled/visible) and hammer (1/1)
+still appear empty on Diego's client. `Renderer.isVisible` proves culling accepted a renderer,
+not that the UI received usable pixels. The stage now clears to magenta and uses the existing
+`GenesisUI/Keyed` material for both forward and deferred rendering, so model colour is
+composited independently of the alpha its game shader writes. One 48×48 readback per inspected
+model logs how many pixels differ from the clear colour and how many of those have near-zero
+alpha. This is a candidate fix; R-062 must confirm the visual result on the client.
+**Amended after R-062:** Diego confirms the character and items are visible in preview.1,
+but reports a pink outline. MSAA and bilinear filtering mixed the clear colour into the
+silhouette before key removal; the distance-derived alpha is not the geometric coverage
+of that mixed sample. The keyed source now uses single-sample rendering and point filtering
+at a bounded 2x resolution (longest side at most 1024). The UI shader decodes four texel
+centres first, interpolates premultiplied colour and coverage, then converts to straight
+colour for the UI blend. Shader compilation and a GPU edge regression check precede
+packaging; R-063 verifies the real model silhouettes on Diego's client.

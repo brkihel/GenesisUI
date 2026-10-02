@@ -64,6 +64,9 @@ namespace GenesisUI.Widgets
             Ui.Place((RectTransform)_time.transform, new Vector2(0.5f, 1f), new Vector2(0f, -TileSize - 20f), new Vector2(CellWidth, 18f));
         }
 
+        /// <summary>The framed square (without the name and time under it).</summary>
+        public RectTransform TileRect => _frame.rectTransform;
+
         public void SetVisible(bool visible)
         {
             if (Root.gameObject.activeSelf != visible) Root.gameObject.SetActive(visible);

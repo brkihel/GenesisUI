@@ -37,6 +37,9 @@
     <Reference Include="UnityEngine"><HintPath>$(RefDir)/UnityEngine.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.CoreModule"><HintPath>$(RefDir)/UnityEngine.CoreModule.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.AssetBundleModule"><HintPath>$(RefDir)/UnityEngine.AssetBundleModule.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="UnityEngine.AudioModule"><HintPath>$(RefDir)/UnityEngine.AudioModule.dll</HintPath><Private>false</Private></Reference>
+    <!-- UnityEngine.AudioModule is built against netstandard 2.1: the game's own netstandard facade. -->
+    <Reference Include="netstandard"><HintPath>$(RefDir)/netstandard.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="gui_framework"><HintPath>$(RefDir)/gui_framework.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.UI"><HintPath>$(RefDir)/UnityEngine.UI.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.UIModule"><HintPath>$(RefDir)/UnityEngine.UIModule.dll</HintPath><Private>false</Private></Reference>
@@ -44,6 +47,7 @@
     <Reference Include="UnityEngine.TextRenderingModule"><HintPath>$(RefDir)/UnityEngine.TextRenderingModule.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="UnityEngine.TextCoreFontEngineModule"><HintPath>$(RefDir)/UnityEngine.TextCoreFontEngineModule.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="Unity.TextMeshPro"><HintPath>$(RefDir)/Unity.TextMeshPro.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Unity.InputSystem"><HintPath>$(RefDir)/Unity.InputSystem.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="BepInEx"><HintPath>$(RefDir)/BepInEx.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="0Harmony"><HintPath>$(RefDir)/0Harmony.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="Jotunn"><HintPath>$(RefDir)/Jotunn.dll</HintPath><Private>false</Private></Reference>

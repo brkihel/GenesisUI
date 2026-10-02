@@ -40,8 +40,11 @@ Esc menu. The main menu (FejdStartup) and the game's settings screen remain in F
 
 ## Research items (not scheduled)
 
-- 3D character figure in the inventory/character panels (render-texture camera;
-  see the ValheimSagas portrait pipeline already studied for the Armaria).
+- 3D character and item previews are implemented in the 1.1 development build (D-034/D-039).
+  R-062 confirms models appear in 1.1.1-preview.1, with a pink outline. The
+  1.1.1-preview.2 edge correction passed shader compilation and the Direct3D11 edge
+  check; Diego approved the visual result in R-063. A full stability and modpack
+  integration review follows before implementing compatibility modules.
 - Container fill level on hover before opening.
 - Live HUD preview inside Settings.
 - Painterly world-map texture (possible link with GenesisMapPrinter).

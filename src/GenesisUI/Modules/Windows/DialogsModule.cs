@@ -179,10 +179,7 @@ namespace GenesisUI.Modules.Windows
                 d.Shown = true;
                 if (vanillaVisual != null)
                 {
-                    var group = d.Skin.Group(vanillaVisual);
-                    group.alpha = 0f;
-                    group.blocksRaycasts = false;
-                    group.interactable = keepInteractable;
+                    d.Skin.Hidden(vanillaVisual, keepInteractable);
                 }
                 d.Root.gameObject.SetActive(true);
                 d.Root.SetAsLastSibling(); // above GenesisUI's windows on the same canvas

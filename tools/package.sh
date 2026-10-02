@@ -50,7 +50,7 @@ mkdir -p "$STAGE/plugins"
 
 OUTDIR=$(dirname "$DLL")
 # Fonts (OFL, with their licenses) and rendered art ship next to the DLL.
-[ "$(ls "$OUTDIR"/fonts/*.ttf 2>/dev/null | wc -l)" -eq 5 ] || { echo "expected 5 fonts in $OUTDIR/fonts (run tools/art/fonts.py)" >&2; exit 1; }
+[ "$(ls "$OUTDIR"/fonts/*.ttf 2>/dev/null | wc -l)" -eq 6 ] || { echo "expected 6 fonts in $OUTDIR/fonts (run tools/art/fonts.py; Noto Sans Runic is shipped as is)" >&2; exit 1; }
 [ -f "$OUTDIR/art/sprites.json" ] || { echo "missing $OUTDIR/art/sprites.json (run tools/art/render.py)" >&2; exit 1; }
 
 cp "$DLL" "$STAGE/plugins/"

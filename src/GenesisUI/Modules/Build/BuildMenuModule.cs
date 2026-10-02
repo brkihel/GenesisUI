@@ -216,9 +216,7 @@ namespace GenesisUI.Modules.Build
             _field = AccessTools.Field(typeof(BuildUi), "m_searchField").GetValue(ui) as TMP_InputField;
             // Vanilla's menu keeps working, unseen: its buttons are pressed through ours and its search
             // field takes the typing. Interactable stays on so that field keeps receiving keys.
-            var group = _skin.Group(ui.gameObject);
-            group.alpha = 0f;
-            group.blocksRaycasts = false;
+            _skin.Hidden(ui.gameObject, interactable: null);
             _root.gameObject.SetActive(true);
             _signature = int.MinValue;
             _detailPiece = null;
@@ -384,9 +382,7 @@ namespace GenesisUI.Modules.Build
             if (!_placing)
             {
                 _placing = true;
-                var group = _hudSkin.Group(hud.m_buildHud);
-                group.alpha = 0f;
-                group.blocksRaycasts = false; // interactable stays: vanilla's build menu search lives under it
+                _hudSkin.Hidden(hud.m_buildHud, interactable: null); // interactable stays: vanilla's build menu search lives under it
                 _placeRoot.gameObject.SetActive(true);
             }
             WindowCanvas.Fit(_placeBoard);

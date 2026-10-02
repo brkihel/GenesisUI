@@ -132,7 +132,7 @@ namespace GenesisUI.Modules.Windows
             if (_root != null) return true;
             _root = WindowCanvas.CreateRoot(store, "GenesisUI.Store", behind: false);
             if (_root == null) return false;
-            Ui.Image(Ui.Fill(Ui.Child(_root, "Dim")), null, new Color(0f, 0f, 0f, 0.35f));
+            Backdrop.Create(_root, _theme);
             _board = WindowCanvas.Area(_root, "Board");
             Draw();
             _root.gameObject.SetActive(false);
@@ -142,9 +142,7 @@ namespace GenesisUI.Modules.Windows
         private void Apply(StoreGui store)
         {
             _applied = true;
-            var group = _skin.Group(store.m_rootPanel);
-            group.alpha = 0f;
-            group.blocksRaycasts = false;
+            _skin.Hidden(store.m_rootPanel, interactable: null);
             _root.gameObject.SetActive(true);
             _elementCount = -1;
             var trader = _traderRef(store);
