@@ -39,8 +39,10 @@ is unclear, ask; do not guess.
   item models/details passed; character/cape, map, Produce, Esc flash and overlapping lore
   readers need R-066. Character now uses owned baked pose meshes; lore is a single unframed
   rune reveal. The Edge coordinate change requires a fresh source/hash/Direct3D11 shader
-  build with key-composition and border/interior probes before packaging; provenance is in
-  `art/shaders/provenance.json`. Commit first and verify ZIP contents by hash.
+  build with key-composition and border/interior probes. It passed locally in Unity 6000.0.75f1
+  (Direct3D11; key 256/512/256 and 3 edge shapes). Debug/Preview/Release passed 191 Core + 11 L2,
+  zero skips; client R-066 is pending. Provenance is in `art/shaders/provenance.json`.
+  Commit first and verify ZIP contents by hash.
   Structured providers/mod resource adapters remain F7 work; no full-modpack certification
   or production rollout is implied. Earlier uncommitted packaging was a one-session exception.
 - **Current F4.0 art source:** Diego supplied isolated UI sheets and separate background,

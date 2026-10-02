@@ -26,6 +26,9 @@
 - Core framing/rune-buffer regressions and existing L2 gates precede delivery. A fresh shader
   build must pass keyed-edge and narrow-border GPU probes before packaging. R-066 verifies the
   client visuals, transitions and restoration; no game result is claimed by the code build.
+- Fresh Unity 6000.0.75f1 build passed Direct3D11 keyed 256/512/256 and three border/interior
+  probes. Debug/Preview/Release passed 191 Core + 11 L2 tests, zero skips. Source/bundle/log
+  hashes are recorded in shader provenance; client approval remains pending.
 
 ## 1.1.2-preview.1 — Stability base before modpack integrations
 

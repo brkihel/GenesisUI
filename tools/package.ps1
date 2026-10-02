@@ -75,7 +75,7 @@ try {
         dependencies = @("ValheimModding-Jotunn-$jotunnVersion")
     } | ConvertTo-Json
     $references = [ordered]@{}
-    foreach ($reference in @('assembly_valheim', 'assembly_utils', 'assembly_guiutils', 'gui_framework', 'Jotunn')) {
+    foreach ($reference in @('assembly_valheim', 'assembly_utils', 'assembly_guiutils', 'gui_framework', 'Jotunn', 'UnityEngine.AnimationModule')) {
         $references["$reference.dll"] = (Get-FileHash -LiteralPath (Join-Path $repoRoot "ref/$reference.dll")).Hash
     }
     $fileHashes = [ordered]@{}
