@@ -1,13 +1,13 @@
 # Stability implementation tracker
 
 Authorized by Diego on 2026-10-02 after the [review](review/2026-10-02/README.md).
-Branch: `fix/stability-1.1.2`. Preserve the approved preview as the visual baseline.
+Release source: `v1.1.2` / `e378afa`; integrated into `main` with Diego's explicit authorization.
 This tracks implementation separately from client verification and modpack certification.
 
 Release target: `1.1.2`; Diego approved preview.3 and authorized packaging for his Hexium upload.
 Evidence: [R-067](testing/results/R-067-1.1.2-preview.3.md).
 R-065 received partial vanilla feedback: item details/models passed; character/cape, map,
-Produce feedback, Esc timing and overlapping lore readers require the D-041 follow-up.
+Produce feedback, Esc timing and overlapping lore readers prompted the D-041 follow-up.
 R-066 found almost everything satisfactory but rejected the baked character and exposed the
 native equip-action bar. The D-041 amendment replaces scale conversion with a visual-only
 skinned rig; D-042 mirrors action progress on item borders with reversible HUD veiling.
@@ -18,34 +18,35 @@ future mod-specific provider is certified. Detailed scope: [CAPABILITIES](CAPABI
 
 | Finding | Correction | State / verification |
 |---|---|---|
-| S-01 | Deferred recovery and isolated fault subscribers | Implemented; client checks pending |
-| S-02 | Partial Build rollback, ownership and roots | Implemented; client checks pending |
-| S-03 | Inventory prerequisite cohort and safe transition | Implemented; client checks pending |
-| S-04 | Minimal headless config sync initialization | Implemented; client checks pending |
-| S-05 | Foreign window ownership and shell dependencies | Implemented; client checks pending |
-| S-06 | Inactive visual-only dynamic preview copies | Implemented; client checks pending |
-| S-07 | Owner-scoped callback/patch failure boundaries | Implemented; client checks pending |
-| S-08 | Vanilla tooltip fallback and complete details | Implemented; client checks pending |
-| S-09 | Presentation/model generation invalidation | Implemented; client checks pending |
-| S-10 | Shared hotkey eligibility and rebinding | Implemented; client checks pending |
-| S-11 | Vanilla input semantics and gamepad projection | Implemented; client checks pending |
-| S-12 | Helper/base/signature/usage contracts | Implemented; client checks pending |
-| S-13 | Stage fault policy and explicit 2D fallback | Implemented; client checks pending |
-| S-14 | Shared exact CanvasGroup ownership/restoration | Implemented; client checks pending |
-| S-15 | Idempotent plugin/host/shared-resource shutdown | Implemented; client checks pending |
-| S-16 | Visible effect routing and overflow | Implemented; client checks pending |
-| S-17 | Stable crafting resource identity | Implemented; client checks pending |
-| S-18 | Cached paths and measured stage/frame diagnostics | Implemented; client checks pending |
-| S-19 | Redaction health and bounded report retention | Implemented; client checks pending |
-| S-20 | JSON grammar and decoded-image budget | Implemented; client checks pending |
-| S-21 | Live map appearance restoration | Implemented; client checks pending |
-| S-22 | Explicit Vitals visual anchor | Implemented; client checks pending |
-| S-23 | Invalid/stale inventory plan rejection | Implemented; client checks pending |
-| S-24 | Meaningful regression/contract gates | Implemented; client checks pending |
-| S-25 | Accurate docs and shader/package provenance | Implemented; client checks pending |
+| S-01 | Deferred recovery and isolated fault subscribers | Implemented; included in approved 1.1.2 |
+| S-02 | Partial Build rollback, ownership and roots | Implemented; included in approved 1.1.2 |
+| S-03 | Inventory prerequisite cohort and safe transition | Implemented; included in approved 1.1.2 |
+| S-04 | Minimal headless config sync initialization | Implemented; included in approved 1.1.2 |
+| S-05 | Foreign window ownership and shell dependencies | Implemented; included in approved 1.1.2 |
+| S-06 | Visual-only rig/private meshes and sanitized item copies | Implemented; included in approved 1.1.2 |
+| S-07 | Owner-scoped callback/patch failure boundaries | Implemented; included in approved 1.1.2 |
+| S-08 | Vanilla tooltip fallback and complete details | Implemented; included in approved 1.1.2 |
+| S-09 | Presentation/model generation invalidation | Implemented; included in approved 1.1.2 |
+| S-10 | Shared hotkey eligibility and rebinding | Implemented; included in approved 1.1.2 |
+| S-11 | Vanilla input semantics and gamepad projection | Implemented; included in approved 1.1.2 |
+| S-12 | Helper/base/signature/usage contracts | Implemented; included in approved 1.1.2 |
+| S-13 | Stage fault policy and explicit 2D fallback | Implemented; included in approved 1.1.2 |
+| S-14 | Shared exact CanvasGroup ownership/restoration | Implemented; included in approved 1.1.2 |
+| S-15 | Idempotent plugin/host/shared-resource shutdown | Implemented; included in approved 1.1.2 |
+| S-16 | Visible effect routing and overflow | Implemented; included in approved 1.1.2 |
+| S-17 | Stable crafting resource identity | Implemented; included in approved 1.1.2 |
+| S-18 | Cached paths and measured stage/frame diagnostics | Implemented; included in approved 1.1.2 |
+| S-19 | Redaction health and bounded report retention | Implemented; included in approved 1.1.2 |
+| S-20 | JSON grammar and decoded-image budget | Implemented; included in approved 1.1.2 |
+| S-21 | Live map appearance restoration | Implemented; included in approved 1.1.2 |
+| S-22 | Explicit Vitals visual anchor | Implemented; included in approved 1.1.2 |
+| S-23 | Invalid/stale inventory plan rejection | Implemented; included in approved 1.1.2 |
+| S-24 | Meaningful regression/contract gates | Implemented; included in approved 1.1.2 |
+| S-25 | Accurate docs and shader/package provenance | Implemented; included in approved 1.1.2 |
 
-No task in this tracker permits server/production changes or a claim of in-game verification
-without Diego's result. Focused client steps will accompany the new committed Preview package.
+Diego approved Release and repository/main synchronization. Server/production changes and
+individual scenario certification still require their own evidence. R-065/R-066/R-067 scripts
+remain available for regression runs.
 
 ## Scope and evidence
 
@@ -56,10 +57,10 @@ without Diego's result. Focused client steps will accompany the new committed Pr
 - S-24 covers recovery ordering, shared claims, stale/invalid/partially failed plans, rollback
   blocked by foreign occupants, strict data/budgets/provenance and compiled native signatures.
   Per-adapter DLL/capability tests follow when each adapter is implemented.
-- S-25 records the unchanged approved bundle against exact staged source hashes and its original
-  Unity/Direct3D11 check. Packaging validates the archive contents, references and source SHA.
-- Headless initialization, GUI lifecycle, native action hooks and the new preview C# code have
-  not been exercised in a game/server process. No server process was launched or changed.
+- S-25 records the fresh R-067 keyed/edge/orbit bundle against exact staged source hashes and
+  Unity/Direct3D11 probes. Release packaging validates archive contents, references and source SHA.
+- Diego's client feedback and approval are recorded in R-065/R-066/R-067. No agent game/server
+  process was launched or changed; headless runtime and combined modpack scenarios are not certified.
 
-Automatic gates and remaining client work are recorded in
-[R-065 result](testing/results/R-065-1.1.2-preview.1.md).
+Automatic gates, approval and remaining scenario scope are recorded in
+[R-067 result](testing/results/R-067-1.1.2-preview.3.md) and [Release 1.1.2](releases/1.1.2.md).

@@ -41,7 +41,7 @@ leaves the center clear.
 | `bar.durability` | `#6DAF50` | 2px bar under slots |
 
 These are the theme tokens (`ThemeTokens.cs`). Contrast of body text on `bg.panel`
-against WCAG AA is still to be checked when the F4 windows put long text on panels.
+against WCAG AA has not been measured for the shipped window text panels.
 
 ## 3. Typography
 
@@ -135,13 +135,13 @@ What each concept shows, and what we can build in the visual, client-only scope.
 |---|---|---|---|---|
 | 3, 4, 5, 6, 8, 10 | HUD | vertical health/stamina/eitr bars, hotbar, status tiles with timers, circular minimap frame, biome name, wind, day/time, sprint bar, boss plate with stars, interaction card | player level badge ("NÍVEL 12"): vanilla has no player level | chest card "12/24 espaços usados" before opening: container contents are not reliably on the client until opened; research item |
 | 3 | HUD (horizontal variant) | long health bar with segmented food pips | — | — |
-| 7, 9 | Inventory | grid of any size, equipment panel for vanilla slots (helmet, chest, legs, cape, utility, trinket, weapons, ammo), item details, weight bar, total armor | amulet/ring/gloves/boots slots (Jewelcrafting and similar mods) | 48 slots, "Consumo rápido", "Slots de ação": gameplay (F8). 3D character figure: research (render-texture camera), F4+ |
+| 7, 9 | Inventory | grid of any size, equipment panel for vanilla slots (helmet, chest, legs, cape, utility, trinket, weapons, ammo), item details, weight bar, total armor | amulet/ring/gloves/boots resource bindings (Jewelcrafting and similar mods) | Slot layout/quick-use/action moved to F4 (D-028); character/item 3D previews and native equip border shipped in 1.1.2 |
 | 1 | Skills ("Habilidades") | vanilla skills (including skills from mods) with level and XP bar, grouped | skill trees, points, attributes (Força, Destreza, Intelecto): no vanilla system | — |
 | 1 | Texts ("Textos") | vanilla texts/lore list with categories | — | — |
 | 2 | Settings | all GenesisUI options; live HUD preview is a later refinement | — | — |
 | 11 | World map | frame, filter pills by pin type, marker palette, legend, zoom and center buttons, "visible to others" toggle (vanilla) | custom pin categories from mods | painterly map texture (see GenesisMapPrinter later), fast travel (gameplay) |
 | 12 | Crafting / Build | recipe list, search, category pills, details, requirements with have/need, craft through vanilla, build piece browser | — | crafting from chests (gameplay, F8) |
-| 1, 2 | "Conquistas" tab | tab shell only | achievements from a provider (e.g. an achievements mod) | — |
+| 1, 2 | "Conquistas" tab | native achievement lists, unlocked progress, earned trophies and details | additional foreign achievement data beyond native lists may need a future provider | — |
 
 When a provider is missing, the element is **hidden**, not shown empty (GenesisMods
 rule: never an empty panel).

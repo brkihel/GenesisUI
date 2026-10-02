@@ -65,9 +65,12 @@ Diego approved preview.3 and authorized the Release ZIP for his Hexium upload. T
 version is already 1.1.2; selecting Release removes the preview suffix, watermark and overlay.
 F8 still writes a report. The manifest requires the checked reference Jotunn 2.30.2. Commit
 the approval/player notes, then run `tools/package.ps1 Release` and tag that source `v1.1.2`.
-Hexium publication and production rollout are separate from preparing this local archive.
+The verified archive/source/hash are in [releases/1.1.2](releases/1.1.2.md). Diego also explicitly
+authorized the agent to push main and update the repository. Publish the existing tagged ZIP on
+GitHub; documentation synchronization may follow the release tag without replacing it.
+Hexium upload and production rollout remain separate steps.
 
-## Preview delivery (current stage)
+## Preview delivery workflow
 
 1. L1–L3 green.
 2. Package built with the `Preview` configuration; watermark shows the version.
@@ -76,14 +79,13 @@ Hexium publication and production rollout are separate from preparing this local
    on any server.
 5. Results recorded in `docs/testing/results/`.
 
-## Release checklist (later stages)
+## Release publication checklist
 
-- [ ] All previews of the milestone passed their scripts.
-- [ ] Contract tests run against the game build currently in production.
-- [ ] Jötunn: compiled against the latest version; production updated to it in the
-      same rollout.
-- [ ] CHANGELOG written for players (pt-BR summary on the Hexium page).
-- [ ] Release build has no diagnostics overlay and no watermark.
+- [x] Diego approved the final preview for Release; detailed unreported scenarios are tracked separately.
+- [x] Contract tests passed against the production references recorded in R-065/R-067.
+- [x] Manifest and compiled reference agree on Jötunn 2.30.2; production upgrades need their own rollout.
+- [x] Player CHANGELOG and pt-BR Hexium notes prepared.
+- [x] Release metadata confirms no diagnostics overlay and no watermark.
 - [ ] Published on Hexium under `GenesisMods`.
 
 ## Production rollout on GenesisHeim (only after Diego's go)

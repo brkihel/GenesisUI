@@ -41,7 +41,7 @@
 
 - Exact-runtime-helper synthetic Unity GPU fixture preserves the native silhouette in nine
   scale pairs and reproduces the previous conversion error. Add four orbit GPU phases to
-  shader provenance. Automated verification is not client visual approval; focused R-067 is pending.
+  shader provenance. Diego subsequently approved preview.3 for Release 1.1.2 (R-067).
 
 ## 1.1.2-preview.2 — Vanilla visual regressions and lore reading
 
@@ -71,7 +71,8 @@
   client visuals, transitions and restoration; no game result is claimed by the code build.
 - Fresh Unity 6000.0.75f1 build passed Direct3D11 keyed 256/512/256 and three border/interior
   probes. Debug/Preview/Release passed 191 Core + 11 L2 tests, zero skips. Source/bundle/log
-  hashes are recorded in shader provenance; client approval remains pending.
+  hashes are recorded in shader provenance. R-066 subsequently rejected the baked character;
+  preview.3 replaced it with the approved visual rig.
 
 ## 1.1.2-preview.1 — Stability base before modpack integrations
 

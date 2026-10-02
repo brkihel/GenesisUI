@@ -1,8 +1,10 @@
 # GenesisUI — Roadmap
 
-Each phase ends with a Preview package and its test scripts passing on Diego's
-client. Phases do not overlap: a phase starts when the previous one's exit criteria
-are met.
+Each phase uses Preview packages and Diego's client approval. The table is the original
+phase sequence; Diego approved the combined in-game windows/map release before F5's remaining
+main-menu/native-settings work. Current baseline: [Release 1.1.2](releases/1.1.2.md).
+Original exit criteria remain visible; individual modpack/performance scenarios are not inferred
+from overall release approval. F7 providers and exact-version resource adapters remain planned.
 
 | Phase | Delivers | Exit criteria |
 |---|---|---|
@@ -10,9 +12,9 @@ are met.
 | **F1 — Foundation** ✅ | Solution and build (Debug/Preview/Release), `Foundation/`: guard and fault registry, guarded patcher, contracts + contract-test harness, input leases, log categories, rate limit, report writer; banned-API and Foundation-isolation tests; an empty plugin that loads, logs its session header and shows the watermark | L1–L3 green; R-000 (smoke) passes on Diego's client |
 | **F2 — Skeleton** ✅ | Plugin, ModuleHost, RegionRegistry, VanillaVeil (spike resolved), Scheduler, diagnostics overlay + inspector + fault injection, theme tokens, runtime fonts, first ornament atlas, **one module: vitals** (vertical health/stamina/eitr bars, concepts 4–6) | R-000, R-001, R-002 and the vitals script pass; enter/leave/re-enter, resolution and GUI scale changes clean |
 | **F3 — HUD (read-only)** ✅ | Hotbar; status tiles with timers; circular minimap frame with biome, wind, day/time; sprint bar; boss/enemy plate with stars; interaction and hover cards; active foods; notifications; key hints (incl. Jötunn hints) | Every HUD module passes its script; perf budget met with the real modpack |
-| **F4 — Inventory and crafting windows** | Window shell (top tabs, Q/E, footer hints) over vanilla's `InventoryGui`; inventory grid + equipment + item details + weight/armour; containers (chests, carts, ships, tombstones); crafting and every station (workbench, forge, cauldron, stonecutter, artisan table, black forge, galdr table…) with recipe list, requirements have/need and upgrade; skills; texts; trophies; build piece browser (hammer, hoe, cultivator) | No item lost or duplicated in the inventory/container script matrix; every station script passes |
-| **F5 — Menus** | Main menu (title, character and world selection, join/host), pause (Esc) menu, vanilla settings window, GenesisUI settings | Menu scripts pass; nothing of the vanilla flow (saves, joining, settings) behaves differently |
-| **F6 — Map** | Map frame, pin filters, marker palette, legend, zoom/center, visibility toggle | Map script passes |
+| **F4 — Inventory and crafting windows** ✅ | Window shell (top tabs, Q/E, footer hints) over vanilla's `InventoryGui`; inventory grid + equipment + item details + weight/armour; containers (chests, carts, ships, tombstones); crafting and every station (workbench, forge, cauldron, stonecutter, artisan table, black forge, galdr table…) with recipe list, requirements have/need and upgrade; skills; texts; trophies; build piece browser (hammer, hoe, cultivator) | No item lost or duplicated in the inventory/container script matrix; every station script passes |
+| **F5 — Menus (partly shipped)** | Main menu (title, character and world selection, join/host), pause (Esc) menu, vanilla settings window, GenesisUI settings | Menu scripts pass; nothing of the vanilla flow (saves, joining, settings) behaves differently |
+| **F6 — Map** ✅ | Map frame, pin filters, marker palette, legend, zoom/center, visibility toggle | Map script passes |
 | **F7 — Extension API v1 and adapters** | Public API, foreign-element dock (spike resolved), first adapters (Backpacks, Jewelcrafting, StarLevelSystem) | Adapter scripts pass with the modpack's versions; contract tests against their DLLs |
 | **F8 — Gameplay package (optional)** | Separate package with server authority. **Inventory part moved into F4, same plugin (D-028)**: admin slot count, quick/utility slots, equipment slots, sort. Left for F8: crafting from chests… | Own design docs; server validates every action |
 | **F9 — Switch-over** | GenesisUI replaces SeneaL UI on GenesisHeim | Release checklist + rollout in [RELEASE.md](RELEASE.md) |
@@ -50,7 +52,7 @@ Esc menu. The main menu (FejdStartup) and the game's settings screen remain in F
   gates precede delivery. Structured providers and Backpacks/Jewelcrafting/HipLantern adapters
   remain separate integration work; R-064 remains their future combined certification script.
 
-- 3D character and item previews are implemented in the 1.1 development build (D-034/D-039).
+- 3D character and item previews are shipped in approved Release 1.1.2 (D-034/D-039/D-041/D-042).
   R-062 confirms models appear in 1.1.1-preview.1, with a pink outline. The
   1.1.1-preview.2 edge correction passed shader compilation and the Direct3D11 edge
   check; Diego approved the visual result in R-063, committed as `2a1854a`.

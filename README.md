@@ -17,7 +17,7 @@ so your other mods keep working and any part can be switched back.
 
 </div>
 
-Release `1.1.2` is approved by Diego and packaged for his Hexium upload: stable 3D previews, equipment border progress, lore rune reveal and window/stability corrections. [Approval and verification](docs/testing/results/R-067-1.1.2-preview.3.md); [mod-specific adapters/certification](docs/CAPABILITIES.md) remain future work.
+Current release: [**1.1.2 — GitHub download**](https://github.com/brkihel/GenesisUI/releases/tag/v1.1.2), approved by Diego: corrected 3D previews, equipment border progress, lore rune reveal and stability fixes. [Release evidence](docs/releases/1.1.2.md). Hexium upload remains Diego's next step; [mod-specific adapters](docs/CAPABILITIES.md) remain future work.
 
 ---
 
@@ -29,7 +29,7 @@ Health, stamina and eitr as liquid bars that move and burn away when you take a 
 
 ## An inventory that makes sense
 
-Your bag, your equipment and the item you are looking at, side by side, with extra quick-use and utility slots. **R** sorts; **Q** and **E** switch between inventory, skills, map, crafting, achievements and settings.
+Your bag, your equipment and the item you are looking at, side by side, with 3D previews and a gold border following equipment progress. Extra quick-use and utility slots. **R** sorts; **Q** and **E** switch between inventory, skills, map, crafting, achievements and settings.
 
 <img src=".github/assets/inventory.webp" alt="GenesisUI inventory" width="100%">
 
@@ -63,6 +63,8 @@ The map in a proper frame, with pin filters and eight new markers — dungeon, o
 
 **Windows**
 - Inventory with quick-use, utility and equipment slots, sorting
+- Character/item 3D previews and native equipment progress on gold borders
+- Lore and guardian text revealed gradually from runes
 - Crafting and upgrading at every station
 - Skills and character, achievements, GenesisUI settings
 - Trader, split and variant dialogs, text input
@@ -122,8 +124,10 @@ GenesisUI is built for security and stability first: it hides vanilla's UI inste
 | [ARCHITECTURE](docs/ARCHITECTURE.md) | how it is built |
 | [ART-DIRECTION](docs/ART-DIRECTION.md) | the look |
 | [PATCH-POLICY](docs/PATCH-POLICY.md) | how we patch the game |
-| [EXTENSION-API](docs/EXTENSION-API.md) | integrating your mod |
-| [ADAPTERS](docs/ADAPTERS.md) | built-in support for other mods |
+| [DOCUMENTATION](docs/README.md) | current guides and release evidence |
+| [CAPABILITIES](docs/CAPABILITIES.md) | shipped features and remaining work |
+| [EXTENSION-API](docs/EXTENSION-API.md) | planned integration API design |
+| [ADAPTERS](docs/ADAPTERS.md) | planned exact-version resource adapters |
 | [DIAGNOSTICS](docs/DIAGNOSTICS.md) | logs, debug overlay, reports |
 | [TESTING](docs/TESTING.md) | how it is tested |
 | [RELEASE](docs/RELEASE.md) | packaging and releases |

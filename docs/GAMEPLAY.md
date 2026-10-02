@@ -1,7 +1,9 @@
 # Inventory gameplay — requirements and design (F4)
 
-Status: inventory layout shipped; `1.1.2-preview.1` adds verified resize prerequisites, position
-snapshots/journals and grow-before-move rollback under D-040. R-065 client verification is pending.
+Status: inventory layout shipped in approved Release `1.1.2`, with verified resize prerequisites,
+position snapshots/journals and grow-before-move rollback under D-040. R-067 records overall
+approval; individual save/reentry/modpack scenarios are not all reported. D-042 progress only
+reads native actions; the existing successful-equip slot journal remains unchanged.
 Independent foreign equipment/container adapters below remain planned; see CAPABILITIES.md.
 Decision: D-028 (same plugin, during F4), D-030 (patches). Plan: F4-PLAN §7.
 The first proposal (every special slot kept in rows vanilla shows, driven by "never lose an item

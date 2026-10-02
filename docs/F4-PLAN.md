@@ -1,7 +1,9 @@
 # F4 — Inventory and crafting windows: plan
 
-Status: **F4.0 done and approved (R-042). Revision 3 (§7) approved 2026-09-29 (one plugin)**
-(2026-09-28). Branch `f4-windows`. §7 supersedes §3–§5 where they differ.
+Status: **F4 shipped** in 1.0.0 and stabilized in approved Release 1.1.2 (R-067).
+This document preserves the 2026-09-28/29 plan and original `f4-windows` branch context.
+Revision 3 (§7) supersedes §3–§5 where they differ; D-032 supersedes moving/skinning vanilla
+slots. Current capabilities and remaining adapters are in [CAPABILITIES](CAPABILITIES.md).
 
 ## 1. Scope
 

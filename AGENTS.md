@@ -7,29 +7,31 @@ is unclear, ask; do not guess.
 
 ## 0. Where the project is (keep this section current)
 
-- **Phase:** F3 (HUD) approved by Diego on 2026-09-28. **F4 — inventory and crafting
-  windows** on branch `f4-windows`, plan in [docs/F4-PLAN.md](docs/F4-PLAN.md). **Approach since
+- **Phase:** HUD, inventory/crafting windows, in-game menus and map are shipped in 1.1.2.
+  F4 and F6 are delivered; F5's main menu and native settings screen remain planned, followed
+  by F7 providers/resource adapters. Original window plan: [docs/F4-PLAN.md](docs/F4-PLAN.md).
+  **Approach since
   2026-09-29: D-032** — GenesisUI draws its own windows on the concept's design board
   (`WindowCanvas.Design`, ConceptArt 9 measured in 1580 x 850 units); vanilla's `InventoryGui`
   stays open, hidden, as the engine, and our cells hand every input to the vanilla grid's own
   callbacks. D-025 ("move and dress vanilla's slots") is replaced; Diego wants fidelity to the
-  concept's assembly, not new designs. Order after F4: F5 menus, F6 map, F7 API and adapters,
-  F8 gameplay package, F9 switch-over (D-024).
-- **Version:** **1.1.2 approved for Release** (2026-10-02, after preview.3; Hexium publication pending Diego's upload). Previous public release: 1.0.1 on 2026-10-01. Release channel: no overlay, no watermark; F8 writes a report. Store page: `store/README.md` (players); `README.md`/`README.pt-BR.md` (GitHub); screenshots in `.github/assets/`. Support: GenesisMods Discord https://discord.gg/TZ785sYtgx. Before it: `0.8.0-preview.5` (button hover/press, map leftovers hidden, R-061; preview.1 preview.1 brought every in-game window: Skills, Achievements,
-  Settings, build menu + placement card, trader store, small dialogs, framed map, Esc menu) with
-  script R-058. Crafting (preview.14/15) and the inventory are approved by Diego. Shaders:
-  source in `unity/`, built on `win-teste` (Unity 6000.0.75f1 in `C:\Unity`, Personal licence in
-  the `heimdall-teste` Windows user) by `tools/shaders/build.sh` into `art/shaders/genesisui.shaders`.
-  Next: main menu (FejdStartup) and the game's settings screen, then the HUD row for quick/action
-  slots, the 3D character, modded slots.
+  concept's assembly, not new designs. Original phase sequence is D-024; actual delivery status
+  and remaining work are in [docs/ROADMAP.md](docs/ROADMAP.md).
+- **Version:** **1.1.2 Release** (2026-10-02; approved after preview.3). Tag `v1.1.2` identifies
+  binary source `e378afa`; [release record](docs/releases/1.1.2.md) includes the verified ZIP/hash.
+  GitHub Release and main synchronization are authorized; Hexium upload remains Diego's step.
+  Release has no overlay/watermark; F8 writes a report. Previous public release: 1.0.1.
+  Store page: `store/README.md`; GitHub docs: `README.md`/`README.pt-BR.md`; images:
+  `.github/assets/`; support: https://discord.gg/TZ785sYtgx. Shader sources: `unity/`, built
+  locally with Unity 6000.0.75f1 by `tools/shaders/build.ps1 -DirectEditor`; proof:
+  `art/shaders/provenance.json`. Character/items and the equip border are approved in R-067.
 - **Art direction:** gold only (D-023). The carved-wood style was tried and rejected; do not
   propose another style unless Diego asks.
 - **Stability review (2026-10-02):** approved preview committed as `2a1854a`.
   [Review](docs/review/2026-10-02/README.md), [FullPlaythrough study](docs/review/2026-10-02/MODPACK.md)
   and [implementation sequence](docs/review/2026-10-02/IMPLEMENTATION.md) record 25 findings
-  and 71 package/74 DLL metadata inventory. Repair lifecycle, inventory patch prerequisites,
-  server-config initialization, region ownership and preview sanitization before dependent
-  integrations. No fixes or modpack runtime certification are claimed by the review.
+  and 71 package/74 DLL metadata inventory. The 25 base findings are implemented in 1.1.2;
+  the immutable review records the earlier source, not current runtime certification.
 - **Development test (2026-10-02):** R-062 on `1.1.1-preview.1` confirms the character
   and items appear (`report-20261002-134941.log`), with an unwanted pink outline.
   `1.1.1-preview.2` decodes the key before edge filtering (D-039, R-063); all three
@@ -56,12 +58,13 @@ is unclear, ask; do not guess.
   contact sheet for the §2b quality gate. All 11 HUD modules use them (frames, `_shape`
   backgrounds with `[Backgrounds]` opacity, `_opening` masks, liquids). Integrated and
   approved in game (R-042). Retouched cuts: `GenesisUI-cuts/edited/<name>.png` (same size as
-  `original/`) replace the sheet cut; rerun `sheets.py` then `render.py`. Next: F4.1 window shell.
+  `original/`) replace the sheet cut; rerun `sheets.py` then `render.py`. HUD/windows are shipped;
+  future art still follows this pipeline and the review gate.
 - **HUD modules (11):** `hud.vitals`, `hud.food`, `hud.hotbar`, `hud.minimap`, `hud.boss`,
   `hud.enemy`, `hud.hover`, `hud.notice`, `hud.status`, `hud.sprint`, plus the key-hint nudge
   owned by `hud.hotbar`. Each has a `[Modules]` toggle and its own config section.
-- **Open items from Diego:** boss plate has unused space (refine later); player positioning
-  of HUD pieces (after F3, not scheduled yet); modpack performance check at the first F4 run.
+- **Open items from Diego:** boss plate spacing; user positioning of HUD pieces; remaining
+  main-menu/native-settings work; exact-version modpack resource adapters and client benchmarks.
 
 ## 1. Read first, in this order
 
@@ -315,8 +318,8 @@ insets and background mask before shipping.
    push the feature branch.
 4. When Diego reports back, record it in `docs/testing/results/R-0NN-<version>.md` (passed,
    bugs with their proven cause, feedback) before changing code. Merge the branch into `main`
-   (fast-forward) only after he approves the phase; the agent cannot push to `main`, so
-   hand him the command.
+   (fast-forward) only after he approves the phase. Pushing `main` requires Diego's explicit
+   authorization; he authorized the agent to synchronize this 1.1.2 release on 2026-10-02.
 5. Update §0 of this file, the ROADMAP note and the README status line when the state
    changes (phase, last package, open items).
 

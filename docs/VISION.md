@@ -15,8 +15,8 @@ in this order:
 
 - A **client-side** replacement for the vanilla HUD and windows: vitals,
   hotbar, status effects, minimap frame, compass, hover/interaction cards, boss and
-  enemy bars, notifications, key hints, and later the inventory, crafting, texts,
-  settings and map windows.
+  enemy bars, notifications, key hints, inventory, crafting, texts, GenesisUI settings
+  and map windows. Main-menu/native-settings replacement remains planned.
 - **Modular**: every piece is a module that can be turned off on its own, live,
   handing its screen region back to vanilla.
 - **Dynamic**: layout, theme and texts are data, not code. Grids follow whatever

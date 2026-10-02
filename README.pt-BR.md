@@ -17,7 +17,7 @@ então seus outros mods continuam funcionando e qualquer parte pode voltar a ser
 
 </div>
 
-Release `1.1.2` aprovado por Diego e empacotado para seu upload no Hexium: previews 3D corrigidos, brilho ao equipar, revelação de lore em runas e correções de janelas/estabilidade. [Aprovação e verificações](docs/testing/results/R-067-1.1.2-preview.3.md); [adaptadores dos mods/certificação](docs/CAPABILITIES.md) seguem como trabalho futuro.
+Versão atual: [**1.1.2 — baixar no GitHub**](https://github.com/brkihel/GenesisUI/releases/tag/v1.1.2), aprovada por Diego: previews 3D corrigidos, brilho ao equipar, lore em runas e correções de estabilidade. [Registro do Release](docs/releases/1.1.2.md). O upload no Hexium segue como próximo passo de Diego; [adaptadores dos mods](docs/CAPABILITIES.md) seguem como trabalho futuro.
 
 ---
 
@@ -29,7 +29,7 @@ Vida, vigor e eitr em barras de líquido que se mexem e queimam quando você lev
 
 ## Um inventário que faz sentido
 
-A sua bolsa, o seu equipamento e o item que você está olhando, lado a lado, com espaços extras de uso rápido e utilitários. **R** organiza; **Q** e **E** trocam entre inventário, habilidades, mapa, criação, conquistas e configurações.
+A sua bolsa, o seu equipamento e o item que você está olhando, lado a lado, com previews 3D e brilho dourado acompanhando o equipamento. Espaços extras de uso rápido e utilitários. **R** organiza; **Q** e **E** trocam entre inventário, habilidades, mapa, criação, conquistas e configurações.
 
 <img src=".github/assets/inventory.webp" alt="Inventário do GenesisUI" width="100%">
 
@@ -63,6 +63,8 @@ O mapa numa moldura de verdade, com filtros e oito marcadores novos — masmorra
 
 **Janelas**
 - Inventário com espaços de uso rápido, utilitários e equipamento, e organizar
+- Previews 3D do personagem/itens e progresso de equipamento na borda dourada
+- Lore e textos de guardião revelados aos poucos a partir de runas
 - Criar e aprimorar em todas as estações
 - Habilidades e personagem, conquistas, configurações do GenesisUI
 - Comerciante, dividir pilha, variantes, campo de texto

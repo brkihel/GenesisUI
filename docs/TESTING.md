@@ -1,5 +1,12 @@
 # GenesisUI — Testing
 
+## Current Release gate
+
+Release 1.1.2 is approved by Diego after preview.3. Package/source/compiled-channel evidence
+is recorded in [releases/1.1.2](releases/1.1.2.md); overall client approval is in the R-067 result.
+The scripts below remain reusable regression scenarios. Individual unreported steps and
+FullPlaythrough certification are separate from that approval.
+
 ## Character and equipment gate (1.1.2-preview.3)
 
 Run `tools/preview/verify-rig.ps1` with local Unity 6000.0.75f1. The isolated fixture compiles

@@ -1,9 +1,15 @@
 # GenesisUI — Diagnostics (debug layer and logs)
 
-## Stability preview additions (1.1.2)
+## Release 1.1.2 diagnostics
+
+Release was verified by compiled metadata: Overlay and Watermark types are absent. F8 writes
+a report; Debug/Preview still expose the full panel. [Release evidence](releases/1.1.2.md).
 
 - F8 reports identify the verified shader SHA/source/Unity/GPU-check date and stage generations,
   render counts, target sizes and estimated color/depth bytes.
+- Preview builds log visual-rig renderer/transform counts, source skin scales/bone counts/bounds
+  and native equip action transitions. The conditional hud.action reservation belongs to
+  win.inventory; those informational lines obey the channel's log threshold.
 - Frame-interval and `Camera.Render` CPU/submission p50/p95 use bounded recent samples. Frame
   intervals include the game/all mods/synchronization; neither metric isolates UI GPU cost or GC.
 - Reports use schema 2, at most 1,048,576 characters (16,384 per input line), unique millisecond/GUID
@@ -11,7 +17,7 @@
   IPv6/hostname/user-path patterns and secret config keys are covered without hiding timestamps.
 - Recovery waits for cleanup subscribers; notification failures are recorded independently.
   Partial builds and shared CanvasGroup leases are restored by owner.
-- The F8 panel scrolls through all module controls and report details, including on shorter canvases.
+- In Debug/Preview, the F8 panel scrolls through module controls/report details on shorter canvases.
 
 **Every build that is not `Release` ships the full diagnostics layer.** It is not
 optional: tests happen on Diego's client, far from the developer, so the build

@@ -68,9 +68,10 @@ GenesisUI's HUD root is a child of `m_rootObject`, so it hides with the vanilla 
   card hides while `Minimap.IsOpen()` (R-040).
 - The key hints nudge is restored and re-applied cleanly on a hotbar fault and retry (R-040 log).
 
-## Open questions
+## Runtime hierarchy evidence
 
-- Where exactly `HotkeyBar` hangs under `Hud` (we search the whole `Hud` object).
-- Whether the large map hangs under `hudroot`: the host logs it on entering the world
-  (`HUD root placed below the large map` or `large map is outside the HUD root`), first
-  answer expected from R-041.
+- HotkeyBar discovery searches live Hud descendants instead of depending on a fixed parent path.
+- The local R-066 report `report-20261002-193046-957-d86de72177674bfb8c477304e2db4ab6.log`,
+  line 318, confirms `HUD root placed below the large map ('MiniMap')` for that vanilla client.
+  The host keeps live hierarchy diagnostics for other game/profile versions; the original
+  R-041 hierarchy question is no longer a release blocker.

@@ -191,7 +191,8 @@ GenesisUI regions instead. Item details retain the full vanilla tooltip text as 
   module at the rate it declares: every frame for what follows vanilla positions
   (minimap, creature plates, notice stack), 30 Hz for bars and plates, 10–20 Hz for food,
   status, hotbar and hover. The elapsed time handed to a module is capped at 0.25 s.
-  Event-driven refreshes (e.g. `Inventory.m_onChanged`) come with the windows (F4).
+  Inventory windows read live native state each frame; the layout/gameplay module declares
+  a 10 Hz refresh. Equipment progress reads the native active action each frame.
 - Views update only when their view model changed (Core diffing).
 - Per-frame budget is enforced by measurement, not by trust (§8).
 
