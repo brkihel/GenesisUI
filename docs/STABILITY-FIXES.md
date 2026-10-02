@@ -4,13 +4,15 @@ Authorized by Diego on 2026-10-02 after the [review](review/2026-10-02/README.md
 Branch: `fix/stability-1.1.2`. Preserve the approved preview as the visual baseline.
 This tracks implementation separately from client verification and modpack certification.
 
-Target: `1.1.2-preview.3`; [focused client script R-067](testing/scripts/R-067-character-rig-and-equip-progress.md).
+Release target: `1.1.2`; Diego approved preview.3 and authorized packaging for his Hexium upload.
+Evidence: [R-067](testing/results/R-067-1.1.2-preview.3.md).
 R-065 received partial vanilla feedback: item details/models passed; character/cape, map,
 Produce feedback, Esc timing and overlapping lore readers require the D-041 follow-up.
 R-066 found almost everything satisfactory but rejected the baked character and exposed the
 native equip-action bar. The D-041 amendment replaces scale conversion with a visual-only
 skinned rig; D-042 mirrors action progress on item borders with reversible HUD veiling.
-The fixes are implemented; focused client approval and FullPlaythrough certification remain pending.
+The fixes are implemented and the preview is approved for Release. Detailed per-step results
+were not supplied; FullPlaythrough certification remains pending.
 The rows mean the base code correction is implemented, not that every acceptance scenario or
 future mod-specific provider is certified. Detailed scope: [CAPABILITIES](CAPABILITIES.md).
 

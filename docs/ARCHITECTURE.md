@@ -1,8 +1,9 @@
 # GenesisUI — Architecture
 
 Status: HUD and in-game windows shipped; the main menu and game settings remain planned.
-`1.1.2-preview.3` follows R-066's rejected character preview with an isolated visual rig and
-native equip-progress mirroring (D-041 amendment/D-042); focused client R-067 is pending.
+Release `1.1.2` is approved by Diego after preview.3's visual rig and native equip-progress
+mirroring (D-041 amendment/D-042). The Hexium package is prepared for his upload; R-067 records
+overall approval separately from detailed test scenarios and future modpack certification.
 [CAPABILITIES](CAPABILITIES.md) separates implemented and planned integration surfaces.
 
 Visual timing: Plugin reads source state after native LateUpdates (execution order 30000),

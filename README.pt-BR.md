@@ -9,7 +9,7 @@ então seus outros mods continuam funcionando e qualquer parte pode voltar a ser
 
 [**Baixar no Hexium**](https://valheim.hexium.gg/mods/GenesisMods/GenesisUI) · [**Discord**](https://discord.gg/TZ785sYtgx) · [**Read in English**](README.md)
 
-[![Versão](https://img.shields.io/badge/vers%C3%A3o-1.0.1-c8a45c?style=flat-square&labelColor=0d151d)](CHANGELOG.md)
+[![Versão](https://img.shields.io/badge/vers%C3%A3o-1.1.2-c8a45c?style=flat-square&labelColor=0d151d)](CHANGELOG.md)
 [![Valheim](https://img.shields.io/badge/Valheim-1.0.16-c8a45c?style=flat-square&labelColor=0d151d)](https://valheim.com)
 [![Jötunn](https://img.shields.io/badge/J%C3%B6tunn-2.30.2-c8a45c?style=flat-square&labelColor=0d151d)](https://github.com/Valheim-Modding/Jotunn)
 [![Licença](https://img.shields.io/badge/licen%C3%A7a-MIT-c8a45c?style=flat-square&labelColor=0d151d)](LICENSE)
@@ -17,7 +17,7 @@ então seus outros mods continuam funcionando e qualquer parte pode voltar a ser
 
 </div>
 
-Em desenvolvimento: `1.1.2-preview.3` substitui o preview rejeitado por uma cópia visual que preserva a escala e os ossos do modelo nativo, e acompanha o equipamento com brilho na borda (D-041/D-042). A validação visual pelo [R-067](docs/testing/scripts/R-067-character-rig-and-equip-progress.md) está pendente; [correções de estabilidade](docs/STABILITY-FIXES.md) e [adaptadores dos mods/certificação](docs/CAPABILITIES.md) têm etapas próprias de aprovação.
+Release `1.1.2` aprovado por Diego e empacotado para seu upload no Hexium: previews 3D corrigidos, brilho ao equipar, revelação de lore em runas e correções de janelas/estabilidade. [Aprovação e verificações](docs/testing/results/R-067-1.1.2-preview.3.md); [adaptadores dos mods/certificação](docs/CAPABILITIES.md) seguem como trabalho futuro.
 
 ---
 

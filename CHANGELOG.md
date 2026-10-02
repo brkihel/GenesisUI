@@ -1,5 +1,29 @@
 # Changelog
 
+## 1.1.2 — 2026-10-02
+
+### Added
+
+- 3D character and item previews in the inventory, with corrected transparency and gold-only
+  presentation. Equipment changes preserve the character's framing and captured cape pose.
+- A rotating gold border follows the game's equip/unequip progress. Items reach equipment
+  slots after successful native completion; the native yellow bar no longer shows behind the window.
+- Lore stones and guardian texts use one gradual rune reveal with the game's normal dismissal.
+
+### Fixed
+
+- Restore clear large-map rendering, remove the native Esc-menu opening flash and overlapping
+  lore windows, and keep the crafting progress glow on the button border.
+- Strengthen fault recovery, window ownership, reversible visibility and inventory-layout
+  validation to improve stability while preserving item identity, count and native input handling.
+- Keep the diagnostics report available with F8. Release has no diagnostic overlay or watermark.
+
+### Release approval
+
+- Diego approved `1.1.2-preview.3` and authorized the Release package for his Hexium upload.
+  Core/contracts pass in all three configurations; source-bound Unity geometry and shader GPU
+  verification is recorded in R-067. Modpack resource adapters remain separate development work.
+
 ## 1.1.2-preview.3 — Preserve character rig scale and mirror equip progress
 
 ### Fixed

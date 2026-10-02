@@ -15,7 +15,7 @@ is unclear, ask; do not guess.
   callbacks. D-025 ("move and dress vanilla's slots") is replaced; Diego wants fidelity to the
   concept's assembly, not new designs. Order after F4: F5 menus, F6 map, F7 API and adapters,
   F8 gameplay package, F9 switch-over (D-024).
-- **Version:** **1.0.1 released** (2026-10-01: player-facing store page, screenshots, Discord; 1.0.0 on 2026-09-30, Release channel: no overlay, no watermark). Store page: `store/README.md` (players); `README.md`/`README.pt-BR.md` (GitHub); screenshots in `.github/assets/`. Support: GenesisMods Discord https://discord.gg/TZ785sYtgx. Before it: `0.8.0-preview.5` (button hover/press, map leftovers hidden, R-061; preview.1 preview.1 brought every in-game window: Skills, Achievements,
+- **Version:** **1.1.2 approved for Release** (2026-10-02, after preview.3; Hexium publication pending Diego's upload). Previous public release: 1.0.1 on 2026-10-01. Release channel: no overlay, no watermark; F8 writes a report. Store page: `store/README.md` (players); `README.md`/`README.pt-BR.md` (GitHub); screenshots in `.github/assets/`. Support: GenesisMods Discord https://discord.gg/TZ785sYtgx. Before it: `0.8.0-preview.5` (button hover/press, map leftovers hidden, R-061; preview.1 preview.1 brought every in-game window: Skills, Achievements,
   Settings, build menu + placement card, trader store, small dialogs, framed map, Esc menu) with
   script R-058. Crafting (preview.14/15) and the inventory are approved by Diego. Shaders:
   source in `unity/`, built on `win-teste` (Unity 6000.0.75f1 in `C:\Unity`, Personal licence in
@@ -35,14 +35,15 @@ is unclear, ask; do not guess.
   `1.1.1-preview.2` decodes the key before edge filtering (D-039, R-063); all three
   channels pass automated tests. Diego approved its visual result in R-063 (`2a1854a`).
   He authorized the complete stability review fixes. Current branch: `fix/stability-1.1.2`,
-  target `1.1.2-preview.3`, D-040/D-041 amendment/D-042 and `docs/STABILITY-FIXES.md`.
+  Release `1.1.2` approved by Diego after preview.3, D-040/D-041 amendment/D-042 and `docs/STABILITY-FIXES.md`.
   R-066: Diego found almost everything satisfactory but rejected the baked character; its local
   report shows 294.12 m bounds against a 2 m frame. Replace it with new transforms/private meshes
   and remapped skin bones; preserve local import-scale/bind-pose relationships, no animator,
   gameplay or cloth components. Exact-helper Unity GPU fixture passed nine scale combinations
   and reproduced the old BakeMesh conversion defect. Native equip progress is mirrored as an
-  orbiting border, with a conditional HUD-bar veil and text fallback. Focused client R-067 is
-  pending. Fresh source-bound key/edge/orbit GPU checks passed in Unity 6000.0.75f1/Direct3D11
+  orbiting border, with a conditional HUD-bar veil and text fallback. R-067 records Diego's
+  overall Release approval; individual step results/new F8 were not supplied. Fresh source-bound
+  key/edge/orbit GPU checks passed in Unity 6000.0.75f1/Direct3D11
   (key 256/512/256, 3 borders, 4 orbit phases); provenance: `art/shaders/provenance.json`.
   Debug/Preview/Release passed 191 Core + 11 L2 each, zero skips; see R-067 results.
   Commit first and verify ZIP contents by hash.

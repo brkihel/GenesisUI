@@ -9,7 +9,7 @@ so your other mods keep working and any part can be switched back.
 
 [**Download on Hexium**](https://valheim.hexium.gg/mods/GenesisMods/GenesisUI) · [**Discord**](https://discord.gg/TZ785sYtgx) · [**Leia em português**](README.pt-BR.md)
 
-[![Version](https://img.shields.io/badge/version-1.0.1-c8a45c?style=flat-square&labelColor=0d151d)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.1.2-c8a45c?style=flat-square&labelColor=0d151d)](CHANGELOG.md)
 [![Valheim](https://img.shields.io/badge/Valheim-1.0.16-c8a45c?style=flat-square&labelColor=0d151d)](https://valheim.com)
 [![Jötunn](https://img.shields.io/badge/J%C3%B6tunn-2.30.2-c8a45c?style=flat-square&labelColor=0d151d)](https://github.com/Valheim-Modding/Jotunn)
 [![License](https://img.shields.io/badge/license-MIT-c8a45c?style=flat-square&labelColor=0d151d)](LICENSE)
@@ -17,7 +17,7 @@ so your other mods keep working and any part can be switched back.
 
 </div>
 
-Development: `1.1.2-preview.3` replaces the rejected baked character with a visual rig preserving native skinning scale, and mirrors equip progress on item borders (D-041 amendment/D-042). [R-067](docs/testing/scripts/R-067-character-rig-and-equip-progress.md) client verification is pending; [stability corrections](docs/STABILITY-FIXES.md) and [mod-specific adapters/certification](docs/CAPABILITIES.md) have separate acceptance scopes.
+Release `1.1.2` is approved by Diego and packaged for his Hexium upload: stable 3D previews, equipment border progress, lore rune reveal and window/stability corrections. [Approval and verification](docs/testing/results/R-067-1.1.2-preview.3.md); [mod-specific adapters/certification](docs/CAPABILITIES.md) remain future work.
 
 ---
 

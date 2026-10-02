@@ -18,7 +18,7 @@ Health, stamina and eitr as liquid bars that move and burn away when you take a 
 
 ## An inventory that makes sense
 
-Your bag, your equipment and the item you are looking at, side by side. Extra quick-use and utility slots. Press **R** to sort.
+Your bag, your equipment and the item you are looking at, side by side, with 3D previews of your character and items. A gold border follows equipment progress until the item is equipped. Extra quick-use and utility slots. Press **R** to sort.
 
 <img src="https://raw.githubusercontent.com/brkihel/GenesisUI/main/.github/assets/inventory.webp" alt="GenesisUI inventory" width="100%">
 
@@ -51,6 +51,11 @@ The hammer, hoe and cultivator menus with search and favourites; the trader; the
 
 Install with your mod manager (Hexium, Gale, r2modman). It is a client mod: install it on your game. On a server it is optional; there it only keeps everyone's inventory slot settings the same. Players without it can still join.
 
+## New in 1.1.2
+
+Corrected 3D previews and cape pose, gold equipment progress, gradual rune reveals for lore,
+a clear large map, cleaner Esc/crafting feedback and stronger interface recovery.
+
 ## Help
 
 Join the [**GenesisMods Discord**](https://discord.gg/TZ785sYtgx). Found a bug? Press **F8** in game to save a report and post it in **#valheim-bugs**.
@@ -62,7 +67,7 @@ Join the [**GenesisMods Discord**](https://discord.gg/TZ785sYtgx). Found a bug? 
 ### Toda a interface do Valheim, redesenhada em metal dourado fino
 
 - **HUD vivo:** vida, vigor e eitr em barras de líquido que se mexem e queimam quando você leva dano. Minimapa redondo com dia, hora e bioma. Placas de chefes e criaturas, comidas e efeitos fáceis de ler.
-- **Inventário que faz sentido:** a sua bolsa, o seu equipamento e o item que você está olhando, lado a lado. Espaços extras de uso rápido e utilitários. **R** organiza.
+- **Inventário que faz sentido:** a sua bolsa, o seu equipamento e o item que você está olhando, lado a lado, com previews 3D do personagem e dos itens. A borda dourada acompanha o progresso até equipar. Espaços extras de uso rápido e utilitários. **R** organiza.
 - **Criação sem adivinhar:** em qualquer bancada, forja ou caldeirão, o que dá para fazer aparece primeiro e o que falta aparece escrito. Criar e aprimorar lado a lado, com o ganho do aprimoramento antes de gastar.
 - **Mapa que vale abrir:** numa moldura de verdade, com filtros e **oito marcadores novos**: masmorra, minério, covil, base, portal, tesouro, comerciante e perigo. São salvos como marcadores normais; nada quebra se você tirar o mod.
 - **E o resto:** menus do martelo, da enxada e do cultivador com busca e favoritos; o comerciante; o menu Esc com o jogo desfocado; habilidades, conquistas e configurações em abas que você troca com **Q** e **E**.
@@ -76,3 +81,7 @@ Join the [**GenesisMods Discord**](https://discord.gg/TZ785sYtgx). Found a bug? 
 **Instalação:** pelo gerenciador de mods (Hexium, Gale, r2modman), no seu jogo. No servidor é opcional; lá ele só mantém igual para todos a configuração dos espaços do inventário. Quem não tem o mod entra normalmente.
 
 **Ajuda:** entre no [**Discord da GenesisMods**](https://discord.gg/TZ785sYtgx). Achou um bug? Aperte **F8** no jogo para salvar um relatório e poste em **#valheim-bugs**.
+
+**Novidades da 1.1.2:** previews 3D e pose da capa corrigidos; brilho ao equipar; lore revelada
+em runas; mapa grande sem escurecimento; menu Esc e criação com apresentação corrigida;
+melhorias de estabilidade e recuperação da interface.

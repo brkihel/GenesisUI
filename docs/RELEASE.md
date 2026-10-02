@@ -37,7 +37,7 @@ by `tools/package.sh`, which runs every test first. The manifest `version_number
 always `MAJOR.MINOR.PATCH`; the preview number lives in the file name, the watermark
 and the logs.
 
-On Windows, `pwsh -File tools/package.ps1 Preview` produces the same layout and
+On Windows, `pwsh -File tools/package.ps1 Preview` or `Release` produces the same layout and
 validates the completed archive. It uses restored dependencies and serial MSBuild
 to keep packaging bounded on development machines.
 
@@ -53,9 +53,19 @@ service must be accessible to that process. A failed shader build never replaces
 last working bundle. Commit the shader bundle/provenance/source changes, then run the package command.
 `-PackagePreview` is usable only when that command's commit gate is already satisfied.
 
-The stability preview reuses the byte-identical bundle approved in R-063 (`2a1854a`), with its
-2026-10-02 Direct3D11 GPU check. No new Unity process or game launch was needed to verify these
-unchanged sources and hashes. This historical GPU result does not verify new C# preview behavior.
+Release 1.1.2 reuses the exact shader bundle verified for R-067 from source `cfb8841`:
+Direct3D11 keyed composition, three border shapes and four equipment-orbit phases in Unity
+6000.0.75f1. Its source/bundle hashes remain unchanged when selecting Release; no shader rebuild
+is needed. The isolated runtime-helper fixture also verifies nine rig scale pairs. Evidence and
+Diego's overall Release approval are recorded in `docs/testing/results/R-067-1.1.2-preview.3.md`.
+
+## Approved Release 1.1.2 (2026-10-02)
+
+Diego approved preview.3 and authorized the Release ZIP for his Hexium upload. The binary
+version is already 1.1.2; selecting Release removes the preview suffix, watermark and overlay.
+F8 still writes a report. The manifest requires the checked reference Jotunn 2.30.2. Commit
+the approval/player notes, then run `tools/package.ps1 Release` and tag that source `v1.1.2`.
+Hexium publication and production rollout are separate from preparing this local archive.
 
 ## Preview delivery (current stage)
 

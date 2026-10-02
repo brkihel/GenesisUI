@@ -40,12 +40,13 @@ Esc menu. The main menu (FejdStartup) and the game's settings screen remain in F
 
 ## Research items (not scheduled)
 
-- **Authorized stabilization:** `fix/stability-1.1.2` / `1.1.2-preview.3` implements the base
+- **Approved stabilization release:** `fix/stability-1.1.2` / `1.1.2` implements the base
   corrections from all 25 findings; tracker [STABILITY-FIXES](STABILITY-FIXES.md), decision D-040,
   client regression [R-065](testing/scripts/R-065-stability-base.md). Partial vanilla feedback
   led to D-041 character/cape, map, Produce, Esc and lore fixes. R-066 rejected the baked
   character and found native equip-bar leakage; the visual rig and D-042 progress replacement
-  await [R-067](testing/scripts/R-067-character-rig-and-equip-progress.md). Core/contracts/data/package
+  received Diego's overall approval for Release in [R-067](testing/results/R-067-1.1.2-preview.3.md).
+  Hexium publication is pending Diego's upload. Core/contracts/data/package
   gates precede delivery. Structured providers and Backpacks/Jewelcrafting/HipLantern adapters
   remain separate integration work; R-064 remains their future combined certification script.
 
