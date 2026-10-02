@@ -67,6 +67,7 @@ namespace GenesisUI.Host
             // These modules skin dynamic windows themselves; the reservation prevents foreign fights.
             ["win.shell"] = Empty,
             ["win.inventory"] = Empty,
+            ["hud.action"] = Empty,
             ["win.crafting"] = Empty,
             ["win.skills"] = Empty,
             ["win.achievements"] = Empty,
@@ -83,11 +84,11 @@ namespace GenesisUI.Host
         private static readonly Dictionary<string, string[]> ForeignOwners = new Dictionary<string, string[]>(StringComparer.Ordinal)
         {
             // SeneaL UI replaces the whole HUD. While both are installed, it keeps it.
-            ["seneaL.valheim.ui"] = new[] { "hud.health", "hud.stamina", "hud.eitr", "hud.healthDecor", "hud.food", "hud.statusEffects", "hud.guardianPower", "hud.hotbar", "hud.minimap", "hud.hover", "hud.messages", "hud.boss", "hud.enemy", "win.shell", "win.inventory", "win.crafting", "win.skills", "win.achievements", "win.settings", "win.menu", "win.dialogs", "win.store", "win.map", "hud.mapmarkers", "hud.build" },
+            ["seneaL.valheim.ui"] = new[] { "hud.health", "hud.stamina", "hud.eitr", "hud.healthDecor", "hud.food", "hud.statusEffects", "hud.guardianPower", "hud.hotbar", "hud.minimap", "hud.hover", "hud.messages", "hud.boss", "hud.enemy", "win.shell", "win.inventory", "hud.action", "win.crafting", "win.skills", "win.achievements", "win.settings", "win.menu", "win.dialogs", "win.store", "win.map", "hud.mapmarkers", "hud.build" },
         };
 
         /// <summary>Regions whose vanilla objects come and go while playing: empty is normal for them.</summary>
-        private static readonly HashSet<string> Dynamic = new HashSet<string>(StringComparer.Ordinal) { "hud.boss", "hud.enemy", "win.shell", "win.inventory", "win.crafting", "win.skills", "win.achievements", "win.settings", "win.menu", "win.dialogs", "win.store", "win.map", "hud.mapmarkers", "hud.build" };
+        private static readonly HashSet<string> Dynamic = new HashSet<string>(StringComparer.Ordinal) { "hud.boss", "hud.enemy", "win.shell", "win.inventory", "hud.action", "win.crafting", "win.skills", "win.achievements", "win.settings", "win.menu", "win.dialogs", "win.store", "win.map", "hud.mapmarkers", "hud.build" };
         private static IEnumerable<GameObject> Empty() => Enumerable.Empty<GameObject>();
 
         public static bool IsDynamic(string region) => Dynamic.Contains(region);

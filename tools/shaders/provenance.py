@@ -16,6 +16,8 @@ if (record.get('schema') != 1 or record.get('requiredShader') != 'GenesisUI/Keye
 gpu = record.get('gpu', {})
 if (gpu.get('api'), gpu.get('solid'), gpu.get('edge'), gpu.get('clear')) != ('Direct3D11', 256, 512, 256):
     sys.exit('Required keyed GPU provenance missing')
+if gpu.get('orbitPhases') != 4:
+    sys.exit('Required equip orbit GPU provenance missing')
 sources = {p.relative_to(root).as_posix(): digest(p)
            for p in (root / 'unity/Assets/GenesisUI').rglob('*') if p.is_file()}
 if sources != record.get('sources'):

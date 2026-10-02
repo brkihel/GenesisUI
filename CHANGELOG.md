@@ -1,5 +1,24 @@
 # Changelog
 
+## 1.1.2-preview.3 — Preserve character rig scale and mirror equip progress
+
+### Fixed
+
+- Replace the flattened baked character with new transforms/private meshes and remapped skin
+  bones. Preserve native import scales/bind poses, blend weights and photographed cape pose;
+  no gameplay, animator or cloth components are instantiated. Keep fixed framing across swaps.
+- Mirror native equip/unequip progress as a narrow rotating gold border on the active item.
+  Hide the native action bar reversibly during replacement; use localized text/percentage if
+  the cell is offscreen or effects are off. Completion/cancellation and slot movement stay native.
+- Update border placement after module refresh, clear finished equip glows immediately and
+  include source skin scales/bounds/bone counts and equipment transitions in diagnostics logs.
+
+### Verification scope
+
+- Exact-runtime-helper synthetic Unity GPU fixture preserves the native silhouette in nine
+  scale pairs and reproduces the previous conversion error. Add four orbit GPU phases to
+  shader provenance. Automated verification is not client visual approval; focused R-067 is pending.
+
 ## 1.1.2-preview.2 — Vanilla visual regressions and lore reading
 
 ### Fixed

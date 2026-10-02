@@ -1,5 +1,14 @@
 # GenesisUI — Testing
 
+## Character and equipment gate (1.1.2-preview.3)
+
+Run `tools/preview/verify-rig.ps1` with local Unity 6000.0.75f1. The isolated fixture compiles
+the runtime helper, uses synthetic geometry only and compares original/new/old GPU silhouettes
+across nine renderer/armature scale pairs. It checks private meshes, remapped bones, pose/blend
+weights, disposal and partial-failure cleanup. Shader packaging additionally requires four
+orbit phases, narrow borders and keyed-edge checks. These are not Valheim visual approval:
+[R-067](testing/scripts/R-067-character-rig-and-equip-progress.md) is the client gate.
+
 ## Stability gate (1.1.2-preview.1)
 
 Run the solution serially in Debug, Preview and Release with a capped managed heap. Mandatory

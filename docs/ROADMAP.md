@@ -40,11 +40,12 @@ Esc menu. The main menu (FejdStartup) and the game's settings screen remain in F
 
 ## Research items (not scheduled)
 
-- **Authorized stabilization:** `fix/stability-1.1.2` / `1.1.2-preview.2` implements the base
+- **Authorized stabilization:** `fix/stability-1.1.2` / `1.1.2-preview.3` implements the base
   corrections from all 25 findings; tracker [STABILITY-FIXES](STABILITY-FIXES.md), decision D-040,
   client regression [R-065](testing/scripts/R-065-stability-base.md). Partial vanilla feedback
-  led to D-041 character/cape, map, Produce, Esc and lore fixes, pending focused
-  [R-066](testing/scripts/R-066-vanilla-visuals-and-lore.md). Core/contracts/data/package
+  led to D-041 character/cape, map, Produce, Esc and lore fixes. R-066 rejected the baked
+  character and found native equip-bar leakage; the visual rig and D-042 progress replacement
+  await [R-067](testing/scripts/R-067-character-rig-and-equip-progress.md). Core/contracts/data/package
   gates precede delivery. Structured providers and Backpacks/Jewelcrafting/HipLantern adapters
   remain separate integration work; R-064 remains their future combined certification script.
 

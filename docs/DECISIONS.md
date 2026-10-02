@@ -599,3 +599,45 @@ no additional runtime DLL or mod dependency is packaged.
 
 **Gate:** all channels' Core/L2 tests; source-bound keyed and narrow-border GPU checks; package
 hash verification; focused client R-066. Shader probes are not Valheim visual approval.
+
+**Amendment (2026-10-02, R-066 rejected / R-067):** replace the baked-mesh portion above with
+a visual-only skinned rig. The local `report-20261002-193046-957-d86de72177674bfb8c477304e2db4ab6.log`
+(preview.2, `fa5571b`, line 412) reports a 294.12 m high picture against the fixed 2 m frame,
+with all six renderers visible and supported shaders. An exact Unity 6000.0.75f1 GPU fixture
+reproduces the erroneous scale conversion: source skin and remapped copy both occupy 176 pixels,
+while the old flattened bake occupies 2/176/232 pixels for renderer scales 0.01/1/100. The
+100-scale flattened bounds are 206.404 m high despite the two-metre native silhouette.
+Source runtime import scales were not logged in preview.2; no exact 100x value is claimed for
+Diego's character. The conversion mechanism is demonstrated independently in nine scale pairs.
+
+Create transforms only, copy local relationships, privately copy meshes and preserve skinning
+bind poses. Remap every bone/root bone; reject outside references. Copy native materials,
+property blocks and blend weights. Never instantiate gameplay/animator/cloth components.
+Rebuild on the existing visual fingerprint and dispose partial/full rigs and owned meshes.
+The cape remains a static pose; native physics never runs in the stage. The same frame/camera
+persists after equipment changes. `tools/preview/verify-rig.ps1` compiles the exact runtime
+helper against synthetic meshes and checks GPU silhouette, source isolation and cleanup.
+
+## D-042 — Mirror native equipment action progress in the inventory
+
+**Context (2026-10-02):** Diego noticed the yellow native progress bar behind the inventory,
+and requested a rotating gold border until equipment completion, then the equipment-slot move.
+Metadata and individually decompiled production Player/Hud show that the HUD bar is outside
+InventoryGui's veiled panels. Player.GetActionProgress exposes the first queued action;
+native completion removes that action and calls EquipItem/UnequipItem.
+
+**Decision:** read that public progress/action once per inventory refresh. Draw a narrow orbiting
+segment on its visible item cell, advancing twice around the border with native progress.
+Paused/cancelled/completed actions follow native state. If the cell is offscreen or effects
+are disabled, show native localized action text and percentage in the inventory's lower gap.
+Hide Hud.m_actionBarRoot with an owner-scoped shared lease only during this replacement;
+restore exactly on cancel/end, close/tab change, replaced HUD, fault or teardown. Reload remains
+native. On completion/cancel retain the veil until Hud hides its potentially stale bar from
+earlier in that frame; the glow stops immediately. Log transitions and reserve hud.action for
+diagnostics/foreign ownership.
+
+Reuse the existing successful EquipItem postfix and validated position journal (D-030/D-040)
+for the slot move. Do not move early, write action data, alter timing or change item identity/count.
+No new Harmony patch or runtime dependency; foreign patches continue to execute unchanged.
+Extend Edge's GPU/source provenance gate with four orbit phases and clear-interior checks.
+Focused client gate: R-067, including cancel, queue order, close and effects-off restoration.

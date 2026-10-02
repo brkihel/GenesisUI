@@ -1,8 +1,8 @@
 # GenesisUI — Architecture
 
 Status: HUD and in-game windows shipped; the main menu and game settings remain planned.
-`1.1.2-preview.2` follows the partial vanilla R-065 feedback with visual/lore fixes (D-041),
-tracked in [STABILITY-FIXES](STABILITY-FIXES.md); client R-066 is pending.
+`1.1.2-preview.3` follows R-066's rejected character preview with an isolated visual rig and
+native equip-progress mirroring (D-041 amendment/D-042); focused client R-067 is pending.
 [CAPABILITIES](CAPABILITIES.md) separates implemented and planned integration surfaces.
 
 Visual timing: Plugin reads source state after native LateUpdates (execution order 30000),
@@ -11,8 +11,17 @@ preview stages render after those module changes (31000), shared CanvasGroup pin
 TextViewer roots are permanently active: requested animator flags select one reader. Its native
 rune/raven graphics are veiled through closing animations and restored on module teardown.
 Lore is unframed, with Core's bounded reusable rune-reveal buffer and native dismissal.
-Character previews bake the current visible pose into owned static meshes, with no copied bones,
-cloth or gameplay components; framing establishes texture aspect first and refits on resize.
+Character previews create only transforms and mesh renderers. Skinned meshes are private copies;
+every bone/root bone is remapped to the new hierarchy, retaining local scales and bind poses.
+No animator, cloth solver or gameplay component is copied. The photographed pose stays static;
+framing establishes texture aspect first and refits the same upright box on resize/equipment changes.
+The hierarchy is bounded to 4096 transforms and 128 levels; external bones fail with cleanup.
+Inventory reads Player.GetActionProgress once per refresh. An orbiting border follows the active
+equip/unequip item at execution order 31010; cancellation clears it immediately. Its native-bar
+veil persists through a stale completion frame until Hud hides the bar, preventing a flash. Native progress
+timing, queues and EquipmentRules' successful-equip positioning remain unchanged. A conditional
+hud.action lease hides the native bar only during that replacement; offscreen items/effects-off
+use a localized percentage line. Reload and closed-inventory progress stay native.
 
 ## 1. Repository layout
 

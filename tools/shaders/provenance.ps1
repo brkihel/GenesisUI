@@ -15,6 +15,7 @@ if ($Mode -eq 'Record') {
     $logText = Get-Content -LiteralPath $BuildLog -Raw
     if ($logText -match 'Shader error' -or $logText -notmatch 'Initialize engine version: 6000\.0\.75f1' -or $logText -notmatch 'GenesisUI preview key verification passed: solid 256, edge 512, clear 256 \(Direct3D11\)') { throw 'Required Unity version/keyed GPU verification missing/failed' }
     if ($logText -notmatch 'GenesisUI edge verification passed: 3 shapes, border lit, interior clear \(Direct3D11\)') { throw 'Required edge GPU verification missing/failed' }
+    if ($logText -notmatch 'GenesisUI orbit verification passed: 4 phases, moving segment, interior clear') { throw 'Required equip orbit GPU verification missing/failed' }
     if (!$SourceCommit) { $SourceCommit = (& git -C $repoRoot rev-parse HEAD).Trim() }
     if ($SourceCommit -notmatch '^[0-9a-f]{40}$') { throw 'Invalid shader source commit' }
     $stagedSources = Join-Path ([IO.Path]::GetDirectoryName([IO.Path]::GetFullPath($BuildLog))) 'Assets/GenesisUI'
@@ -26,13 +27,14 @@ if ($Mode -eq 'Record') {
         schema = 1; unityVersion = '6000.0.75f1'; target = 'StandaloneWindows64'
         requiredShader = 'GenesisUI/Keyed'; bundleSha256 = $bundleHash
         sourceCommit = $SourceCommit; sources = $sources
-        gpu = [ordered]@{ api = 'Direct3D11'; solid = 256; edge = 512; clear = 256; verifiedAtUtc = (Get-Item -LiteralPath $BuildLog).LastWriteTimeUtc.ToString('o'); logSha256 = (Get-FileHash -LiteralPath $BuildLog).Hash }
+        gpu = [ordered]@{ api = 'Direct3D11'; solid = 256; edge = 512; clear = 256; orbitPhases = 4; verifiedAtUtc = (Get-Item -LiteralPath $BuildLog).LastWriteTimeUtc.ToString('o'); logSha256 = (Get-FileHash -LiteralPath $BuildLog).Hash }
     }
     $record | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $recordPath -Encoding utf8NoBOM
 } else {
     $record = Get-Content -LiteralPath $recordPath -Raw | ConvertFrom-Json
     if ($record.schema -ne 1 -or $record.requiredShader -ne 'GenesisUI/Keyed' -or $record.unityVersion -ne '6000.0.75f1' -or $record.target -ne 'StandaloneWindows64' -or $record.bundleSha256 -ne $bundleHash) { throw 'Shader provenance/bundle mismatch' }
     if ($record.gpu.api -ne 'Direct3D11' -or $record.gpu.solid -ne 256 -or $record.gpu.edge -ne 512 -or $record.gpu.clear -ne 256) { throw 'Required keyed GPU provenance missing' }
+    if ($record.gpu.orbitPhases -ne 4) { throw 'Required equip orbit GPU provenance missing' }
     if (@($record.sources.PSObject.Properties).Count -ne $sources.Count) { throw 'Shader source inventory mismatch' }
     foreach ($relative in $sources.Keys) { if ($record.sources.$relative -ne $sources[$relative]) { throw "Shader source changed since verified build: $relative" } }
 }

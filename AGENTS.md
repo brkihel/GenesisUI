@@ -35,13 +35,15 @@ is unclear, ask; do not guess.
   `1.1.1-preview.2` decodes the key before edge filtering (D-039, R-063); all three
   channels pass automated tests. Diego approved its visual result in R-063 (`2a1854a`).
   He authorized the complete stability review fixes. Current branch: `fix/stability-1.1.2`,
-  target `1.1.2-preview.2`, D-040/D-041 and `docs/STABILITY-FIXES.md`. Partial vanilla R-065:
-  item models/details passed; character/cape, map, Produce, Esc flash and overlapping lore
-  readers need R-066. Character now uses owned baked pose meshes; lore is a single unframed
-  rune reveal. The Edge coordinate change requires a fresh source/hash/Direct3D11 shader
-  build with key-composition and border/interior probes. It passed locally in Unity 6000.0.75f1
-  (Direct3D11; key 256/512/256 and 3 edge shapes). Debug/Preview/Release passed 191 Core + 11 L2,
-  zero skips; client R-066 is pending. Provenance is in `art/shaders/provenance.json`.
+  target `1.1.2-preview.3`, D-040/D-041 amendment/D-042 and `docs/STABILITY-FIXES.md`.
+  R-066: Diego found almost everything satisfactory but rejected the baked character; its local
+  report shows 294.12 m bounds against a 2 m frame. Replace it with new transforms/private meshes
+  and remapped skin bones; preserve local import-scale/bind-pose relationships, no animator,
+  gameplay or cloth components. Exact-helper Unity GPU fixture passed nine scale combinations
+  and reproduced the old BakeMesh conversion defect. Native equip progress is mirrored as an
+  orbiting border, with a conditional HUD-bar veil and text fallback. Focused client R-067 is
+  pending. Fresh source-bound key/edge/orbit GPU build precedes packaging; provenance lives in
+  `art/shaders/provenance.json`. Debug/Preview/Release baseline: 191 Core + 11 L2, zero skips.
   Commit first and verify ZIP contents by hash.
   Structured providers/mod resource adapters remain F7 work; no full-modpack certification
   or production rollout is implied. Earlier uncommitted packaging was a one-session exception.

@@ -18,6 +18,8 @@ Shader "GenesisUI/Edge"
         _Line ("Thin line strength", Range(0, 2)) = 0.5
         _Intensity ("Intensity", Range(0, 2)) = 1
         _Progress ("Progress (1 = whole border)", Range(0, 1)) = 1
+        _Orbit ("Moving border segment", Float) = 0
+        _Phase ("Orbit phase", Float) = 0
         _Pulse ("Breathing amount", Range(0, 1)) = 0
         _PulseSpeed ("Breathing speed", Float) = 3
 
@@ -64,7 +66,7 @@ Shader "GenesisUI/Edge"
 
             fixed4 _Color;
             float4 _Rect, _ClipRect, _QuadSize;
-            float _Inset, _Radius, _Halo, _Line, _Intensity, _Progress, _Pulse, _PulseSpeed;
+            float _Inset, _Radius, _Halo, _Line, _Intensity, _Progress, _Pulse, _PulseSpeed, _Orbit, _Phase;
 
             v2f vert(appdata_t v)
             {
@@ -91,7 +93,13 @@ Shader "GenesisUI/Edge"
                 float light = halo + line_;
 
                 // Progress: clockwise from the top centre (0..1 around the border).
-                if (_Progress < 0.999)
+                if (_Orbit > 0.5)
+                {
+                    float u = frac(atan2(p.x, p.y) / 6.28318 + 1.0);
+                    float distance_ = frac(u - frac(_Phase) + 0.5) - 0.5;
+                    light *= 0.08 + 1.7 * exp(-distance_ * distance_ / (2.0 * 0.05 * 0.05));
+                }
+                else if (_Progress < 0.999)
                 {
                     float u = frac(atan2(p.x, p.y) / 6.28318 + 1.0);
                     float lit = smoothstep(_Progress + 0.006, _Progress - 0.006, u);

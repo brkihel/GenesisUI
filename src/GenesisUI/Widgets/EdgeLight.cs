@@ -12,6 +12,7 @@ namespace GenesisUI.Widgets
     /// or the shader is not loaded.
     /// </summary>
     [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Theme.ThemeRuntime), typeof(GenesisUI.Widgets.Ui), typeof(GenesisUI.Foundation.GuardedBehaviour))]
+    [DefaultExecutionOrder(31010)]
     internal sealed class EdgeLight : GenesisUI.Foundation.GuardedBehaviour
     {
         private static readonly int RectId = Shader.PropertyToID("_Rect");
@@ -19,6 +20,8 @@ namespace GenesisUI.Widgets
         private static readonly int IntensityId = Shader.PropertyToID("_Intensity");
         private static readonly int ProgressId = Shader.PropertyToID("_Progress");
         private static readonly int PulseId = Shader.PropertyToID("_Pulse");
+        private static readonly int OrbitId = Shader.PropertyToID("_Orbit");
+        private static readonly int PhaseId = Shader.PropertyToID("_Phase");
         private static readonly int ColorId = Shader.PropertyToID("_Color");
         private static readonly Vector3[] Corners = new Vector3[4];
 
@@ -26,6 +29,8 @@ namespace GenesisUI.Widgets
         private Material _material;
         private RectTransform _rt, _parent;
         private float _margin, _shown = -1f, _shownProgress = -1f, _shownPulse = -1f, _current;
+        private float _shownPhase = -1f;
+        private bool _shownOrbit;
 
         /// <summary>The piece to light (null: none). Its border is followed every lit frame.</summary>
         public RectTransform Target;
@@ -36,6 +41,9 @@ namespace GenesisUI.Widgets
         public float Progress = 1f;
         /// <summary>Breathing amount (0..1).</summary>
         public float Pulse;
+        /// <summary>Use a moving border segment; Phase follows native action progress.</summary>
+        public bool Orbit;
+        public float Phase;
 
         /// <param name="parent">Where the quad lives; drawn over its earlier siblings.</param>
         public static EdgeLight Create(RectTransform parent, ThemeRuntime theme, float margin = 12f)
@@ -61,6 +69,12 @@ namespace GenesisUI.Widgets
 
         public void SetFloat(string name, float value) => _material.SetFloat(name, value);
 
+        public void HideImmediately()
+        {
+            Target = null; Intensity = _current = 0f;
+            if (_image != null) _image.enabled = false;
+        }
+
         protected override void OnOwnerDisabled()
         {
             _current = 0f;
@@ -72,7 +86,7 @@ namespace GenesisUI.Widgets
             if (_material != null) Destroy(_material);
         }
 
-        protected override void OnOwnerUpdate()
+        protected override void OnOwnerLateUpdate()
         {
             float target = Target != null && Target.gameObject.activeInHierarchy ? Intensity : 0f;
             if (target == 0f && _current == 0f) return;
@@ -94,6 +108,8 @@ namespace GenesisUI.Widgets
             if (!Mathf.Approximately(_current, _shown)) { _shown = _current; _material.SetFloat(IntensityId, _current); }
             if (!Mathf.Approximately(Progress, _shownProgress)) { _shownProgress = Progress; _material.SetFloat(ProgressId, Progress); }
             if (!Mathf.Approximately(Pulse, _shownPulse)) { _shownPulse = Pulse; _material.SetFloat(PulseId, Pulse); }
+            if (Orbit != _shownOrbit) { _shownOrbit = Orbit; _material.SetFloat(OrbitId, Orbit ? 1f : 0f); }
+            if (!Mathf.Approximately(Phase, _shownPhase)) { _shownPhase = Phase; _material.SetFloat(PhaseId, Phase); }
         }
     }
 }

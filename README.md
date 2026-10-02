@@ -17,7 +17,7 @@ so your other mods keep working and any part can be switched back.
 
 </div>
 
-Development: `1.1.2-preview.2` follows the partial vanilla test with character/cape, map, Produce, Esc and lore fixes (D-041). [R-066](docs/testing/scripts/R-066-vanilla-visuals-and-lore.md) client verification is pending; [stability corrections](docs/STABILITY-FIXES.md) and [mod-specific adapters/certification](docs/CAPABILITIES.md) have separate acceptance scopes.
+Development: `1.1.2-preview.3` replaces the rejected baked character with a visual rig preserving native skinning scale, and mirrors equip progress on item borders (D-041 amendment/D-042). [R-067](docs/testing/scripts/R-067-character-rig-and-equip-progress.md) client verification is pending; [stability corrections](docs/STABILITY-FIXES.md) and [mod-specific adapters/certification](docs/CAPABILITIES.md) have separate acceptance scopes.
 
 ---
 

@@ -56,6 +56,11 @@ namespace GenesisUI.Modules.Windows
     [GameContract("assembly_valheim", "Humanoid", "IsItemEquiped")]
     [GameContract("assembly_valheim", "Player", "GetMaxCarryWeight")]
     [GameContract("assembly_valheim", "Player", "GetBodyArmor")]
+    [GameContract("assembly_valheim", "Player", "GetActionProgress", Parameters = new[] { "System.String&", "System.Single&", "Player+MinorActionData&" })]
+    [GameContract("assembly_valheim", "Player+MinorActionData", "m_item", Kind = ContractMemberKind.Field, Static = ContractStatic.Instance, ValueType = "ItemDrop+ItemData")]
+    [GameContract("assembly_valheim", "Player+MinorActionData", "m_type", Kind = ContractMemberKind.Field, Static = ContractStatic.Instance, ValueType = "Player+MinorActionData+ActionType")]
+    [GameContract("assembly_valheim", "Hud", "get_instance")]
+    [GameContract("assembly_valheim", "Hud", "m_actionBarRoot", Kind = ContractMemberKind.Field, Static = ContractStatic.Instance, ValueType = "UnityEngine.GameObject")]
     [GameContract("assembly_valheim", "ItemDrop+ItemData", "GetIcon")]
     [GameContract("assembly_valheim", "ItemDrop+ItemData", "GetWeight")]
     [GameContract("assembly_valheim", "ItemDrop+ItemData", "GetMaxDurability", Parameters = new string[0])]
@@ -142,6 +147,7 @@ namespace GenesisUI.Modules.Windows
         };
 
         private readonly VanillaSkin _skin = new VanillaSkin(Owner);
+        private readonly VanillaSkin _actionSkin = new VanillaSkin(Owner + ":equip-progress");
         private readonly List<ItemCell> _gridCells = new List<ItemCell>(SlotLayout.Width * VisibleRows);
         private readonly List<ItemCell> _quickCells = new List<ItemCell>(SlotLayout.MaxQuick);
         private readonly List<ItemCell> _utilityCells = new List<ItemCell>(SlotLayout.MaxUtility);
@@ -165,6 +171,15 @@ namespace GenesisUI.Modules.Windows
         private Image _weightFill;
         // Light effects: the slot an item is dragged over; embers from the weight bar near the limit.
         private EdgeLight _dropLight;
+        private EdgeLight _equipLight;
+        private TextMeshProUGUI _equipText;
+        private GameObject _hiddenActionBar;
+        private ItemDrop.ItemData _equipItem;
+        private ItemCell _equipCell;
+        private float _equipProgress;
+        private int _equipPercent = -1;
+        private string _actionName, _equipFormat;
+        private bool _otherAction;
         // The character in 3D between the equipment slots (D-034).
         private CharacterPreview _character;
         private EmberField _weightEmbers;
@@ -209,7 +224,7 @@ namespace GenesisUI.Modules.Windows
 
         public string Id => "win.inventory";
         public string NameToken => "$genesisui_module_inventory_window";
-        public IReadOnlyList<string> Regions => new[] { Id };
+        public IReadOnlyList<string> Regions => new[] { Id, "hud.action" };
         public float RefreshRate => 0f;
 
         /// <summary>
@@ -240,6 +255,7 @@ namespace GenesisUI.Modules.Windows
             bool on = gui != null && player != null && WindowShellModule.Showing && WindowShellModule.ActiveTab == WindowShellModule.Tab.Inventory;
             if (!on)
             {
+                ClearEquipProgress();
                 if (_applied)
                 {
                     // Keep vanilla hidden while our window fades out with vanilla's close animation.
@@ -268,6 +284,7 @@ namespace GenesisUI.Modules.Windows
 
             var inventory = player.GetInventory();
             var dragged = _dragItem(gui);
+            ReadEquipProgress(player);
             bool container = UpdateContainer(gui, player, dragged);
             for (int i = 0; i < _gridCells.Count; i++) UpdateCell(_gridCells[i], inventory, player, dragged);
             for (int i = 0; i < _quickCells.Count; i++)
@@ -282,6 +299,7 @@ namespace GenesisUI.Modules.Windows
             }
             if (!container)
                 foreach (var cell in _wornCells.Values) UpdateCell(cell, inventory, player, dragged);
+            ShowEquipProgress();
             if (_character != null)
             {
                 if (container) _character.Hide();
@@ -324,6 +342,7 @@ namespace GenesisUI.Modules.Windows
         {
             if (_live == this) _live = null;
             Running = false;
+            ClearEquipProgress();
             if (_applied) Unapply();
             if (_character != null) _character.Destroy();
             _character = null;
@@ -354,6 +373,12 @@ namespace GenesisUI.Modules.Windows
             // Last in the board: drawn over the cells it lights.
             _dropLight = EdgeLight.Create(_area, _theme, 10f);
             if (_dropLight != null) { _dropLight.Pulse = 0.3f; _dropLight.Speed = 10f; }
+            _equipLight = EdgeLight.Create(_area, _theme, 6f);
+            if (_equipLight != null)
+            {
+                _equipLight.Orbit = true; _equipLight.Speed = 20f;
+                _equipLight.SetFloat("_Halo", 1.8f); _equipLight.SetFloat("_Inset", 2f);
+            }
             _root.gameObject.SetActive(false);
             return true;
         }
@@ -385,6 +410,7 @@ namespace GenesisUI.Modules.Windows
         private void Unapply()
         {
             _applied = false;
+            ClearEquipProgress();
             VanillaPanels.Release("win.inventory");
             _closedFor = 0f;
             InventoryModule.SetEquipmentPanelVisible(false);
@@ -628,7 +654,81 @@ namespace GenesisUI.Modules.Windows
         {
             var item = cell.Active && inventory != null ? inventory.GetItemAt(cell.Pos.x, cell.Pos.y) : null;
             bool dim = item != null && (item == dragged || (_filter != Filter.All && !Matches(item, _filter)));
-            cell.Show(item, player != null && item != null && player.IsItemEquiped(item), cell == _hovered || cell == _focused, dim ? DimAlpha : 1f);
+            bool busy = item != null && item == _equipItem && cell.Root.gameObject.activeInHierarchy;
+            if (busy) _equipCell = cell;
+            cell.Show(item, player != null && item != null && player.IsItemEquiped(item), cell == _hovered || cell == _focused || (busy && _equipLight == null), dim ? DimAlpha : 1f);
+        }
+
+        // Native owns the queue, pause/cancel timing and completion. This window only reads it.
+        private void ReadEquipProgress(Player player)
+        {
+            _equipCell = null;
+            player.GetActionProgress(out var name, out var progress, out var action);
+            var item = action != null && (action.m_type == Player.MinorActionData.ActionType.Equip || action.m_type == Player.MinorActionData.ActionType.Unequip) ? action.m_item : null;
+            _otherAction = action != null && item == null;
+            if (item != _equipItem)
+            {
+                if (_equipLight != null) _equipLight.HideImmediately();
+                GenesisLog.Info("Module:win.inventory", item == null ? "native equip progress ended/cancelled; replacement cleared" : "native equip progress started: " + item.m_shared.m_name);
+                _equipItem = item;
+            }
+            _equipProgress = float.IsNaN(progress) || float.IsInfinity(progress) ? 0f : Mathf.Clamp01(progress);
+            if (_actionName != name)
+            {
+                _actionName = name;
+                _equipFormat = item != null ? Localize(name ?? item.m_shared.m_name) + " {0:0}%" : null;
+                _equipPercent = -1;
+            }
+        }
+
+        private void ShowEquipProgress()
+        {
+            if (_equipItem == null)
+            {
+                if (_equipLight != null) _equipLight.HideImmediately();
+                _equipText.enabled = false;
+                // Hud.Update may have read the queue before Player completed it this frame.
+                // Keep the last veil until native hides that stale bar, avoiding a completion flash.
+                if (_otherAction || _hiddenActionBar == null || !_hiddenActionBar.activeSelf)
+                {
+                    _actionSkin.Restore(); _hiddenActionBar = null;
+                }
+                return;
+            }
+            bool fallback = _equipCell == null || _equipLight == null;
+            if (_equipLight != null)
+            {
+                if (_equipCell != null)
+                {
+                    _equipLight.Target = _equipCell.Root;
+                    _equipLight.Intensity = 0.7f;
+                    _equipLight.Phase = _equipProgress * 2f;
+                }
+                else _equipLight.HideImmediately();
+            }
+            _equipText.enabled = fallback;
+            int percent = Mathf.RoundToInt(_equipProgress * 100f);
+            if (fallback && percent != _equipPercent && _equipFormat != null)
+            {
+                _equipPercent = percent; _equipText.SetText(_equipFormat, percent);
+            }
+            var hud = Hud.instance;
+            var bar = hud != null ? hud.m_actionBarRoot : null;
+            if (bar != _hiddenActionBar)
+            {
+                _actionSkin.Restore(); _hiddenActionBar = bar;
+            }
+            if (bar != null) _actionSkin.Hidden(bar);
+        }
+
+        private void ClearEquipProgress()
+        {
+            if (_equipLight != null) _equipLight.HideImmediately();
+            if (_equipText != null) _equipText.enabled = false;
+            _actionSkin.Restore();
+            _hiddenActionBar = null; _equipCell = null; _equipItem = null;
+            _actionName = _equipFormat = null; _equipPercent = -1;
+            _otherAction = false;
         }
 
         /// <summary>While an item is dragged, the slot under the pointer is outlined in light (where it lands).</summary>
@@ -889,6 +989,8 @@ namespace GenesisUI.Modules.Windows
                 _utilityCells.Add(MakeCell(p, "Utility " + i, UtilityX + i * UtilityPitch, SpecialY, SmallCell, null));
 
             // Weight, at the bottom like the concept.
+            _equipText = Label(p, "EquipProgress", FontRole.Label, 15f, t.AccentGoldBright, 56f, 592f, 700f, 28f, TextAlignmentOptions.Left);
+            _equipText.enabled = false;
             Label(p, "WeightLabel", FontRole.Label, 16f, t.TextFlavor, 56f, 626f, 90f, 26f, TextAlignmentOptions.Left).text =
                 Localize("$genesisui_weight").ToUpperInvariant();
             var track = WindowCanvas.At(p, "WeightTrack", 130f, 636f, 450f, 6f);

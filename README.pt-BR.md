@@ -17,7 +17,7 @@ então seus outros mods continuam funcionando e qualquer parte pode voltar a ser
 
 </div>
 
-Em desenvolvimento: `1.1.2-preview.2` corrige personagem/capa, mapa, Produzir, Esc e leitura de lore após o teste parcial vanilla (D-041). A validação visual pelo [R-066](docs/testing/scripts/R-066-vanilla-visuals-and-lore.md) está pendente; [correções de estabilidade](docs/STABILITY-FIXES.md) e [adaptadores dos mods/certificação](docs/CAPABILITIES.md) têm etapas próprias de aprovação.
+Em desenvolvimento: `1.1.2-preview.3` substitui o preview rejeitado por uma cópia visual que preserva a escala e os ossos do modelo nativo, e acompanha o equipamento com brilho na borda (D-041/D-042). A validação visual pelo [R-067](docs/testing/scripts/R-067-character-rig-and-equip-progress.md) está pendente; [correções de estabilidade](docs/STABILITY-FIXES.md) e [adaptadores dos mods/certificação](docs/CAPABILITIES.md) têm etapas próprias de aprovação.
 
 ---
 

@@ -51,6 +51,7 @@ namespace GenesisUI
                     target.Release(); UnityEngine.Object.DestroyImmediate(target); target = null;
                 }
                 Debug.Log("GenesisUI edge verification passed: 3 shapes, border lit, interior clear (" + SystemInfo.graphicsDeviceType + ")");
+                VerifyOrbit(material);
             }
             finally
             {
@@ -59,6 +60,36 @@ namespace GenesisUI
                 if (target != null) { target.Release(); UnityEngine.Object.DestroyImmediate(target); }
                 UnityEngine.Object.DestroyImmediate(material);
             }
+        }
+
+        private static void VerifyOrbit(Material material)
+        {
+            material.SetVector("_Rect", new Vector4(-40f, -40f, 40f, 40f));
+            material.SetVector("_QuadSize", new Vector4(100f, 100f, 0f, 0f));
+            material.SetFloat("_Orbit", 1f);
+            var target = new RenderTexture(200, 200, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear);
+            var pixels = new Texture2D(200, 200, TextureFormat.RGBA32, false, true);
+            try
+            {
+                target.Create();
+                for (int phase = 0; phase < 4; phase++)
+                {
+                    material.SetFloat("_Phase", phase * 0.25f);
+                    RenderTexture.active = target; GL.Clear(false, true, Color.clear);
+                    Graphics.Blit(Texture2D.whiteTexture, target, material);
+                    pixels.ReadPixels(new Rect(0, 0, 200, 200), 0, 0); pixels.Apply();
+                    var points = new[] { new Vector2Int(100, 176), new Vector2Int(176, 100), new Vector2Int(100, 24), new Vector2Int(24, 100) };
+                    if (pixels.GetPixel(100, 100).r > 0.01f) throw new Exception("Orbit lights item interior");
+                    for (int i = 0; i < points.Length; i++)
+                    {
+                        float red = pixels.GetPixel(points[i].x, points[i].y).r;
+                        if (i == phase ? red < 0.35f : red > 0.12f) throw new Exception("Orbit segment at wrong edge: phase " + phase + ", edge " + i);
+                    }
+                    if (phase == 1) File.WriteAllBytes("Bundles/orbit-verification.png", pixels.EncodeToPNG());
+                }
+                Debug.Log("GenesisUI orbit verification passed: 4 phases, moving segment, interior clear");
+            }
+            finally { target.Release(); UnityEngine.Object.DestroyImmediate(target); UnityEngine.Object.DestroyImmediate(pixels); }
         }
     }
 }

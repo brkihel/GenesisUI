@@ -4,7 +4,7 @@
 
 Logical dynamic reservations now cover `win.shell`, `win.inventory`, `win.crafting`, `win.skills`,
 `win.achievements`, `win.settings`, `win.menu`, `win.dialogs`, `win.store`, `win.map`, `hud.mapmarkers`
-and `hud.build`. Their resolvers are empty because the existing views acquire/skin live objects
+and `hud.build`, plus conditional `hud.action`. Their resolvers are empty because the existing views acquire/skin live objects
 on demand. Known SeneaL ownership blocks these regions conservatively, including the shell;
 inventory/crafting/skills/achievements/settings wait for an active shell before hiding vanilla.
 
@@ -26,6 +26,7 @@ A region is a named piece of the vanilla UI. One owner at a time
 
 | Region | Vanilla object | Owner module | Veil | Known interplay | Foreign owners |
 |---|---|---|---|---|---|
+| `hud.action` | `Hud.m_actionBarRoot` | `win.inventory` | Shared CanvasGroup lease only while the open inventory mirrors an equip/unequip action | Native `Hud.UpdateActionProgress` keeps running; restore on completion, cancellation, tab/close, fault or teardown; reload remains native | SeneaL UI |
 | `hud.health` | `Hud.m_healthBarRoot` | `hud.vitals` | CanvasGroup alpha 0 | `m_healthAnimator` may animate it | SeneaL UI |
 | `hud.stamina` | `Hud.m_staminaBar2Root` | `hud.vitals` | CanvasGroup alpha 0, re-applied each LateUpdate | `m_staminaAnimator` "Visible" hides it 1 s after full; vanilla moves it up while building or sailing | SeneaL UI |
 | `hud.eitr` | `Hud.m_eitrBarRoot` | `hud.vitals` | CanvasGroup alpha 0 | `m_eitrAnimator` | SeneaL UI |
