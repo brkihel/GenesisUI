@@ -216,7 +216,7 @@ namespace GenesisUI.Host
             GenesisLog.Info("Host", "HUD gone (scene change); modules wait for the next one");
         }
 
-        private static bool NeedsShell(ModuleEntry entry) => entry.Module.Id == "win.inventory" || entry.Module.Id == "win.crafting" || entry.Module.Id == "win.skills" || entry.Module.Id == "win.achievements" || entry.Module.Id == "win.settings";
+        private static bool NeedsShell(ModuleEntry entry) => entry.Module.Id == "win.inventory" || entry.Module.Id == "win.crafting" || entry.Module.Id == "win.skills" || entry.Module.Id == "win.achievements" || entry.Module.Id == "win.settings" || entry.Module.Id == "win.tooltips";
         internal static bool IsActive(string id)
         {
             foreach (var entry in Entries) if (entry.Module.Id == id) return entry.State == ModuleState.Active && !Guard.IsTripped(entry.Owner);

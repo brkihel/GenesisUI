@@ -262,5 +262,16 @@
   "genesisui_marker_portal": "Portal",
   "genesisui_marker_treasure": "Treasure",
   "genesisui_marker_trader": "Trader",
-  "genesisui_marker_danger": "Danger"
+  "genesisui_marker_danger": "Danger",
+  "genesisui_module_backpacks": "Backpacks integration",
+  "genesisui_module_adventure_backpacks": "Adventure Backpacks integration",
+  "genesisui_module_jewelcrafting": "Jewelcrafting integration",
+  "genesisui_module_hiplantern": "Hip Lantern integration",
+  "genesisui_module_item_tooltips": "Item tooltips",
+  "genesisui_slot_wallet": "Coins",
+  "genesisui_slot_key_one": "Key I",
+  "genesisui_slot_key_two": "Key II",
+  "genesisui_sockets": "Sockets",
+  "genesisui_insert_gems": "Insert gems",
+  "genesisui_close": "Close"
 }

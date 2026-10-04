@@ -1,5 +1,6 @@
 # GenesisUI — Roadmap
 
+Development 2026-10-04: `1.2.0-preview.1` starts F7 inventory adapters, coin/key pockets, native tooltips and rested-frame correction (D-043/D-044). [R-069](testing/scripts/R-069-modular-inventory.md) on Gale `GenesisHeimLocal` awaits client results; public providers and remaining menu/resource work continue to be planned.
 Each phase uses Preview packages and Diego's client approval. The table is the original
 phase sequence; Diego approved the combined in-game windows/map release before F5's remaining
 main-menu/native-settings work. Current baseline: [Release 1.1.2](releases/1.1.2.md).

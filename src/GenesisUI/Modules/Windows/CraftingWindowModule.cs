@@ -87,6 +87,7 @@ namespace GenesisUI.Modules.Windows
     [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Host.ModuleContext), typeof(GenesisUI.Widgets.WindowParts), typeof(GenesisUI.Widgets.WindowCanvas), typeof(GenesisUI.Patches.CraftingListPatch), typeof(GenesisUI.Widgets.Backdrop), typeof(GenesisUI.Modules.Windows.VanillaPanels), typeof(GenesisUI.Foundation.GenesisLog), typeof(GenesisUI.Collections.ListOrder), typeof(GenesisUI.Gameplay.ItemCategories), typeof(GenesisUI.Theme.ThemeRuntime), typeof(GenesisUI.Theme.ThemeTokens), typeof(GenesisUI.Widgets.ItemStats), typeof(GenesisUI.Widgets.OneShotLight), typeof(GenesisUI.Modules.Windows.RequirementBindings), typeof(GenesisUI.Widgets.UiSound), typeof(GenesisUI.Widgets.EdgeLight), typeof(GenesisUI.Widgets.EmberField), typeof(GenesisUI.Patches.TextInputFocus), typeof(GenesisUI.Foundation.InputLeases), typeof(GenesisUI.Widgets.Ui), typeof(GenesisUI.Widgets.ColorExtensions), typeof(GenesisUI.Widgets.Frame), typeof(GenesisUI.Foundation.Guard))]
     [GameContract("assembly_guiutils", "Localization", "get_instance", Parameters = new string[0], ValueType = "Localization")]
     [GameContract("assembly_guiutils", "Localization", "GetSelectedLanguage", Parameters = new string[0], ValueType = "System.String")]
+    [GameContract("assembly_valheim", "InventoryGui+RecipeDataPair", "get_CanCraft", Parameters = new string[0])]
     internal sealed class CraftingWindowModule : IUiModule, IRecoverable
     {
         /// <summary>IRecoverable: on a fault the windows close (vanilla's never shows in their place).</summary>
@@ -149,7 +150,7 @@ namespace GenesisUI.Modules.Windows
             public readonly List<Row> Rows = new List<Row>(VisibleRows);
             public int Scroll;
             public RectTransform Track, Thumb;
-            public TextMeshProUGUI Empty;
+            public TextMeshProUGUI Empty, Title;
             public bool Available = true;
         }
 
@@ -159,6 +160,7 @@ namespace GenesisUI.Modules.Windows
             public Recipe Recipe;
             public ItemDrop.ItemData Item;
             public GameObject Mark;
+            public bool CanCraft;
             public Button Button;
         }
 
@@ -199,9 +201,11 @@ namespace GenesisUI.Modules.Windows
         private RectTransform _root, _area, _details, _panel, _progress;
         private CanvasGroup _fade;
         private TextMeshProUGUI _station, _name, _type, _description, _reasonText, _craftLabel, _detailsEmpty;
+        private TextMeshProUGUI _socketWarning;
         private Image _icon;
         private GameObject _detailsBody;
-        private Button _craft, _repair, _variant;
+        private Button _craft, _repair, _variant, _socketTab, _normalTab, _editSockets;
+        private bool _socketMode;
         // Light effects: the craft's progress around the button; embers behind the details at a forge.
         private EdgeLight _craftLight;
         private EmberField _forgeEmbers;
@@ -224,7 +228,7 @@ namespace GenesisUI.Modules.Windows
         private string _shownCraftText, _shownReason;
 
         private FieldInfo _availableField;
-        private PropertyInfo _recipeProp, _itemProp, _elementProp;
+        private PropertyInfo _recipeProp, _itemProp, _elementProp, _canCraftProp;
         private AccessTools.FieldRef<InventoryGui, float> _craftTimer;
         private AccessTools.FieldRef<GuiBar, float> _barMax;
 
@@ -249,6 +253,7 @@ namespace GenesisUI.Modules.Windows
             _recipeProp = AccessTools.Property(pair, "Recipe");
             _itemProp = AccessTools.Property(pair, "ItemData");
             _elementProp = AccessTools.Property(pair, "InterfaceElement");
+            _canCraftProp = AccessTools.Property(pair, "CanCraft");
             _craftTimer = AccessTools.FieldRefAccess<InventoryGui, float>("m_craftTimer");
             _barMax = AccessTools.FieldRefAccess<GuiBar, float>("m_maxValue");
             ResetState();
@@ -413,7 +418,14 @@ namespace GenesisUI.Modules.Windows
             _craftColumn.All.Clear();
             _upgradeColumn.All.Clear();
             var inventory = player.GetInventory();
-            foreach (var recipe in _recipes)
+            _socketMode = Adapters.Jewelcrafting.JewelcraftingAdapter.SocketMode;
+            if (_socketMode)
+            {
+                _craftColumn.Available = true; _upgradeColumn.Available = false;
+                foreach (var row in _vanillaRows)
+                    if (row.Recipe != null && row.Item != null) _craftColumn.All.Add(NewEntry(row.Recipe, row.Item, row.CanCraft));
+            }
+            else foreach (var recipe in _recipes)
             {
                 if (recipe == null || recipe.m_item == null) continue;
                 var data = recipe.m_item.m_itemData;
@@ -437,6 +449,7 @@ namespace GenesisUI.Modules.Windows
                     _upgradeColumn.All.Add(NewEntry(recipe, item, can));
                 }
             }
+            _craftColumn.Title.text = Localize(_socketMode ? "$genesisui_sockets" : "$genesisui_tab_craft").ToUpperInvariant();
             // What can be made now first; vanilla's order otherwise (a stable sort).
             GenesisUI.Collections.ListOrder.StablePartition(_craftColumn.All, CanCraftFirst, _partitionBuffer);
             GenesisUI.Collections.ListOrder.StablePartition(_upgradeColumn.All, CanCraftFirst, _partitionBuffer);
@@ -562,6 +575,7 @@ namespace GenesisUI.Modules.Windows
                     Item = _itemProp.GetValue(pair) as ItemDrop.ItemData,
                     Mark = mark != null ? mark.gameObject : null,
                     Button = element.GetComponent<Button>(),
+                    CanCraft = (bool)_canCraftProp.GetValue(pair),
                 });
             }
         }
@@ -610,7 +624,7 @@ namespace GenesisUI.Modules.Windows
                 row.Name.color = ThemeRuntime.ToUnity(sel ? _theme.Tokens.AccentGoldBright : _theme.Tokens.TextTitle);
                 if (entry.CanCraft) row.Sub.text = Localize(ItemStats.TypeToken(data));
                 else row.Sub.text = "<color=#B5613F>" + Localize("$genesisui_missing_materials") + "</color>";
-                row.Right.text = entry.Upgrade != null ? Localize("$genesisui_level") + " " + entry.Upgrade.m_quality + " → " + (entry.Upgrade.m_quality + 1) : "";
+                row.Right.text = !_socketMode && entry.Upgrade != null ? Localize("$genesisui_level") + " " + entry.Upgrade.m_quality + " → " + (entry.Upgrade.m_quality + 1) : "";
                 row.Group.alpha = entry.CanCraft ? 1f : 0.55f;
                 row.Selection.enabled = sel;
                 if (entry.JustReady && row.Shine != null)
@@ -641,7 +655,15 @@ namespace GenesisUI.Modules.Windows
             bool repair = gui.m_repairButton != null && gui.m_repairButton.gameObject.activeSelf;
             if (_repair.gameObject.activeSelf != repair) _repair.gameObject.SetActive(repair);
             if (repair && _repair.interactable != gui.m_repairButton.interactable) _repair.interactable = gui.m_repairButton.interactable;
-            bool variant = gui.m_variantButton != null && gui.m_variantButton.gameObject.activeSelf;
+            bool available = Adapters.Jewelcrafting.JewelcraftingAdapter.Available;
+            if (_socketTab.gameObject.activeSelf != available) _socketTab.gameObject.SetActive(available);
+            if (_normalTab.gameObject.activeSelf != available) _normalTab.gameObject.SetActive(available);
+            bool socketMode = Adapters.Jewelcrafting.JewelcraftingAdapter.SocketMode;
+            if (_socketTab.interactable == socketMode) _socketTab.interactable = !socketMode;
+            if (_normalTab.interactable != socketMode) _normalTab.interactable = socketMode;
+            bool edit = Adapters.Jewelcrafting.JewelcraftingAdapter.CanEditSelected;
+            if (_editSockets.gameObject.activeSelf != edit) _editSockets.gameObject.SetActive(edit);
+            bool variant = !Adapters.Jewelcrafting.JewelcraftingAdapter.CanEditSelected && gui.m_variantButton != null && gui.m_variantButton.gameObject.activeSelf;
             if (_variant.gameObject.activeSelf != variant) _variant.gameObject.SetActive(variant);
         }
 
@@ -654,17 +676,17 @@ namespace GenesisUI.Modules.Windows
             foreach (var m in _materials) { m.ItemName = null; m.Have = m.Need = -1; }
             if (!_selValid) return;
             var data = _selItem ?? _selRecipe.m_item.m_itemData;
-            int quality = _selItem != null ? _selItem.m_quality + 1 : 1;
+            int quality = _selItem != null ? _selItem.m_quality + (_socketMode ? 0 : 1) : 1;
             _icon.sprite = data.GetIcon();
             string name = Localize(data.m_shared.m_name);
             if (_selItem == null && _selRecipe.m_amount > 1) name += " x" + _selRecipe.m_amount;
             _name.text = name.ToUpperInvariant();
             string type = Localize(ItemStats.TypeToken(data));
-            if (_selItem != null) type += "  ·  " + Localize("$genesisui_level") + " " + _selItem.m_quality + " → " + quality;
+            if (_selItem != null && !_socketMode) type += "  ·  " + Localize("$genesisui_level") + " " + _selItem.m_quality + " → " + quality;
             _type.text = type;
             _description.text = Localize(data.m_shared.m_description);
 
-            if (_selItem != null)
+            if (_selItem != null && !_socketMode)
             {
                 ItemStats.Collect(data, _selItem.m_quality, crafting: true, _stats);
                 ItemStats.Collect(data, quality, crafting: true, _next);
@@ -676,7 +698,7 @@ namespace GenesisUI.Modules.Windows
             }
             for (int i = 0; i < MaxStats; i++)
             {
-                bool show = i < _stats.Count;
+                bool show = !_socketMode && i < _stats.Count;
                 _statLabels[i].transform.parent.gameObject.SetActive(show);
                 if (!show) continue;
                 _statLabels[i].text = Localize(_stats[i].Token);
@@ -710,7 +732,8 @@ namespace GenesisUI.Modules.Windows
                     m.NativeName = name != null ? name.GetComponent<TMP_Text>() : null;
                     m.NativeAmount = amount != null ? amount.GetComponent<TMP_Text>() : null;
                 }
-                bool show = _selValid && m.NativeIcon != null && m.NativeIcon.gameObject.activeSelf;
+                bool show = _selValid && m.NativeIcon != null && m.NativeIcon.gameObject.activeSelf &&
+                    element != null && element.gameObject.activeSelf && (element.parent == null || element.parent.gameObject.activeSelf);
                 if (m.Root.gameObject.activeSelf != show) m.Root.gameObject.SetActive(show);
                 if (!show) continue;
                 var sprite = m.NativeIcon.sprite;
@@ -768,7 +791,11 @@ namespace GenesisUI.Modules.Windows
             }
             UpdateForge(player);
 
-            string reason = _selValid && !interactable && !crafting ? Reason(gui, player) : "";
+            string warning = _socketMode && _selValid && gui.m_itemCraftType != null ? gui.m_itemCraftType.text : "";
+            bool showWarning = _socketMode && _selValid;
+            if (_socketWarning.gameObject.activeSelf != showWarning) _socketWarning.gameObject.SetActive(showWarning);
+            if (_socketWarning.text != warning) _socketWarning.text = warning;
+            string reason = !_socketMode && _selValid && !interactable && !crafting ? Reason(gui, player) : "";
             if (reason != _shownReason)
             {
                 _shownReason = reason;
@@ -798,7 +825,7 @@ namespace GenesisUI.Modules.Windows
                 _reason.Append(m.Need - m.Have).Append(' ').Append(m.Label);
             }
             if (_reason.Length > 0) return _reason.ToString();
-            int quality = _selItem != null ? _selItem.m_quality + 1 : 1;
+            int quality = _selItem != null ? _selItem.m_quality + (_socketMode ? 0 : 1) : 1;
             var required = _selRecipe.GetRequiredStation(quality);
             if (required != null)
             {
@@ -822,8 +849,8 @@ namespace GenesisUI.Modules.Windows
             var gui = InventoryGui.instance;
             if (gui == null || entry == null) return;
             bool upgrade = entry.Upgrade != null;
-            if (upgrade && gui.InCraftTab()) gui.OnTabUpgradePressed();
-            else if (!upgrade && !gui.InCraftTab()) gui.OnTabCraftPressed();
+            if (!_socketMode && upgrade && gui.InCraftTab()) gui.OnTabUpgradePressed();
+            else if (!_socketMode && !upgrade && !gui.InCraftTab()) gui.OnTabCraftPressed();
             if (CraftingListPatch.Version != _vanillaVersion) CacheVanillaRows(gui); // the tab switch rebuilt vanilla's list
             foreach (var row in _vanillaRows)
             {
@@ -932,7 +959,11 @@ namespace GenesisUI.Modules.Windows
                 m.Root.gameObject.SetActive(false);
                 _materials.Add(m);
             }
+            _socketWarning = _parts.Label(body, "SocketWarning", FontRole.Body, 17f, t.StateDanger, pad, 310f, w, 140f, TextAlignmentOptions.TopLeft);
+            _socketWarning.textWrappingMode = TextWrappingModes.Normal;
             _reasonText = _parts.Label(body, "Reason", FontRole.Body, 15f, t.StateDanger, pad, 580f, w, 22f, TextAlignmentOptions.Left);
+            _editSockets = _parts.Button(body, "EditSockets", pad, 612f, 130f, 44f, "$genesisui_insert_gems", 16f, "socket gems",
+                () => { Adapters.Jewelcrafting.JewelcraftingAdapter.PressSockets(); WindowShellModule.RequestInventory(); }, out _);
             _variant = _parts.Button(body, "Variant", pad, 612f, 130f, 44f, "$genesisui_style", 17f, "crafting style",
                 () => { var gui = InventoryGui.instance; if (gui != null) gui.m_variantButton.onClick.Invoke(); }, out _);
             _craft = _parts.Button(body, "Craft", pad + 140f, 612f, w - 140f, 44f, null, 20f, "crafting craft", PressCraft, out _craftLabel);
@@ -963,7 +994,11 @@ namespace GenesisUI.Modules.Windows
 
         private void BuildPanel(ThemeTokens t)
         {
-            _station = _parts.Label(_panel, "Station", FontRole.Body, 17f, t.TextFlavor, 420f, 18f, 500f, 28f, TextAlignmentOptions.Right);
+            _normalTab = _parts.Button(_panel, "NativeCraftTab", 220f, 16f, 126f, 32f, "$genesisui_tab_craft", 16f, "native crafting tab",
+                Adapters.Jewelcrafting.JewelcraftingAdapter.PressCraft, out _);
+            _socketTab = _parts.Button(_panel, "NativeSocketTab", 354f, 16f, 126f, 32f, "$genesisui_sockets", 16f, "native socket tab",
+                Adapters.Jewelcrafting.JewelcraftingAdapter.PressTab, out _);
+            _station = _parts.Label(_panel, "Station", FontRole.Body, 17f, t.TextFlavor, 490f, 18f, 430f, 28f, TextAlignmentOptions.Right);
             _repair = _parts.Button(_panel, "Repair", PanelW - 24f - 140f, 16f, 140f, 32f, "$genesisui_repair", 16f, "crafting repair",
                 () => { var gui = InventoryGui.instance; if (gui != null && gui.m_repairButton.interactable) gui.m_repairButton.onClick.Invoke(); }, out _);
             BuildSearch(t);
@@ -994,6 +1029,7 @@ namespace GenesisUI.Modules.Windows
         private void BuildColumn(Column column, float x, string titleToken, ThemeTokens t)
         {
             var title = _parts.Label(_panel, "Title " + titleToken, FontRole.Display, 17f, t.AccentGoldBright, x, 158f, ColumnW, 26f, TextAlignmentOptions.Center);
+            column.Title = title;
             title.text = Localize(titleToken).ToUpperInvariant();
             title.characterSpacing = 5f;
             _parts.Rule(_panel, x + ColumnW / 2f - 90f, 186f, 180f);

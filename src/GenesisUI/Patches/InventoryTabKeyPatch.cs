@@ -15,6 +15,7 @@ namespace GenesisUI.Patches
     [HarmonyPatch(typeof(InventoryGui), "Update")]
     [GameContract("assembly_valheim", "InventoryGui", "Update")]
     [GameContract("assembly_utils", "ZInput", "ResetButtonStatus", Parameters = new[] { "System.String" })]
+    [GameContract("assembly_utils", "ZInput", "GetButtonDown", Parameters = new[] { "System.String" })]
     [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Foundation.Guard), typeof(GenesisUI.Patches.TextInputFocus))]
     internal static class InventoryTabKeyPatch
     {
@@ -35,6 +36,12 @@ namespace GenesisUI.Patches
                 return;
             }
             var key = WindowShellModule.ActiveNextKey;
+            if (WindowShellModule.Showing && ZInput.GetButtonDown("Use") && InventoryWindowModule.UseHovered())
+            {
+                WindowShellModule.ItemUseFrame = Time.frameCount;
+                ZInput.ResetButtonStatus("Use");
+                return;
+            }
             if (key != KeyCode.None && BepInEx.UnityInput.Current.GetKeyDown(key)) ZInput.ResetButtonStatus("Use");
         }
     }

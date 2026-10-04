@@ -52,6 +52,7 @@ namespace GenesisUI.Modules.Vitals
 
         public readonly RectTransform Root;
         private readonly Image _frame;
+        private readonly Image _rested;
         private readonly RectTransform _mask;
         private readonly RectTransform _burnMask;
         private readonly RawImage _burn;
@@ -111,6 +112,11 @@ namespace GenesisUI.Modules.Vitals
             _frameColor = frameSprite != null ? Color.white : ThemeRuntime.ToUnity(theme.Tokens.PanelBackground);
             _dangerColor = ThemeRuntime.ToUnity(theme.Tokens.StateDanger);
             _frame = Ui.Image(Ui.Fill(Ui.Child(Root, "Frame")), frameSprite, _frameColor);
+            // The same alpha silhouette as the metal; a group rectangle would surround food
+            // and empty space instead of these shaped bars (R-068).
+            _rested = Ui.Image(Ui.Fill(Ui.Child(Root, "Rested")), frameSprite,
+                ThemeRuntime.ToUnity(theme.Tokens.AccentGold).WithA(0f));
+            _rested.enabled = false;
 
             // The content area comes from art/sprites.json; the fallback matches the frame drawn today.
             var c = theme.Content(frameName, new Vector4(10f, 24f, 10f, 32f));
@@ -133,6 +139,7 @@ namespace GenesisUI.Modules.Vitals
                 // The frame's opening is transparent in this art: draw the frame over the liquid,
                 // so its inner rim overlaps the liquid's edge.
                 _frame.transform.SetAsLastSibling();
+                _rested.transform.SetAsLastSibling();
             }
             var area = Ui.Fill(Ui.Child(areaParent, "FillArea"), c.x, c.y, c.z, c.w);
 
@@ -257,7 +264,7 @@ namespace GenesisUI.Modules.Vitals
         }
 
         /// <param name="danger">0..1 pulse strength of the low-value alert (0 = none).</param>
-        public void Apply(BarAnimator bar, float danger, float deltaSeconds)
+        public void Apply(BarAnimator bar, float danger, float deltaSeconds, float rested = 0f)
         {
             _time += deltaSeconds;
 
@@ -288,6 +295,11 @@ namespace GenesisUI.Modules.Vitals
             // drew a red box around the bar).
             var frame = danger > 0f ? Color.Lerp(_frameColor, _dangerColor, danger) : _frameColor;
             if (_frame.color != frame) _frame.color = frame;
+            float restAlpha = danger > 0f ? 0f : rested * (0.09f + 0.02f * Mathf.Sin(_time * 1.5f));
+            bool restOn = restAlpha > 0.001f && _rested.sprite != null;
+            if (_rested.enabled != restOn) _rested.enabled = restOn;
+            if (restOn && !Mathf.Approximately(_rested.color.a, restAlpha))
+                _rested.color = _rested.color.WithA(restAlpha);
 
             // Any change of value flashes the surface briefly.
             if (_lastFast >= 0f && Mathf.Abs(bar.Fast - _lastFast) > 0.0005f) _activity = 1f;

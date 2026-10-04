@@ -1,13 +1,23 @@
 # GenesisUI — Adapters
 
-Status: design only; no exact-version adapters are shipped in 1.1.2. The stability base now has
-owner cleanup, dependency contracts, region reservations and vanilla tooltip/input fallbacks.
-Backpacks, Jewelcrafting and HipLantern resource modules follow as separate integration slices,
-with their own DLL contracts and client results. See [CAPABILITIES](CAPABILITIES.md) and
-[the modpack study](review/2026-10-02/MODPACK.md).
+Status: initial F7 inventory slice implemented in `1.2.0-preview.1`, pending R-069 client
+approval. Release 1.1.2 remains the public baseline. Adapters are optional guarded host
+modules exposing an internal disposable capability registry, not a published Extension API.
+Versions outside the matrix are blocked locally with a diagnostic reason.
 
-An adapter implements Extension API interfaces **on behalf of** a mod that does not
-know GenesisUI. It lives in-tree (`src/GenesisUI/Adapters/<ModName>/`), isolated from
+| Adapter | Exact plugin version | Reference provenance | Client status |
+| --- | --- | --- | --- |
+| [Backpacks](adapters/Backpacks.md) | 1.3.10 | GenesisHeimLocal / identical FullPlaythrough DLL | R-069 pending |
+| [Jewelcrafting](adapters/Jewelcrafting.md) | 2.0.10 | GenesisHeimLocal / identical FullPlaythrough DLL | R-069 pending |
+| [HipLantern](adapters/HipLantern.md) | 1.1.12 | GenesisHeimLocal / identical FullPlaythrough DLL | R-069 pending |
+| [AdventureBackpacks](adapters/AdventureBackpacks.md) | 2.0.3 | Official Thunderstore DLL; absent from GenesisHeimLocal | Optional R-069 run pending |
+
+No foreign assembly or assets are packaged. Binding uses the owning plugin assembly only.
+Real DLL contract tests report a skip per missing optional DLL; they are all supplied locally
+for this preview's checks. Native action entry points remain owned by the foreign mod.
+
+The planned public adapter interface serves mods that do not know GenesisUI.
+The initial slice instead uses IUiModule/IModulePrerequisites and InventoryIntegrations. It lives in-tree (`src/GenesisUI/Adapters/<ModName>/`), isolated from
 everything else. A separate package for an adapter is an exception that needs a
 decision entry.
 

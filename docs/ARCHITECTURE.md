@@ -308,3 +308,22 @@ Rule: **Foundation never references anything outside Foundation** (no modules, v
 theme or API types). A contract test enforces it by scanning type references. The day
 a second GenesisMods mod needs it, `Foundation` moves as-is into GenesisModLIB, a
 separate plugin (DECISIONS.md D-002, D-015).
+
+## 15. Initial F7 inventory capabilities (1.2.0 preview)
+
+`Adapters/InventoryIntegrations` is an internal registry of disposable, owner-guarded
+item classifiers, configured slot availability, item-use UI commands and live native container
+inventories. Exact-version adapters are ordinary host modules with prerequisites; an absent
+or incompatible plugin blocks only that adapter. Binding uses the owning Chainloader entry's
+assembly, never arbitrary assembly scanning. Delegates are compiled once during Build.
+The public provider API remains planned. See D-043 and docs/adapters/.
+
+The inventory projects the authoritative native container grid. Backpack content adds a pane
+below the inventory and extends both shell and inventory boards uniformly; socket containers
+use the existing right pane. Native callbacks continue to own transfers and persistence.
+Tooltips style the native live object through VanillaSkin and remove only owned line graphics.
+
+Native coin/key pockets remain inside the isolated Gameplay capability. Capacity metadata
+is reversible and server-synced; a guarded native load service preserves enlarged saved coin
+counts independently of drawing toggles (D-044). The guard owner and patch status appear in
+F8; no foreign patches, game count writes or dependencies are introduced.

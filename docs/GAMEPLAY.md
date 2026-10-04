@@ -114,3 +114,23 @@ every special kind (valid and invalid); split into special cells; equip/unequip 
 from grid, panel and hotkey; ring/amulet swap; quick-use and utility hotkeys; sort; die with
 items in every row and take the grave back (all and one by one); stack all / take all at a chest;
 admin 4→6→4 with rows full; fault injection mid-drag.
+
+## Native wallet and key pockets — 1.2.0 preview (D-044)
+
+`[Inventory] Pockets` adds Coins and two key cells, using the player's real saved inventory
+positions. Accept CryptKey/DvergrKey; these cells do not equip their contents. Existing stacks
+can be dragged together using native UI callbacks. New coins merge through the game's own
+stack search; counts, money spent and weight remain native.
+
+`WalletCapacity` is server-synced, defaults to 2,147,483,647 and only changes Coins' shared
+stack metadata while owned. Visible large numbers use compact k/M/G notation. Original
+metadata is restored on teardown or when pockets are turned off, unless another mod changed
+it. Both native inventory load paths temporarily preserve the full Int32 coin count before
+restoring metadata, even when the wallet drawing is disabled. This prevents UI toggles from
+truncating saved stacks. Removing every mod that preserves the larger limit exposes vanilla's
+verified load clamp; split enlarged coin stacks before uninstalling GenesisUI.
+
+Accessories use each exact-version mod's classifier and existing equip logic. Adventure
+Backpacks' native cape/equipment restrictions are retained; a visual cell does not grant a
+new simultaneous equip capacity. Changes in enabled integrations are planned as safe layout
+migrations; a full inventory can retain its previous layout until there is ordinary space.

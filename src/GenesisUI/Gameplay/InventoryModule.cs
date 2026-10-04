@@ -37,6 +37,16 @@ namespace GenesisUI.Gameplay
     [GenesisUI.Foundation.Contracts.GameContract("assembly_guiutils", "Localization", "Localize", Parameters = new string[] { "System.String" }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.String")]
     [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop\u002BItemData", "m_stack", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Int32")]
     [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Gameplay.InventorySafety), typeof(GenesisUI.Gameplay.InventorySettings), typeof(GenesisUI.Host.ModuleContext), typeof(GenesisUI.Foundation.VanillaSkin), typeof(GenesisUI.Gameplay.SavedLayout), typeof(GenesisUI.InventoryModel.SlotLayout), typeof(GenesisUI.InventoryModel.LayoutChange), typeof(GenesisUI.Foundation.GenesisLog), typeof(GenesisUI.Gameplay.EquipmentRules))]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData", "m_dropPrefab", Kind = ContractMemberKind.Field, Static = ContractStatic.Instance, ValueType = "UnityEngine.GameObject")]
+    [GameContract("assembly_valheim", "ItemDrop", "m_itemData", Kind = ContractMemberKind.Field, Static = ContractStatic.Instance, ValueType = "ItemDrop+ItemData")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData", "m_shared", Kind = ContractMemberKind.Field, Static = ContractStatic.Instance, ValueType = "ItemDrop+ItemData+SharedData")]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData+SharedData", "m_maxStackSize", Kind = ContractMemberKind.Field, Static = ContractStatic.Instance, ValueType = "System.Int32")]
+    [GameContract("assembly_valheim", "ObjectDB", "get_instance", Parameters = new string[0])]
+    [GameContract("assembly_valheim", "ObjectDB", "GetItemPrefab", Parameters = new[] { "System.String" })]
+    [GameContract("assembly_valheim", "Inventory", "GetItemAt", Parameters = new[] { "System.Int32", "System.Int32" })]
+    [GameContract("assembly_valheim", "Inventory", "m_onChanged", Kind = ContractMemberKind.Field, Static = ContractStatic.Instance, ValueType = "System.Action")]
+    [ContractDependency(typeof(PocketRules), typeof(EquipmentMove))]
+    [GameContract("assembly_valheim", "Inventory", "GetWidth", Parameters = new string[0])]
     internal sealed class InventoryModule : IUiModule, IModulePrerequisites
     {
         private static readonly string[] NoRegions = new string[0];
@@ -47,6 +57,7 @@ namespace GenesisUI.Gameplay
         private Player _appliedTo;
         private SlotLayout _wanted;
         private bool _dirty = true;
+        private int _integrationMask = -1;
         private string _lastRefusal;
         private readonly List<ItemAt> _items = new List<ItemAt>(64);
         private readonly VanillaSkin _specialSkin = new VanillaSkin("module:inv.slots");
@@ -54,6 +65,11 @@ namespace GenesisUI.Gameplay
         private static InventoryModule _active;
         private static bool _equipmentPanelVisible;
         private AccessTools.FieldRef<InventoryGrid, List<InventoryElement>> _elements;
+        private ItemDrop.ItemData.SharedData _coinShared;
+        private int _originalCoinLimit, _appliedCoinLimit;
+        private bool _coinOverrideLost;
+        private static readonly System.Func<ItemDrop.ItemData, int> ReadCount = item => item.m_stack;
+        private static readonly System.Func<ItemDrop.ItemData, (int, int)> ReadPosition = item => (item.m_gridPos.x, item.m_gridPos.y);
 
         public string Id => "inv.slots";
         public string NameToken => "$genesisui_module_inventory";
@@ -70,6 +86,7 @@ namespace GenesisUI.Gameplay
             context.OnRelease(() => InventorySettings.Changed -= OnSettingsChanged);
             _appliedTo = null;
             _dirty = true;
+            _integrationMask = -1;
             _active = this;
             _equipmentPanelVisible = false;
         }
@@ -83,8 +100,10 @@ namespace GenesisUI.Gameplay
                 _appliedTo = null;
                 return;
             }
+            int mask = InventorySettings.IntegrationMask();
+            if (mask != _integrationMask) { _integrationMask = mask; _dirty = true; }
             if (_dirty || _appliedTo != player) Apply(player);
-            if (Current != null) HideSpecialRows();
+            if (Current != null) { HideSpecialRows(); EquipmentRules.ReconcileExisting(player); ReconcilePockets(player); }
         }
 
         public void Teardown()
@@ -96,9 +115,77 @@ namespace GenesisUI.Gameplay
             _active = null;
             _specialSkin.Restore();
             _firstSpecialElement = null;
+            RestoreCoinLimit();
         }
 
         private void OnSettingsChanged() => _dirty = true;
+
+        private void ReconcilePockets(Player player)
+        {
+            if (Current.EquipmentPosition(EquipSlot.Wallet).X < 0) { RestoreCoinLimit(); return; }
+            if (_coinShared != null && _appliedCoinLimit != InventorySettings.WalletCapacity.Value)
+            {
+                if (_coinShared.m_maxStackSize == _appliedCoinLimit)
+                { _appliedCoinLimit = InventorySettings.WalletCapacity.Value; _coinShared.m_maxStackSize = _appliedCoinLimit; }
+                else _coinOverrideLost = true;
+            }
+            if (_coinShared == null && ObjectDB.instance != null)
+            {
+                var prefab = ObjectDB.instance.GetItemPrefab("Coins");
+                var drop = prefab != null ? prefab.GetComponent<ItemDrop>() : null;
+                if (drop != null && drop.m_itemData != null)
+                {
+                    _coinShared = drop.m_itemData.m_shared;
+                    _originalCoinLimit = _coinShared.m_maxStackSize;
+                    _appliedCoinLimit = InventorySettings.WalletCapacity.Value;
+                    _coinShared.m_maxStackSize = _appliedCoinLimit;
+                    GenesisLog.Info("Module:inv.slots", "wallet coin stack capacity: " + _appliedCoinLimit + "; weight and counts unchanged");
+                }
+            }
+            if (_coinShared != null && _coinShared.m_maxStackSize != _appliedCoinLimit && !_coinOverrideLost)
+            {
+                _coinOverrideLost = true;
+                GenesisLog.Warn("Module:inv.slots", "another mod changed the coin stack capacity; preserving its value instead of reapplying ours");
+            }
+            var inventory = player.GetInventory();
+            var all = inventory.GetAllItems();
+            for (int i = 0; i < all.Count; i++)
+            {
+                var item = all[i];
+                if (!Current.IsOrdinary(item.m_gridPos.x, item.m_gridPos.y) || item.m_dropPrefab == null) continue;
+                string name = item.m_dropPrefab.name;
+                EquipSlot? slot = null;
+                if (PocketRules.Accepts(EquipSlot.Wallet, name)) slot = EquipSlot.Wallet;
+                else if (PocketRules.Accepts(EquipSlot.KeyOne, name))
+                {
+                    var first = Current.EquipmentPosition(EquipSlot.KeyOne);
+                    slot = inventory.GetItemAt(first.X, first.Y) == null ? EquipSlot.KeyOne : EquipSlot.KeyTwo;
+                }
+                if (!slot.HasValue) continue;
+                var target = Current.EquipmentPosition(slot.Value);
+                if (target.X < 0 || inventory.GetItemAt(target.X, target.Y) != null) continue;
+                var snapshot = new PositionSnapshot<ItemDrop.ItemData>(all, ReadCount, ReadPosition);
+                var plan = EquipmentMove.Equip(Current, slot.Value, i, snapshot.Positions);
+                if (!plan.Ok || plan.Moves.Count == 0) continue;
+                try
+                {
+                    snapshot.Apply(all, plan.Moves, inventory.GetWidth(), inventory.GetHeight(), InventorySafety.WritePosition);
+                    inventory.m_onChanged?.Invoke();
+                    if (!snapshot.Matches(inventory.GetAllItems())) throw new System.InvalidOperationException("Pocket callback changed item identity/count");
+                }
+                catch { snapshot.RestoreRemaining(inventory.GetAllItems(), InventorySafety.WritePosition); throw; }
+                GenesisLog.Info("Module:inv.slots", "reserved " + slot.Value + " without changing item identity/count");
+            }
+        }
+
+        internal static bool WalletItem(ItemDrop.ItemData item) => WalletActive && ReferenceEquals(item.m_shared, _active._coinShared);
+        internal static bool WalletActive => _active != null && _active._coinShared != null && _active._coinShared.m_maxStackSize == _active._appliedCoinLimit && !Guard.IsTripped(InventorySafety.Owner);
+
+        private void RestoreCoinLimit()
+        {
+            if (_coinShared != null && _coinShared.m_maxStackSize == _appliedCoinLimit) _coinShared.m_maxStackSize = _originalCoinLimit;
+            _coinShared = null; _coinOverrideLost = false;
+        }
 
         /// <summary>
         /// Brings the player's inventory into the admin's layout. Plans first (LayoutChange): if the

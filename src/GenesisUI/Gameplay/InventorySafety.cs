@@ -31,7 +31,7 @@ namespace GenesisUI.Gameplay
 
         internal static bool Transitioning(Humanoid player) => _player != null && player == _player;
         internal static string MissingPatches => GuardedPatcher.MissingCapability(
-            typeof(Patches.InventorySizePatch), typeof(Patches.InventoryPlacementPatches),
+            typeof(Patches.InventorySizePatch), typeof(Patches.InventoryPlacementPatches), typeof(Patches.WalletLoadPatch),
             typeof(Patches.EquipmentPatches), typeof(Patches.InventoryTransitionPatch));
 
         internal static void Resolve()

@@ -75,3 +75,18 @@ GenesisUI's HUD root is a child of `m_rootObject`, so it hides with the vanilla 
   line 318, confirms `HUD root placed below the large map ('MiniMap')` for that vanilla client.
   The host keeps live hierarchy diagnostics for other game/profile versions; the original
   R-041 hierarchy question is no longer a release blocker.
+
+## Initial F7 projections (1.2.0-preview.1)
+
+- `win.inventory` projects native `m_containerGrid.GetInventory()` even without a real
+  Container. The existing InventoryGui container veil remains its owner. Known backpack
+  inventories draw below the player inventory; socket/unknown containers draw at the right.
+  Native grids and foreign UI objects stay alive and keep their callbacks.
+- `win.crafting` projects Jewelcrafting's live native Socket rows/buttons and warning text;
+  the original crafting veil is unchanged and the adapter owns no foreign veil.
+- `win.tooltips` is a shell-dependent logical styling module, with no blanket region claim:
+  it reversibly dresses the current UITooltip background/font and owns only four thin lines.
+  Foreign tooltip children and native placement/size remain intact.
+- `adapter.backpacks`, `adapter.adventurebackpacks`, `adapter.jewelcrafting`,
+  `adapter.hiplantern` expose internal capabilities and no new blanket visual region. Each
+  has a Modules toggle, exact-version prerequisite and independent fault cleanup.

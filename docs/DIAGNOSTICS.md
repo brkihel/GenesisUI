@@ -96,3 +96,11 @@ world name. A config switch disables redaction for private debugging.
 - Anything that can fail silently must log at least once.
 - Diagnostics code is compiled out of Release with `#if GENESIS_DIAGNOSTICS`,
   except the report and error logging.
+
+### Inventory integration diagnostics — 1.2.0 preview
+
+F8 lists the four `adapter.*` module prerequisites/states, `win.tooltips` and the inventory
+modules. Each binding logs GUID/version or its exact unsupported reason. Container rebuilds
+log native dimensions and visible rows. `wallet:load` faults and guarded `WalletLoadPatch`
+status distinguish saved-count preservation from the wallet drawing. Capacity metadata
+ownership conflicts log once and do not repeatedly overwrite another mod's value.

@@ -1,3 +1,4 @@
+using System;
 using GenesisUI.Foundation;
 using GenesisUI.Foundation.Contracts;
 using GenesisUI.Gameplay;
@@ -75,6 +76,8 @@ namespace GenesisUI.Patches
     [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop\u002BItemData", "m_worldLevel", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Int32")]
     [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop\u002BItemData\u002BSharedData", "m_maxStackSize", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Int32")]
     [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.InventoryModel.SlotLayout))]
+    [GameContract("assembly_valheim", "Inventory", "GetWidth", Parameters = new string[0])]
+    [GameContract("assembly_valheim", "Inventory", "GetHeight", Parameters = new string[0])]
     internal static class InventoryPlacementPatches
     {
         private static SlotLayout LayoutFor(Inventory inventory)
@@ -150,18 +153,38 @@ namespace GenesisUI.Patches
 
         [HarmonyPatch(typeof(Inventory), nameof(Inventory.CanAddItem), typeof(ItemDrop.ItemData), typeof(int))]
         [HarmonyPostfix]
-        private static void CanAddItem(Inventory __instance, ItemDrop.ItemData item, int stack, ref bool __result)
+        [HarmonyPriority(Priority.First)]
+        private static void CanAddItem(Inventory __instance, ItemDrop.ItemData item, int stack, bool __runOriginal, ref bool __result)
         {
             if (Guard.IsTripped(InventorySafety.Owner)) return;
             var original = __result;
             try
             {
             var layout = LayoutFor(__instance);
-            if (layout == null || !__result || item == null) return;
+            if (item == null) return;
             if (stack <= 0) stack = item.m_stack;
+            if (__runOriginal && InventoryModule.WalletItem(item))
+            {
+                // Correct the proven native Int32 overflow before other mods' normal-priority
+                // postfixes can apply their own restrictions. Never create or merge an item.
+                long free = 0;
+                var items = __instance.GetAllItems();
+                foreach (var held in items)
+                    if (held.m_shared.m_name == item.m_shared.m_name && held.m_worldLevel == item.m_worldLevel)
+                        free += Math.Max(0, held.m_shared.m_maxStackSize - held.m_stack);
+                int cells = __instance.GetWidth() * __instance.GetHeight() - items.Count;
+                bool raw = unchecked((int)free + cells * item.m_shared.m_maxStackSize) >= stack;
+                if (__result != raw) return;
+                if (free + (long)cells * item.m_shared.m_maxStackSize > int.MaxValue)
+                    __result = PocketRules.HasStackCapacity(free, layout != null ? OrdinaryFree(__instance, layout) : cells, item.m_shared.m_maxStackSize, stack);
+                if (layout != null && __result)
+                    __result = PocketRules.HasStackCapacity(free, OrdinaryFree(__instance, layout), item.m_shared.m_maxStackSize, stack);
+                return;
+            }
+            if (layout == null || !__result) return;
             // Vanilla counted every empty position; only ordinary ones take new stacks.
-            __result = __instance.FindFreeStackSpace(item.m_shared.m_name, item.m_worldLevel) +
-                       OrdinaryFree(__instance, layout) * item.m_shared.m_maxStackSize >= stack;
+            __result = PocketRules.HasStackCapacity(__instance.FindFreeStackSpace(item.m_shared.m_name, item.m_worldLevel),
+                       OrdinaryFree(__instance, layout), item.m_shared.m_maxStackSize, stack);
                     }
             catch (System.Exception error) { __result = original; Guard.Fault(InventorySafety.Owner, error); }
         }

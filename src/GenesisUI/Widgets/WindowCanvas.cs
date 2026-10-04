@@ -104,7 +104,7 @@ namespace GenesisUI.Widgets
             if (screen.x <= 0f || screen.y <= 0f) return;
             float w = Size != null ? Size.Value : 0.75f;
             float h = Height != null ? Height.Value : 0.75f;
-            float scale = Mathf.Min(screen.x * w / Design.x, screen.y * h / Design.y);
+            float scale = Mathf.Min(screen.x * w / area.sizeDelta.x, screen.y * h / area.sizeDelta.y);
             if (!Mathf.Approximately(area.localScale.x, scale)) area.localScale = new Vector3(scale, scale, 1f);
         }
 
@@ -116,6 +116,12 @@ namespace GenesisUI.Widgets
             rt.anchoredPosition = new Vector2(x, -y);
             rt.sizeDelta = new Vector2(width, height);
             return rt;
+        }
+
+        internal static void InventoryHeight(RectTransform area, bool expanded)
+        {
+            var size = new Vector2(Design.x, expanded ? 1200f : Design.y);
+            if (area.sizeDelta != size) area.sizeDelta = size;
         }
     }
 }

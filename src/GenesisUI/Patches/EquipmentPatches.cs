@@ -35,6 +35,8 @@ namespace GenesisUI.Patches
     [GenesisUI.Foundation.Contracts.GameContract("assembly_utils", "Vector2i", "y", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Int32")]
     [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Character", "Message", Parameters = new string[] { "MessageHud\u002BMessageType", "System.String", "System.Int32", "UnityEngine.Sprite", "System.Boolean" }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Void")]
     [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Foundation.Guard), typeof(GenesisUI.InventoryModel.SlotLayout), typeof(GenesisUI.Gameplay.EquipmentRules), typeof(GenesisUI.Gameplay.ItemCategories), typeof(GenesisUI.InventoryModel.SlotRules), typeof(GenesisUI.Foundation.GenesisLog))]
+    [GameContract("assembly_valheim", "ItemDrop+ItemData", "m_dropPrefab", Kind = ContractMemberKind.Field, Static = ContractStatic.Instance, ValueType = "UnityEngine.GameObject")]
+    [ContractDependency(typeof(PocketRules))]
     internal static class EquipmentPatches
     {
         [ThreadStatic] private static int _equipDepth;
@@ -62,6 +64,7 @@ namespace GenesisUI.Patches
 
         [HarmonyPatch(typeof(Humanoid), nameof(Humanoid.EquipItem))]
         [HarmonyPostfix]
+        [HarmonyAfter("org.bepinex.plugins.backpacks", "org.bepinex.plugins.jewelcrafting", "shudnal.HipLantern")]
         private static void EquipPostfix(Humanoid __instance, ItemDrop.ItemData item, bool __result, bool __state)
         {
             if (!__state || !__result || _selectionDepth > 0) return;
@@ -102,7 +105,9 @@ namespace GenesisUI.Patches
                 var targetSlot = layout.EquipmentAt(pos.x, pos.y);
                 var kind = layout.KindAt(pos.x, pos.y);
                 bool allowed;
-                if (targetSlot.HasValue)
+                if (targetSlot.HasValue && PocketRules.IsPocket(targetSlot.Value))
+                    allowed = PocketAccepts(targetSlot.Value, ___m_dragItem) && (item == null || PocketAccepts(targetSlot.Value, item));
+                else if (targetSlot.HasValue)
                     allowed = ___m_dragInventory == player.GetInventory() &&
                               EquipmentRules.SlotFor(___m_dragItem) == targetSlot && ___m_dragItem.m_stack == 1 &&
                               (item == null || EquipmentRules.SlotFor(item) == targetSlot);
@@ -118,6 +123,15 @@ namespace GenesisUI.Patches
                         ? false
                         : SlotRules.AllowsMove(sourceKind == SlotKind.Equipment ? SlotKind.Ordinary : sourceKind, kind.Value,
                             ItemCategories.Of(___m_dragItem), item != null ? ItemCategories.Of(item) : (ItemCategory?)null);
+                }
+                if (allowed && item != null && ___m_dragInventory == player.GetInventory())
+                {
+                    var source = ___m_dragItem.m_gridPos;
+                    var sourceSlot = layout.EquipmentAt(source.x, source.y);
+                    if (sourceSlot.HasValue && PocketRules.IsPocket(sourceSlot.Value))
+                        allowed = PocketAccepts(sourceSlot.Value, item);
+                    else if (targetSlot.HasValue && PocketRules.IsPocket(targetSlot.Value))
+                        allowed = layout.IsOrdinary(source.x, source.y);
                 }
                 if (!allowed)
                 {
@@ -163,7 +177,7 @@ namespace GenesisUI.Patches
             var inventory = player.GetInventory();
             if (!inventory.ContainsItem(state.Drag)) return;
             var now = state.Drag.m_gridPos;
-            if (state.TargetSlot.HasValue && now.x == state.Target.x && now.y == state.Target.y && !state.Drag.m_equipped)
+            if (state.TargetSlot.HasValue && !PocketRules.IsPocket(state.TargetSlot.Value) && now.x == state.Target.x && now.y == state.Target.y && !state.Drag.m_equipped)
             {
                 if (!player.EquipItem(state.Drag, triggerEquipEffects: false))
                 {
@@ -186,5 +200,8 @@ namespace GenesisUI.Patches
                      !layout.EquipmentAt(now.x, now.y).HasValue && state.Drag.m_equipped)
                 player.UnequipItem(state.Drag, triggerEquipEffects: false);
         }
+
+        private static bool PocketAccepts(EquipSlot slot, ItemDrop.ItemData item) =>
+            item != null && item.m_dropPrefab != null && PocketRules.Accepts(slot, item.m_dropPrefab.name);
     }
 }

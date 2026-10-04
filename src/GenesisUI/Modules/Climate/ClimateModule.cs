@@ -49,8 +49,7 @@ namespace GenesisUI.Modules.Climate
         private RawImage _heart;
         private Material _heartMaterial;
         private float _heartIntensity, _beatPhase, _shownHeart = -1f;
-        private EdgeLight _rested;
-        private RectTransform _vitals;
+        internal static float RestedIntensity { get; private set; }
 
         public string Id => "hud.climate";
         public string NameToken => "$genesisui_module_climate";
@@ -70,15 +69,7 @@ namespace GenesisUI.Modules.Climate
                 _heart.material = _heartMaterial;
                 _heart.enabled = false;
             }
-            _rested = EdgeLight.Create(context.Root, context.Theme, 14f);
-            if (_rested != null)
-            {
-                _rested.Pulse = 0.25f;
-                _rested.Speed = 0.6f;
-                _rested.SetFloat("_Halo", 9f);
-                _rested.SetFloat("_Line", 0f);
-                _rested.SetFloat("_Radius", 14f);
-            }
+            RestedIntensity = 0f;
             _climate = _shift = Vector4.zero;
             _heartIntensity = 0f;
         }
@@ -115,12 +106,7 @@ namespace GenesisUI.Modules.Climate
 
             UpdateHeart(alive ? health : 1f, dt);
 
-            if (_rested != null)
-            {
-                _vitals = Modules.Vitals.VitalsModule.VisualAnchor;
-                _rested.Target = _vitals;
-                _rested.Intensity = rested && _vitals != null && ModuleHost.IsActive("hud.vitals") ? 0.3f : 0f;
-            }
+            RestedIntensity = Mathf.MoveTowards(RestedIntensity, rested && _context.Theme.LightsEnabled ? 1f : 0f, dt * 0.6f);
         }
 
         public void Teardown()
@@ -130,11 +116,9 @@ namespace GenesisUI.Modules.Climate
             _shownClimate = _shownShift = new Vector4(-1f, 0f, 0f, 0f);
             if (_heart != null) Object.Destroy(_heart.gameObject);
             if (_heartMaterial != null) Object.Destroy(_heartMaterial);
-            if (_rested != null) Object.Destroy(_rested.gameObject);
             _heart = null;
             _heartMaterial = null;
-            _rested = null;
-            _vitals = null;
+            RestedIntensity = 0f;
         }
 
         private static float Ease(float value, float target, float dt, float up, float down) =>

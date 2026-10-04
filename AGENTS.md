@@ -8,8 +8,9 @@ is unclear, ask; do not guess.
 ## 0. Where the project is (keep this section current)
 
 - **Phase:** HUD, inventory/crafting windows, in-game menus and map are shipped in 1.1.2.
-  F4 and F6 are delivered; F5's main menu and native settings screen remain planned, followed
-  by F7 providers/resource adapters. Original window plan: [docs/F4-PLAN.md](docs/F4-PLAN.md).
+  F4 and F6 are delivered; F5's main menu and native settings screen remain planned.
+  F7 inventory adapters begin in the 1.2.0 preview; public providers/resource adapters
+  remain planned. Original window plan: [docs/F4-PLAN.md](docs/F4-PLAN.md).
   **Approach since
   2026-09-29: D-032** — GenesisUI draws its own windows on the concept's design board
   (`WindowCanvas.Design`, ConceptArt 9 measured in 1580 x 850 units); vanilla's `InventoryGui`
@@ -36,7 +37,7 @@ is unclear, ask; do not guess.
   and items appear (`report-20261002-134941.log`), with an unwanted pink outline.
   `1.1.1-preview.2` decodes the key before edge filtering (D-039, R-063); all three
   channels pass automated tests. Diego approved its visual result in R-063 (`2a1854a`).
-  He authorized the complete stability review fixes. Current branch: `fix/stability-1.1.2`,
+  He authorized the complete stability review fixes. Release branch: `fix/stability-1.1.2`; current development branch: `feat/modpack-inventory-1.2.0`,
   Release `1.1.2` approved by Diego after preview.3, D-040/D-041 amendment/D-042 and `docs/STABILITY-FIXES.md`.
   R-066: Diego found almost everything satisfactory but rejected the baked character; its local
   report shows 294.12 m bounds against a 2 m frame. Replace it with new transforms/private meshes
@@ -66,6 +67,15 @@ is unclear, ask; do not guess.
   key-hint nudge remains owned by `hud.hotbar`; the quick-use/action HUD rows are already shipped.
 - **Open items from Diego:** boss plate spacing; user positioning of HUD pieces; remaining
   main-menu/native-settings work; exact-version modpack resource adapters and client benchmarks.
+
+- **Development (2026-10-04):** branch `feat/modpack-inventory-1.2.0`, Preview
+  `1.2.0-preview.1` adds the first F7 inventory integrations (D-043/D-044), native coin/key
+  pockets, discreet native tooltip styling and the shaped rested-bar halo fix. R-068 records
+  Diego's feedback; R-069 is the pending single-client script on Gale `GenesisHeimLocal`.
+  Exact DLL contracts: Backpacks 1.3.10, Jewelcrafting 2.0.10, HipLantern 1.1.12;
+  optional Adventure Backpacks 2.0.3 is absent from that profile and uses the official
+  reference download. Public API/resource adapters and full-modpack certification remain
+  planned. Release/main stay at approved 1.1.2 until review of this development phase.
 
 ## 1. Read first, in this order
 

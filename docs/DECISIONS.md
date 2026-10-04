@@ -641,3 +641,76 @@ for the slot move. Do not move early, write action data, alter timing or change 
 No new Harmony patch or runtime dependency; foreign patches continue to execute unchanged.
 Extend Edge's GPU/source provenance gate with four orbit phases and clear-interior checks.
 Focused client gate: R-067, including cancel, queue order, close and effects-off restoration.
+
+## D-043 — Exact-version inventory integrations through native UI commands
+
+**Date:** 2026-10-04. Diego requested Jewelcrafting's Socket workflow, accessory equipment
+cells, backpack contents below the inventory, and Use taking precedence over next-tab.
+
+**Decision:** deliver internal disposable equipment/container capabilities as guarded host
+modules, bound only to the assembly of a loaded plugin with the declared GUID and exact
+version. This is an initial F7 slice; the public extension API remains planned. Verify every
+foreign contract against the owning DLL. No foreign code, assets, DLLs or API wrappers ship.
+No patches target foreign methods and no hard/runtime assembly dependency is added.
+Soft BepInDependency metadata orders already-installed owning plugins before GenesisUI,
+so the initial prerequisite check sees their initialized config/API; absent mods stay optional.
+
+Project the live native container grid even when InventoryGui.m_currentContainer is null.
+Backpacks and Adventure Backpacks select the below-inventory pane; unknown containers use
+the existing right pane. All cells retain native grid callbacks; close/take/stack invoke
+native UI commands and retain their visibility restrictions. The complete board scales
+uniformly when the backpack pane opens. Equipment positions are planned under D-028/D-030;
+mod predicates classify gear, while successful native equip completion decides relocation.
+
+Jewelcrafting's Socket tab projects its actual RecipeDataPair list and CanCraft values.
+Selecting a row invokes the native row Button without changing to the ordinary upgrade tab.
+Adding sockets and opening gem slots invoke the original buttons. Native warning text remains
+visible even with an enabled craft button; no costs, success chances or unsocket rules are
+reimplemented. The Use guard forwards a supported hovered item's owning-mod command first,
+then suppresses the shell tab change for that frame; vanilla Update and all patches still run.
+EquipItem's postfix follows the supported owning mods. Existing special-cell skipping guards
+also reject invalid pocket swaps; D-030's valid-input native execution remains unchanged.
+
+Style the live UITooltip reversibly, preserving foreign children, dimensions, text and timing.
+Use a dark flat background, the theme font and four one-pixel gold lines. Replace the rested
+rectangular vitals EdgeLight with an alpha-preserving tint over each existing shaped frame.
+Visual approval requires R-069; this is not full-modpack certification.
+
+## D-044 — Native coin and key pockets, with safe coin reload
+
+**Date:** 2026-10-04. Diego clarified these are native items: one wallet and two key cells
+above the model; coins should share a practically unlimited stack.
+
+**Decision:** append Wallet/KeyOne/KeyTwo to the existing saved equipment enum, preserving
+old bit indices. Pockets accept exact Coins, CryptKey and DvergrKey identities; they do not
+equip items. Only position plans move existing items, with identity/count snapshots and
+rollback. New pickups and manual stack merges remain native. Existing multiple coin stacks
+can be consolidated with native drag/drop; no automatic count manipulation is introduced.
+
+Pockets and WalletCapacity are server-synced inventory settings. Default coin capacity is
+Int32.MaxValue (2,147,483,647), the native saved count's technical ceiling, not mathematical
+infinity. Weight, purchasing, key use, ownership and RPCs remain native. Metadata capacity
+is owned reversibly by Gameplay, not a visual module; if another mod changes it, do not fight.
+Abbreviate large visible counts; hover/native details retain item data.
+
+Individual native Inventory decompilation proves CanAddItem's Int32 addition/multiplication
+can overflow with this capacity, and the private serialized AddItem path clamps the saved
+stack with Mathf.Min(stack, shared.m_maxStackSize). Correct the proven capacity overflow in
+CanAddItem's first-priority postfix, before other mods' normal-priority restrictions. Only
+correct a result matching the raw native arithmetic and only for the owned Coins SharedData;
+never revive a skipped original or a differing foreign result. Other prefixes/postfixes run.
+
+Add void prefixes/finalizers to both native Inventory.Load(ZPackage) overloads. Temporarily
+raise only the Coins prefab's metadata limit to Int32.MaxValue while native deserialization
+runs; restore the prior limit in the finalizer only if still owned. No package bytes or item
+counts are edited; originals and other patches run and native exceptions propagate unchanged.
+This persistence safeguard is deliberately independent of the wallet drawing/config toggle:
+turning off a UI feature must not truncate a previously saved coin stack. It is the explicit
+exception to visual feature no-op policy, with its own guarded-patch diagnostics/fault owner.
+Headless servers still receive no gameplay patches. The wallet feature requires this patch
+capability; failure to bind prevents activating expanded stacks.
+
+Removing GenesisUI (and every mod that preserves the enlarged limit) can expose vanilla's
+reload clamp. Reduce enlarged coin stacks before uninstalling; this proven persistence
+limitation is included in the client script and gameplay documentation. Single-client
+save/reload, toggle, transfer, capacity and modpack validation remain mandatory in R-069.

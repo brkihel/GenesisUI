@@ -354,5 +354,16 @@
   "genesisui_marker_portal": "Portal",
   "genesisui_marker_treasure": "Tesouro",
   "genesisui_marker_trader": "Comerciante",
-  "genesisui_marker_danger": "Perigo"
+  "genesisui_marker_danger": "Perigo",
+  "genesisui_module_backpacks": "Backpacks — integração",
+  "genesisui_module_adventure_backpacks": "Adventure Backpacks — integração",
+  "genesisui_module_jewelcrafting": "Jewelcrafting — integração",
+  "genesisui_module_hiplantern": "Hip Lantern — integração",
+  "genesisui_module_item_tooltips": "Dicas dos itens",
+  "genesisui_slot_wallet": "Moedas",
+  "genesisui_slot_key_one": "Chave I",
+  "genesisui_slot_key_two": "Chave II",
+  "genesisui_sockets": "Sockets",
+  "genesisui_insert_gems": "Inserir gemas",
+  "genesisui_close": "Fechar"
 }

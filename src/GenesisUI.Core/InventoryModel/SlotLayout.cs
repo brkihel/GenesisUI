@@ -25,6 +25,9 @@ namespace GenesisUI.InventoryModel
         Lantern,
         Amulet,
         Ring,
+        Wallet,
+        KeyOne,
+        KeyTwo,
     }
 
     /// <summary>

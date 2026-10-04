@@ -138,6 +138,9 @@ namespace GenesisUI.Modules.Windows
 
         /// <summary>The next-tab key, while the shell is showing; read by the Use guard patch.</summary>
         internal static KeyCode ActiveNextKey { get; private set; } = KeyCode.None;
+        internal static int ItemUseFrame { get; set; } = -1;
+        private static bool _inventoryRequested;
+        internal static void RequestInventory() => _inventoryRequested = true;
 
         public void Build(ModuleContext context)
         {
@@ -170,6 +173,7 @@ namespace GenesisUI.Modules.Windows
 
         public void Refresh(float deltaSeconds)
         {
+            if (_inventoryRequested) { _inventoryRequested = false; Show(Tab.Inventory); }
             var gui = InventoryGui.instance;
             if (!EnsureBuilt(gui)) return;
             bool mapOpen = LargeMapOpen();
@@ -227,11 +231,13 @@ namespace GenesisUI.Modules.Windows
             _fade.blocksRaycasts = visible;
             if (!visible) return;
 
-            if (!opened)
+            if (!opened && ItemUseFrame != Time.frameCount)
             {
                 if (_previousKey.Value.IsDown()) Select(Step(-1), callVanilla: true);
                 else if (_nextKey.Value.IsDown()) Select(Step(+1), callVanilla: true);
             }
+            Adapters.InventoryIntegrations.Container(out bool below);
+            WindowCanvas.InventoryHeight(_area, _active == Tab.Inventory && below);
             WindowCanvas.Fit(_area, 0.4f); // the bars are nearer the back than the panels
             FollowVanilla(gui);
         }

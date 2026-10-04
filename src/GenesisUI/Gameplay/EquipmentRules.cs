@@ -25,9 +25,13 @@ namespace GenesisUI.Gameplay
     [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.InventoryModel.SlotLayout), typeof(GenesisUI.Foundation.GenesisLog), typeof(GenesisUI.InventoryModel.EquipmentMove))]
     internal static class EquipmentRules
     {
+        private static bool _reconciling;
+        private static readonly List<ItemDrop.ItemData> Worn = new List<ItemDrop.ItemData>(16);
         internal static EquipSlot? SlotFor(ItemDrop.ItemData item)
         {
             if (item == null || item.m_shared == null) return null;
+            var foreign = Adapters.InventoryIntegrations.SlotFor(item);
+            if (foreign.HasValue) return foreign;
             switch (item.m_shared.m_itemType)
             {
                 case ItemDrop.ItemData.ItemType.Helmet: return EquipSlot.Head;
@@ -47,11 +51,12 @@ namespace GenesisUI.Gameplay
             if (layout == null || player == null || player != Player.m_localPlayer ||
                 item == null || !item.m_equipped || !slot.HasValue) return;
             var inventory = player.GetInventory();
+            var target = layout.EquipmentPosition(slot.Value);
+            if (target.X < 0 || (item.m_gridPos.x == target.X && item.m_gridPos.y == target.Y)) return;
             var all = inventory.GetAllItems();
             var snapshot = new PositionSnapshot<ItemDrop.ItemData>(all, entry => entry.m_stack, entry => (entry.m_gridPos.x, entry.m_gridPos.y));
             int index = all.IndexOf(item);
             if (index < 0) return;
-            var target = layout.EquipmentPosition(slot.Value);
             var occupant = inventory.GetItemAt(target.X, target.Y);
             if (occupant != null && occupant != item && (SlotFor(occupant) != slot || occupant.m_equipped))
             {
@@ -66,13 +71,20 @@ namespace GenesisUI.Gameplay
         internal static void ReconcileExisting(Player player)
         {
             if (player == null || InventoryModule.Current == null) return;
+            if (_reconciling) return;
+            _reconciling = true;
+            try
+            {
             var all = player.GetInventory().GetAllItems();
             // AfterEquip changes positions, not list membership. Take a snapshot to keep this
             // traversal stable if inventory change listeners rebuild the UI.
-            var worn = new List<ItemDrop.ItemData>();
+            var worn = Worn;
+            worn.Clear();
             foreach (var item in all)
                 if (item.m_equipped && SlotFor(item).HasValue) worn.Add(item);
             foreach (var item in worn) AfterEquip(player, item);
+            }
+            finally { _reconciling = false; }
         }
 
         internal static void AfterUnequip(Player player, ItemDrop.ItemData item)

@@ -1,5 +1,34 @@
 # Changelog
 
+## 1.2.0-preview.1 — 2026-10-04 (client validation pending)
+
+### Added
+
+- Exact-version optional Backpacks 1.3.10, Jewelcrafting 2.0.10 and HipLantern 1.1.12
+  inventory integrations; Adventure Backpacks 2.0.3 uses its public API when installed.
+- Aligned backpack/lantern cells, necklace/ring below the character, and three compact native
+  coin/key pockets above it. Pocket and coin capacity settings follow server authority.
+- Jewelcrafting's native Socket list, craft button, gem-container action and success/break
+  warning; native transfer, costs, persistence and mod hooks stay authoritative.
+- Backpack contents below the inventory, with uniform board scaling, native scrolling,
+  take/stack visibility and a native close command. Containers without a real Container
+  object now project the native grid rather than disappearing.
+- Reversible native item-tooltip font/background styling with discreet one-pixel gold edges,
+  preserving foreign content. Large visible stack counts use compact k/M/G notation.
+
+### Fixed
+
+- Use on a supported hovered backpack/container takes precedence over next-tab, including E.
+- Rested light follows the three vital frames instead of drawing a rectangle around food/bars.
+- Coin capacity calculations use wide arithmetic; native reload temporarily preserves the
+  saved Int32 coin count, including with the wallet drawing disabled. Uninstalling every
+  enlarged-stack provider still requires reducing those stacks before vanilla reload.
+
+### Validation
+
+- R-068 records user feedback; R-069 covers the single-client GenesisHeimLocal preview.
+  Public extension API, full-modpack certification and game visual approval remain pending.
+
 ## 1.1.2 — 2026-10-02
 
 ### Added

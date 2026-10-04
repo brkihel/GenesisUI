@@ -100,3 +100,10 @@ item itself.
 - Before 1.0: breaking changes are allowed in minor versions and announced.
 - From 1.0: members are marked `[Obsolete]` for one minor version before removal;
   removal only in a major version.
+
+### Initial F7 inventory slice — 1.2.0-preview.1
+
+The four in-tree inventory adapters currently use the internal `InventoryIntegrations`
+registry and host lifecycles (D-043). This does not publish or change the proposed public
+provider API. Foreign callers should not bind internal types; public registration, docking
+and additional resource adapters remain planned.

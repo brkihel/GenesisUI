@@ -32,6 +32,10 @@ namespace GenesisUI
     /// </summary>
     [BepInPlugin(PluginInfo.Guid, PluginInfo.Name, PluginInfo.Version)]
     [BepInDependency(Jotunn.Main.ModGuid)]
+    [BepInDependency(Adapters.Backpacks.BackpacksAdapter.Guid, BepInDependency.DependencyFlags.SoftDependency)]
+    [BepInDependency(Adapters.Jewelcrafting.JewelcraftingAdapter.Guid, BepInDependency.DependencyFlags.SoftDependency)]
+    [BepInDependency(Adapters.HipLantern.HipLanternAdapter.Guid, BepInDependency.DependencyFlags.SoftDependency)]
+    [BepInDependency(Adapters.AdventureBackpacks.AdventureBackpacksAdapter.Guid, BepInDependency.DependencyFlags.SoftDependency)]
     [NetworkCompatibility(CompatibilityLevel.NotEnforced, VersionStrictness.None)]
     [GameContract("assembly_utils", "ZInput", "GetButtonDown", Parameters = new[] { "System.String" })]
     [GameContract("assembly_utils", "ZInput", "instance")]
@@ -135,6 +139,14 @@ namespace GenesisUI
                     "Notificações do canto superior esquerdo e mensagens do centro no visual do GenesisUI. Desligado, o jogo mostra as originais."));
                 ModuleHost.Register(new StatusModule(Config), Config.Bind("Modules", "Status", true,
                     "Efeitos ativos e o poder do guardião em quadros com nome e tempo. Desligado, o jogo mostra os efeitos originais."));
+                ModuleHost.Register(new Adapters.Backpacks.BackpacksAdapter(), Config.Bind("Modules", "Backpacks", true,
+                    "Integra a mochila do Backpacks com os espaços de equipamento e mostra seu conteúdo abaixo do inventário. Exige uma versão verificada do mod."));
+                ModuleHost.Register(new Adapters.AdventureBackpacks.AdventureBackpacksAdapter(), Config.Bind("Modules", "AdventureBackpacks", true,
+                    "Integra a mochila equipada e a abertura nativa do Adventure Backpacks, quando disponível na versão suportada."));
+                ModuleHost.Register(new Adapters.Jewelcrafting.JewelcraftingAdapter(), Config.Bind("Modules", "Jewelcrafting", true,
+                    "Integra anel, colar, a aba de sockets da mesa de lapidação e os espaços de gemas, mantendo as ações e restrições do Jewelcrafting."));
+                ModuleHost.Register(new Adapters.HipLantern.HipLanternAdapter(), Config.Bind("Modules", "HipLantern", true,
+                    "Mostra o espaço independente da lanterna do HipLantern no equipamento. O mod continua controlando luz, combustível e uso."));
                 ModuleHost.Register(new Gameplay.InventoryModule(), Config.Bind("Modules", "Inventory", true,
                     "Espaços do GenesisUI no inventário: tamanho definido pelo admin (32/40/48), consumo rápido, utilitários e equipamento. " +
                     "Desligado, o inventário volta ao do jogo; itens nos espaços especiais aparecem nas linhas de baixo."));
@@ -142,6 +154,8 @@ namespace GenesisUI
                     "Moldura das janelas: barra de abas em cima (Inventário, Habilidades, Mapa, Criação, Conquistas, Configurações) e dicas de atalho embaixo, com o inventário aberto. Desligado, as janelas ficam como no jogo."));
                 ModuleHost.Register(new Modules.Windows.InventoryWindowModule(Config), Config.Bind("Modules", "InventoryWindow", true,
                     "Janela de inventário no layout do GenesisUI (inventário, equipamento, detalhes do item), por cima do inventário do jogo. Desligado, o inventário do jogo aparece como é."));
+                ModuleHost.Register(new Modules.Windows.ItemTooltipModule(), Config.Bind("Modules", "ItemTooltips", true,
+                    "Dicas dos itens com fontes e bordas discretas do GenesisUI. Preserva textos, gemas e dicas dos mods; desligado, o tooltip volta ao visual original."));
                 ModuleHost.Register(new Modules.Windows.CraftingWindowModule(), Config.Bind("Modules", "CraftingWindow", true,
                     "Aba Criação no layout do concept: lista de receitas com busca e categorias, detalhes e materiais. Desligado, a aba mostra a criação original do jogo."));
                 ModuleHost.Register(new Modules.Windows.SkillsWindowModule(), Config.Bind("Modules", "SkillsWindow", true,
@@ -184,6 +198,7 @@ namespace GenesisUI
                 GuardedPatcher.Apply(_harmony, typeof(Patches.InventoryTransitionPatch));
                 GuardedPatcher.Apply(_harmony, typeof(Patches.InventoryHoverPatch));
                 GuardedPatcher.Apply(_harmony, typeof(Patches.InventoryPlacementPatches));
+                GuardedPatcher.Apply(_harmony, typeof(Patches.WalletLoadPatch));
                 GuardedPatcher.Apply(_harmony, typeof(Patches.EquipmentPatches));
                 GuardedPatcher.Apply(_harmony, typeof(Patches.CraftingListPatch));
                 GuardedPatcher.Apply(_harmony, typeof(Patches.RequirementBindingPatch));

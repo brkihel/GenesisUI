@@ -125,14 +125,15 @@ namespace GenesisUI.Modules.Vitals
             _healthView.ShowValue(values);
             _staminaView.ShowValue(values);
             _eitrView.ShowValue(values);
-            _healthView.Apply(_health, danger, deltaSeconds);
-            _staminaView.Apply(_stamina, 0f, deltaSeconds);
+            float rested = Modules.Climate.ClimateModule.RestedIntensity;
+            _healthView.Apply(_health, danger, deltaSeconds, rested);
+            _staminaView.Apply(_stamina, 0f, deltaSeconds, rested);
             // Eitr fades in and out instead of popping; the anchor follows the same curve.
             _eitrShown = Mathf.MoveTowards(_eitrShown, _eitr.HasCapacity ? 1f : 0f, deltaSeconds * 2.5f);
             float eitr = Mathf.SmoothStep(0f, 1f, _eitrShown);
             _eitrView.SetVisible(_eitrShown > 0.001f);
             if (!Mathf.Approximately(_eitrFade.alpha, eitr)) _eitrFade.alpha = eitr;
-            if (_eitr.HasCapacity) _eitrView.Apply(_eitr, 0f, deltaSeconds);
+            if (_eitr.HasCapacity) _eitrView.Apply(_eitr, 0f, deltaSeconds, rested);
             PublishAnchor(eitr);
         }
 

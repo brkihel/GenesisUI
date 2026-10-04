@@ -18,6 +18,8 @@ while (root != null && !File.Exists(Path.Combine(root, "GenesisUI.sln"))) root =
 string refDir = Path.Combine(root ?? ".", "ref");
 
 var paths = Directory.GetFiles(refDir, "*.dll").ToList();
+string adapters = Path.Combine(refDir, "adapters");
+if (Directory.Exists(adapters)) paths.AddRange(Directory.GetFiles(adapters, "*.dll"));
 // Resolution only: the full Managed folder of devplugins, so every Unity module resolves.
 string full = Path.Combine(root ?? ".", "..", "devplugins", "referencias", "valheim", "valheim_Data", "Managed");
 if (Directory.Exists(full))
@@ -30,7 +32,9 @@ string runtime = Path.GetDirectoryName(typeof(object).Assembly.Location)!;
 paths.AddRange(Directory.GetFiles(runtime, "*.dll").Where(p => !names.Contains(Path.GetFileNameWithoutExtension(p))));
 
 using var ctx = new MetadataLoadContext(new PathAssemblyResolver(paths), "mscorlib");
-var type = ctx.LoadFromAssemblyPath(Path.Combine(refDir, args[0] + ".dll")).GetType(args[1]);
+string assemblyPath = paths.FirstOrDefault(p => string.Equals(Path.GetFileNameWithoutExtension(p), args[0], StringComparison.OrdinalIgnoreCase));
+if (assemblyPath == null) { Console.WriteLine("assembly not found: " + args[0]); return 1; }
+var type = ctx.LoadFromAssemblyPath(assemblyPath).GetType(args[1]);
 if (type == null)
 {
     Console.WriteLine("type not found: " + args[1]);

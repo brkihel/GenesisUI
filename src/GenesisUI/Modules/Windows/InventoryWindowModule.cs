@@ -101,6 +101,7 @@ namespace GenesisUI.Modules.Windows
     [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop\u002BItemData", "m_shared", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "ItemDrop\u002BItemData\u002BSharedData")]
     [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "ItemDrop\u002BItemData\u002BSharedData", "m_name", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.String")]
     [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Foundation.VanillaSkin), typeof(GenesisUI.Host.ModuleContext), typeof(GenesisUI.Widgets.WindowParts), typeof(GenesisUI.Widgets.WindowCanvas), typeof(GenesisUI.InventoryModel.SlotLayout), typeof(GenesisUI.Widgets.CharacterPreview), typeof(GenesisUI.Widgets.Backdrop), typeof(GenesisUI.Widgets.EdgeLight), typeof(GenesisUI.Modules.Windows.VanillaPanels), typeof(GenesisUI.Foundation.GenesisLog), typeof(GenesisUI.Foundation.SharedCanvasGroups), typeof(GenesisUI.Foundation.CanvasGroupLease), typeof(GenesisUI.Foundation.Guard), typeof(GenesisUI.Gameplay.SlotHotkeys), typeof(GenesisUI.Widgets.KeyText), typeof(GenesisUI.Theme.ThemeRuntime), typeof(GenesisUI.Theme.ThemeTokens), typeof(GenesisUI.Widgets.EmberField), typeof(GenesisUI.InventoryModel.InventorySort), typeof(GenesisUI.Gameplay.ItemCategories), typeof(GenesisUI.Widgets.Ui), typeof(GenesisUI.Widgets.Frame), typeof(GenesisUI.Widgets.ColorExtensions), typeof(GenesisUI.Widgets.ItemPreview), typeof(GenesisUI.Widgets.ItemStats))]
+    [GameContract("assembly_valheim", "InventoryGui", "CloseContainer", Parameters = new string[0])]
     internal sealed class InventoryWindowModule : IUiModule, IRecoverable
     {
         /// <summary>IRecoverable: on a fault the windows close (vanilla's never shows in their place).</summary>
@@ -144,6 +145,7 @@ namespace GenesisUI.Modules.Windows
         {
             EquipSlot.Head, EquipSlot.Chest, EquipSlot.Cape, EquipSlot.Legs,
             EquipSlot.Trinket, EquipSlot.Belt, EquipSlot.Amulet, EquipSlot.Ring, EquipSlot.Lantern, EquipSlot.BackpackQuiver,
+            EquipSlot.Wallet, EquipSlot.KeyOne, EquipSlot.KeyTwo,
         };
 
         private readonly VanillaSkin _skin = new VanillaSkin(Owner);
@@ -163,6 +165,9 @@ namespace GenesisUI.Modules.Windows
         private CanvasGroup _fade;
         private RectTransform _area;
         private RectTransform _inventoryPanel, _equipmentPanel, _detailsPanel, _containerPanel;
+        private RectTransform _takeRect, _stackRect, _closeRect;
+        private bool _containerBelow;
+        private Action<InventoryGui> _closeContainer;
         private RectTransform _filterList;
         private RectTransform _scrollTrack, _scrollThumb;
         private RectTransform _containerGrid;
@@ -238,6 +243,7 @@ namespace GenesisUI.Modules.Windows
             Running = true;
             _theme = context.Theme;
             _parts = new WindowParts(_theme);
+            _closeContainer = AccessTools.MethodDelegate<Action<InventoryGui>>(AccessTools.Method(typeof(InventoryGui), "CloseContainer"));
             _containerGridRef = AccessTools.FieldRefAccess<InventoryGui, InventoryGrid>("m_containerGrid");
             _containerRef = AccessTools.FieldRefAccess<InventoryGui, Container>("m_currentContainer");
             _dragItem = AccessTools.FieldRefAccess<InventoryGui, ItemDrop.ItemData>("m_dragItem");
@@ -273,6 +279,8 @@ namespace GenesisUI.Modules.Windows
             _closedFor = 0f;
             if (!EnsureBuilt(gui)) return;
             if (!_applied) Apply(gui);
+            Adapters.InventoryIntegrations.Container(out bool below);
+            WindowCanvas.InventoryHeight(_area, below);
             WindowCanvas.Fit(_area);
             SetFade(WindowShellModule.Opacity, true);
 
@@ -297,17 +305,17 @@ namespace GenesisUI.Modules.Windows
                 _utilityCells[i].Bind(_utilityCells[i].Pos, _utilityCells[i].Active, HotkeyText(4 + i));
                 UpdateCell(_utilityCells[i], inventory, player, dragged);
             }
-            if (!container)
+            if (!container || _containerBelow)
                 foreach (var cell in _wornCells.Values) UpdateCell(cell, inventory, player, dragged);
             ShowEquipProgress();
             if (_character != null)
             {
-                if (container) _character.Hide();
+                if (container && !_containerBelow) _character.Hide();
                 else _character.Show(player, deltaSeconds);
             }
             UpdateGhost(gui, dragged);
             UpdateDropLight(dragged);
-            if (!container) UpdateDetails(inventory, deltaSeconds);
+            if (!container || _containerBelow) UpdateDetails(inventory, deltaSeconds);
             UpdateStats(player, inventory, layout);
 
             if (_sortKey.Value.IsDown()) Sort(gui, player, layout);
@@ -325,7 +333,7 @@ namespace GenesisUI.Modules.Windows
             _layoutKey = null;
             _builtContainerW = _builtContainerH = -1;
             _containerScroll = _scroll = 0;
-            _containerShown = false;
+            _containerShown = _containerBelow = false;
             _hovered = null;
             _focused = null;
             _containerName = null;
@@ -472,8 +480,8 @@ namespace GenesisUI.Modules.Windows
         private Inventory InventoryOf(InventoryGui gui, ItemCell cell)
         {
             if (!cell.Container) return Player.m_localPlayer != null ? Player.m_localPlayer.GetInventory() : null;
-            var container = _containerRef(gui);
-            return container != null ? container.GetInventory() : null;
+            var grid = _containerGridRef(gui);
+            return grid != null ? grid.GetInventory() : null;
         }
 
         // ------------------------------------------------------------------ input (called by CellInput)
@@ -537,6 +545,16 @@ namespace GenesisUI.Modules.Windows
             if (live == null || !live._applied || live._hovered == null || InventoryGui.instance == null || Guard.IsTripped(Owner)) return null;
             if (live.GridOf(InventoryGui.instance, live._hovered) != grid) return null;
             return live.Element(grid, live._hovered.Pos);
+        }
+
+        internal static bool UseHovered()
+        {
+            var live = _live;
+            var gui = InventoryGui.instance;
+            if (live == null || !live._applied || gui == null || live._hovered == null || live._hovered.Container || !live._hovered.Active) return false;
+            var inventory = live.InventoryOf(gui, live._hovered);
+            var item = inventory != null ? inventory.GetItemAt(live._hovered.Pos.x, live._hovered.Pos.y) : null;
+            return item != null && Adapters.InventoryIntegrations.Use(item);
         }
         private void MirrorSelection(InventoryGui gui, SlotLayout layout)
         {
@@ -614,12 +632,13 @@ namespace GenesisUI.Modules.Windows
             {
                 if (!_wornCells.TryGetValue(slot, out var cell)) continue;
                 var p = layout.EquipmentPosition(slot);
-                bool present = p.X >= 0 && placed < 8;
+                bool present = p.X >= 0;
                 cell.Root.gameObject.SetActive(present);
                 if (!present) continue;
                 cell.Bind(new Vector2i(p.X, p.Y), true, null);
-                PlaceWorn(cell, placed);
-                placed++;
+                if (PocketRules.IsPocket(slot)) PlaceCompact(cell, ((int)slot - (int)EquipSlot.Wallet), 74f);
+                else if (slot == EquipSlot.Amulet || slot == EquipSlot.Ring) PlaceCompact(cell, slot == EquipSlot.Amulet ? 0 : 2, 490f);
+                else { PlaceWorn(cell, placed); placed++; }
             }
             GenesisLog.Info("Module:win.inventory", "layout bound: " + layout.Rows + "/" + layout.Quick + "/" + layout.Utility + "/" + layout.Equipment.Count);
         }
@@ -636,6 +655,28 @@ namespace GenesisUI.Modules.Windows
                 rt.anchoredPosition = new Vector2(x - 20f, -(y + WornCell + 4f));
                 cell.Label.gameObject.SetActive(true);
             }
+        }
+
+        private void PlaceCompact(ItemCell cell, int index, float y)
+        {
+            float size = PocketRules.IsPocket(WornSlot(cell)) ? 46f : 58f;
+            bool pocket = PocketRules.IsPocket(WornSlot(cell));
+            float x = pocket ? (EquipmentW - 3f * size - 12f) * 0.5f + index * (size + 6f) : EquipmentW * 0.5f + (index == 0 ? -68f : 10f);
+            cell.Root.sizeDelta = new Vector2(size, size);
+            cell.Root.anchoredPosition = new Vector2(x, -y);
+            if (cell.Label != null)
+            {
+                var rt = (RectTransform)cell.Label.transform;
+                rt.sizeDelta = new Vector2(size + 24f, 20f);
+                rt.anchoredPosition = new Vector2(x - 12f, -(y + size + 2f));
+                cell.Label.fontSize = 13f;
+                cell.Label.gameObject.SetActive(true);
+            }
+        }
+        private EquipSlot WornSlot(ItemCell cell)
+        {
+            foreach (var pair in _wornCells) if (pair.Value == cell) return pair.Key;
+            return EquipSlot.Head;
         }
 
         private void UpdateScrollbar(int rows)
@@ -768,22 +809,40 @@ namespace GenesisUI.Modules.Windows
         /// <summary>The chest panel over equipment and details (ConceptArt 9 keeps the inventory on the left).</summary>
         private bool UpdateContainer(InventoryGui gui, Player player, ItemDrop.ItemData dragged)
         {
-            var container = _containerRef(gui);
-            bool open = gui.IsContainerOpen() && container != null;
+            var nativeGrid = _containerGridRef(gui);
+            var inventory = nativeGrid != null ? nativeGrid.GetInventory() : null;
+            var foreign = Adapters.InventoryIntegrations.Container(out bool below);
+            bool open = gui.IsContainerOpen() && inventory != null;
+            below = open && below && ReferenceEquals(foreign, inventory);
+            if (_containerBelow != below)
+            {
+                _containerBelow = below;
+                _builtContainerW = _builtContainerH = -1;
+                _containerPanel.anchoredPosition = new Vector2(below ? 0f : EquipmentX, below ? -690f : 0f);
+                float panelWidth = below ? EquipmentX - 4f : WindowCanvas.Design.x - EquipmentX;
+                _containerPanel.sizeDelta = new Vector2(panelWidth, below ? 300f : PanelsHeight);
+                _containerGrid.sizeDelta = new Vector2(panelWidth, below ? 300f - GridY - 20f : PanelsHeight - GridY - 40f);
+            }
+            float buttonsWidth = _containerPanel.sizeDelta.x;
+            _takeRect.anchoredPosition = new Vector2(buttonsWidth - 226f, -30f);
+            _stackRect.anchoredPosition = new Vector2(buttonsWidth - 388f, -30f);
+            _closeRect.anchoredPosition = new Vector2(buttonsWidth - 64f, -30f);
+            bool equipmentVisible = !open || below;
+            if (_equipmentPanel.gameObject.activeSelf != equipmentVisible) _equipmentPanel.gameObject.SetActive(equipmentVisible);
+            if (_detailsPanel.gameObject.activeSelf != equipmentVisible) _detailsPanel.gameObject.SetActive(equipmentVisible);
+            bool take = open && gui.m_takeAllButton != null && gui.m_takeAllButton.gameObject.activeSelf && gui.m_takeAllButton.interactable;
+            bool stack = open && gui.m_stackAllButton != null && gui.m_stackAllButton.gameObject.activeSelf && gui.m_stackAllButton.interactable;
+            if (_takeRect.gameObject.activeSelf != take) _takeRect.gameObject.SetActive(take);
+            if (_stackRect.gameObject.activeSelf != stack) _stackRect.gameObject.SetActive(stack);
             if (open != _containerShown)
             {
                 _containerShown = open;
-                _equipmentPanel.gameObject.SetActive(!open);
-                _detailsPanel.gameObject.SetActive(!open);
                 _containerPanel.gameObject.SetActive(open);
                 _containerScroll = 0;
             }
             if (!open) return false;
-            var inventory = container.GetInventory();
-            if (inventory == null) return true;
             int w = inventory.GetWidth(), h = inventory.GetHeight();
             if (w != _builtContainerW || h != _builtContainerH) BuildContainerCells(w, h);
-            var nativeGrid = _containerGridRef(gui);
             if ((ZInput.IsGamepadActive() || ZInput.IsTouchActive()) && nativeGrid != null)
             {
                 var selected = nativeGrid.GetGamepadSelectedElement();
@@ -920,7 +979,7 @@ namespace GenesisUI.Modules.Windows
             BuildInventory(t);
             BuildEquipment(t);
             // Between the two columns of worn slots, above the protection total.
-            _character = CharacterPreview.Create(WindowCanvas.At(_equipmentPanel, "Character", 112f, 78f, EquipmentW - 224f, 486f));
+            _character = CharacterPreview.Create(WindowCanvas.At(_equipmentPanel, "Character", 112f, 148f, EquipmentW - 224f, 330f));
             _details = new Details(this, _detailsPanel);
             BuildContainer(t);
 
@@ -1022,10 +1081,12 @@ namespace GenesisUI.Modules.Windows
                 "$genesisui_slot_head", "$genesisui_slot_chest", "$genesisui_slot_cape", "$genesisui_slot_legs",
                 "$genesisui_slot_trinket", "$genesisui_slot_belt", "$genesisui_slot_amulet", "$genesisui_slot_ring",
                 "$genesisui_slot_lantern", "$genesisui_slot_backpack",
+                "$genesisui_slot_wallet", "$genesisui_slot_key_one", "$genesisui_slot_key_two",
             };
             for (int i = 0; i < WornOrder.Length; i++)
             {
-                var cell = MakeCell(p, "Worn " + WornOrder[i], 0f, 0f, WornCell, null);
+                float size = PocketRules.IsPocket(WornOrder[i]) ? 46f : (WornOrder[i] == EquipSlot.Ring || WornOrder[i] == EquipSlot.Amulet ? 58f : WornCell);
+                var cell = MakeCell(p, "Worn " + WornOrder[i], 0f, 0f, size, null);
                 cell.Label = Label(p, "Label " + WornOrder[i], FontRole.Body, 16f, t.TextTitle, 0f, 0f, WornCell + 40f, 22f, TextAlignmentOptions.Center);
                 cell.Label.text = Localize(tokens[i]);
                 cell.Label.gameObject.SetActive(false);
@@ -1043,14 +1104,17 @@ namespace GenesisUI.Modules.Windows
         {
             var p = _containerPanel;
             float w = WindowCanvas.Design.x - EquipmentX;
-            var take = WindowCanvas.At(p, "TakeAll", w - 24f - 150f, 30f, 150f, 38f);
+            var take = _takeRect = WindowCanvas.At(p, "TakeAll", w - 24f - 150f, 30f, 150f, 38f);
             Frame.Dress(take, _theme, "keycap_wide", "Windows", 38f);
             Label(take, "Text", FontRole.Body, 16f, t.TextTitle, 0f, 0f, 150f, 38f, TextAlignmentOptions.Center).text = Localize("$genesisui_take_all");
             Clickable(take, "container take all", () => { var gui = InventoryGui.instance; if (gui != null) gui.m_takeAllButton.onClick.Invoke(); });
-            var stack = WindowCanvas.At(p, "StackAll", w - 24f - 150f - 12f - 150f, 30f, 150f, 38f);
+            var stack = _stackRect = WindowCanvas.At(p, "StackAll", w - 24f - 150f - 12f - 150f, 30f, 150f, 38f);
             Frame.Dress(stack, _theme, "keycap_wide", "Windows", 38f);
             Label(stack, "Text", FontRole.Body, 16f, t.TextTitle, 0f, 0f, 150f, 38f, TextAlignmentOptions.Center).text = Localize("$genesisui_stack_all");
             Clickable(stack, "container stack all", () => { var gui = InventoryGui.instance; if (gui != null) gui.m_stackAllButton.onClick.Invoke(); });
+            var close = _parts.Button(p, "Close", w - 64f, 30f, 48f, 38f, "$genesisui_close", 13f, "container close",
+                () => { var gui = InventoryGui.instance; if (gui != null) _closeContainer(gui); }, out _);
+            _closeRect = (RectTransform)close.transform;
             _containerGrid = WindowCanvas.At(p, "Grid", 0f, GridY, w, PanelsHeight - GridY - 40f);
             var hit = Ui.Image(_containerGrid, null, new Color(0f, 0f, 0f, 0f), raycast: true);
             hit.gameObject.AddComponent<CellInput>().Init(this, null).ContainerScroll = true;
@@ -1229,7 +1293,10 @@ namespace GenesisUI.Modules.Windows
                     _stack = stack;
                     if (stack <= 0) Amount.text = "";
                     else if (ShowMax) Amount.SetText("{0}/{1}", stack, item.m_shared.m_maxStackSize);
-                    else Amount.SetText("{0}", stack);
+                    else if (stack >= 1000000000) Amount.text = (stack / 1000000000d).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) + "G";
+                    else if (stack >= 1000000) Amount.text = (stack / 1000000d).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) + "M";
+                    else if (stack >= 10000) Amount.text = (stack / 1000d).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) + "k";
+                    else Amount.text = stack.ToString(System.Globalization.CultureInfo.InvariantCulture);
                 }
                 int quality = item != null && item.m_shared.m_maxQuality > 1 ? item.m_quality : 0;
                 if (quality != _quality)

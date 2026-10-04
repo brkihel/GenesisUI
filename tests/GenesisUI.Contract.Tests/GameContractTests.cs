@@ -24,6 +24,8 @@ namespace GenesisUI.Contract.Tests
         internal static MetadataLoadContext Load(out Assembly plugin)
         {
             var paths = Directory.GetFiles(TestPaths.RefDir, "*.dll").ToList();
+            string adapters = Path.Combine(TestPaths.RefDir, "adapters");
+            if (Directory.Exists(adapters)) paths.AddRange(Directory.GetFiles(adapters, "*.dll"));
             var names = new HashSet<string>(paths.Select(Path.GetFileNameWithoutExtension), StringComparer.OrdinalIgnoreCase);
             var runtime = Path.GetDirectoryName(typeof(object).Assembly.Location);
             paths.AddRange(Directory.GetFiles(runtime, "*.dll").Where(p => !names.Contains(Path.GetFileNameWithoutExtension(p))));
@@ -70,8 +72,10 @@ namespace GenesisUI.Contract.Tests
             var missing = new List<string>();
             foreach (var c in contracts)
             {
+                if (IsAdapter(c.asm)) continue;
                 string where = c.owner.FullName + " -> " + c.asm + ":" + c.type + "::" + c.member;
                 string file = c.asm == "GenesisUI" ? TestPaths.PluginDll : Path.Combine(TestPaths.RefDir, c.asm + ".dll");
+                if (!File.Exists(file)) file = Path.Combine(TestPaths.RefDir, "adapters", c.asm + ".dll");
                 if (!File.Exists(file)) { missing.Add(where + " (assembly not in ref/)"); continue; }
 
                 var type = ctx.LoadFromAssemblyPath(file).GetType(c.type, false);
@@ -85,6 +89,34 @@ namespace GenesisUI.Contract.Tests
 
             Assert.True(missing.Count == 0,
                 "Game contracts broken (verified against " + VerifiedAgainst + "):\n" + string.Join("\n", missing));
+        }
+
+        private static bool IsAdapter(string assembly) => assembly == "Backpacks" || assembly == "Jewelcrafting" || assembly == "HipLantern" || assembly == "AdventureBackpacks";
+
+        [SkippableTheory]
+        [InlineData("Backpacks", "org.bepinex.plugins.backpacks", "1.3.10")]
+        [InlineData("Jewelcrafting", "org.bepinex.plugins.jewelcrafting", "2.0.10")]
+        [InlineData("HipLantern", "shudnal.HipLantern", "1.1.12")]
+        [InlineData("AdventureBackpacks", "vapok.mods.adventurebackpacks", "2.0.3")]
+        public void Foreign_adapter_contracts_match_the_exact_owning_plugin(string name, string guid, string version)
+        {
+            TestPaths.SkipUnlessRefs(); TestPaths.SkipUnlessPlugin();
+            string path = Path.Combine(TestPaths.RefDir, "adapters", name + ".dll");
+            Skip.IfNot(File.Exists(path), "Optional exact-version adapter DLL missing: " + path);
+            using var ctx = Load(out var plugin);
+            var assembly = ctx.LoadFromAssemblyPath(path);
+            var metadata = assembly.GetTypes().SelectMany(t => t.GetCustomAttributesData())
+                .Single(a => a.AttributeType.FullName == "BepInEx.BepInPlugin" && (string)a.ConstructorArguments[0].Value == guid);
+            Assert.Equal(version, (string)metadata.ConstructorArguments[2].Value);
+            var declared = Contracts(plugin).Where(c => c.asm == name).ToArray();
+            Assert.NotEmpty(declared);
+            foreach (var c in declared)
+            {
+                var type = assembly.GetType(c.type, false);
+                Assert.NotNull(type);
+                Assert.True(type.GetMember(c.member, All).Any(m => ContractMatcher.Matches(m, c.shape)),
+                    name + " " + version + ": " + c.type + "::" + c.member);
+            }
         }
 
         [SkippableFact]
@@ -111,6 +143,7 @@ namespace GenesisUI.Contract.Tests
             var weak = new List<string>();
             foreach (var contract in Contracts(plugin))
             {
+                if (IsAdapter(contract.asm) && !File.Exists(Path.Combine(TestPaths.RefDir, "adapters", contract.asm + ".dll"))) continue;
                 var type = context.LoadFromAssemblyName(contract.asm).GetType(contract.type, false);
                 if (type == null || type.GetField(contract.member, All) == null) continue;
                 if (contract.shape.Kind != ContractMemberKind.Field || contract.shape.Static == ContractStatic.Any || string.IsNullOrEmpty(contract.shape.ValueType)) weak.Add(contract.owner.FullName + " -> " + contract.type + "::" + contract.member);

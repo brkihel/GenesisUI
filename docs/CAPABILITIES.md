@@ -19,7 +19,7 @@ The immutable review remains evidence of its earlier source; see [release record
 | UI ownership | Logical window/build/map/action reservations; known SeneaL ownership blocks conflicts | Conservative coexistence; original foreign UI stays the owner, no implicit certification |
 | Diagnostics/package | Bounded metrics/reports; shader/build evidence; ZIP content hashes | Release ZIP payloads/stamp verified; compiled Overlay/Watermark types absent; F8 report retained; POSIX/remote builds require their own environment |
 | Extension API and generic foreign dock | Design only (F7), no public provider registration | Disposable read-only providers/bounds/version contracts planned |
-| Backpacks, Jewelcrafting, HipLantern | No independent slot/container/socket adapters shipped | Exact-version resource/action slices described in the modpack study |
+| Development 1.2.0-preview.1: Backpacks, Jewelcrafting, HipLantern, Adventure Backpacks | Exact-version optional equipment/container/Socket UI integrations implemented (D-043); native coin/key pockets and reversible tooltip style (D-044) | DLL contracts verified; R-069 in-game visual/input/save/reload approval pending. Adventure Backpacks absent from GenesisHeimLocal |
 | Other FullPlaythrough capabilities | Existing vanilla mirroring only | Per-feature/version/config certification pending, including combined interactions |
 | Performance budget | Hot-path caches and measurement support implemented | No benchmark/GPU/GC improvement claim; measure on Diego's client |
 

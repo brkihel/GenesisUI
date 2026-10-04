@@ -24,6 +24,8 @@ namespace GenesisUI.Gameplay
         internal static ConfigEntry<int> Rows;
         internal static ConfigEntry<int> QuickSlots;
         internal static ConfigEntry<int> UtilitySlots;
+        internal static ConfigEntry<bool> Pockets;
+        internal static ConfigEntry<int> WalletCapacity;
 
         /// <summary>Raised when any synced value changes (locally or from the server).</summary>
         internal static event Action Changed;
@@ -49,6 +51,11 @@ namespace GenesisUI.Gameplay
             QuickSlots = Synced(config.Bind("Inventory", "QuickSlots", 4, new ConfigDescription(
                 "[Servidor] Espaços de consumo rápido (comidas, hidromeles, poções): 0 desliga, até 4.",
                 new AcceptableValueRange<int>(0, SlotLayout.MaxQuick))));
+            Pockets = Synced(config.Bind("Inventory", "Pockets", true,
+                "[Servidor] Um espaço para moedas e dois para chaves, acima do personagem."));
+            WalletCapacity = Synced(config.Bind("Inventory", "WalletCapacity", int.MaxValue, new ConfigDescription(
+                "[Servidor] Limite da pilha de moedas; o máximo é 2147483647. Peso, gastos e transferências seguem o jogo.",
+                new AcceptableValueRange<int>(1, int.MaxValue))));
             UtilitySlots = Synced(config.Bind("Inventory", "UtilitySlots", 4, new ConfigDescription(
                 "[Servidor] Espaços utilitários (munição, magias, escudos, ferramentas, armas; anéis e colares para troca rápida): 0 desliga, até 4.",
                 new AcceptableValueRange<int>(0, SlotLayout.MaxUtility))));
@@ -61,7 +68,7 @@ namespace GenesisUI.Gameplay
         internal static bool LockedHere => _sync != null && _sync.IsLocked && !_sync.IsSourceOfTruth && !_sync.IsAdmin;
 
         /// <summary>Whether an entry is one of the server-synced inventory settings.</summary>
-        internal static bool IsSynced(ConfigEntryBase entry) => entry == Rows || entry == QuickSlots || entry == UtilitySlots;
+        internal static bool IsSynced(ConfigEntryBase entry) => entry == Rows || entry == QuickSlots || entry == UtilitySlots || entry == Pockets || entry == WalletCapacity;
 
         /// <summary>The layout the admin's settings describe right now.</summary>
         internal static SlotLayout Layout() =>
@@ -76,6 +83,22 @@ namespace GenesisUI.Gameplay
             yield return EquipSlot.Cape;
             yield return EquipSlot.Belt;
             yield return EquipSlot.Trinket;
+            foreach (var slot in new[] { EquipSlot.BackpackQuiver, EquipSlot.Lantern, EquipSlot.Amulet, EquipSlot.Ring })
+                if (Adapters.InventoryIntegrations.Enabled(slot)) yield return slot;
+            if (Pockets.Value)
+            {
+                yield return EquipSlot.Wallet;
+                yield return EquipSlot.KeyOne;
+                yield return EquipSlot.KeyTwo;
+            }
+        }
+
+        internal static int IntegrationMask()
+        {
+            int mask = 0;
+            for (int i = (int)EquipSlot.BackpackQuiver; i <= (int)EquipSlot.Ring; i++)
+                if (Adapters.InventoryIntegrations.Enabled((EquipSlot)i)) mask |= 1 << i;
+            return mask;
         }
 
         private static ConfigEntry<T> Synced<T>(ConfigEntry<T> entry)
@@ -91,7 +114,7 @@ namespace GenesisUI.Gameplay
             Watched.Clear(); Changed = null;
             var registry = typeof(ConfigSync).GetField("configSyncs", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)?.GetValue(null) as ICollection<ConfigSync>;
             if (_sync != null && registry != null) registry.Remove(_sync); // this instance only; never another mod's sync or patches
-            _sync = null; Lock = null; Rows = null; QuickSlots = null; UtilitySlots = null;
+            _sync = null; Lock = null; Rows = null; QuickSlots = null; UtilitySlots = null; Pockets = null; WalletCapacity = null;
         }
     }
 }
