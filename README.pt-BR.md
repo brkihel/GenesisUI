@@ -19,7 +19,7 @@ então seus outros mods continuam funcionando e qualquer parte pode voltar a ser
 
 Versão atual: [**1.1.2 — baixar no GitHub**](https://github.com/brkihel/GenesisUI/releases/tag/v1.1.2), aprovada por Diego: previews 3D corrigidos, brilho ao equipar, lore em runas e correções de estabilidade. [Registro do Release](docs/releases/1.1.2.md). O upload no Hexium segue como próximo passo de Diego.
 
-Em desenvolvimento: **1.2.0-preview.1** acrescenta integrações de mochila, joias, lanterna e sockets, carteira/chaves e tooltips discretos. A [validação no cliente](docs/testing/scripts/R-069-modular-inventory.md) está pendente no Gale `GenesisHeimLocal`; o Release público aprovado continua sendo 1.1.2.
+Em desenvolvimento: **1.2.0-preview.2** corrige o reconhecimento da mochila no slot, acrescenta escalas geral/das janelas e mantém a edição de gemas sobre os detalhes sem sair da mesa. A [validação no cliente](docs/testing/scripts/R-070-backpack-scale-gem-flow.md) está pendente no Gale `GenesisHeimLocal`; o Release público aprovado continua sendo 1.1.2.
 ---
 
 ## Um HUD que parece vivo

@@ -49,3 +49,9 @@ apply their restrictions afterwards. Both Inventory.Load overloads have observin
 prefixes and restoring finalizers, and retain originals, foreign patches and exceptions.
 The D-044 load service intentionally remains active with wallet drawing disabled to avoid
 saved coin truncation. No Harmony patch targets a foreign method.
+
+Preview.2 extends only the existing GetHoveredElement postfix: inventory and gem-editor
+projections return the exact native element under their visible cell, each guarded by its
+own window owner. Original execution and every foreign prefix/postfix remain unchanged;
+inactive/faulted projections do nothing. The default-key correction, scale controls and
+station-preserving native UI commands introduce no new patch target or skipping prefix.

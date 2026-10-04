@@ -1,15 +1,15 @@
 # GenesisUI — Adapters
 
-Status: initial F7 inventory slice implemented in `1.2.0-preview.1`, pending R-069 client
+Status: initial F7 inventory slice continues in `1.2.0-preview.2`, with R-069 feedback and pending R-070 client
 approval. Release 1.1.2 remains the public baseline. Adapters are optional guarded host
 modules exposing an internal disposable capability registry, not a published Extension API.
 Versions outside the matrix are blocked locally with a diagnostic reason.
 
 | Adapter | Exact plugin version | Reference provenance | Client status |
 | --- | --- | --- | --- |
-| [Backpacks](adapters/Backpacks.md) | 1.3.10 | GenesisHeimLocal / identical FullPlaythrough DLL | R-069 pending |
-| [Jewelcrafting](adapters/Jewelcrafting.md) | 2.0.10 | GenesisHeimLocal / identical FullPlaythrough DLL | R-069 pending |
-| [HipLantern](adapters/HipLantern.md) | 1.1.12 | GenesisHeimLocal / identical FullPlaythrough DLL | R-069 pending |
+| [Backpacks](adapters/Backpacks.md) | 1.3.10 | GenesisHeimLocal / identical FullPlaythrough DLL | R-069 feedback; R-070 pending |
+| [Jewelcrafting](adapters/Jewelcrafting.md) | 2.0.10 | GenesisHeimLocal / identical FullPlaythrough DLL | R-069 feedback; R-070 pending |
+| [HipLantern](adapters/HipLantern.md) | 1.1.12 | GenesisHeimLocal / identical FullPlaythrough DLL | R-069 feedback; R-070 pending |
 | [AdventureBackpacks](adapters/AdventureBackpacks.md) | 2.0.3 | Official Thunderstore DLL; absent from GenesisHeimLocal | Optional R-069 run pending |
 
 No foreign assembly or assets are packaged. Binding uses the owning plugin assembly only.

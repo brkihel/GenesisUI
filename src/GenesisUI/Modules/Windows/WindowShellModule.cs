@@ -139,8 +139,6 @@ namespace GenesisUI.Modules.Windows
         /// <summary>The next-tab key, while the shell is showing; read by the Use guard patch.</summary>
         internal static KeyCode ActiveNextKey { get; private set; } = KeyCode.None;
         internal static int ItemUseFrame { get; set; } = -1;
-        private static bool _inventoryRequested;
-        internal static void RequestInventory() => _inventoryRequested = true;
 
         public void Build(ModuleContext context)
         {
@@ -173,7 +171,6 @@ namespace GenesisUI.Modules.Windows
 
         public void Refresh(float deltaSeconds)
         {
-            if (_inventoryRequested) { _inventoryRequested = false; Show(Tab.Inventory); }
             var gui = InventoryGui.instance;
             if (!EnsureBuilt(gui)) return;
             bool mapOpen = LargeMapOpen();

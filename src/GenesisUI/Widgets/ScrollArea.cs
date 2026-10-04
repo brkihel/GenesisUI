@@ -48,6 +48,13 @@ namespace GenesisUI.Widgets
 
         public void ToTop() => Apply(0f);
 
+        /// <summary>Keep a focused row visible without moving the viewport when already in view.</summary>
+        public void ShowRange(float top, float bottom)
+        {
+            if (top < _offset) Apply(top);
+            else if (bottom > _offset + Viewport.sizeDelta.y) Apply(bottom - Viewport.sizeDelta.y);
+        }
+
         public void Scroll(float wheel) => Apply(_offset - Mathf.Sign(wheel) * (wheel == 0f ? 0f : _step));
 
         private void Apply(float offset)

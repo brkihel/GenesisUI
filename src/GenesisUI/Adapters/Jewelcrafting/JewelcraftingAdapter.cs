@@ -46,6 +46,8 @@ namespace GenesisUI.Adapters.Jewelcrafting
         internal static bool Available { get; private set; }
         internal static bool SocketMode { get; private set; }
         internal static bool CanEditSelected { get; private set; }
+        internal static Inventory OpenInventory => _live != null && _live._entry != null && !Guard.IsTripped(_live._entry.Owner)
+            ? _live._entry.Container : null;
         public string Id => "adapter.jewelcrafting";
         public string NameToken => "$genesisui_module_jewelcrafting";
         public IReadOnlyList<string> Regions => Array.Empty<string>();

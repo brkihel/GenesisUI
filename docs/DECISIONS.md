@@ -714,3 +714,34 @@ Removing GenesisUI (and every mod that preserves the enlarged limit) can expose 
 reload clamp. Reduce enlarged coin stacks before uninstalling; this proven persistence
 limitation is included in the client script and gameplay documentation. Single-client
 save/reload, toggle, transfer, capacity and modpack validation remain mandatory in R-069.
+
+## D-045 — Independent visual scales and station-preserving gem editing
+
+**Date:** 2026-10-04. Diego's Preview.1 client feedback: backpack drops are refused, the
+expanded backpack layout is too small, and gem editing forces leaving the crafting view.
+
+**Decision:** bind ItemDataManager containers with the owning method's actual default
+string parameter, checked against both exact foreign DLLs; null addresses a different entry
+and is not equivalent to omitting the parameter. Preserve native equip/transfer execution.
+
+Add `[General] Scale` (0.5–1.5, default 1) for owned HUD/windows and `[Windows] Scale`
+(0.5–2, default 1) for owned design boards. Compose with the existing local scales/viewport
+fractions, use uniform transforms and keep boards within 98% of the screen for parallax.
+Keep HUD edge anchors by dividing its logical canvas size by the general multiplier.
+Native UI geometry/scale stays game-owned; dressed native tooltips/dialogs retain game scale.
+Both settings are client-only, localized in our settings screen and included in F8/logs.
+
+Keep station gem editing on the Crafting tab. Invoke the original Socket gem button, then
+project the live native container and player grids into an owned panel at Item Details.
+Hide the entire Details panel, preserving its content, to prevent transparency bleed.
+Pause recipe clicks until native CloseContainer restores Details on the same station/item.
+Close the editor on tab exit/teardown; guarded cleanup releases hover and drag-icon leases
+even if a native close call fails. Do not close a different container that replaced ours.
+
+Wrap native cell addresses in a bounded pure layout; every pointer, tooltip, touch and
+drag/drop action forwards to native elements/callbacks. No item acceptance, socket cost,
+unsocket chance, save rule, inventory count or identity is implemented by the view. The
+existing GetHoveredElement postfix accepts this additional owner-guarded projection;
+original/foreign patches continue running. Native split dialogs render above our view.
+No new Harmony target, foreign patch, dependency, public API or art asset is introduced.
+Automated contracts/math tests are distinct from the focused R-070 client/visual gate.

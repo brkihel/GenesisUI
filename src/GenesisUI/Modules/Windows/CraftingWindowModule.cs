@@ -88,6 +88,19 @@ namespace GenesisUI.Modules.Windows
     [GameContract("assembly_guiutils", "Localization", "get_instance", Parameters = new string[0], ValueType = "Localization")]
     [GameContract("assembly_guiutils", "Localization", "GetSelectedLanguage", Parameters = new string[0], ValueType = "System.String")]
     [GameContract("assembly_valheim", "InventoryGui+RecipeDataPair", "get_CanCraft", Parameters = new string[0])]
+    [GameContract("assembly_valheim", "InventoryGui", "m_playerGrid", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "InventoryGrid")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_containerGrid", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "InventoryGrid")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_dragItem", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "ItemDrop\u002BItemData")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_dragAmount", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Int32")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_dragGo", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.GameObject")]
+    [GameContract("assembly_valheim", "InventoryGui", "m_splitDialog", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "SplitDialog")]
+    [GameContract("assembly_valheim", "InventoryGui", "IsContainerOpen")]
+    [GameContract("assembly_valheim", "SplitDialog", "get_IsActive")]
+    [GameContract("assembly_utils", "ZInput", "get_pointerPosition")]
+    [ContractDependency(typeof(NativeGridProjection), typeof(SharedCanvasGroups), typeof(CanvasGroupLease))]
+    [GameContract("assembly_valheim", "InventoryGui", "m_containerName", Kind = ContractMemberKind.Field, Static = ContractStatic.Instance, ValueType = "TMPro.TMP_Text")]
+    [GameContract("assembly_valheim", "InventoryGui", "CloseContainer", Parameters = new string[0])]
+    [GameContract("assembly_valheim", "InventoryGrid", "GetInventory", Parameters = new string[0])]
     internal sealed class CraftingWindowModule : IUiModule, IRecoverable
     {
         /// <summary>IRecoverable: on a fault the windows close (vanilla's never shows in their place).</summary>
@@ -206,6 +219,20 @@ namespace GenesisUI.Modules.Windows
         private GameObject _detailsBody;
         private Button _craft, _repair, _variant, _socketTab, _normalTab, _editSockets;
         private bool _socketMode;
+        private RectTransform _gemPanel, _gemGhost;
+        private Image _gemGhostIcon;
+        private TextMeshProUGUI _gemName, _gemGhostAmount;
+        private NativeGridProjection _gemSlots, _gemItems;
+        private CanvasGroup _recipeInput;
+        private Inventory _gemInventory;
+        private AccessTools.FieldRef<InventoryGui, InventoryGrid> _nativeContainerGrid;
+        private AccessTools.FieldRef<InventoryGui, ItemDrop.ItemData> _nativeDragItem;
+        private AccessTools.FieldRef<InventoryGui, GameObject> _nativeDragGo;
+        private AccessTools.FieldRef<InventoryGui, int> _nativeDragAmount;
+        private Action<InventoryGui> _closeContainer;
+        private CanvasGroupLease _gemDragLease;
+        private GameObject _gemHiddenDrag;
+        private int _gemShownAmount = -1;
         // Light effects: the craft's progress around the button; embers behind the details at a forge.
         private EdgeLight _craftLight;
         private EmberField _forgeEmbers;
@@ -256,6 +283,12 @@ namespace GenesisUI.Modules.Windows
             _canCraftProp = AccessTools.Property(pair, "CanCraft");
             _craftTimer = AccessTools.FieldRefAccess<InventoryGui, float>("m_craftTimer");
             _barMax = AccessTools.FieldRefAccess<GuiBar, float>("m_maxValue");
+            NativeGridProjection.Bind();
+            _nativeContainerGrid = AccessTools.FieldRefAccess<InventoryGui, InventoryGrid>("m_containerGrid");
+            _nativeDragItem = AccessTools.FieldRefAccess<InventoryGui, ItemDrop.ItemData>("m_dragItem");
+            _nativeDragGo = AccessTools.FieldRefAccess<InventoryGui, GameObject>("m_dragGo");
+            _nativeDragAmount = AccessTools.FieldRefAccess<InventoryGui, int>("m_dragAmount");
+            _closeContainer = (Action<InventoryGui>)Delegate.CreateDelegate(typeof(Action<InventoryGui>), AccessTools.Method(typeof(InventoryGui), "CloseContainer"));
             ResetState();
         }
 
@@ -320,6 +353,7 @@ namespace GenesisUI.Modules.Windows
             if (_detailsDirty) ShowDetails();
             UpdateMaterials(gui, player);
             UpdateAction(gui, player);
+            UpdateGemEditor(gui);
             if (_search != null && !_search.isFocused && _typingLease != null) EndTyping();
         }
 
@@ -329,6 +363,7 @@ namespace GenesisUI.Modules.Windows
             if (_applied) Unapply();
             if (_root != null) UnityEngine.Object.Destroy(_root.gameObject);
             _root = null;
+            _gemPanel = _gemGhost = null; _gemSlots = _gemItems = null;
             _craftColumn.Rows.Clear();
             _upgradeColumn.Rows.Clear();
             _materials.Clear();
@@ -369,6 +404,7 @@ namespace GenesisUI.Modules.Windows
 
         private void Unapply()
         {
+            CloseGemEditor();
             _applied = false;
             VanillaPanels.Release("win.crafting");
             _closedFor = 0f;
@@ -387,7 +423,8 @@ namespace GenesisUI.Modules.Windows
         /// <summary>Vanilla's style dialog stays vanilla's: while it is open our window steps behind.</summary>
         private void FollowDialogs(InventoryGui gui)
         {
-            bool dialog = gui.m_variantDialog != null && gui.m_variantDialog.gameObject.activeInHierarchy;
+            bool dialog = (gui.m_variantDialog != null && gui.m_variantDialog.gameObject.activeInHierarchy) ||
+                (gui.m_splitDialog != null && gui.m_splitDialog.IsActive);
             if (dialog == _behind || _guiAncestor == null || _guiAncestor.parent != _root.parent) return;
             _behind = dialog;
             int index = _guiAncestor.GetSiblingIndex();
@@ -905,6 +942,125 @@ namespace GenesisUI.Modules.Windows
             _panel = _parts.Panel(panels, "Crafting", PanelX, 0f, PanelW, PanelsHeight, "$genesisui_panel_crafting", 68f, 26f, TextAlignmentOptions.Left);
             BuildDetails(t);
             BuildPanel(t);
+            BuildGemEditor(panels, t);
+        }
+
+        private void BuildGemEditor(RectTransform panels, ThemeTokens t)
+        {
+            _recipeInput = _panel.gameObject.AddComponent<CanvasGroup>();
+            _gemPanel = _parts.Panel(panels, "GemEditor", 0f, 0f, DetailsW, PanelsHeight,
+                "$genesisui_gem_editor", 0f, 19f, TextAlignmentOptions.Center);
+            _gemName = _parts.Label(_gemPanel, "Equipment", FontRole.Display, 21f, t.AccentGoldBright,
+                24f, 66f, 432f, 36f, TextAlignmentOptions.Center);
+            var hint = _parts.Label(_gemPanel, "Hint", FontRole.Body, 15f, t.TextBody,
+                24f, 106f, 432f, 38f, TextAlignmentOptions.Center);
+            hint.textWrappingMode = TextWrappingModes.Normal;
+            hint.text = Localize("$genesisui_gem_editor_hint");
+            _gemSlots = new NativeGridProjection(_gemPanel, _theme, "Sockets", 24f, 154f, 432f, 158f, 6);
+            _parts.Rule(_gemPanel, 24f, 318f, 432f);
+            _parts.Label(_gemPanel, "InventoryLabel", FontRole.Label, 16f, t.TextFlavor,
+                24f, 328f, 432f, 24f, TextAlignmentOptions.Left).text = Localize("$genesisui_panel_inventory");
+            _gemItems = new NativeGridProjection(_gemPanel, _theme, "Items", 24f, 362f, 432f, 240f, 6);
+            _parts.Button(_gemPanel, "Close", 24f, 618f, 432f, 38f, "$genesisui_gem_editor_close", 17f,
+                "close gem editor", CloseGemEditor, out _);
+            _gemPanel.gameObject.SetActive(false);
+            _gemGhost = WindowCanvas.At(_area, "GemDrag", 0f, 0f, 64f, 64f);
+            _gemGhost.pivot = new Vector2(.5f, .5f);
+            _gemGhostIcon = Ui.Image(Ui.Fill(Ui.Child(_gemGhost, "Icon")), null, Color.white);
+            _gemGhostIcon.preserveAspect = true;
+            _gemGhostAmount = _parts.Label(_gemGhost, "Amount", FontRole.Display, 20f, t.TextTitle,
+                0f, 32f, 64f, 32f, TextAlignmentOptions.BottomRight);
+            _gemGhost.gameObject.SetActive(false);
+        }
+
+        private void OpenGemEditor()
+        {
+            Adapters.Jewelcrafting.JewelcraftingAdapter.PressSockets();
+            var inventory = Adapters.Jewelcrafting.JewelcraftingAdapter.OpenInventory;
+            var gui = InventoryGui.instance;
+            if (inventory == null || gui == null || !gui.IsContainerOpen()) return;
+            _gemInventory = inventory;
+            if (_search != null) _search.DeactivateInputField();
+            EndTyping();
+            UpdateGemEditor(gui);
+            GenesisLog.Info("Module:win.crafting", "native gem editor opened over item details; station and recipe selection retained");
+        }
+
+        private void UpdateGemEditor(InventoryGui gui)
+        {
+            var grid = _nativeContainerGrid(gui);
+            bool show = _gemInventory != null && ReferenceEquals(_gemInventory, Adapters.Jewelcrafting.JewelcraftingAdapter.OpenInventory)
+                && gui.IsContainerOpen() && grid != null && ReferenceEquals(grid.GetInventory(), _gemInventory);
+            if (_gemPanel.gameObject.activeSelf != show) _gemPanel.gameObject.SetActive(show);
+            if (_details.gameObject.activeSelf == show) _details.gameObject.SetActive(!show);
+            if (_recipeInput.interactable == show) _recipeInput.interactable = !show;
+            if (!show)
+            {
+                if (_gemInventory != null) CloseGemEditor();
+                return;
+            }
+            string name = gui.m_containerName != null ? gui.m_containerName.text : "";
+            if (_gemName.text != name) _gemName.text = name;
+            var dragged = _nativeDragItem(gui);
+            _gemSlots.Refresh(grid, dragged);
+            _gemItems.Refresh(gui.m_playerGrid, dragged);
+            var nativeGhost = _nativeDragGo(gui);
+            if (nativeGhost != _gemHiddenDrag)
+            {
+                ReleaseGemDrag();
+                _gemHiddenDrag = nativeGhost;
+                if (nativeGhost != null) { _gemDragLease = SharedCanvasGroups.Acquire(Owner, nativeGhost); _gemDragLease.Hide(true); }
+            }
+            bool held = dragged != null;
+            if (_gemGhost.gameObject.activeSelf != held) _gemGhost.gameObject.SetActive(held);
+            if (held)
+            {
+                var icon = dragged.GetIcon();
+                if (_gemGhostIcon.sprite != icon) _gemGhostIcon.sprite = icon;
+                int amount = _nativeDragAmount(gui);
+                if (amount != _gemShownAmount)
+                {
+                    _gemShownAmount = amount;
+                    if (amount > 1) _gemGhostAmount.SetText("{0}", amount);
+                    else _gemGhostAmount.text = "";
+                }
+                _gemGhost.position = ZInput.pointerPosition;
+            }
+        }
+
+        private void CloseGemEditor()
+        {
+            var gui = InventoryGui.instance;
+            try
+            {
+                // Never close a different adapter's container after native has already replaced ours.
+                var grid = gui != null ? _nativeContainerGrid(gui) : null;
+                if (_gemInventory != null && gui != null && gui.IsContainerOpen() &&
+                    grid != null && ReferenceEquals(grid.GetInventory(), _gemInventory) &&
+                    ReferenceEquals(_gemInventory, Adapters.Jewelcrafting.JewelcraftingAdapter.OpenInventory))
+                    _closeContainer(gui);
+            }
+            finally
+            {
+                bool edited = _gemInventory != null;
+                _gemInventory = null;
+                _gemShownAmount = -1;
+                if (_gemSlots != null) Guard.Try("gem socket hover cleanup", _gemSlots.Hide);
+                if (_gemItems != null) Guard.Try("gem item hover cleanup", _gemItems.Hide);
+                ReleaseGemDrag();
+                if (_gemGhost != null) _gemGhost.gameObject.SetActive(false);
+                if (_gemPanel != null) _gemPanel.gameObject.SetActive(false);
+                if (_details != null) _details.gameObject.SetActive(true);
+                if (_recipeInput != null) _recipeInput.interactable = true;
+                _detailsDirty = true;
+                if (edited) GenesisLog.Info("Module:win.crafting", "gem editor closed; returning to the same item details");
+            }
+        }
+
+        private void ReleaseGemDrag()
+        {
+            if (_gemDragLease != null) _gemDragLease.Release();
+            _gemDragLease = null; _gemHiddenDrag = null;
         }
 
         private void BuildDetails(ThemeTokens t)
@@ -963,7 +1119,7 @@ namespace GenesisUI.Modules.Windows
             _socketWarning.textWrappingMode = TextWrappingModes.Normal;
             _reasonText = _parts.Label(body, "Reason", FontRole.Body, 15f, t.StateDanger, pad, 580f, w, 22f, TextAlignmentOptions.Left);
             _editSockets = _parts.Button(body, "EditSockets", pad, 612f, 130f, 44f, "$genesisui_insert_gems", 16f, "socket gems",
-                () => { Adapters.Jewelcrafting.JewelcraftingAdapter.PressSockets(); WindowShellModule.RequestInventory(); }, out _);
+                OpenGemEditor, out _);
             _variant = _parts.Button(body, "Variant", pad, 612f, 130f, 44f, "$genesisui_style", 17f, "crafting style",
                 () => { var gui = InventoryGui.instance; if (gui != null) gui.m_variantButton.onClick.Invoke(); }, out _);
             _craft = _parts.Button(body, "Craft", pad + 140f, 612f, w - 140f, 44f, null, 20f, "crafting craft", PressCraft, out _craftLabel);

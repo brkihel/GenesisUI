@@ -104,3 +104,8 @@ modules. Each binding logs GUID/version or its exact unsupported reason. Contain
 log native dimensions and visible rows. `wallet:load` faults and guarded `WalletLoadPatch`
 status distinguish saved-count preservation from the wallet drawing. Capacity metadata
 ownership conflicts log once and do not repeatedly overwrite another mod's value.
+
+Preview.2 logs general/window scale changes and native gem-editor open/close transitions
+under Windows/win.crafting. F8 includes both scale config values, existing window/adapter
+states, faults and those recent logs. Invalid special-cell drops name the prefab and target;
+normal equip relocation still logs its verified count-preserving position moves.

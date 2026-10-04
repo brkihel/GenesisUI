@@ -69,9 +69,10 @@ is unclear, ask; do not guess.
   main-menu/native-settings work; exact-version modpack resource adapters and client benchmarks.
 
 - **Development (2026-10-04):** branch `feat/modpack-inventory-1.2.0`, Preview
-  `1.2.0-preview.1` adds the first F7 inventory integrations (D-043/D-044), native coin/key
-  pockets, discreet native tooltip styling and the shaped rested-bar halo fix. R-068 records
-  Diego's feedback; R-069 is the pending single-client script on Gale `GenesisHeimLocal`.
+  `1.2.0-preview.2` keeps the first F7 inventory integrations (D-043/D-044) and adds
+  general/window scales, correct default-key backpack classification and station-preserving
+  gem editing (D-045). R-069 records Diego's Preview.1 feedback/proven causes; R-070 is the
+  pending focused single-client script on Gale `GenesisHeimLocal`.
   Exact DLL contracts: Backpacks 1.3.10, Jewelcrafting 2.0.10, HipLantern 1.1.12;
   optional Adventure Backpacks 2.0.3 is absent from that profile and uses the official
   reference download. Public API/resource adapters and full-modpack certification remain

@@ -19,7 +19,7 @@ so your other mods keep working and any part can be switched back.
 
 Current release: [**1.1.2 — GitHub download**](https://github.com/brkihel/GenesisUI/releases/tag/v1.1.2), approved by Diego: corrected 3D previews, equipment border progress, lore rune reveal and stability fixes. [Release evidence](docs/releases/1.1.2.md). Hexium upload remains Diego's next step.
 
-Development: **1.2.0-preview.1** adds optional backpack/jewelry/lantern/Socket integrations, native coin/key pockets and subtle tooltip styling. [Client validation](docs/testing/scripts/R-069-modular-inventory.md) is pending on Gale `GenesisHeimLocal`; the approved public release remains 1.1.2.
+Development: **1.2.0-preview.2** corrects backpack slot recognition, adds general/window scale controls and keeps gem editing over Item Details while the station stays open. [Client validation](docs/testing/scripts/R-070-backpack-scale-gem-flow.md) is pending on Gale `GenesisHeimLocal`; the approved public release remains 1.1.2.
 ---
 
 ## A HUD that feels alive

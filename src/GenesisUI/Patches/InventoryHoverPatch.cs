@@ -1,6 +1,7 @@
 using GenesisUI.Foundation;
 using GenesisUI.Foundation.Contracts;
 using GenesisUI.Modules.Windows;
+using GenesisUI.Widgets;
 using HarmonyLib;
 
 namespace GenesisUI.Patches
@@ -9,15 +10,19 @@ namespace GenesisUI.Patches
     [HarmonyPatch(typeof(InventoryGrid), "GetHoveredElement")]
     [GameContract("assembly_valheim", "InventoryGrid", "GetHoveredElement", Parameters = new string[0])]
     [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Foundation.Guard))]
+    [ContractDependency(typeof(NativeGridProjection))]
     internal static class InventoryHoverPatch
     {
         private static readonly System.Action<InventoryGrid> Read = grid => _projected = InventoryWindowModule.ProjectHover(grid);
+        private static readonly System.Action<InventoryGrid> ReadGem = grid => _projected = NativeGridProjection.ProjectHover(grid);
         private static InventoryElement _projected;
         [HarmonyPostfix]
         private static void Postfix(InventoryGrid __instance, ref InventoryElement __result)
         {
             _projected = null;
             if (Guard.Run("module:win.inventory", Read, __instance) && _projected != null) __result = _projected;
+            _projected = null;
+            if (Guard.Run(NativeGridProjection.Owner, ReadGem, __instance) && _projected != null) __result = _projected;
         }
     }
 }

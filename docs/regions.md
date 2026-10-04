@@ -83,7 +83,10 @@ GenesisUI's HUD root is a child of `m_rootObject`, so it hides with the vanilla 
   inventories draw below the player inventory; socket/unknown containers draw at the right.
   Native grids and foreign UI objects stay alive and keep their callbacks.
 - `win.crafting` projects Jewelcrafting's live native Socket rows/buttons and warning text;
-  the original crafting veil is unchanged and the adapter owns no foreign veil.
+  the original crafting veil is unchanged and the adapter owns no foreign veil. Preview.2
+  additionally projects native player/container cells over the owned Details footprint while
+  editing station gems. The entire owned Details panel is hidden, then restored on native
+  close. Native grids remain hidden/alive; item callbacks and foreign save subscriptions run.
 - `win.tooltips` is a shell-dependent logical styling module, with no blanket region claim:
   it reversibly dresses the current UITooltip background/font and owns only four thin lines.
   Foreign tooltip children and native placement/size remain intact.

@@ -136,7 +136,8 @@ namespace GenesisUI.Patches
                 if (!allowed)
                 {
                     player.Message(MessageHud.MessageType.Center, "$msg_cantuseitem");
-                    GenesisLog.Warn("Equipment", "refused invalid special-cell drop");
+                    string prefab = ___m_dragItem.m_dropPrefab != null ? ___m_dragItem.m_dropPrefab.name : "<no prefab>";
+                    GenesisLog.Warn("Equipment", "refused invalid special-cell drop: " + prefab + " -> " + (targetSlot.HasValue ? targetSlot.Value.ToString() : kind.ToString()));
                     return false;
                 }
                 __state.Drag = ___m_dragItem;

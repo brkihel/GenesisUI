@@ -320,8 +320,22 @@ The public provider API remains planned. See D-043 and docs/adapters/.
 
 The inventory projects the authoritative native container grid. Backpack content adds a pane
 below the inventory and extends both shell and inventory boards uniformly; socket containers
-use the existing right pane. Native callbacks continue to own transfers and persistence.
+opened from Inventory use the existing right pane. Station gem editing stays on Crafting:
+an owned panel covers the Details footprint while the entire Details object is hidden.
+Two bounded `NativeGridProjection` views wrap sockets/player cells without changing native
+addresses and forward pointer/touch/drag/tooltip events to actual native InventoryElements.
+Recipe interaction pauses during editing; close invokes native CloseContainer and restores
+Details, without changing the station or selecting another recipe. Native split dialogs
+remain above the projection. Native callbacks continue to own transfers and persistence.
 Tooltips style the native live object through VanillaSkin and remove only owned line graphics.
+
+`[General] Scale` uniformly scales the owned HUD root and creature plates and multiplies
+window sizing. The HUD root's logical canvas dimensions divide by the multiplier to preserve
+screen-edge anchors. `[Windows] Scale` affects only design boards, combining with the general
+multiplier and existing width/height fit. Core InterfaceScale bounds windows to 98% of the
+screen, leaving space for parallax; extended backpack boards use their actual height. Defaults
+of 1 preserve the existing fit. Native UI scale/geometry and game state are not written.
+Native tooltip/dialog styling still inherits the game's scale rather than an owned HUD root.
 
 Native coin/key pockets remain inside the isolated Gameplay capability. Capacity metadata
 is reversible and server-synced; a guarded native load service preserves enlarged saved coin
