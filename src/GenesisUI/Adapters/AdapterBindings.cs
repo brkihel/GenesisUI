@@ -50,7 +50,11 @@ namespace GenesisUI.Adapters
             var data = Method(assembly, "ItemDataManager.ItemExtensions", "Data", typeof(ItemDrop.ItemData));
             var getter = assembly.GetType("ItemDataManager.ItemInfo", true).GetMethods(All)
                 .Single(m => m.Name == "Get" && m.IsGenericMethodDefinition).MakeGenericMethod(assembly.GetType(containerType, true));
-            return Expression.Lambda<Func<ItemDrop.ItemData, object>>(Expression.Convert(Expression.Call(Expression.Call(data, item), getter, Expression.Constant(null, typeof(string))), typeof(object)), item).Compile();
+            var key = getter.GetParameters()[0];
+            if (!key.HasDefaultValue || !(key.DefaultValue is string))
+                throw new InvalidOperationException(containerType + " has no verified string default key");
+            // ItemDataManager treats null as a different key (type + "#"), not its default entry.
+            return Expression.Lambda<Func<ItemDrop.ItemData, object>>(Expression.Convert(Expression.Call(Expression.Call(data, item), getter, Expression.Constant(key.DefaultValue, typeof(string))), typeof(object)), item).Compile();
         }
 
         internal static Func<object, T> ReadMethod<T>(MethodInfo method)

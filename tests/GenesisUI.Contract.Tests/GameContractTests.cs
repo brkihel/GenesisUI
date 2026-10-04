@@ -119,6 +119,24 @@ namespace GenesisUI.Contract.Tests
             }
         }
 
+        [SkippableTheory]
+        [InlineData("Backpacks")]
+        [InlineData("Jewelcrafting")]
+        public void Item_container_getters_require_the_empty_default_key(string name)
+        {
+            TestPaths.SkipUnlessRefs(); TestPaths.SkipUnlessPlugin();
+            string path = Path.Combine(TestPaths.RefDir, "adapters", name + ".dll");
+            Skip.IfNot(File.Exists(path), "Optional adapter DLL missing: " + path);
+            using var context = Load(out _);
+            var getter = context.LoadFromAssemblyPath(path).GetType("ItemDataManager.ItemInfo", true)
+                .GetMethods(All).Single(m => m.Name == "Get" && m.IsGenericMethodDefinition);
+            var key = Assert.Single(getter.GetParameters());
+            Assert.Equal("System.String", key.ParameterType.FullName);
+            Assert.True(key.HasDefaultValue);
+            Assert.Equal("", key.RawDefaultValue);
+            // Null would resolve the distinct type# entry in the owning mods' class-key rules.
+        }
+
         [SkippableFact]
         public void Helper_contract_dependencies_do_not_import_other_module_lifecycles()
         {
