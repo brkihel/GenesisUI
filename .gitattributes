@@ -1,0 +1,5 @@
+# Preserve exact source bytes used by the verified shader build.
+unity/Assets/GenesisUI/** text eol=lf
+# These two sources were verified with CRLF; preserve that recorded form.
+unity/Assets/GenesisUI/Shaders/Blur.shader text eol=crlf
+unity/Assets/GenesisUI/Shaders/Burn.shader text eol=crlf

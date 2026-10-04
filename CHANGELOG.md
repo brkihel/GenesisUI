@@ -19,6 +19,7 @@
 ### Fixed
 
 - Use on a supported hovered backpack/container takes precedence over next-tab, including E.
+- Preserve the shader sources' verified LF/CRLF forms across checkouts for exact package provenance.
 - Rested light follows the three vital frames instead of drawing a rectangle around food/bars.
 - Coin capacity calculations use wide arithmetic; native reload temporarily preserves the
   saved Int32 coin count, including with the wallet drawing disabled. Uninstalling every
