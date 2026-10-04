@@ -34,10 +34,12 @@ namespace GenesisUI.Host
     [GameContract("assembly_valheim", "Minimap", "m_largeRoot", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.GameObject")]
     [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Hud", "get_instance", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Static, ValueType = "Hud")]
     [GenesisUI.Foundation.Contracts.GameContract("assembly_valheim", "Hud", "m_rootObject", Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Field, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "UnityEngine.GameObject")]
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Widgets.WindowCanvas))]
     internal static class ModuleHost
     {
         /// <summary>The longest time step a module is ever given (seconds).</summary>
         private const float MaxRefreshDelta = 0.25f;
+        private static readonly System.Action ScaleHudAction = ScaleHud;
 
         private static readonly List<ModuleEntry> Entries = new List<ModuleEntry>();
         private static RectTransform _hudRoot;
@@ -91,6 +93,7 @@ namespace GenesisUI.Host
         {
             if (Hud.instance == null || Hud.instance.m_rootObject == null) return; // main menu
             EnsureHudRoot();
+            ScaleHud();
             KeepBelowLargeMap();
             foreach (var e in Entries) Reconcile(e);
         }
@@ -99,6 +102,7 @@ namespace GenesisUI.Host
         public static void Tick(float dt)
         {
             if (_hudRoot == null && HasBuiltModules()) OnSceneLost();
+            Guard.Run("host:hud-scale", ScaleHudAction);
 
             foreach (var e in Entries)
             {
@@ -407,6 +411,27 @@ namespace GenesisUI.Host
             _hudRoot.anchorMin = _hudRoot.anchorMax = _hudRoot.pivot = new Vector2(0.5f, 0.5f);
             _hudRoot.sizeDelta = canvasSize;
             _hudRoot.anchoredPosition = -parent.rect.center;
+        }
+
+        private static void ScaleHud()
+        {
+            if (_hudRoot == null) return;
+            var parent = _hudRoot.parent as RectTransform;
+            var canvas = parent != null ? parent.GetComponentInParent<Canvas>() : null;
+            var canvasRect = canvas != null ? canvas.rootCanvas.transform as RectTransform : null;
+            if (parent == null || canvasRect == null) return;
+            float scale = Widgets.WindowCanvas.UiScale;
+            // Keep screen-edge anchors in place while their margins and ornaments grow uniformly.
+            _hudRoot.anchorMin = _hudRoot.anchorMax = _hudRoot.pivot = new Vector2(0.5f, 0.5f);
+            Vector2 size = canvasRect.rect.size / scale;
+            if (_hudRoot.sizeDelta != size) _hudRoot.sizeDelta = size;
+            var position = -parent.rect.center;
+            if (_hudRoot.anchoredPosition != position) _hudRoot.anchoredPosition = position;
+            if (!Mathf.Approximately(_hudRoot.localScale.x, scale))
+            {
+                _hudRoot.localScale = new Vector3(scale, scale, 1f);
+                GenesisLog.Info("Host", "HUD general scale: " + scale.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture));
+            }
         }
 
         private static void Stretch(RectTransform rt)

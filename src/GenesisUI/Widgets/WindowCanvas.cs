@@ -15,10 +15,18 @@ namespace GenesisUI.Widgets
     {
         internal static ConfigEntry<float> Size;
         internal static ConfigEntry<float> Height;
-        internal static void Shutdown() { Size = null; Height = null; }
+        internal static ConfigEntry<float> GeneralScale;
+        internal static ConfigEntry<float> Scale;
+        private static float _loggedGeneral = -1f, _loggedWindows = -1f;
+        internal static float UiScale => Layout.InterfaceScale.Multiplier(GeneralScale != null ? GeneralScale.Value : 1f, 1.5f);
+        internal static void Shutdown() { Size = null; Height = null; GeneralScale = null; Scale = null; _loggedGeneral = _loggedWindows = -1f; }
 
         internal static void Bind(ConfigFile config)
         {
+            GeneralScale = config.Bind("General", "Scale", 1f, new ConfigDescription(
+                "Escala geral do HUD e das janelas GenesisUI. 1 = tamanho padrão; mantém as proporções e combina com a escala de cada elemento.", new AcceptableValueRange<float>(0.5f, 1.5f)));
+            Scale = config.Bind("Windows", "Scale", 1f, new ConfigDescription(
+                "Escala apenas das janelas GenesisUI. Combine com a escala geral; aumente para ler melhor o inventário com a mochila aberta. Limitada ao tamanho da tela.", new AcceptableValueRange<float>(0.5f, 2f)));
             Size = config.Bind("Windows", "Width", 0.75f, new ConfigDescription(
                 "Largura das janelas (inventário, criação...) em fração da tela: 0,75 = 75%.", new AcceptableValueRange<float>(0.45f, 1f)));
             Height = config.Bind("Windows", "Height", 0.75f, new ConfigDescription(
@@ -104,7 +112,15 @@ namespace GenesisUI.Widgets
             if (screen.x <= 0f || screen.y <= 0f) return;
             float w = Size != null ? Size.Value : 0.75f;
             float h = Height != null ? Height.Value : 0.75f;
-            float scale = Mathf.Min(screen.x * w / area.sizeDelta.x, screen.y * h / area.sizeDelta.y);
+            float windows = Layout.InterfaceScale.Multiplier(Scale != null ? Scale.Value : 1f);
+            if (_loggedGeneral != UiScale || _loggedWindows != windows)
+            {
+                _loggedGeneral = UiScale; _loggedWindows = windows;
+                GenesisLog.Info("Windows", "scale multipliers: general " + UiScale.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)
+                    + ", windows " + windows.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture) + "; uniform, bounded to the screen");
+            }
+            float scale = Layout.InterfaceScale.Window(screen.x, screen.y, area.sizeDelta.x, area.sizeDelta.y,
+                w, h, UiScale, windows);
             if (!Mathf.Approximately(area.localScale.x, scale)) area.localScale = new Vector3(scale, scale, 1f);
         }
 

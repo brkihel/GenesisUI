@@ -122,13 +122,15 @@ namespace GenesisUI.Widgets
         }
 
         /// <summary>Stack amount; hidden when 1 or less, like vanilla.</summary>
-        public void SetAmount(int amount)
+        public void SetAmount(int amount, bool compact = false)
         {
             int shown = amount > 1 ? amount : int.MinValue;
-            if (shown == _shownCorner && _shownUnit == '#') return;
+            char unit = compact ? 'c' : '#';
+            if (shown == _shownCorner && _shownUnit == unit) return;
             _shownCorner = shown;
-            _shownUnit = '#';
+            _shownUnit = unit;
             if (shown == int.MinValue) _corner.text = "";
+            else if (compact) _corner.text = Text.ItemCount.Compact(amount);
             else _corner.SetText("{0}", amount);
         }
 

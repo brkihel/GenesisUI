@@ -1,5 +1,29 @@
 # Changelog
 
+## 1.2.0-preview.2 — 2026-10-04 (client validation pending)
+
+### Added
+
+- General HUD/windows scale and independent windows scale, exposed in GenesisUI settings.
+  Both preserve proportions; windows remain within the screen, including the backpack pane.
+- A native gem editor over Item Details, with sockets and a scrollable player inventory.
+  Underlying details are hidden completely; close returns to the same station and selection.
+
+### Fixed
+
+- Read ItemDataManager containers with the owning API's verified default string key rather
+  than null. This restores backpack classification/equipment-cell acceptance and container use.
+- Opening station gem slots no longer forces the Inventory tab. Native close saves the gems;
+  switching away, failure cleanup and native split dialogs retain their normal lifecycle.
+- Keep large coin counts compact in the gem editor and identify rejected special-cell drops
+  by prefab/target in diagnostics.
+
+### Validation
+
+- Preview.1 client feedback and proven causes are in R-069. R-070 is the focused single-client
+  gate for the new flow/scales; no game verification or full-modpack certification is inferred
+  from automated checks. Native item operations and all foreign Harmony hooks remain in place.
+
 ## 1.2.0-preview.1 — 2026-10-04 (client validation pending)
 
 ### Added

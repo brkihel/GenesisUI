@@ -365,5 +365,10 @@
   "genesisui_slot_key_two": "Chave II",
   "genesisui_sockets": "Sockets",
   "genesisui_insert_gems": "Inserir gemas",
-  "genesisui_close": "Fechar"
+  "genesisui_close": "Fechar",
+  "genesisui_cfg_General_Scale": "Escala geral da UI",
+  "genesisui_cfg_Windows_Scale": "Escala das janelas",
+  "genesisui_gem_editor": "Gemas do equipamento",
+  "genesisui_gem_editor_hint": "Arraste gemas entre o inventário e os sockets. As regras da mesa continuam valendo.",
+  "genesisui_gem_editor_close": "Fechar e voltar aos detalhes"
 }

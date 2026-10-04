@@ -1293,10 +1293,7 @@ namespace GenesisUI.Modules.Windows
                     _stack = stack;
                     if (stack <= 0) Amount.text = "";
                     else if (ShowMax) Amount.SetText("{0}/{1}", stack, item.m_shared.m_maxStackSize);
-                    else if (stack >= 1000000000) Amount.text = (stack / 1000000000d).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) + "G";
-                    else if (stack >= 1000000) Amount.text = (stack / 1000000d).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) + "M";
-                    else if (stack >= 10000) Amount.text = (stack / 1000d).ToString("0.#", System.Globalization.CultureInfo.InvariantCulture) + "k";
-                    else Amount.text = stack.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                    else Amount.text = Text.ItemCount.Compact(stack);
                 }
                 int quality = item != null && item.m_shared.m_maxQuality > 1 ? item.m_quality : 0;
                 if (quality != _quality)

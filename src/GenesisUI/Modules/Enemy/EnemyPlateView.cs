@@ -14,6 +14,7 @@ namespace GenesisUI.Modules.Enemy
     /// </summary>
     [GenesisUI.Foundation.Contracts.GameContract("assembly_guiutils", "GuiBar", "GetSmoothValue", Parameters = new string[] {  }, Kind = GenesisUI.Foundation.Contracts.ContractMemberKind.Method, Static = GenesisUI.Foundation.Contracts.ContractStatic.Instance, ValueType = "System.Single")]
     [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Theme.ThemeRuntime), typeof(GenesisUI.Theme.ThemeTokens), typeof(GenesisUI.Widgets.Ui), typeof(GenesisUI.Widgets.LiquidLayer))]
+    [GenesisUI.Foundation.Contracts.ContractDependency(typeof(GenesisUI.Widgets.WindowCanvas))]
     internal sealed class EnemyPlateView
     {
         private const float Width = 112f;
@@ -136,6 +137,8 @@ namespace GenesisUI.Modules.Enemy
         public void Apply(int offsetY)
         {
             if (_root == null) return;
+            float scale = WindowCanvas.UiScale;
+            if (!Mathf.Approximately(_root.localScale.x, scale)) _root.localScale = new Vector3(scale, scale, 1f);
             if (offsetY != _shownOffset)
             {
                 _shownOffset = offsetY;

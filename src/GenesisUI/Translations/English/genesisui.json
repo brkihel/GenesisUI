@@ -273,5 +273,10 @@
   "genesisui_slot_key_two": "Key II",
   "genesisui_sockets": "Sockets",
   "genesisui_insert_gems": "Insert gems",
-  "genesisui_close": "Close"
+  "genesisui_close": "Close",
+  "genesisui_cfg_General_Scale": "General UI scale",
+  "genesisui_cfg_Windows_Scale": "Window scale",
+  "genesisui_gem_editor": "Equipment gems",
+  "genesisui_gem_editor_hint": "Drag gems between your inventory and the sockets. The station rules still apply.",
+  "genesisui_gem_editor_close": "Close and return to details"
 }
